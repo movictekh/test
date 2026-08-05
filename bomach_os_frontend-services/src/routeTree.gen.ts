@@ -16,6 +16,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as PortalRouteImport } from './routes/portal'
 import { Route as AppIndexRouteImport } from './routes/app/index'
 import { Route as AppDashboardRouteImport } from './routes/app/dashboard'
+import { Route as AppDesignSystemRouteImport } from './routes/app/design-system'
 import { Route as PortalIndexRouteImport } from './routes/portal/index'
 import { Route as PortalDashboardRouteImport } from './routes/portal/dashboard'
 
@@ -54,6 +55,11 @@ const AppDashboardRoute = AppDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
+const AppDesignSystemRoute = AppDesignSystemRouteImport.update({
+  id: '/design-system',
+  path: '/design-system',
+  getParentRoute: () => AppRoute,
+} as any)
 const PortalIndexRoute = PortalIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -72,6 +78,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/portal': typeof PortalRouteWithChildren
   '/app/dashboard': typeof AppDashboardRoute
+  '/app/design-system': typeof AppDesignSystemRoute
   '/portal/dashboard': typeof PortalDashboardRoute
   '/app/': typeof AppIndexRoute
   '/portal/': typeof PortalIndexRoute
@@ -81,6 +88,7 @@ export interface FileRoutesByTo {
   '/forbidden': typeof ForbiddenRoute
   '/login': typeof LoginRoute
   '/app/dashboard': typeof AppDashboardRoute
+  '/app/design-system': typeof AppDesignSystemRoute
   '/portal/dashboard': typeof PortalDashboardRoute
   '/app': typeof AppIndexRoute
   '/portal': typeof PortalIndexRoute
@@ -93,6 +101,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/portal': typeof PortalRouteWithChildren
   '/app/dashboard': typeof AppDashboardRoute
+  '/app/design-system': typeof AppDesignSystemRoute
   '/portal/dashboard': typeof PortalDashboardRoute
   '/app/': typeof AppIndexRoute
   '/portal/': typeof PortalIndexRoute
@@ -106,6 +115,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/portal'
     | '/app/dashboard'
+    | '/app/design-system'
     | '/portal/dashboard'
     | '/app/'
     | '/portal/'
@@ -115,6 +125,7 @@ export interface FileRouteTypes {
     | '/forbidden'
     | '/login'
     | '/app/dashboard'
+    | '/app/design-system'
     | '/portal/dashboard'
     | '/app'
     | '/portal'
@@ -126,6 +137,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/portal'
     | '/app/dashboard'
+    | '/app/design-system'
     | '/portal/dashboard'
     | '/app/'
     | '/portal/'
@@ -190,6 +202,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/design-system': {
+      id: '/app/design-system'
+      path: '/design-system'
+      fullPath: '/app/design-system'
+      preLoaderRoute: typeof AppDesignSystemRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/portal/': {
       id: '/portal/'
       path: '/'
@@ -209,11 +228,13 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRoute
+  AppDesignSystemRoute: typeof AppDesignSystemRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
+  AppDesignSystemRoute: AppDesignSystemRoute,
   AppIndexRoute: AppIndexRoute,
 }
 

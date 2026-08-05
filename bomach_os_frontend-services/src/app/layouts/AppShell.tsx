@@ -1,5 +1,4 @@
 import {
-  IconBell,
   IconBook,
   IconBuildingCommunity,
   IconCalculator,
@@ -30,6 +29,7 @@ import { Link, useNavigate, useRouter, useRouterState } from '@tanstack/react-ro
 import { useMemo, useState, type PropsWithChildren } from 'react'
 
 import { formatRoleLabel, useAuth } from '@/app/auth'
+import { NotificationPanel } from '@/app/notifications'
 import {
   getVisibleNavigation,
   isNavigationItemActive,
@@ -132,14 +132,7 @@ export function AppShell({ children, navigation, variant = 'operations' }: AppSh
             </span>
           ) : null}
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-white hover:bg-white/10 hover:text-white"
-            aria-label="Notifications"
-          >
-            <IconBell size={19} />
-          </Button>
+          <NotificationPanel />
 
           <div className="hidden text-right sm:block">
             <p className="max-w-36 truncate text-xs font-semibold">{user?.name ?? 'Bomach User'}</p>

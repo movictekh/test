@@ -21,7 +21,7 @@ export type NavigationIconName =
   | 'payments'
   | 'documents'
 
-export type NavigationPath = '/app/dashboard' | '/portal/dashboard'
+export type NavigationPath = '/app/dashboard' | '/app/design-system' | '/portal/dashboard'
 
 export interface NavigationItem {
   id: string

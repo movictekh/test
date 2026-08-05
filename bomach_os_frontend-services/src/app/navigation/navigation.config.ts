@@ -14,6 +14,14 @@ export const operationsNavigation = [
         permissions: [PERMISSIONS.dashboardRead],
         exact: true,
       },
+      {
+        id: 'design-system',
+        label: 'Design System',
+        icon: 'form',
+        to: '/app/design-system',
+        permissions: [PERMISSIONS.dashboardRead],
+        exact: true,
+      },
     ],
   },
   {
