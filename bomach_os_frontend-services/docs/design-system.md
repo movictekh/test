@@ -147,3 +147,22 @@ During development, authenticated staff users can review the design system at:
 `/app/design-system`
 
 This route is for development and review. It is not a business module.
+
+## Error and feedback placement
+
+The complete standard is documented in:
+
+`docs/error-handling-and-feedback.md`
+
+Summary:
+
+- field validation belongs beside the field;
+- whole-form failures belong in a persistent form Alert;
+- temporary action feedback belongs in a toast;
+- section loading failures use `SectionErrorState`;
+- page loading failures use `ErrorState`;
+- expired sessions redirect to login and show a persistent Alert;
+- route permission failures use the Forbidden page;
+- major completed journeys use `SuccessState`;
+- do not display the same message in several places;
+- do not show arbitrary backend error text directly.

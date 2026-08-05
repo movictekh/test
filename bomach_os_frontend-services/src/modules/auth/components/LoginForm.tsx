@@ -3,6 +3,7 @@ import { useNavigate, useRouter } from '@tanstack/react-router'
 import { useState } from 'react'
 
 import { getAuthenticatedHome, useAuth } from '@/app/auth'
+import { getUserFacingErrorMessage } from '@/shared/errors'
 import { Alert, Button, FormControl, Input } from '@/shared/ui'
 
 import { loginSchema, twoFactorSchema } from '../schemas/login.schema'
@@ -42,7 +43,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
         else if (result.user)
           await navigate({ to: getAuthenticatedHome(result.user), replace: true })
       } catch (error) {
-        setFormError(error instanceof Error ? error.message : 'Login could not be completed.')
+        setFormError(getUserFacingErrorMessage(error, 'login'))
       }
     },
   })
@@ -61,7 +62,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
         if (redirectTo) router.history.push(redirectTo)
         else await navigate({ to: getAuthenticatedHome(user), replace: true })
       } catch (error) {
-        setFormError(error instanceof Error ? error.message : 'The code could not be verified.')
+        setFormError(getUserFacingErrorMessage(error, 'two-factor'))
       }
     },
   })
