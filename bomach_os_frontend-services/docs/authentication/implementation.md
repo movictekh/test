@@ -23,17 +23,17 @@ The same API functions are used in both modes.
 ```env
 VITE_API_BASE_URL=/api/v1
 VITE_ENABLE_MOCKS=true
-VITE_AUTH_MODE=mock
 ```
 
 MSW intercepts the normal HTTP requests and returns responses matching the backend contract.
+The mock login handler only accepts the known demo credentials in the repository and returns
+`401` for anything else.
 
 ### Real
 
 ```env
 VITE_API_BASE_URL=https://bomachauthtest.bgbot.app/api/v1
 VITE_ENABLE_MOCKS=false
-VITE_AUTH_MODE=real
 ```
 
 The same requests reach the deployed backend without changing the UI or feature code.

@@ -89,7 +89,7 @@ async function logout(): Promise<void> {
   try {
     await apiClient.post<LogoutResponseDto>('/auth/logout')
   } finally {
-    tokenStore.clear()
+    tokenStore.clear('logout')
   }
 }
 

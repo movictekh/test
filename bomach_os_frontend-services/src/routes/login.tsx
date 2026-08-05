@@ -4,20 +4,40 @@ import { LoginPage } from '@/modules/auth'
 
 interface LoginSearch {
   redirect?: string
+  reason?: 'session-expired'
+}
+
+function isSafeInternalRedirect(value: string): boolean {
+  return value.startsWith('/') && !value.startsWith('//') && !value.startsWith('/login')
 }
 
 function validateLoginSearch(search: Record<string, unknown>): LoginSearch {
-  if (typeof search.redirect === 'string' && search.redirect.length > 0) {
-    return { redirect: search.redirect }
+  const result: LoginSearch = {}
+
+  if (
+    typeof search.redirect === 'string' &&
+    search.redirect.length > 0 &&
+    isSafeInternalRedirect(search.redirect)
+  ) {
+    result.redirect = search.redirect
   }
 
-  return {}
+  if (search.reason === 'session-expired') {
+    result.reason = 'session-expired'
+  }
+
+  return result
 }
 
 function LoginRouteComponent() {
   const search = Route.useSearch()
 
-  return search.redirect ? <LoginPage redirectTo={search.redirect} /> : <LoginPage />
+  return (
+    <LoginPage
+      {...(search.redirect ? { redirectTo: search.redirect } : {})}
+      {...(search.reason ? { reason: search.reason } : {})}
+    />
+  )
 }
 
 export const Route = createFileRoute('/login')({

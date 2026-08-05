@@ -1,10 +1,13 @@
+import { Alert } from '@/shared/ui'
+
 import { LoginForm } from '../components/LoginForm'
 
 interface LoginPageProps {
   redirectTo?: string
+  reason?: 'session-expired'
 }
 
-export function LoginPage({ redirectTo }: LoginPageProps) {
+export function LoginPage({ redirectTo, reason }: LoginPageProps) {
   return (
     <main className="min-h-screen bg-[linear-gradient(135deg,#112957,#1f3d7a_58%,#3159aa)] px-4 py-8 sm:grid sm:place-items-center">
       <section className="mx-auto w-full max-w-[420px] rounded-[22px] bg-white px-6 py-8 shadow-[0_24px_80px_rgba(4,12,32,0.35)] sm:px-[38px] sm:py-[38px]">
@@ -17,6 +20,15 @@ export function LoginPage({ redirectTo }: LoginPageProps) {
             Request · Quote · Pay · Deliver · Experience
           </p>
         </header>
+
+        {reason === 'session-expired' ? (
+          <Alert
+            className="mb-4"
+            tone="warning"
+            title="Your session has expired"
+            description="Sign in again to continue from where you stopped."
+          />
+        ) : null}
 
         <LoginForm {...(redirectTo ? { redirectTo } : {})} />
 

@@ -14,6 +14,16 @@ function isAuthorized(request: Request): boolean {
   return request.headers.get('authorization')?.startsWith('Bearer mock-access-') ?? false
 }
 
+function authenticate(email: string, password: string): keyof typeof mockAuthUsers | null {
+  for (const [profile, account] of Object.entries(mockAuthUsers)) {
+    if (account.user.email === email && account.password === password) {
+      return profile as keyof typeof mockAuthUsers
+    }
+  }
+
+  return null
+}
+
 export const authHandlers = [
   http.post(endpoint('/auth/login'), async ({ request }) => {
     await delay(250)
@@ -23,8 +33,15 @@ export const authHandlers = [
       return HttpResponse.json({ detail: 'Email and password are required.' }, { status: 401 })
     }
 
-    const profile =
-      body.email === mockAuthUsers.client.user.email ? 'client' : 'service-administrator'
+    const profile = authenticate(body.email, body.password)
+
+    if (!profile) {
+      return HttpResponse.json(
+        { detail: 'No active account found with the given credentials.' },
+        { status: 401 },
+      )
+    }
+
     activeProfile = profile
 
     return HttpResponse.json({

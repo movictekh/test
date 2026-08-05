@@ -2,6 +2,7 @@ import type { RoleResponseDto, UserResponseDto } from '@/modules/auth/types/auth
 
 export const mockAuthUsers = {
   'service-administrator': {
+    password: 'demo-password',
     user: {
       id: 101,
       email: 'service.admin@bomach.local',
@@ -33,6 +34,7 @@ export const mockAuthUsers = {
     } satisfies RoleResponseDto,
   },
   client: {
+    password: 'demo-password',
     user: {
       id: 202,
       email: 'client@bomach.local',

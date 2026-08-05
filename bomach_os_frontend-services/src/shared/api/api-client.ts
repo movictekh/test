@@ -67,7 +67,7 @@ async function refreshAccessToken(): Promise<string | null> {
       })
 
       if (!response.ok) {
-        tokenStore.clear()
+        tokenStore.clear('expired')
         return null
       }
 
@@ -75,7 +75,7 @@ async function refreshAccessToken(): Promise<string | null> {
       tokenStore.updateAccessToken(payload.access_token)
       return payload.access_token
     } catch {
-      tokenStore.clear()
+      tokenStore.clear('expired')
       return null
     } finally {
       refreshPromise = null
@@ -152,7 +152,7 @@ async function request<TResponse>(
     const errorPayload =
       typeof payload === 'object' && payload !== null ? (payload as ApiErrorPayload) : undefined
 
-    if (response.status === 401) tokenStore.clear()
+    if (response.status === 401) tokenStore.clear('expired')
 
     throw new ApiError(
       errorPayload?.detail ?? errorPayload?.message ?? 'The request could not be completed.',

@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useCallback, useMemo, type PropsWithChildren } from 'react'
+import { useCallback, useEffect, useMemo, type PropsWithChildren } from 'react'
 
 import { authMutations } from '@/modules/auth/api/auth.mutations'
 import { authQueries } from '@/modules/auth/api/auth.queries'
 import type { LoginCredentials, LoginResult } from '@/modules/auth/types/auth.types'
+import { redirectToSessionExpiredLogin } from '@/shared/auth/session-navigation'
 import { tokenStore } from '@/shared/auth/token-store'
 
 import { AuthContext } from './auth.context'
@@ -16,6 +17,30 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const { mutateAsync: loginMutateAsync } = useMutation(authMutations.login())
   const { mutateAsync: verifyTwoFactorMutateAsync } = useMutation(authMutations.verifyTwoFactor())
   const { mutateAsync: logoutMutateAsync } = useMutation(authMutations.logout())
+
+  useEffect(() => {
+    const unsubscribe = tokenStore.subscribe(({ tokens, reason }) => {
+      if (tokens) return
+
+      queryClient.setQueryData(currentUserQueryOptions.queryKey, null)
+
+      if (reason === 'expired' || reason === 'invalid' || reason === 'storage-cleared') {
+        queryClient.clear()
+        redirectToSessionExpiredLogin()
+      }
+    })
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.storageArea === window.localStorage) tokenStore.syncFromStorage()
+    }
+
+    window.addEventListener('storage', handleStorage)
+
+    return () => {
+      unsubscribe()
+      window.removeEventListener('storage', handleStorage)
+    }
+  }, [currentUserQueryOptions.queryKey, queryClient])
 
   const loadCurrentUser = useCallback(async (): Promise<AuthUser> => {
     const user = await queryClient.fetchQuery({
@@ -32,7 +57,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
       const result = await loginMutateAsync(credentials)
 
       if (result.type === 'authenticated') {
-        await queryClient.invalidateQueries({ queryKey: currentUserQueryOptions.queryKey })
+        await queryClient.invalidateQueries({
+          queryKey: currentUserQueryOptions.queryKey,
+        })
         const user = await loadCurrentUser()
         return { type: 'authenticated', user }
       }
@@ -45,7 +72,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const verifyTwoFactor = useCallback(
     async (sessionToken: string, code: string): Promise<AuthUser> => {
       await verifyTwoFactorMutateAsync({ session_token: sessionToken, code })
-      await queryClient.invalidateQueries({ queryKey: currentUserQueryOptions.queryKey })
+      await queryClient.invalidateQueries({
+        queryKey: currentUserQueryOptions.queryKey,
+      })
       return loadCurrentUser()
     },
     [currentUserQueryOptions.queryKey, loadCurrentUser, queryClient, verifyTwoFactorMutateAsync],
@@ -55,7 +84,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     try {
       await logoutMutateAsync()
     } finally {
-      tokenStore.clear()
+      tokenStore.clear('logout')
       queryClient.clear()
     }
   }, [logoutMutateAsync, queryClient])

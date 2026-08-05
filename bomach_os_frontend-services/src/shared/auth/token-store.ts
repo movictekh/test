@@ -1,76 +1,93 @@
 import { z } from 'zod'
 
-const TOKEN_STORAGE_KEY = 'bomach-auth-tokens'
+const ACCESS_TOKEN_KEY = 'bomach-access-token'
+const REFRESH_TOKEN_KEY = 'bomach-refresh-token'
 
-const tokenPairSchema = z.object({
-  accessToken: z.string().min(1),
-  refreshToken: z.string().min(1),
-})
+const tokenSchema = z.string().min(1)
 
-export type AuthTokenPair = z.infer<typeof tokenPairSchema>
+export type AuthSessionEndReason = 'logout' | 'expired' | 'invalid' | 'storage-cleared' | 'manual'
 
-type TokenListener = (tokens: AuthTokenPair | null) => void
-
-const listeners = new Set<TokenListener>()
-let memoryTokens: AuthTokenPair | null = null
-
-function readPersistedTokens(): AuthTokenPair | null {
-  if (typeof window === 'undefined') return null
-
-  const value = window.localStorage.getItem(TOKEN_STORAGE_KEY)
-  if (!value) return null
-
-  try {
-    const result = tokenPairSchema.safeParse(JSON.parse(value) as unknown)
-    return result.success ? result.data : null
-  } catch {
-    return null
-  }
+export interface AuthTokenPair {
+  accessToken: string
+  refreshToken: string
 }
 
-function notify(tokens: AuthTokenPair | null): void {
-  listeners.forEach((listener) => listener(tokens))
+export interface AuthSessionEvent {
+  tokens: AuthTokenPair | null
+  reason?: AuthSessionEndReason
+}
+
+type TokenListener = (event: AuthSessionEvent) => void
+const listeners = new Set<TokenListener>()
+
+function notify(event: AuthSessionEvent): void {
+  listeners.forEach((listener) => listener(event))
+}
+
+function readSessionValue(key: string): string | null {
+  if (typeof window === 'undefined') return null
+  const result = tokenSchema.safeParse(window.sessionStorage.getItem(key))
+  return result.success ? result.data : null
+}
+
+function readLocalValue(key: string): string | null {
+  if (typeof window === 'undefined') return null
+  const result = tokenSchema.safeParse(window.localStorage.getItem(key))
+  return result.success ? result.data : null
 }
 
 export const tokenStore = {
   get(): AuthTokenPair | null {
-    if (memoryTokens) return memoryTokens
-    memoryTokens = readPersistedTokens()
-    return memoryTokens
+    const accessToken = readSessionValue(ACCESS_TOKEN_KEY)
+    const refreshToken = readLocalValue(REFRESH_TOKEN_KEY)
+    return accessToken && refreshToken ? { accessToken, refreshToken } : null
+  },
+
+  getAccessToken(): string | null {
+    return readSessionValue(ACCESS_TOKEN_KEY)
+  },
+
+  getRefreshToken(): string | null {
+    return readLocalValue(REFRESH_TOKEN_KEY)
+  },
+
+  hasRefreshToken(): boolean {
+    return Boolean(readLocalValue(REFRESH_TOKEN_KEY))
   },
 
   set(tokens: AuthTokenPair): void {
-    memoryTokens = tokens
-
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify(tokens))
-    }
-
-    notify(tokens)
+    if (typeof window === 'undefined') return
+    window.sessionStorage.setItem(ACCESS_TOKEN_KEY, tokens.accessToken)
+    window.localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refreshToken)
+    notify({ tokens })
   },
 
   updateAccessToken(accessToken: string): void {
-    const current = tokenStore.get()
-    if (!current) return
+    if (typeof window === 'undefined') return
+    window.sessionStorage.setItem(ACCESS_TOKEN_KEY, accessToken)
 
-    tokenStore.set({
-      ...current,
-      accessToken,
-    })
+    const refreshToken = readLocalValue(REFRESH_TOKEN_KEY)
+    if (refreshToken) notify({ tokens: { accessToken, refreshToken } })
   },
 
-  clear(): void {
-    memoryTokens = null
-
+  clear(reason: AuthSessionEndReason = 'manual'): void {
     if (typeof window !== 'undefined') {
-      window.localStorage.removeItem(TOKEN_STORAGE_KEY)
+      window.sessionStorage.removeItem(ACCESS_TOKEN_KEY)
+      window.localStorage.removeItem(REFRESH_TOKEN_KEY)
     }
-
-    notify(null)
+    notify({ tokens: null, reason })
   },
 
   subscribe(listener: TokenListener): () => void {
     listeners.add(listener)
     return () => listeners.delete(listener)
+  },
+
+  syncFromStorage(): void {
+    const tokens = tokenStore.get()
+    notify({
+      tokens,
+      ...(tokens ? {} : { reason: 'storage-cleared' as const }),
+    })
   },
 }
