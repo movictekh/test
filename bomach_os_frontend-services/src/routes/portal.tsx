@@ -5,7 +5,7 @@ import { ClientPortalLayout } from '@/app/layouts'
 
 export const Route = createFileRoute('/portal')({
   beforeLoad: ({ context, location }) => {
-    requireAuthenticatedUser({
+    return requireAuthenticatedUser({
       auth: context.auth,
       locationHref: location.href,
       allowedKinds: ['client'],

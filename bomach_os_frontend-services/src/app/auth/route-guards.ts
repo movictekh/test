@@ -12,13 +12,13 @@ export function requireAuthenticatedUser({
   auth,
   locationHref,
   allowedKinds,
-}: RequireAuthenticatedUserOptions): void {
+}: RequireAuthenticatedUserOptions): void | ReturnType<typeof redirect> {
   if (auth.isLoading) {
     return
   }
 
   if (!auth.isAuthenticated || !auth.user) {
-    throw redirect({
+    return redirect({
       to: '/login',
       search: {
         redirect: locationHref,
@@ -28,7 +28,7 @@ export function requireAuthenticatedUser({
   }
 
   if (allowedKinds && !allowedKinds.includes(auth.user.kind)) {
-    throw redirect({
+    return redirect({
       to: '/forbidden',
       replace: true,
     })

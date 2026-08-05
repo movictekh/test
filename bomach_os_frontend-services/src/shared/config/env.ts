@@ -8,9 +8,13 @@ const envSchema = z.object({
     .transform((value) => value === 'true'),
 })
 
+const rawEnv: Record<string, unknown> = import.meta.env
+
 const result = envSchema.safeParse({
-  VITE_API_BASE_URL: import.meta.env.VITE_API_BASE_URL,
-  VITE_ENABLE_MOCKS: import.meta.env.VITE_ENABLE_MOCKS,
+  VITE_API_BASE_URL:
+    typeof rawEnv.VITE_API_BASE_URL === 'string' ? rawEnv.VITE_API_BASE_URL : undefined,
+  VITE_ENABLE_MOCKS:
+    typeof rawEnv.VITE_ENABLE_MOCKS === 'string' ? rawEnv.VITE_ENABLE_MOCKS : undefined,
 })
 
 if (!result.success) {

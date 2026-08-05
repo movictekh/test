@@ -5,7 +5,7 @@ import { ClientPortalFoundationPage } from '@/modules/foundation/pages/ClientPor
 
 export const Route = createFileRoute('/portal/dashboard')({
   beforeLoad: ({ context }) => {
-    requireRoutePermission({
+    return requireRoutePermission({
       auth: context.auth,
       permissions: [PERMISSIONS.portalRead],
     })

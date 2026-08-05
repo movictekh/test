@@ -4,7 +4,7 @@ import { forwardRef, type ButtonHTMLAttributes } from 'react'
 import { cn } from '@/shared/lib/cn'
 import { Spinner } from '@/shared/ui/spinner'
 
-export const buttonVariants = cva(
+const buttonVariants = cva(
   'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-control font-semibold transition-colors focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
@@ -61,7 +61,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       aria-busy={isLoading || undefined}
       {...props}
     >
-      {isLoading ? <Spinner className="size-4" /> : null}
+      {isLoading ? <Spinner className="size-4" label="" /> : null}
       {children}
     </button>
   ),

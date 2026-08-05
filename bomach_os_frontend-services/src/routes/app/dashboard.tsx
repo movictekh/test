@@ -5,7 +5,7 @@ import { FoundationPage } from '@/modules/foundation/pages/FoundationPage'
 
 export const Route = createFileRoute('/app/dashboard')({
   beforeLoad: ({ context }) => {
-    requireRoutePermission({
+    return requireRoutePermission({
       auth: context.auth,
       permissions: [PERMISSIONS.dashboardRead],
     })

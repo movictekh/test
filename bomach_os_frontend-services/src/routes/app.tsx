@@ -5,7 +5,7 @@ import { OperationsLayout } from '@/app/layouts'
 
 export const Route = createFileRoute('/app')({
   beforeLoad: ({ context, location }) => {
-    requireAuthenticatedUser({
+    return requireAuthenticatedUser({
       auth: context.auth,
       locationHref: location.href,
       allowedKinds: ['staff'],
