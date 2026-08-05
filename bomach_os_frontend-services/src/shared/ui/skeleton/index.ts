@@ -1,1 +1,6 @@
-export { Skeleton } from './Skeleton'
+export { AppShellSkeleton } from './AppShellSkeleton'
+export { DashboardSkeleton } from './DashboardSkeleton'
+export { FormSkeleton } from './FormSkeleton'
+export { PageSkeleton } from './PageSkeleton'
+export { Skeleton, type SkeletonProps } from './Skeleton'
+export { TableSkeleton } from './TableSkeleton'

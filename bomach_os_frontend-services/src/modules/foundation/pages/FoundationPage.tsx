@@ -5,12 +5,10 @@ import {
   IconClipboardCheck,
   IconPlus,
 } from '@tabler/icons-react'
-import { queryOptions, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 
-import { apiClient } from '@/shared/api/api-client'
-import { AppShell } from '@/shared/layouts/AppShell'
+import { PERMISSIONS, PermissionGate } from '@/app/permissions'
 import { formatCurrency } from '@/shared/lib/formatters'
-import type { ApiResponse } from '@/shared/types/api'
 import {
   Badge,
   Button,
@@ -19,45 +17,41 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  DashboardSkeleton,
   EmptyState,
   ErrorState,
   FormControl,
   Input,
   PageHeader,
   Select,
-  Skeleton,
   StatCard,
   Textarea,
 } from '@/shared/ui'
 
-interface HealthStatus {
-  status: string
-  service: string
-  timestamp: string
-}
-
-const healthQueryOptions = queryOptions({
-  queryKey: ['foundation', 'health'],
-  queryFn: () => apiClient.get<ApiResponse<HealthStatus>>('/health'),
-  select: (response) => response.data,
-})
+import { foundationQueries } from '../api/foundation.queries'
 
 export function FoundationPage() {
-  const healthQuery = useQuery(healthQueryOptions)
+  const healthQuery = useQuery(foundationQueries.health())
+
+  if (healthQuery.isPending) {
+    return <DashboardSkeleton />
+  }
 
   return (
-    <AppShell>
+    <>
       <PageHeader
         eyebrow="Phase 1"
         title="Frontend Foundation"
-        description="Design tokens, shared components, TanStack providers, API boundaries, mocks, tests, and quality tooling."
+        description="Design tokens, shared components, TanStack providers, route protection, permissions, mocks, tests, and quality tooling."
         actions={
           <>
             <Button variant="outline">View standards</Button>
-            <Button>
-              <IconPlus size={17} aria-hidden="true" />
-              Continue setup
-            </Button>
+            <PermissionGate permission={PERMISSIONS.serviceCreate}>
+              <Button>
+                <IconPlus size={17} aria-hidden="true" />
+                Continue setup
+              </Button>
+            </PermissionGate>
           </>
         }
       />
@@ -70,19 +64,19 @@ export function FoundationPage() {
                 Foundation status
               </h2>
               <p className="text-foreground-subtle mt-1 text-xs">
-                These cards confirm the global design language we will reuse across the module.
+                These cards confirm the global design language that the service modules will reuse.
               </p>
             </div>
-            <Badge tone={healthQuery.isSuccess ? 'success' : 'warning'}>
-              {healthQuery.isSuccess ? 'Foundation online' : 'Checking foundation'}
+            <Badge tone={healthQuery.isSuccess ? 'success' : 'danger'}>
+              {healthQuery.isSuccess ? 'Foundation online' : 'Foundation needs attention'}
             </Badge>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <StatCard
               label="Shared components"
-              value="14"
-              trend={{ direction: 'up', label: 'Initial library ready' }}
+              value="19+"
+              trend={{ direction: 'up', label: 'Skeleton library included' }}
               icon={<IconClipboardCheck size={20} />}
             />
             <StatCard
@@ -99,7 +93,7 @@ export function FoundationPage() {
             />
             <StatCard
               label="Mock API"
-              value={healthQuery.isSuccess ? 'Ready' : 'Pending'}
+              value={healthQuery.isSuccess ? 'Ready' : 'Unavailable'}
               description="MSW network layer"
               icon={<IconActivity size={20} />}
             />
@@ -112,7 +106,8 @@ export function FoundationPage() {
               <div>
                 <CardTitle>Form component foundation</CardTitle>
                 <CardDescription>
-                  These controls will later be connected to TanStack Form and domain schemas.
+                  These controls will be connected to TanStack Form and domain schemas in the first
+                  real business form.
                 </CardDescription>
               </div>
               <Badge tone="info">Reusable</Badge>
@@ -159,18 +154,14 @@ export function FoundationPage() {
               <div>
                 <CardTitle>Network and page states</CardTitle>
                 <CardDescription>
-                  Every production page must handle loading, success, empty, and error states.
+                  Every production page must intentionally handle loading, success, empty, error,
+                  forbidden, and unauthorized states.
                 </CardDescription>
               </div>
             </CardHeader>
 
             <CardContent className="space-y-4">
-              {healthQuery.isPending ? (
-                <div className="space-y-3" aria-label="Loading mock API status">
-                  <Skeleton className="h-5 w-40" />
-                  <Skeleton className="h-20 w-full" />
-                </div>
-              ) : healthQuery.isError ? (
+              {healthQuery.isError ? (
                 <ErrorState
                   title="Mock API unavailable"
                   description={healthQuery.error.message}
@@ -182,8 +173,8 @@ export function FoundationPage() {
                 <div className="rounded-card border-success-200 bg-success-50 border p-4">
                   <p className="text-success-700 text-sm font-bold">{healthQuery.data.service}</p>
                   <p className="text-success-700/80 mt-1 text-xs">
-                    Status: {healthQuery.data.status}. The UI is using the same request path that
-                    the real backend will later provide.
+                    Status: {healthQuery.data.status}. The UI is using the same request boundary
+                    that the real backend will later provide.
                   </p>
                 </div>
               )}
@@ -197,6 +188,6 @@ export function FoundationPage() {
           </Card>
         </div>
       </main>
-    </AppShell>
+    </>
   )
 }

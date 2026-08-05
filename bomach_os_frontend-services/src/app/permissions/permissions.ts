@@ -1,0 +1,178 @@
+import type { AppRole, AuthUser } from '@/app/auth'
+
+import type { AppPermission, PermissionMode } from './permission.types'
+
+export const PERMISSIONS = {
+  dashboardRead: 'dashboard.read',
+  serviceRead: 'service.read',
+  serviceCreate: 'service.create',
+  serviceUpdate: 'service.update',
+  requestRead: 'request.read',
+  requestCreate: 'request.create',
+  requestUpdate: 'request.update',
+  quoteRead: 'quote.read',
+  quoteCreate: 'quote.create',
+  quoteApprove: 'quote.approve',
+  invoiceRead: 'invoice.read',
+  invoiceCreate: 'invoice.create',
+  paymentConfirm: 'payment.confirm',
+  approvalRead: 'approval.read',
+  approvalAct: 'approval.act',
+  orderRead: 'order.read',
+  orderUpdate: 'order.update',
+  taskRead: 'task.read',
+  taskUpdate: 'task.update',
+  deliverableRead: 'deliverable.read',
+  deliverableUpdate: 'deliverable.update',
+  deliverableApprove: 'deliverable.approve',
+  realEstateRead: 'real-estate.read',
+  reportRead: 'report.read',
+  auditRead: 'audit.read',
+  portalRead: 'portal.read',
+} as const satisfies Record<string, AppPermission>
+
+const allPermissions: readonly AppPermission[] = Object.values(PERMISSIONS)
+
+export const rolePermissions: Record<AppRole, readonly AppPermission[]> = {
+  CEO: allPermissions,
+  SERVICE_ADMINISTRATOR: [
+    PERMISSIONS.dashboardRead,
+    PERMISSIONS.serviceRead,
+    PERMISSIONS.serviceCreate,
+    PERMISSIONS.serviceUpdate,
+    PERMISSIONS.requestRead,
+    PERMISSIONS.requestCreate,
+    PERMISSIONS.requestUpdate,
+    PERMISSIONS.quoteRead,
+    PERMISSIONS.quoteCreate,
+    PERMISSIONS.approvalRead,
+    PERMISSIONS.orderRead,
+    PERMISSIONS.taskRead,
+    PERMISSIONS.deliverableRead,
+    PERMISSIONS.reportRead,
+    PERMISSIONS.auditRead,
+  ],
+  HEAD_OF_OPERATIONS: [
+    PERMISSIONS.dashboardRead,
+    PERMISSIONS.serviceRead,
+    PERMISSIONS.requestRead,
+    PERMISSIONS.requestUpdate,
+    PERMISSIONS.quoteRead,
+    PERMISSIONS.quoteApprove,
+    PERMISSIONS.approvalRead,
+    PERMISSIONS.approvalAct,
+    PERMISSIONS.orderRead,
+    PERMISSIONS.orderUpdate,
+    PERMISSIONS.taskRead,
+    PERMISSIONS.taskUpdate,
+    PERMISSIONS.deliverableRead,
+    PERMISSIONS.deliverableApprove,
+    PERMISSIONS.reportRead,
+  ],
+  SERVICE_MANAGER: [
+    PERMISSIONS.dashboardRead,
+    PERMISSIONS.serviceRead,
+    PERMISSIONS.requestRead,
+    PERMISSIONS.requestCreate,
+    PERMISSIONS.requestUpdate,
+    PERMISSIONS.quoteRead,
+    PERMISSIONS.quoteCreate,
+    PERMISSIONS.invoiceRead,
+    PERMISSIONS.approvalRead,
+    PERMISSIONS.orderRead,
+    PERMISSIONS.orderUpdate,
+    PERMISSIONS.taskRead,
+    PERMISSIONS.taskUpdate,
+    PERMISSIONS.deliverableRead,
+    PERMISSIONS.deliverableUpdate,
+  ],
+  FINANCE: [
+    PERMISSIONS.dashboardRead,
+    PERMISSIONS.requestRead,
+    PERMISSIONS.quoteRead,
+    PERMISSIONS.invoiceRead,
+    PERMISSIONS.invoiceCreate,
+    PERMISSIONS.paymentConfirm,
+    PERMISSIONS.reportRead,
+  ],
+  SALES_CSRC: [
+    PERMISSIONS.dashboardRead,
+    PERMISSIONS.serviceRead,
+    PERMISSIONS.requestRead,
+    PERMISSIONS.requestCreate,
+    PERMISSIONS.requestUpdate,
+    PERMISSIONS.quoteRead,
+    PERMISSIONS.quoteCreate,
+    PERMISSIONS.invoiceRead,
+    PERMISSIONS.orderRead,
+  ],
+  CIVIL_ENGINEER: [
+    PERMISSIONS.dashboardRead,
+    PERMISSIONS.requestRead,
+    PERMISSIONS.requestUpdate,
+    PERMISSIONS.orderRead,
+    PERMISSIONS.orderUpdate,
+    PERMISSIONS.taskRead,
+    PERMISSIONS.taskUpdate,
+    PERMISSIONS.deliverableRead,
+    PERMISSIONS.deliverableUpdate,
+  ],
+  LAND_SURVEYOR: [
+    PERMISSIONS.dashboardRead,
+    PERMISSIONS.requestRead,
+    PERMISSIONS.requestUpdate,
+    PERMISSIONS.orderRead,
+    PERMISSIONS.orderUpdate,
+    PERMISSIONS.taskRead,
+    PERMISSIONS.taskUpdate,
+    PERMISSIONS.deliverableRead,
+    PERMISSIONS.deliverableUpdate,
+  ],
+  PROPERTY_MANAGER: [
+    PERMISSIONS.dashboardRead,
+    PERMISSIONS.serviceRead,
+    PERMISSIONS.requestRead,
+    PERMISSIONS.requestCreate,
+    PERMISSIONS.requestUpdate,
+    PERMISSIONS.orderRead,
+    PERMISSIONS.orderUpdate,
+    PERMISSIONS.taskRead,
+    PERMISSIONS.taskUpdate,
+    PERMISSIONS.realEstateRead,
+  ],
+  PROJECT_MANAGER: [
+    PERMISSIONS.dashboardRead,
+    PERMISSIONS.requestRead,
+    PERMISSIONS.orderRead,
+    PERMISSIONS.orderUpdate,
+    PERMISSIONS.taskRead,
+    PERMISSIONS.taskUpdate,
+    PERMISSIONS.deliverableRead,
+    PERMISSIONS.deliverableUpdate,
+  ],
+  CLIENT: [PERMISSIONS.portalRead],
+}
+
+export function getUserPermissions(user: AuthUser | null): readonly AppPermission[] {
+  return user ? rolePermissions[user.role] : []
+}
+
+export function hasPermission(user: AuthUser | null, permission: AppPermission): boolean {
+  return getUserPermissions(user).includes(permission)
+}
+
+export function hasPermissions(
+  user: AuthUser | null,
+  permissions: readonly AppPermission[],
+  mode: PermissionMode = 'all',
+): boolean {
+  if (permissions.length === 0) {
+    return true
+  }
+
+  const grantedPermissions = new Set(getUserPermissions(user))
+
+  return mode === 'all'
+    ? permissions.every((permission) => grantedPermissions.has(permission))
+    : permissions.some((permission) => grantedPermissions.has(permission))
+}

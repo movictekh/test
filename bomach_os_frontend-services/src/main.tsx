@@ -1,12 +1,11 @@
 import '@fontsource-variable/inter'
 import '@/styles/index.css'
 
-import { RouterProvider } from '@tanstack/react-router'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 
 import { AppProviders } from '@/app/providers/AppProviders'
-import { router } from '@/app/router/router'
+import { ApplicationRouter } from '@/app/router/ApplicationRouter'
 import { env } from '@/shared/config/env'
 
 async function enableApiMocking(): Promise<void> {
@@ -36,7 +35,7 @@ async function bootstrap(): Promise<void> {
   createRoot(rootElement).render(
     <StrictMode>
       <AppProviders>
-        <RouterProvider router={router} />
+        <ApplicationRouter />
       </AppProviders>
     </StrictMode>,
   )

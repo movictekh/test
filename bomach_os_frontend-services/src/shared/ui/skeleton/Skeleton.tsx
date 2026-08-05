@@ -2,7 +2,9 @@ import type { HTMLAttributes } from 'react'
 
 import { cn } from '@/shared/lib/cn'
 
-export function Skeleton({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
+export type SkeletonProps = HTMLAttributes<HTMLDivElement>
+
+export function Skeleton({ className, ...props }: SkeletonProps) {
   return (
     <div
       aria-hidden="true"
