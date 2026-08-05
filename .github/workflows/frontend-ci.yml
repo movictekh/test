@@ -1,0 +1,47 @@
+name: Frontend CI
+
+on:
+  pull_request:
+    paths:
+      - 'bomach_os_frontend-services/**'
+      - '.github/workflows/frontend-ci.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'bomach_os_frontend-services/**'
+      - '.github/workflows/frontend-ci.yml'
+
+concurrency:
+  group: frontend-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: bomach_os_frontend-services
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: bomach_os_frontend-services/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate route tree
+        run: npx vite build
+
+      - name: Run quality checks
+        run: npm run check
+
+      - name: Build Storybook
+        run: npm run build:storybook
