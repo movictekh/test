@@ -14,8 +14,8 @@ const roleLabels: Record<AppRole, string> = {
   CLIENT: 'Client',
 }
 
-export function formatRoleLabel(role: AppRole): string {
-  return roleLabels[role]
+export function formatRoleLabel(role: AppRole, roleLabel?: string): string {
+  return roleLabel || roleLabels[role]
 }
 
 export function getAuthenticatedHome(user: AuthUser): '/app/dashboard' | '/portal/dashboard' {

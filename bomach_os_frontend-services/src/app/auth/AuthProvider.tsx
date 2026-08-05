@@ -1,121 +1,82 @@
-import { useCallback, useEffect, useMemo, useState, type PropsWithChildren } from 'react'
-import { z } from 'zod'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useCallback, useMemo, type PropsWithChildren } from 'react'
+
+import { authMutations } from '@/modules/auth/api/auth.mutations'
+import { authQueries } from '@/modules/auth/api/auth.queries'
+import type { LoginCredentials, LoginResult } from '@/modules/auth/types/auth.types'
+import { tokenStore } from '@/shared/auth/token-store'
 
 import { AuthContext } from './auth.context'
-import {
-  APP_ROLES,
-  AUTH_USER_KINDS,
-  type AuthContextValue,
-  type AuthUser,
-  type MockAuthProfile,
-} from './auth.types'
-
-const AUTH_STORAGE_KEY = 'bomach-ui-auth-session'
-
-const authUserSchema = z.object({
-  id: z.string().min(1),
-  name: z.string().min(1),
-  email: z.string().email(),
-  initials: z.string().min(1).max(4),
-  role: z.enum(APP_ROLES),
-  kind: z.enum(AUTH_USER_KINDS),
-})
-
-const mockUsers = {
-  'service-administrator': {
-    id: 'usr-service-admin',
-    name: 'Kene Eze',
-    email: 'service.admin@bomach.local',
-    initials: 'KE',
-    role: 'SERVICE_ADMINISTRATOR',
-    kind: 'staff',
-  },
-  client: {
-    id: 'usr-client-demo',
-    name: 'Chief Okafor',
-    email: 'client@bomach.local',
-    initials: 'CO',
-    role: 'CLIENT',
-    kind: 'client',
-  },
-} satisfies Record<MockAuthProfile, AuthUser>
-
-function readStoredUser(): AuthUser | null {
-  if (typeof window === 'undefined') {
-    return null
-  }
-
-  const storedValue = window.localStorage.getItem(AUTH_STORAGE_KEY)
-
-  if (!storedValue) {
-    return null
-  }
-
-  try {
-    const parsedValue: unknown = JSON.parse(storedValue)
-    const result = authUserSchema.safeParse(parsedValue)
-
-    return result.success ? result.data : null
-  } catch {
-    return null
-  }
-}
-
-function persistUser(user: AuthUser | null): void {
-  if (typeof window === 'undefined') {
-    return
-  }
-
-  if (user) {
-    window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user))
-    return
-  }
-
-  window.localStorage.removeItem(AUTH_STORAGE_KEY)
-}
+import type { AuthContextValue, AuthUser } from './auth.types'
 
 export function AuthProvider({ children }: PropsWithChildren) {
-  const [user, setUser] = useState<AuthUser | null>(() => readStoredUser())
+  const queryClient = useQueryClient()
+  const currentUserQueryOptions = useMemo(() => authQueries.currentUser(), [])
+  const currentUserQuery = useQuery(currentUserQueryOptions)
+  const { mutateAsync: loginMutateAsync } = useMutation(authMutations.login())
+  const { mutateAsync: verifyTwoFactorMutateAsync } = useMutation(authMutations.verifyTwoFactor())
+  const { mutateAsync: logoutMutateAsync } = useMutation(authMutations.logout())
 
-  useEffect(() => {
-    const handleStorage = (event: StorageEvent) => {
-      if (event.key === AUTH_STORAGE_KEY) {
-        setUser(readStoredUser())
+  const loadCurrentUser = useCallback(async (): Promise<AuthUser> => {
+    const user = await queryClient.fetchQuery({
+      ...currentUserQueryOptions,
+      staleTime: 0,
+    })
+
+    if (!user) throw new Error('The authenticated user could not be loaded.')
+    return user
+  }, [currentUserQueryOptions, queryClient])
+
+  const login = useCallback(
+    async (credentials: LoginCredentials): Promise<LoginResult> => {
+      const result = await loginMutateAsync(credentials)
+
+      if (result.type === 'authenticated') {
+        await queryClient.invalidateQueries({ queryKey: currentUserQueryOptions.queryKey })
+        const user = await loadCurrentUser()
+        return { type: 'authenticated', user }
       }
+
+      return result
+    },
+    [currentUserQueryOptions.queryKey, loadCurrentUser, loginMutateAsync, queryClient],
+  )
+
+  const verifyTwoFactor = useCallback(
+    async (sessionToken: string, code: string): Promise<AuthUser> => {
+      await verifyTwoFactorMutateAsync({ session_token: sessionToken, code })
+      await queryClient.invalidateQueries({ queryKey: currentUserQueryOptions.queryKey })
+      return loadCurrentUser()
+    },
+    [currentUserQueryOptions.queryKey, loadCurrentUser, queryClient, verifyTwoFactorMutateAsync],
+  )
+
+  const signOut = useCallback(async (): Promise<void> => {
+    try {
+      await logoutMutateAsync()
+    } finally {
+      tokenStore.clear()
+      queryClient.clear()
     }
-
-    window.addEventListener('storage', handleStorage)
-
-    return () => {
-      window.removeEventListener('storage', handleStorage)
-    }
-  }, [])
-
-  const signInAsProfile = useCallback((profile: MockAuthProfile): Promise<AuthUser> => {
-    const nextUser = mockUsers[profile]
-
-    persistUser(nextUser)
-    setUser(nextUser)
-
-    return Promise.resolve(nextUser)
-  }, [])
-
-  const signOut = useCallback((): Promise<void> => {
-    persistUser(null)
-    setUser(null)
-
-    return Promise.resolve()
-  }, [])
+  }, [logoutMutateAsync, queryClient])
 
   const value = useMemo<AuthContextValue>(
     () => ({
-      user,
-      isAuthenticated: Boolean(user),
-      isLoading: false,
-      signInAsProfile,
+      user: currentUserQuery.data ?? null,
+      isAuthenticated: Boolean(currentUserQuery.data),
+      isLoading: currentUserQuery.isPending || currentUserQuery.isFetching,
+      login,
+      verifyTwoFactor,
       signOut,
     }),
-    [signInAsProfile, signOut, user],
+    [
+      currentUserQuery.data,
+      currentUserQuery.isFetching,
+      currentUserQuery.isPending,
+      login,
+      signOut,
+      verifyTwoFactor,
+    ],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

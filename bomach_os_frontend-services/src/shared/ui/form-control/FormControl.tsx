@@ -7,7 +7,7 @@ interface FormControlProps {
   label: string
   children: ReactNode
   description?: string
-  error?: string
+  error?: string | undefined
   required?: boolean
   className?: string
 }

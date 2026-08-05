@@ -154,7 +154,8 @@ export const rolePermissions: Record<AppRole, readonly AppPermission[]> = {
 }
 
 export function getUserPermissions(user: AuthUser | null): readonly AppPermission[] {
-  return user ? rolePermissions[user.role] : []
+  if (!user) return []
+  return user.permissions.length > 0 ? user.permissions : rolePermissions[user.role]
 }
 
 export function hasPermission(user: AuthUser | null, permission: AppPermission): boolean {
@@ -166,13 +167,10 @@ export function hasPermissions(
   permissions: readonly AppPermission[],
   mode: PermissionMode = 'all',
 ): boolean {
-  if (permissions.length === 0) {
-    return true
-  }
+  if (permissions.length === 0) return true
 
-  const grantedPermissions = new Set(getUserPermissions(user))
-
+  const granted = new Set(getUserPermissions(user))
   return mode === 'all'
-    ? permissions.every((permission) => grantedPermissions.has(permission))
-    : permissions.some((permission) => grantedPermissions.has(permission))
+    ? permissions.every((permission) => granted.has(permission))
+    : permissions.some((permission) => granted.has(permission))
 }

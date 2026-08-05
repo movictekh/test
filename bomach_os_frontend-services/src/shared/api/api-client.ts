@@ -1,18 +1,28 @@
+import { tokenStore } from '@/shared/auth/token-store'
 import { env } from '@/shared/config/env'
 
 import { ApiError } from './api-error'
 
-type RequestBody = BodyInit | Record<string, unknown> | unknown[] | null
+type RequestBody = BodyInit | object | null
 
 interface ApiRequestOptions extends Omit<RequestInit, 'body'> {
   body?: RequestBody
+  skipAuth?: boolean
+  skipRefresh?: boolean
 }
 
 interface ApiErrorPayload {
+  detail?: string
   message?: string
   code?: string
   errors?: unknown
 }
+
+interface RefreshTokenResponse {
+  access_token: string
+}
+
+let refreshPromise: Promise<string | null> | null = null
 
 function buildUrl(path: string): string {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`
@@ -31,33 +41,65 @@ function isNativeBody(body: RequestBody): body is BodyInit {
 }
 
 async function parseResponse(response: Response): Promise<unknown> {
-  if (response.status === 204) {
-    return undefined
-  }
+  if (response.status === 204) return undefined
 
   const contentType = response.headers.get('content-type') ?? ''
-
-  if (contentType.includes('application/json')) {
-    return response.json()
-  }
+  if (contentType.includes('application/json')) return response.json()
 
   return response.text()
 }
 
-async function request<TResponse>(
+async function refreshAccessToken(): Promise<string | null> {
+  if (refreshPromise) return refreshPromise
+
+  refreshPromise = (async () => {
+    const tokens = tokenStore.get()
+    if (!tokens?.refreshToken) return null
+
+    try {
+      const response = await fetch(buildUrl('/auth/refresh'), {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refresh_token: tokens.refreshToken }),
+      })
+
+      if (!response.ok) {
+        tokenStore.clear()
+        return null
+      }
+
+      const payload = (await response.json()) as RefreshTokenResponse
+      tokenStore.updateAccessToken(payload.access_token)
+      return payload.access_token
+    } catch {
+      tokenStore.clear()
+      return null
+    } finally {
+      refreshPromise = null
+    }
+  })()
+
+  return refreshPromise
+}
+
+async function executeRequest(
   path: string,
-  options: ApiRequestOptions = {},
-): Promise<TResponse> {
-  const { body, ...requestOptions } = options
+  options: ApiRequestOptions,
+  accessToken?: string,
+): Promise<Response> {
+  const { body, skipAuth: _skipAuth, skipRefresh: _skipRefresh, ...requestOptions } = options
+  void _skipAuth
+  void _skipRefresh
   const headers = new Headers(requestOptions.headers)
   let requestBody: BodyInit | null | undefined
 
   if (body !== undefined) {
-    if (isNativeBody(body)) {
-      requestBody = body
-    } else if (body === null) {
-      requestBody = null
-    } else {
+    if (isNativeBody(body)) requestBody = body
+    else if (body === null) requestBody = null
+    else {
       headers.set('Content-Type', 'application/json')
       requestBody = JSON.stringify(body)
     }
@@ -65,20 +107,29 @@ async function request<TResponse>(
 
   headers.set('Accept', 'application/json')
 
-  let response: Response
+  if (accessToken) {
+    headers.set('Authorization', `Bearer ${accessToken}`)
+  }
 
   const requestInit: RequestInit = {
     ...requestOptions,
     headers,
-    credentials: 'include',
   }
 
-  if (requestBody !== undefined) {
-    requestInit.body = requestBody
-  }
+  if (requestBody !== undefined) requestInit.body = requestBody
+
+  return fetch(buildUrl(path), requestInit)
+}
+
+async function request<TResponse>(
+  path: string,
+  options: ApiRequestOptions = {},
+): Promise<TResponse> {
+  const tokens = options.skipAuth ? null : tokenStore.get()
+  let response: Response
 
   try {
-    response = await fetch(buildUrl(path), requestInit)
+    response = await executeRequest(path, options, tokens?.accessToken)
   } catch (error) {
     throw new ApiError('The server could not be reached.', {
       status: 0,
@@ -87,17 +138,30 @@ async function request<TResponse>(
     })
   }
 
+  if (response.status === 401 && !options.skipAuth && !options.skipRefresh) {
+    const refreshedAccessToken = await refreshAccessToken()
+
+    if (refreshedAccessToken) {
+      response = await executeRequest(path, { ...options, skipRefresh: true }, refreshedAccessToken)
+    }
+  }
+
   const payload = await parseResponse(response)
 
   if (!response.ok) {
     const errorPayload =
       typeof payload === 'object' && payload !== null ? (payload as ApiErrorPayload) : undefined
 
-    throw new ApiError(errorPayload?.message ?? 'The request could not be completed.', {
-      status: response.status,
-      ...(errorPayload?.code !== undefined ? { code: errorPayload.code } : {}),
-      details: errorPayload?.errors ?? payload,
-    })
+    if (response.status === 401) tokenStore.clear()
+
+    throw new ApiError(
+      errorPayload?.detail ?? errorPayload?.message ?? 'The request could not be completed.',
+      {
+        status: response.status,
+        ...(errorPayload?.code !== undefined ? { code: errorPayload.code } : {}),
+        details: errorPayload?.errors ?? payload,
+      },
+    )
   }
 
   return payload as TResponse
@@ -109,17 +173,10 @@ function createBodyRequest<TResponse>(
   body: RequestBody | undefined,
   options: Omit<ApiRequestOptions, 'method' | 'body'> | undefined,
 ): Promise<TResponse> {
-  if (body === undefined) {
-    return request<TResponse>(path, {
-      ...options,
-      method,
-    })
-  }
-
   return request<TResponse>(path, {
     ...options,
     method,
-    body,
+    ...(body !== undefined ? { body } : {}),
   })
 }
 

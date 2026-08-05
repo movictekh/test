@@ -6,10 +6,8 @@ export { useAuth } from './useAuth'
 export {
   APP_ROLES,
   AUTH_USER_KINDS,
-  MOCK_AUTH_PROFILES,
   type AppRole,
   type AuthContextValue,
   type AuthUser,
   type AuthUserKind,
-  type MockAuthProfile,
 } from './auth.types'

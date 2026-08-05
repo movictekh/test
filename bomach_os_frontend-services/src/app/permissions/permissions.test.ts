@@ -8,18 +8,28 @@ const serviceAdministrator: AuthUser = {
   id: 'service-admin',
   name: 'Service Administrator',
   email: 'service.admin@bomach.local',
+  username: 'service.admin',
   initials: 'SA',
   role: 'SERVICE_ADMINISTRATOR',
+  roleLabel: 'Service Administrator',
   kind: 'staff',
+  permissions: [],
+  backendPermissions: [],
+  isVerified: true,
 }
 
 const client: AuthUser = {
   id: 'client',
   name: 'Client',
   email: 'client@bomach.local',
+  username: 'chief.okafor',
   initials: 'CL',
   role: 'CLIENT',
+  roleLabel: 'Client',
   kind: 'client',
+  permissions: [],
+  backendPermissions: [],
+  isVerified: true,
 }
 
 describe('permission helpers', () => {
