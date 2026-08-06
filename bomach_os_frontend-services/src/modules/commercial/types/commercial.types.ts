@@ -13,6 +13,14 @@ export type ServiceRequestStatus =
 
 export type ServiceRequestPriority = 'Low' | 'Medium' | 'High' | 'Urgent'
 
+export interface ServiceRequestActivity {
+  id: string
+  at: string
+  title: string
+  actor: string
+  description: string
+}
+
 export interface CommercialServiceRequest {
   id: string
   client: string
@@ -32,6 +40,25 @@ export interface CommercialServiceRequest {
   dueAt: string
   details: string
   nextAction: string
+  intakeResponses: Record<string, string>
+  activities: ServiceRequestActivity[]
+}
+
+export interface CreateServiceRequestInput {
+  client: string
+  clientType: string
+  phone: string
+  email: string
+  service: string
+  division: string
+  branch: string
+  source: string
+  priority: ServiceRequestPriority
+  budget: number
+  dueAt: string
+  details: string
+  intakeResponses: Record<string, string>
+  submit: boolean
 }
 
 export interface CommercialSummary {

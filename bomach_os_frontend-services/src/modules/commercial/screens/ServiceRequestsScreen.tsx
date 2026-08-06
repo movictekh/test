@@ -27,9 +27,11 @@ function priorityClass(priority: string) {
 export function ServiceRequestsScreen({
   summary,
   requests,
+  onOpenRequest,
 }: {
   summary: CommercialSummary
   requests: CommercialServiceRequest[]
+  onOpenRequest: (request: CommercialServiceRequest) => void
 }) {
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('All statuses')
@@ -186,7 +188,8 @@ export function ServiceRequestsScreen({
                         type="button"
                         className="commercial-open"
                         aria-label={`Open ${request.id}`}
-                        title="Request 360 is implemented in UI-2.04"
+                        title={`Open ${request.id}`}
+                        onClick={() => onOpenRequest(request)}
                       >
                         <IconChevronRight size={15} />
                       </button>

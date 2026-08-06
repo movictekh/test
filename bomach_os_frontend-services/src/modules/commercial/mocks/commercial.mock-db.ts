@@ -1,4 +1,8 @@
-import type { CommercialServiceRequest, CommercialWorkspace } from '../types/commercial.types'
+import type {
+  CommercialServiceRequest,
+  CommercialWorkspace,
+  CreateServiceRequestInput,
+} from '../types/commercial.types'
 
 const requests: CommercialServiceRequest[] = [
   {
@@ -20,6 +24,16 @@ const requests: CommercialServiceRequest[] = [
     dueAt: '2026-07-14',
     details: 'Construction of a six-bedroom duplex from foundation to roofing at Ezeagu.',
     nextAction: 'Schedule site assessment',
+    intakeResponses: { Location: 'Ezeagu' },
+    activities: [
+      {
+        id: 'ACT-001',
+        at: '2026-07-13T09:14:00.000Z',
+        title: 'Request created',
+        actor: 'Sales Officer',
+        description: 'Converted from a qualified lead.',
+      },
+    ],
   },
   {
     id: 'REQ-260712-014',
@@ -40,6 +54,8 @@ const requests: CommercialServiceRequest[] = [
     dueAt: '2026-07-13',
     details: 'Interested in plot 39 at Fortress City Estate. Wants outright payment.',
     nextAction: 'Verify plot availability',
+    intakeResponses: {},
+    activities: [],
   },
   {
     id: 'REQ-260711-009',
@@ -60,6 +76,8 @@ const requests: CommercialServiceRequest[] = [
     dueAt: '2026-07-16',
     details: 'Pre-purchase structural inspection for a residential property.',
     nextAction: 'Prepare inspection quotation',
+    intakeResponses: {},
+    activities: [],
   },
   {
     id: 'REQ-260710-021',
@@ -80,6 +98,8 @@ const requests: CommercialServiceRequest[] = [
     dueAt: '2026-07-24',
     details: 'Perimeter survey and beacon placement for cooperative land.',
     nextAction: 'Follow up on client decision',
+    intakeResponses: {},
+    activities: [],
   },
   {
     id: 'REQ-260709-016',
@@ -100,6 +120,8 @@ const requests: CommercialServiceRequest[] = [
     dueAt: '2026-07-10',
     details: 'Retail operations and inventory management platform.',
     nextAction: 'Assign discovery owner',
+    intakeResponses: {},
+    activities: [],
   },
 ]
 
@@ -120,4 +142,40 @@ export function getCommercialWorkspace(): CommercialWorkspace {
     requests,
     pendingApprovals: 4,
   })
+}
+
+export function createMockServiceRequest(input: CreateServiceRequestInput): CommercialWorkspace {
+  const now = new Date()
+  const id = `REQ-${now.toISOString().slice(2, 10).replaceAll('-', '')}-${String(requests.length + 1).padStart(3, '0')}`
+  requests.unshift({
+    id,
+    client: input.client,
+    clientType: input.clientType,
+    phone: input.phone,
+    email: input.email,
+    service: input.service,
+    division: input.division,
+    branch: input.branch,
+    source: input.source,
+    status: 'New',
+    priority: input.priority,
+    budget: input.budget,
+    estimate: 0,
+    owner: 'Unassigned',
+    createdAt: now.toISOString().slice(0, 10),
+    dueAt: input.dueAt,
+    details: input.details,
+    nextAction: input.submit ? 'Assign request owner' : 'Complete request draft',
+    intakeResponses: input.intakeResponses,
+    activities: [
+      {
+        id: `${id}-ACT-1`,
+        at: now.toISOString(),
+        title: input.submit ? 'Request submitted' : 'Draft created',
+        actor: 'Commercial Operations',
+        description: 'Request captured in the commercial workspace.',
+      },
+    ],
+  })
+  return getCommercialWorkspace()
 }
