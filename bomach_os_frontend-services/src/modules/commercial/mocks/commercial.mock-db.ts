@@ -297,7 +297,7 @@ const quotations: CommercialQuotation[] = [
       {
         id: 'Q-260713-011-A2',
         at: '2026-07-11T16:00:00.000Z',
-        title: 'Approved and sent',
+        title: 'Quotation approved',
         actor: 'Service Manager',
         description: 'Issued to the client.',
       },
@@ -575,16 +575,43 @@ export function updateMockQuotation(id: string, input: UpdateQuotationInput): Co
   const action = input.action
   const map = {
     'submit-approval': ['Awaiting Approval', 'Submitted for approval'],
-    'approve-send': ['Sent', 'Approved and sent'],
+    approve: ['Approved', 'Quotation approved'],
+    send: ['Sent', 'Sent to client'],
     accept: ['Accepted', 'Client accepted quotation'],
     reject: ['Rejected', 'Client rejected quotation'],
+    revise: ['Draft', 'Quotation revised'],
   } as const
 
-  if (action) {
+  if (action === 'revise' && input.revision) {
+    const totals = offerTotals({ ...input.revision, status: 'Draft' })
+    quotation.status = 'Draft'
+    quotation.version += 1
+    quotation.updatedAt = now.toISOString().slice(0, 10)
+    Object.assign(quotation, totals)
+    quotation.depositPercent = Number(input.revision.depositPercent) || 0
+    quotation.validUntil = input.revision.validUntil
+    quotation.paymentTerms = input.revision.paymentTerms
+    quotation.notes = input.revision.scopeSummary
+    quotation.approvalRoute = input.revision.approvalRoute
+    quotation.validityDays = Math.max(
+      1,
+      Math.round((new Date(input.revision.validUntil).getTime() - now.getTime()) / 86400000) || 14,
+    )
+    delete quotation.issuedAt
+    delete quotation.clientDecisionAt
+    delete quotation.clientDecisionNote
+    quotation.activities.push({
+      id: `${id}-A${quotation.activities.length + 1}`,
+      at: now.toISOString(),
+      title: 'Quotation revised',
+      actor: 'Commercial Operations',
+      description: input.decisionNote || `Version ${quotation.version} drafted.`,
+    })
+  } else if (action) {
     const [status, title] = map[action]
     quotation.status = status
     quotation.updatedAt = now.toISOString().slice(0, 10)
-    if (action === 'approve-send') quotation.issuedAt = now.toISOString()
+    if (action === 'send') quotation.issuedAt = now.toISOString()
     if (action === 'accept' || action === 'reject') {
       quotation.clientDecisionAt = now.toISOString()
       if (input.decisionNote !== undefined) {
@@ -603,7 +630,7 @@ export function updateMockQuotation(id: string, input: UpdateQuotationInput): Co
   }
 
   const source = requests.find((item) => item.id === quotation.requestId)
-  if (source && action === 'approve-send') {
+  if (source && action === 'send') {
     source.status = 'Client Approval'
     source.nextAction = `Await client decision on ${id}`
   }
@@ -614,6 +641,10 @@ export function updateMockQuotation(id: string, input: UpdateQuotationInput): Co
   if (source && action === 'reject') {
     source.status = 'Rejected'
     source.nextAction = 'Review client feedback'
+  }
+  if (source && action === 'revise') {
+    source.status = 'Quoted'
+    source.nextAction = `Review revised quotation ${id}`
   }
 
   return getCommercialWorkspace()

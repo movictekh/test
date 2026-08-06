@@ -1035,3 +1035,9 @@
     grid-column: 1 / -1;
   }
 }
+
+.commercial-decision-actions {
+  display: grid;
+  gap: 8px;
+  width: min(360px, 100%);
+}

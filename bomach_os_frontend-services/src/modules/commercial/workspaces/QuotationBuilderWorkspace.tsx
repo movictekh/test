@@ -3,6 +3,7 @@ import { useForm } from '@tanstack/react-form'
 
 import { commercialMoney, quotationApprovers } from '../commercial.ui'
 import type { CommercialServiceRequest, CreateQuotationInput } from '../types/commercial.types'
+import { getQuotationEligibleRequests, validateQuotationDraft } from './quotation-workflow.rules'
 
 function defaultValidUntil() {
   const date = new Date()
@@ -23,7 +24,9 @@ export function QuotationBuilderWorkspace({
   onClose: () => void
   onSubmit: (input: CreateQuotationInput) => void
 }) {
-  const source = requests.find((item) => item.id === initialRequestId) ?? requests[0] ?? null
+  const eligibleRequests = getQuotationEligibleRequests(requests)
+  const source =
+    eligibleRequests.find((item) => item.id === initialRequestId) ?? eligibleRequests[0] ?? null
 
   const defaultValues: {
     requestId: string
@@ -54,7 +57,12 @@ export function QuotationBuilderWorkspace({
 
   const submitWithStatus = (status: CreateQuotationInput['status']) => {
     const value = form.state.values
-    if (!value.requestId) return
+    const errors = validateQuotationDraft(value)
+    if (Object.keys(errors).length > 0) {
+      const message = Object.values(errors)[0]
+      if (message) window.alert(message)
+      return
+    }
     onSubmit({
       requestId: value.requestId,
       validUntil: value.validUntil,
@@ -115,7 +123,7 @@ export function QuotationBuilderWorkspace({
                       value={field.state.value}
                       onChange={(event) => applyRequest(event.target.value)}
                     >
-                      {requests.map((item) => (
+                      {eligibleRequests.map((item) => (
                         <option key={item.id} value={item.id}>
                           {item.id} — {item.client} — {item.service}
                         </option>
@@ -312,7 +320,7 @@ export function QuotationBuilderWorkspace({
             <button
               type="button"
               className="commercial-btn"
-              disabled={saving || requests.length === 0}
+              disabled={saving || eligibleRequests.length === 0}
               onClick={() => submitWithStatus('Draft')}
             >
               {saving ? 'Saving...' : 'Save Draft'}
@@ -320,7 +328,7 @@ export function QuotationBuilderWorkspace({
             <button
               type="button"
               className="commercial-btn commercial-btn-primary"
-              disabled={saving || requests.length === 0}
+              disabled={saving || eligibleRequests.length === 0}
               onClick={() => submitWithStatus('Awaiting Approval')}
             >
               {saving ? 'Submitting...' : 'Submit for Approval'}

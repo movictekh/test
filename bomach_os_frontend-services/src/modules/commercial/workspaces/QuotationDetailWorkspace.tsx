@@ -1,8 +1,10 @@
 import { IconX } from '@tabler/icons-react'
+import { useState } from 'react'
 import { useToast } from '@/shared/ui'
 
 import { commercialMoney, quotationStatusClass } from '../commercial.ui'
 import type { CommercialQuotation, UpdateQuotationInput } from '../types/commercial.types'
+import { quotationActionAllowed } from './quotation-workflow.rules'
 
 export function QuotationDetailWorkspace({
   quotation,
@@ -18,6 +20,12 @@ export function QuotationDetailWorkspace({
   onCreateInvoice?: (quotationId: string) => void
 }) {
   const toast = useToast()
+  const [decisionNote, setDecisionNote] = useState('')
+  const canSubmitApproval = quotationActionAllowed(quotation.status, 'submit-approval')
+  const canApprove = quotationActionAllowed(quotation.status, 'approve')
+  const canSend = quotationActionAllowed(quotation.status, 'send')
+  const canAccept = quotationActionAllowed(quotation.status, 'accept')
+  const canReject = quotationActionAllowed(quotation.status, 'reject')
 
   return (
     <div className="commercial-modal-backdrop" role="presentation" onMouseDown={onClose}>
@@ -141,6 +149,22 @@ export function QuotationDetailWorkspace({
               ) : null}
             </div>
           </section>
+          <section className="commercial-form-section">
+            <h3>Activity & audit trail</h3>
+            <div className="commercial-timeline-list">
+              {[...quotation.activities].reverse().map((activity) => (
+                <article key={activity.id} className="commercial-tl">
+                  <b>{activity.title}</b>
+                  <p>
+                    {activity.description}
+                    <br />
+                    <strong>{activity.actor}</strong>
+                  </p>
+                  <time>{new Date(activity.at).toLocaleString('en-GB')}</time>
+                </article>
+              ))}
+            </div>
+          </section>
         </div>
 
         <footer className="commercial-modal-footer">
@@ -150,7 +174,7 @@ export function QuotationDetailWorkspace({
             </button>
           </div>
           <div className="commercial-modal-footer-actions">
-            {quotation.status === 'Draft' ? (
+            {canSubmitApproval ? (
               <button
                 type="button"
                 className="commercial-btn commercial-btn-primary"
@@ -160,35 +184,68 @@ export function QuotationDetailWorkspace({
                 {saving ? 'Submitting...' : 'Submit Approval'}
               </button>
             ) : null}
-            {quotation.status === 'Awaiting Approval' ? (
+            {canApprove ? (
               <button
                 type="button"
                 className="commercial-btn commercial-btn-green"
                 disabled={saving}
-                onClick={() => onUpdate(quotation.id, { action: 'approve-send' })}
+                onClick={() => onUpdate(quotation.id, { action: 'approve' })}
               >
-                {saving ? 'Sending...' : 'Approve & Send'}
+                {saving ? 'Approving...' : 'Approve'}
               </button>
             ) : null}
-            {quotation.status === 'Sent' ? (
-              <>
-                <button
-                  type="button"
-                  className="commercial-btn"
-                  disabled={saving}
-                  onClick={() => onUpdate(quotation.id, { action: 'reject' })}
-                >
-                  Mark Rejected
-                </button>
-                <button
-                  type="button"
-                  className="commercial-btn commercial-btn-green"
-                  disabled={saving}
-                  onClick={() => onUpdate(quotation.id, { action: 'accept' })}
-                >
-                  {saving ? 'Saving...' : 'Mark Accepted'}
-                </button>
-              </>
+            {canSend ? (
+              <button
+                type="button"
+                className="commercial-btn commercial-btn-primary"
+                disabled={saving}
+                onClick={() => onUpdate(quotation.id, { action: 'send' })}
+              >
+                {saving ? 'Sending...' : 'Send to Client'}
+              </button>
+            ) : null}
+            {canAccept || canReject ? (
+              <div className="commercial-decision-actions">
+                <label className="commercial-field">
+                  <span>Client decision note</span>
+                  <textarea
+                    rows={3}
+                    value={decisionNote}
+                    onChange={(event) => setDecisionNote(event.target.value)}
+                    placeholder="Required for rejection"
+                  />
+                </label>
+                {canReject ? (
+                  <button
+                    type="button"
+                    className="commercial-btn"
+                    disabled={saving || !decisionNote.trim()}
+                    onClick={() =>
+                      onUpdate(quotation.id, {
+                        action: 'reject',
+                        decisionNote: decisionNote.trim(),
+                      })
+                    }
+                  >
+                    Mark Rejected
+                  </button>
+                ) : null}
+                {canAccept ? (
+                  <button
+                    type="button"
+                    className="commercial-btn commercial-btn-green"
+                    disabled={saving}
+                    onClick={() =>
+                      onUpdate(quotation.id, {
+                        action: 'accept',
+                        decisionNote: decisionNote.trim(),
+                      })
+                    }
+                  >
+                    {saving ? 'Saving...' : 'Mark Accepted'}
+                  </button>
+                ) : null}
+              </div>
             ) : null}
             {quotation.status === 'Accepted' ? (
               <button

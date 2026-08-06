@@ -80,7 +80,7 @@ export interface CommercialWorkspace {
 }
 
 export type QuotationStatus =
-  'Draft' | 'Awaiting Approval' | 'Sent' | 'Accepted' | 'Rejected' | 'Expired'
+  'Draft' | 'Awaiting Approval' | 'Approved' | 'Sent' | 'Accepted' | 'Rejected' | 'Expired'
 
 export interface QuotationLineItem {
   id: string
@@ -146,8 +146,9 @@ export interface CreateQuotationInput {
 }
 
 export interface UpdateQuotationInput {
-  action?: 'submit-approval' | 'approve-send' | 'accept' | 'reject'
+  action?: 'submit-approval' | 'approve' | 'send' | 'accept' | 'reject' | 'revise'
   decisionNote?: string
+  revision?: Omit<CreateQuotationInput, 'status'>
 }
 
 export interface QuotationSummary {
