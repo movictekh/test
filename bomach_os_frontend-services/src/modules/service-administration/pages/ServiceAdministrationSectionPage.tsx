@@ -254,7 +254,7 @@ export function ServiceAdministrationSectionPage({
       {section === 'request-form-builder' ? (
         <RequestFormBuilderScreen
           forms={workspace.requestForms}
-          onCreate={() => setFormEditor('new')}
+          onSave={(input) => saveRequestForm.mutate(input)}
         />
       ) : null}
 

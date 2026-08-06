@@ -1,9 +1,11 @@
-import { IconApps, IconCopy, IconForms } from '@tabler/icons-react'
+import { IconApps, IconCopy } from '@tabler/icons-react'
 import { useMemo, useState } from 'react'
 
 import type {
   PricingCalculator,
+  RequestFormField,
   ServiceCatalogueItem,
+  SaveRequestFormInput,
   ServiceRequestForm,
   ServiceWorkflow,
 } from '../types/service-administration.types'
@@ -205,46 +207,57 @@ export function CalculatorLibraryScreen({
                 </tr>
               </thead>
               <tbody>
-                {calculators.map((calculator) => (
-                  <tr key={calculator.id}>
-                    <td>
-                      <b>{calculator.name}</b>
-                      <div className="service-admin-row-subtitle">{calculator.code}</div>
-                    </td>
-                    <td>{calculator.serviceName}</td>
-                    <td>
-                      {calculator.charges.some((charge) => charge.kind === 'formula')
-                        ? 'Formula'
-                        : calculator.charges.some((charge) => charge.kind === 'percentage')
-                          ? 'Percentage'
-                          : 'Fixed'}
-                    </td>
-                    <td>{calculator.variables.length}</td>
-                    <td>
-                      {calculator.charges.find((charge) =>
-                        charge.label.toLowerCase().includes('deposit'),
-                      )?.value ?? '—'}
-                    </td>
-                    <td>
-                      &gt;{' '}
-                      {calculator.charges.find((charge) =>
-                        charge.label.toLowerCase().includes('approval'),
-                      )?.value ?? '—'}
-                    </td>
-                    <td>
-                      <button
-                        type="button"
-                        className="service-admin-button service-admin-button-small"
-                        onClick={() => {
-                          setActiveId(calculator.id)
-                          setInputs({})
-                        }}
-                      >
-                        Test
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {calculators.map((calculator) => {
+                  const isActive = calculator.id === active.id
+
+                  return (
+                    <tr
+                      key={calculator.id}
+                      className={isActive ? 'service-admin-table-row--active' : undefined}
+                      aria-selected={isActive}
+                    >
+                      <td>
+                        <b>{calculator.name}</b>
+                        <div className="service-admin-row-subtitle">{calculator.code}</div>
+                      </td>
+                      <td>{calculator.serviceName}</td>
+                      <td>
+                        {calculator.charges.some((charge) => charge.kind === 'formula')
+                          ? 'Formula'
+                          : calculator.charges.some((charge) => charge.kind === 'percentage')
+                            ? 'Percentage'
+                            : 'Fixed'}
+                      </td>
+                      <td>{calculator.variables.length}</td>
+                      <td>
+                        {calculator.charges.find((charge) =>
+                          charge.label.toLowerCase().includes('deposit'),
+                        )?.value ?? '—'}
+                      </td>
+                      <td>
+                        &gt;{' '}
+                        {calculator.charges.find((charge) =>
+                          charge.label.toLowerCase().includes('approval'),
+                        )?.value ?? '—'}
+                      </td>
+                      <td>
+                        <button
+                          type="button"
+                          className={`service-admin-button service-admin-button-small${
+                            isActive ? ' service-admin-button-primary' : ''
+                          }`}
+                          aria-pressed={isActive}
+                          onClick={() => {
+                            setActiveId(calculator.id)
+                            setInputs({})
+                          }}
+                        >
+                          Test
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
@@ -299,91 +312,209 @@ export function CalculatorLibraryScreen({
   )
 }
 
-const palette = [
-  ['Short text', 'text'],
-  ['Long text', 'textarea'],
-  ['Number', 'number'],
-  ['Date', 'date'],
-  ['Select', 'select'],
-  ['File upload', 'file'],
-  ['Checkbox', 'checkbox'],
-] as const
+const requestBuilderPalette: {
+  label: string
+  type: RequestFormField['type']
+}[] = [
+  { label: 'Text Field', type: 'text' },
+  { label: 'Number Field', type: 'number' },
+  { label: 'Dropdown', type: 'select' },
+  { label: 'Date Field', type: 'date' },
+  { label: 'File Upload', type: 'file' },
+  { label: 'Consent Checkbox', type: 'checkbox' },
+  { label: 'Location', type: 'text' },
+  { label: 'Client Identity', type: 'text' },
+  { label: 'Budget Range', type: 'number' },
+]
 
 export function RequestFormBuilderScreen({
   forms,
-  onCreate,
+  onSave,
 }: {
   forms: ServiceRequestForm[]
-  onCreate: () => void
+  onSave: (input: SaveRequestFormInput) => void
 }) {
   const [activeId, setActiveId] = useState(forms[0]?.id ?? '')
   const active = forms.find((form) => form.id === activeId) ?? forms[0]
+  const [fields, setFields] = useState<RequestFormField[]>(active?.fields ?? [])
+  const [editingIndex, setEditingIndex] = useState<number | null>(null)
+
+  const selectForm = (id: string) => {
+    setActiveId(id)
+    const next = forms.find((form) => form.id === id)
+    setFields(next?.fields ?? [])
+    setEditingIndex(null)
+  }
+
+  if (!active) return null
+  const editingField = editingIndex === null ? undefined : fields[editingIndex]
 
   return (
     <div className="service-admin-page service-admin-content">
-      <div className="service-admin-card">
-        <div className="service-admin-card-header">
-          <div>
-            <div className="service-admin-card-title">Request Form Builder</div>
-            <div className="service-admin-card-subtitle">Design service-specific intake forms</div>
+      <div className="service-admin-request-builder">
+        <aside className="service-admin-request-palette">
+          <h2>Field Palette</h2>
+          <div className="service-admin-request-palette-list">
+            {requestBuilderPalette.map((item) => (
+              <button
+                key={item.label}
+                type="button"
+                onClick={() =>
+                  setFields((current) => [
+                    ...current,
+                    {
+                      id: `field-${Date.now()}`,
+                      label: item.label,
+                      key: item.label.toLowerCase().replace(/[^a-z0-9]+/g, '_'),
+                      type: item.type,
+                      required: false,
+                    },
+                  ])
+                }
+              >
+                <span>+</span>
+                {item.label}
+              </button>
+            ))}
           </div>
           <button
             type="button"
-            className="service-admin-button service-admin-button-primary"
-            onClick={onCreate}
+            className="service-admin-request-save"
+            onClick={() =>
+              onSave({
+                id: active.id,
+                name: active.name,
+                serviceId: active.serviceId,
+                status: active.status,
+                fields,
+              })
+            }
           >
-            New Request Form
+            Save Form
           </button>
-        </div>
+        </aside>
 
-        <div className="service-admin-filter-group">
-          <select value={activeId} onChange={(event) => setActiveId(event.target.value)}>
-            {forms.map((form) => (
-              <option key={form.id} value={form.id}>
-                {form.name} · {form.serviceName}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {active ? (
-          <div className="service-admin-builder">
-            <aside className="service-admin-palette">
-              <div className="service-admin-card-title">Field palette</div>
-              <div className="service-admin-card-subtitle mb-3">Add fields to the request form</div>
-              {palette.map(([label]) => (
-                <div key={label} className="service-admin-palette-item">
-                  <IconForms size={14} />
-                  {label}
-                </div>
+        <section className="service-admin-request-canvas">
+          <div className="service-admin-request-canvas-header">
+            <div>
+              <h2>Service Request Form Builder</h2>
+              <p>Create the exact information required per service</p>
+            </div>
+            <select value={activeId} onChange={(event) => selectForm(event.target.value)}>
+              {forms.map((form) => (
+                <option key={form.id} value={form.id}>
+                  {form.serviceName}
+                </option>
               ))}
-            </aside>
-
-            <section className="service-admin-canvas">
-              <div className="service-admin-card-title">{active.name}</div>
-              <div className="service-admin-card-subtitle mb-3">
-                {active.serviceName} · Version {active.version}
-              </div>
-              {active.fields.map((field, index) => (
-                <div key={field.id} className="service-admin-canvas-field">
-                  <span className="service-admin-row-subtitle">{index + 1}</span>
-                  <IconForms size={14} />
-                  <div className="service-admin-grow">
-                    <b className="text-[9px]">{field.label}</b>
-                    <div className="service-admin-row-subtitle">
-                      {field.type}
-                      {field.required ? ' · Required' : ''}
-                    </div>
-                  </div>
-                  <button type="button" className="service-admin-button service-admin-button-small">
-                    Configure
-                  </button>
-                </div>
-              ))}
-            </section>
+            </select>
           </div>
-        ) : null}
+
+          <div className="service-admin-request-field-list">
+            {fields.map((field, index) => (
+              <article key={field.id} className="service-admin-request-field-row">
+                <span className="service-admin-request-drag">::</span>
+                <div className="service-admin-grow">
+                  <b>{field.label}</b>
+                  <small>
+                    {field.type} · {field.required ? 'Required' : 'Optional'}
+                  </small>
+                </div>
+                <button type="button" onClick={() => setEditingIndex(index)}>
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFields((current) => current.filter((_, itemIndex) => itemIndex !== index))
+                  }
+                >
+                  Delete
+                </button>
+              </article>
+            ))}
+          </div>
+        </section>
       </div>
+
+      {editingField && editingIndex !== null ? (
+        <div
+          className="service-admin-editor-backdrop"
+          role="presentation"
+          onMouseDown={() => setEditingIndex(null)}
+        >
+          <section
+            className="service-admin-field-editor-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Edit ${editingField.label}`}
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <header>
+              <h2>Edit Field</h2>
+              <button type="button" onClick={() => setEditingIndex(null)}>
+                ×
+              </button>
+            </header>
+            <div className="service-admin-field-editor-body">
+              <label>
+                <span>Label</span>
+                <input
+                  value={editingField.label}
+                  onChange={(event) =>
+                    setFields((current) =>
+                      current.map((item, index) =>
+                        index === editingIndex ? { ...item, label: event.target.value } : item,
+                      ),
+                    )
+                  }
+                />
+              </label>
+              <label>
+                <span>Type</span>
+                <select
+                  value={editingField.type}
+                  onChange={(event) =>
+                    setFields((current) =>
+                      current.map((item, index) =>
+                        index === editingIndex
+                          ? { ...item, type: event.target.value as RequestFormField['type'] }
+                          : item,
+                      ),
+                    )
+                  }
+                >
+                  <option value="text">Text</option>
+                  <option value="textarea">Long text</option>
+                  <option value="number">Number</option>
+                  <option value="date">Date</option>
+                  <option value="select">Dropdown</option>
+                  <option value="file">File upload</option>
+                  <option value="checkbox">Checkbox</option>
+                </select>
+              </label>
+              <label className="service-admin-field-editor-check">
+                <input
+                  type="checkbox"
+                  checked={editingField.required}
+                  onChange={(event) =>
+                    setFields((current) =>
+                      current.map((item, index) =>
+                        index === editingIndex ? { ...item, required: event.target.checked } : item,
+                      ),
+                    )
+                  }
+                />
+                Required field
+              </label>
+            </div>
+            <footer>
+              <button type="button" onClick={() => setEditingIndex(null)}>
+                Done
+              </button>
+            </footer>
+          </section>
+        </div>
+      ) : null}
     </div>
   )
 }
