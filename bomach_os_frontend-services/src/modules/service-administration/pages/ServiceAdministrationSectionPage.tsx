@@ -16,20 +16,19 @@ import { serviceAdministrationKeys } from '../api/service-administration.keys'
 import { serviceAdministrationQueries } from '../api/service-administration.queries'
 import {
   BranchMatrix,
-  CalculatorList,
   CompactPageToolbar,
   NewServiceDialog,
   PrototypeButton,
-  PrototypeFilterBar,
-  PrototypeSelect,
-  RequestFormCards,
   SectionCard,
-  ServiceCatalogueGrid,
   ServiceDetailPanel,
-  SummaryStrip,
-  WorkflowCards,
 } from '../components/ServiceAdministrationUi'
 import { serviceAdministrationIcons } from '../components/service-administration.icons'
+import {
+  ExactCalculatorLibrary,
+  ExactRequestFormBuilder,
+  ExactServiceCatalogue,
+  ExactWorkflowDesigner,
+} from '../prototype/PrototypeExactScreens'
 import type {
   BranchActivation,
   CreateServiceInput,
@@ -41,7 +40,6 @@ import type {
   SaveRequestFormInput,
   SaveWorkflowInput,
   UpdateBranchActivationInput,
-  UpdateConfigurationStatusInput,
 } from '../types/service-administration.types'
 
 export type ServiceAdministrationSection =
@@ -90,9 +88,6 @@ export function ServiceAdministrationSectionPage({
   const queryClient = useQueryClient()
   const toast = useToast()
   const query = useQuery(serviceAdministrationQueries.workspace())
-  const [search, setSearch] = useState('')
-  const [status, setStatus] = useState('')
-  const [division, setDivision] = useState('')
   const [selectedService, setSelectedService] = useState<ServiceCatalogueItem | null>(null)
   const [newServiceOpen, setNewServiceOpen] = useState(false)
   const [calculatorEditor, setCalculatorEditor] = useState<PricingCalculator | null | 'new'>(null)
@@ -114,15 +109,11 @@ export function ServiceAdministrationSectionPage({
     },
   })
 
-  const updateStatus = useMutation<
-    Awaited<ReturnType<typeof serviceAdministrationApi.updateStatus>>,
-    Error,
-    UpdateConfigurationStatusInput
-  >({
-    mutationFn: (input) => serviceAdministrationApi.updateStatus(input),
-    onSuccess: (workspace) => {
-      queryClient.setQueryData(serviceAdministrationKeys.workspace(), workspace)
-      toast.success('Configuration updated')
+  const duplicateService = useMutation({
+    mutationFn: (input: { id: string }) => serviceAdministrationApi.duplicateService(input),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: serviceAdministrationKeys.all })
+      toast.success('Service duplicated as draft')
     },
   })
 
@@ -180,30 +171,6 @@ export function ServiceAdministrationSectionPage({
   const workspace = query.data
   const page = metadata[section]
 
-  const filteredServices = workspace.services.filter((item) => {
-    const matchesSearch = [item.name, item.code, item.division, item.owner]
-      .join(' ')
-      .toLowerCase()
-      .includes(search.toLowerCase())
-    return (
-      matchesSearch &&
-      (!status || item.status === status) &&
-      (!division || item.division === division)
-    )
-  })
-
-  const divisions = Array.from(new Set(workspace.services.map((item) => item.division)))
-
-  const filteredCalculators = workspace.calculators.filter((item) =>
-    [item.name, item.code, item.serviceName].join(' ').toLowerCase().includes(search.toLowerCase()),
-  )
-  const filteredForms = workspace.requestForms.filter((item) =>
-    [item.name, item.serviceName].join(' ').toLowerCase().includes(search.toLowerCase()),
-  )
-  const filteredWorkflows = workspace.workflows.filter((item) =>
-    [item.name, item.serviceName].join(' ').toLowerCase().includes(search.toLowerCase()),
-  )
-
   const toolbarPrimary =
     section === 'service-catalogue' ? (
       <PrototypeButton tone="primary" onClick={() => setNewServiceOpen(true)}>
@@ -244,122 +211,40 @@ export function ServiceAdministrationSectionPage({
         }
       />
 
-      <main className="space-y-3 p-3 sm:p-4 lg:p-5">
-        <SummaryStrip
-          items={[
-            { label: 'Services', value: workspace.summary.totalServices },
-            { label: 'Active', value: workspace.summary.activeServices },
-            { label: 'Draft', value: workspace.summary.draftServices },
-            { label: 'Branches covered', value: workspace.summary.branchesCovered },
-            {
-              label: 'Configuration issues',
-              value: workspace.summary.configurationIssues,
-              note: 'Needs attention',
-            },
-          ]}
+      {section === 'service-catalogue' ? (
+        <ExactServiceCatalogue
+          services={workspace.services}
+          onConfigure={setSelectedService}
+          onDuplicate={(service) => duplicateService.mutate({ id: service.id })}
         />
+      ) : null}
 
-        <PrototypeFilterBar search={search} onSearch={setSearch}>
-          {section === 'service-catalogue' ? (
-            <>
-              <PrototypeSelect label="Status" value={status} onChange={setStatus}>
-                <option value="">All</option>
-                <option value="active">Active</option>
-                <option value="draft">Draft</option>
-                <option value="inactive">Inactive</option>
-              </PrototypeSelect>
-              <PrototypeSelect label="Division" value={division} onChange={setDivision}>
-                <option value="">All</option>
-                {divisions.map((item) => (
-                  <option key={item}>{item}</option>
-                ))}
-              </PrototypeSelect>
-            </>
-          ) : null}
-        </PrototypeFilterBar>
+      {section === 'calculator-library' ? (
+        <ExactCalculatorLibrary
+          calculators={workspace.calculators}
+          onCreate={() => setCalculatorEditor('new')}
+        />
+      ) : null}
 
-        {section === 'service-catalogue' ? (
+      {section === 'request-form-builder' ? (
+        <ExactRequestFormBuilder
+          forms={workspace.requestForms}
+          onCreate={() => setFormEditor('new')}
+        />
+      ) : null}
+
+      {section === 'workflow-designer' ? (
+        <ExactWorkflowDesigner
+          workflows={workspace.workflows}
+          onCreate={() => setWorkflowEditor('new')}
+        />
+      ) : null}
+
+      {section === 'branch-activation' ? (
+        <main className="prototype-page prototype-content">
           <SectionCard
-            title="Configured Services"
-            description={page.description}
-            icon={serviceAdministrationIcons.catalogue}
-          >
-            <div className="p-3">
-              <ServiceCatalogueGrid services={filteredServices} onSelect={setSelectedService} />
-            </div>
-          </SectionCard>
-        ) : null}
-
-        {section === 'calculator-library' ? (
-          <SectionCard
-            title="Pricing Calculators"
-            description={page.description}
-            icon={serviceAdministrationIcons.calculators}
-          >
-            <div className="p-3">
-              <CalculatorList
-                calculators={filteredCalculators}
-                onEdit={setCalculatorEditor}
-                onToggle={(item: PricingCalculator) =>
-                  updateStatus.mutate({
-                    entity: 'calculator',
-                    id: item.id,
-                    status: item.status === 'active' ? 'inactive' : 'active',
-                  })
-                }
-              />
-            </div>
-          </SectionCard>
-        ) : null}
-
-        {section === 'request-form-builder' ? (
-          <SectionCard
-            title="Service Request Forms"
-            description={page.description}
-            icon={serviceAdministrationIcons.forms}
-          >
-            <div className="p-3">
-              <RequestFormCards
-                forms={filteredForms}
-                onEdit={setFormEditor}
-                onToggle={(item: ServiceRequestForm) =>
-                  updateStatus.mutate({
-                    entity: 'request-form',
-                    id: item.id,
-                    status: item.status === 'active' ? 'draft' : 'active',
-                  })
-                }
-              />
-            </div>
-          </SectionCard>
-        ) : null}
-
-        {section === 'workflow-designer' ? (
-          <SectionCard
-            title="Service Workflows"
-            description={page.description}
-            icon={serviceAdministrationIcons.workflows}
-          >
-            <div className="p-3">
-              <WorkflowCards
-                workflows={filteredWorkflows}
-                onEdit={setWorkflowEditor}
-                onToggle={(item: ServiceWorkflow) =>
-                  updateStatus.mutate({
-                    entity: 'workflow',
-                    id: item.id,
-                    status: item.status === 'active' ? 'draft' : 'active',
-                  })
-                }
-              />
-            </div>
-          </SectionCard>
-        ) : null}
-
-        {section === 'branch-activation' ? (
-          <SectionCard
-            title="Service × Branch Activation Matrix"
-            description={page.description}
+            title="Branch Activation"
+            description="Service availability and branch capacity"
             icon={serviceAdministrationIcons.branches}
           >
             <div className="p-3">
@@ -379,8 +264,8 @@ export function ServiceAdministrationSectionPage({
               />
             </div>
           </SectionCard>
-        ) : null}
-      </main>
+        </main>
+      ) : null}
 
       {selectedService ? (
         <ServiceDetailPanel service={selectedService} onClose={() => setSelectedService(null)} />
