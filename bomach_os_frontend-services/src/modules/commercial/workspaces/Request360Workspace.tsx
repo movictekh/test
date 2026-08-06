@@ -1,12 +1,9 @@
 import { IconX } from '@tabler/icons-react'
-import { useEffect, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 
 import { useToast } from '@/shared/ui'
 
-import type {
-  CommercialServiceRequest,
-  ServiceRequestStatus,
-} from '../types/commercial.types'
+import type { CommercialServiceRequest, ServiceRequestStatus } from '../types/commercial.types'
 import type { UpdateServiceRequestInput } from '../api/commercial.api'
 
 const money = new Intl.NumberFormat('en-NG', {
@@ -94,13 +91,6 @@ export function Request360Workspace({
   const [activityOutcome, setActivityOutcome] = useState<string>(activityOutcomes[0])
   const [activityNote, setActivityNote] = useState('')
   const [activityNext, setActivityNext] = useState('')
-
-  useEffect(() => {
-    setStatus(request.status)
-    setOwner(request.owner)
-    setNextAction(request.nextAction)
-    setDueAt(request.dueAt)
-  }, [request])
 
   const activeStage = lifecycleActiveIndex(request.status)
   const lead = request.intakeResponses['Lead / campaign reference']

@@ -8,6 +8,7 @@ import {
   PrototypeButton,
 } from '@/modules/service-administration/components/ServiceAdministrationUi'
 import { presentError } from '@/shared/errors'
+import { serviceAdministrationQueries } from '@/modules/service-administration/api/service-administration.queries'
 import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
 
 import { commercialApi, type UpdateServiceRequestInput } from '../api/commercial.api'
@@ -35,6 +36,7 @@ export function CommercialSectionPage({ section }: { section: CommercialSection 
   const queryClient = useQueryClient()
   const toast = useToast()
   const query = useQuery(commercialQueries.workspace())
+  const serviceAdministrationQuery = useQuery(serviceAdministrationQueries.workspace())
   const [createOpen, setCreateOpen] = useState(false)
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null)
 
@@ -52,13 +54,8 @@ export function CommercialSectionPage({ section }: { section: CommercialSection 
   })
 
   const updateRequest = useMutation({
-    mutationFn: ({
-      requestId,
-      input,
-    }: {
-      requestId: string
-      input: UpdateServiceRequestInput
-    }) => commercialApi.updateRequest(requestId, input),
+    mutationFn: ({ requestId, input }: { requestId: string; input: UpdateServiceRequestInput }) =>
+      commercialApi.updateRequest(requestId, input),
     onSuccess: (workspace, variables) => {
       queryClient.setQueryData(commercialKeys.workspace(), workspace)
       const next = workspace.requests.find((item) => item.id === variables.requestId)
@@ -75,11 +72,21 @@ export function CommercialSectionPage({ section }: { section: CommercialSection 
     return query.data.requests.find((item) => item.id === selectedRequestId) ?? null
   }, [query.data, selectedRequestId])
 
-  if (query.isPending) return <DashboardSkeleton />
-  if (query.isError) {
-    const e = presentError(query.error, 'page-load')
+  if (query.isPending || serviceAdministrationQuery.isPending) {
+    return <DashboardSkeleton />
+  }
+  if (query.isError || serviceAdministrationQuery.isError) {
+    const sourceError = query.error ?? serviceAdministrationQuery.error
+    const e = presentError(sourceError, 'page-load')
     return (
-      <ErrorState title={e.title} description={e.message} onRetry={() => void query.refetch()} />
+      <ErrorState
+        title={e.title}
+        description={e.message}
+        onRetry={() => {
+          void query.refetch()
+          void serviceAdministrationQuery.refetch()
+        }}
+      />
     )
   }
 
@@ -121,15 +128,18 @@ export function CommercialSectionPage({ section }: { section: CommercialSection 
         </main>
       )}
 
-      <CreateRequestWorkspace
-        open={createOpen}
-        saving={createRequest.isPending}
-        onClose={() => setCreateOpen(false)}
-        onSubmit={(input) => createRequest.mutate(input)}
-      />
+      {createOpen ? (
+        <CreateRequestWorkspace
+          saving={createRequest.isPending}
+          serviceWorkspace={serviceAdministrationQuery.data}
+          onClose={() => setCreateOpen(false)}
+          onSubmit={(input) => createRequest.mutate(input)}
+        />
+      ) : null}
 
       {selectedRequest ? (
         <Request360Workspace
+          key={selectedRequest.id}
           request={selectedRequest}
           saving={updateRequest.isPending}
           onClose={() => setSelectedRequestId(null)}

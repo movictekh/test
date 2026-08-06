@@ -719,3 +719,44 @@
   }
 }
 
+.commercial-form-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.commercial-form-section-heading h3 {
+  margin-bottom: 2px;
+}
+
+.commercial-form-section-heading p,
+.commercial-form-note {
+  color: var(--color-foreground-subtle);
+  font-size: 8.5px;
+}
+
+.commercial-field small {
+  color: var(--color-foreground-subtle);
+  font-size: 8px;
+  font-weight: 500;
+}
+
+.commercial-field em,
+.commercial-check em {
+  color: var(--color-danger-700);
+  font-size: 8px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.commercial-config-warning {
+  border: 1px solid #f6d78b;
+  border-radius: 9px;
+  background: #fff8e6;
+  padding: 10px;
+  color: #8a5a00;
+  font-size: 9px;
+  font-weight: 700;
+}
