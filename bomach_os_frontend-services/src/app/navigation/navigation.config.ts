@@ -83,7 +83,7 @@ export const operationsNavigation = [
         label: 'Quotations',
         icon: 'quotations',
         to: appShellRoute,
-        params: { section: 'quotations-proposals' },
+        params: { section: 'quotations' },
         permissions: [PERMISSIONS.quoteRead],
       },
       {
@@ -99,7 +99,7 @@ export const operationsNavigation = [
         label: 'Approvals',
         icon: 'approvals',
         to: appShellRoute,
-        params: { section: 'approval-queue' },
+        params: { section: 'approvals' },
         permissions: [PERMISSIONS.approvalRead],
         badge: 4,
         badgeTone: 'alert',
