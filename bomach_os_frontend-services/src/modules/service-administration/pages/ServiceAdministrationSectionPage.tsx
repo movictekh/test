@@ -236,7 +236,7 @@ export function ServiceAdministrationSectionPage({
             <PrototypeButton
               onClick={() =>
                 void navigate({
-                  to: '/app/shell/$section',
+                  to: '/app/$section',
                   params: { section: 'service-requests' },
                 })
               }
@@ -261,7 +261,7 @@ export function ServiceAdministrationSectionPage({
           onCreate={() => setNewServiceOpen(true)}
           onBranchAvailability={() =>
             void navigate({
-              to: '/app/shell/$section',
+              to: '/app/$section',
               params: { section: 'branch-activation' },
             })
           }

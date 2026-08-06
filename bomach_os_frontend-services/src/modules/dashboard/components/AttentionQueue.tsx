@@ -95,7 +95,7 @@ export function AttentionQueue({ items, title, description, action }: AttentionQ
                     onClick={() => {
                       if (!item.destination) return
                       void navigate({
-                        to: '/app/shell/$section',
+                        to: '/app/$section',
                         params: { section: item.destination.section },
                       })
                     }}
@@ -104,7 +104,7 @@ export function AttentionQueue({ items, title, description, action }: AttentionQ
                       if (event.key !== 'Enter' && event.key !== ' ') return
                       event.preventDefault()
                       void navigate({
-                        to: '/app/shell/$section',
+                        to: '/app/$section',
                         params: { section: item.destination.section },
                       })
                     }}

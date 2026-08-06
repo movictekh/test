@@ -56,7 +56,7 @@ export function ExecutiveAlerts({ alerts }: { alerts: DashboardExecutiveAlert[] 
                   {value ? <span>·</span> : null}
                   {alert.destination ? (
                     <Link
-                      to="/app/shell/$section"
+                      to="/app/$section"
                       params={{ section: alert.destination.section }}
                       className="font-semibold hover:underline"
                     >

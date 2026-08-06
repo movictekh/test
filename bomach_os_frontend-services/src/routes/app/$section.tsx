@@ -32,7 +32,7 @@ function formatSectionTitle(section: string): string {
     .join(' ')
 }
 
-export const Route = createFileRoute('/app/shell/$section')({
+export const Route = createFileRoute('/app/$section')({
   beforeLoad: ({ context, location }) => {
     const matchingItem = findNavigationItemByPath(operationsNavigation, location.pathname)
 
@@ -61,7 +61,7 @@ function AppShellRoute() {
     <ModuleShellPage
       eyebrow="Service Operations"
       title={title}
-      description="This section will be replaced during its prototype-first UI phase."
+      description="i will replace this section during its prototype UI phase."
       backTo="/app/dashboard"
       backLabel="Back to dashboard"
     />

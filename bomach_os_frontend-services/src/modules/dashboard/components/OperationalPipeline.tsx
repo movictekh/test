@@ -71,7 +71,7 @@ export function OperationalPipeline({
             return stage.destination ? (
               <Link
                 key={stage.key}
-                to="/app/shell/$section"
+                to="/app/$section"
                 params={{ section: stage.destination.section }}
                 className="block h-full"
               >

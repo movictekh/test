@@ -169,7 +169,7 @@ function RequestsTable({ items }: { items: DashboardAttentionItem[] }) {
           <div className="command-center-card-subtitle">Prioritized by SLA, value and urgency</div>
         </div>
         <Link
-          to="/app/shell/$section"
+          to="/app/$section"
           params={{ section: 'service-requests' }}
           className="command-center-btn command-center-btn-small"
         >
@@ -195,7 +195,7 @@ function RequestsTable({ items }: { items: DashboardAttentionItem[] }) {
                 onClick={() => {
                   if (!item.destination) return
                   void navigate({
-                    to: '/app/shell/$section',
+                    to: '/app/$section',
                     params: { section: item.destination.section },
                   })
                 }}
@@ -291,7 +291,7 @@ function RecentActivityCard({ items }: { items: DashboardActivityItem[] }) {
           <div className="command-center-card-subtitle">Permanent audit history</div>
         </div>
         <Link
-          to="/app/shell/$section"
+          to="/app/$section"
           params={{ section: 'audit-log' }}
           className="command-center-btn command-center-btn-small"
         >
@@ -330,7 +330,7 @@ export function OperationsDashboardPage() {
       setNewServiceOpen(false)
       toast.success('Service created successfully')
       void navigate({
-        to: '/app/shell/$section',
+        to: '/app/$section',
         params: { section: 'service-catalogue' },
       })
     },
@@ -363,7 +363,7 @@ export function OperationsDashboardPage() {
           Client Portal
         </Link>
         <Link
-          to="/app/shell/$section"
+          to="/app/$section"
           params={{ section: 'service-requests' }}
           className="command-center-btn"
         >

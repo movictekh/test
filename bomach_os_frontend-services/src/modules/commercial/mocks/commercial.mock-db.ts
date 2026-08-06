@@ -179,3 +179,42 @@ export function createMockServiceRequest(input: CreateServiceRequestInput): Comm
   })
   return getCommercialWorkspace()
 }
+
+export function updateMockServiceRequest(
+  id: string,
+  patch: Partial<
+    Pick<
+      CommercialServiceRequest,
+      'status' | 'owner' | 'nextAction' | 'dueAt' | 'estimate' | 'budget'
+    >
+  > & {
+    activity?: Omit<CommercialServiceRequest['activities'][number], 'id'>
+  },
+): CommercialWorkspace {
+  const index = requests.findIndex((request) => request.id === id)
+  if (index === -1) return getCommercialWorkspace()
+
+  const current = requests[index]
+  if (!current) return getCommercialWorkspace()
+
+  const nextActivities = [...current.activities]
+  if (patch.activity) {
+    nextActivities.push({
+      id: `${id}-ACT-${nextActivities.length + 1}`,
+      ...patch.activity,
+    })
+  }
+
+  requests[index] = {
+    ...current,
+    status: patch.status ?? current.status,
+    owner: patch.owner ?? current.owner,
+    nextAction: patch.nextAction ?? current.nextAction,
+    dueAt: patch.dueAt ?? current.dueAt,
+    estimate: patch.estimate ?? current.estimate,
+    budget: patch.budget ?? current.budget,
+    activities: nextActivities,
+  }
+
+  return getCommercialWorkspace()
+}

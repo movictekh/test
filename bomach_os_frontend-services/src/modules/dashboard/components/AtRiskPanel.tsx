@@ -37,7 +37,7 @@ export function AtRiskPanel({ items }: { items: DashboardRiskItem[] }) {
           return item.destination ? (
             <Link
               key={item.id}
-              to="/app/shell/$section"
+              to="/app/$section"
               params={{ section: item.destination.section }}
               className="block"
             >

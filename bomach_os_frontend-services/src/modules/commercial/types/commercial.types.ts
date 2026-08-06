@@ -4,11 +4,13 @@ export type CommercialSection =
 export type ServiceRequestStatus =
   | 'New'
   | 'Under Review'
+  | 'Awaiting Client'
   | 'Site Assessment'
   | 'Awaiting Quotation'
   | 'Quoted'
   | 'Client Approval'
   | 'Converted'
+  | 'Rejected'
   | 'Closed'
 
 export type ServiceRequestPriority = 'Low' | 'Medium' | 'High' | 'Urgent'

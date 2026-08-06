@@ -25,7 +25,7 @@ export type NavigationPath =
   | '/app/dashboard'
   | '/app/design-system'
   | '/portal/dashboard'
-  | '/app/shell/$section'
+  | '/app/$section'
   | '/portal/shell/$section'
 
 export interface NavigationItem {

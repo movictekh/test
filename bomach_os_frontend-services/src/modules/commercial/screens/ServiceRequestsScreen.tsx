@@ -1,4 +1,4 @@
-import { IconChevronRight, IconSearch } from '@tabler/icons-react'
+import { IconSearch } from '@tabler/icons-react'
 import { useMemo, useState } from 'react'
 
 import type { CommercialServiceRequest, CommercialSummary } from '../types/commercial.types'
@@ -10,18 +10,17 @@ const money = new Intl.NumberFormat('en-NG', {
 })
 
 function statusClass(status: string) {
-  if (status === 'New') return 'commercial-pill-gray'
+  if (status === 'New' || status === 'Rejected') return 'commercial-pill-gray'
   if (status === 'Quoted' || status === 'Converted') return 'commercial-pill-green'
-  if (status === 'Awaiting Quotation' || status === 'Client Approval') {
+  if (
+    status === 'Awaiting Quotation' ||
+    status === 'Client Approval' ||
+    status === 'Awaiting Client' ||
+    status === 'Site Assessment'
+  ) {
     return 'commercial-pill-yellow'
   }
   return 'commercial-pill-blue'
-}
-
-function priorityClass(priority: string) {
-  if (priority === 'Urgent') return 'commercial-priority-red'
-  if (priority === 'High') return 'commercial-priority-yellow'
-  return 'commercial-priority-gray'
 }
 
 export function ServiceRequestsScreen({
@@ -74,11 +73,11 @@ export function ServiceRequestsScreen({
     <main className="commercial-content">
       <section className="commercial-kgrid" aria-label="Request summary">
         {[
-          ['Total Requests', summary.total, 'All commercial requests'],
-          ['New', summary.newRequests, 'Require assignment'],
-          ['Under Review', summary.underReview, 'Assessment in progress'],
-          ['Awaiting Quote', summary.awaitingQuotation, 'Commercial action'],
+          ['New / unreviewed', summary.newRequests, 'Require assignment'],
+          ['Site assessment required', summary.underReview, 'Assessment in progress'],
+          ['Awaiting client information', summary.awaitingQuotation, 'Commercial action'],
           ['High Priority', summary.highPriority, 'High and urgent'],
+          ['Total Requests', summary.total, 'All commercial requests'],
         ].map(([label, value, note]) => (
           <article className="commercial-kpi" key={label}>
             <div className="commercial-kpi-label">{label}</div>
@@ -139,13 +138,12 @@ export function ServiceRequestsScreen({
                   <th>Request</th>
                   <th>Client</th>
                   <th>Service</th>
-                  <th>Branch</th>
+                  <th>Source</th>
+                  <th>Estimate</th>
                   <th>Status</th>
-                  <th>Priority</th>
                   <th>Owner</th>
-                  <th>Value</th>
-                  <th>Next action</th>
-                  <th aria-label="Open" />
+                  <th>Next</th>
+                  <th aria-label="Actions" />
                 </tr>
               </thead>
               <tbody>
@@ -153,7 +151,9 @@ export function ServiceRequestsScreen({
                   <tr key={request.id}>
                     <td>
                       <b>{request.id}</b>
-                      <small>{request.createdAt}</small>
+                      <small>
+                        {request.createdAt} · {request.branch}
+                      </small>
                     </td>
                     <td>
                       <b>{request.client}</b>
@@ -163,35 +163,24 @@ export function ServiceRequestsScreen({
                       <b>{request.service}</b>
                       <small>{request.division}</small>
                     </td>
-                    <td>{request.branch}</td>
+                    <td>{request.source}</td>
+                    <td>
+                      <b>{money.format(request.estimate || request.budget)}</b>
+                    </td>
                     <td>
                       <span className={`commercial-pill ${statusClass(request.status)}`}>
                         {request.status}
                       </span>
                     </td>
-                    <td>
-                      <span className={`commercial-priority ${priorityClass(request.priority)}`}>
-                        {request.priority}
-                      </span>
-                    </td>
                     <td>{request.owner}</td>
-                    <td>
-                      <b>{money.format(request.estimate || request.budget)}</b>
-                      <small>{request.estimate ? 'Estimate' : 'Budget'}</small>
-                    </td>
-                    <td>
-                      <b>{request.nextAction}</b>
-                      <small>Due {request.dueAt}</small>
-                    </td>
+                    <td>{request.nextAction}</td>
                     <td>
                       <button
                         type="button"
-                        className="commercial-open"
-                        aria-label={`Open ${request.id}`}
-                        title={`Open ${request.id}`}
+                        className="commercial-btn commercial-btn-small"
                         onClick={() => onOpenRequest(request)}
                       >
-                        <IconChevronRight size={15} />
+                        Open
                       </button>
                     </td>
                   </tr>
