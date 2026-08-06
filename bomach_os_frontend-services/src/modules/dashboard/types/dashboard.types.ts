@@ -8,51 +8,92 @@ export type DashboardMetricKey =
   | 'open_tasks'
   | 'service_configuration'
 
-export type DashboardSeverity = 'info' | 'warning' | 'danger'
-export type DashboardTrend = 'up' | 'down' | 'neutral'
+export type DashboardSeverity = 'info' | 'warning' | 'danger' | 'success'
+export type DashboardProgressTone = 'brand' | 'success' | 'warning' | 'danger'
+
+export interface DashboardDestination {
+  section: string
+}
 
 export interface DashboardMetric {
   key: DashboardMetricKey
   label: string
   value: number
+  valueFormat?: 'number' | 'currency' | 'percent'
   description: string
-  trend?: {
-    direction: Exclude<DashboardTrend, 'neutral'>
-    label: string
-  }
+  trend?: { direction: 'up' | 'down'; label: string }
 }
 
 export interface DashboardAttentionItem {
   id: string
-  severity: DashboardSeverity
+  severity: Exclude<DashboardSeverity, 'success'>
   title: string
   description: string
   recordType: string
   recordNumber?: string
   dueLabel?: string
-  destination?: {
-    section: string
-  }
+  requestNumber?: string
+  createdLabel?: string
+  client?: string
+  service?: string
+  statusLabel?: string
+  statusTone?: Exclude<DashboardSeverity, 'success'>
+  owner?: string
+  nextAction?: string
+  destination?: DashboardDestination
 }
 
 export interface DashboardPipelineStage {
   key: string
   label: string
   count: number
-  destination?: {
-    section: string
-  }
+  description?: string
+  state?: 'done' | 'active' | 'pending'
+  destination?: DashboardDestination
+}
+
+export interface DashboardExecutiveAlert {
+  id: string
+  severity: DashboardSeverity
+  title: string
+  description: string
+  value?: number
+  valueFormat?: 'number' | 'currency' | 'percent'
+  destination?: DashboardDestination
+}
+
+export interface DashboardHealthMetric {
+  key: string
+  label: string
+  value: number
+  tone: DashboardProgressTone
+}
+
+export interface DashboardServicePerformance {
+  id: string
+  serviceName: string
+  completionRate: number
+  verifiedRevenue: number
+  destination?: DashboardDestination
+}
+
+export interface DashboardBranchPerformance {
+  id: string
+  branchName: string
+  requests: number
+  activeOrders: number
+  verifiedRevenue: number
+  slaPerformance: number
+  clientSatisfaction: number
 }
 
 export interface DashboardRiskItem {
   id: string
-  severity: DashboardSeverity
+  severity: Exclude<DashboardSeverity, 'success'>
   label: string
   count: number
   description: string
-  destination?: {
-    section: string
-  }
+  destination?: DashboardDestination
 }
 
 export interface DashboardMyWork {
@@ -75,6 +116,10 @@ export interface OperationsDashboardSummary {
   metrics: DashboardMetric[]
   attentionItems: DashboardAttentionItem[]
   pipeline: DashboardPipelineStage[]
+  executiveAlerts: DashboardExecutiveAlert[]
+  operationsHealth: DashboardHealthMetric[]
+  servicePerformance: DashboardServicePerformance[]
+  branchPerformance: DashboardBranchPerformance[]
   risks: DashboardRiskItem[]
   myWork: DashboardMyWork
   configuration?: DashboardConfigurationReadiness
@@ -88,7 +133,5 @@ export interface DashboardActivityItem {
   occurredAt: string
   recordType?: string
   recordNumber?: string
-  destination?: {
-    section: string
-  }
+  destination?: DashboardDestination
 }

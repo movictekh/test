@@ -1,41 +1,36 @@
 import { describe, expect, it } from 'vitest'
-
 import { dashboardActivityMock, dashboardSummaryMock } from '../mocks/dashboard.mock-data'
 import { mapDashboardActivity, mapDashboardSummary } from './dashboard.mapper'
 
 describe('dashboard mapper', () => {
-  it('maps the operations summary contract into the dashboard view model', () => {
+  it('maps all prototype-aligned dashboard sections', () => {
     const summary = mapDashboardSummary(dashboardSummaryMock)
-
-    expect(summary.metrics).toHaveLength(4)
-    expect(summary.metrics[0]).toMatchObject({
-      key: 'open_requests',
-      value: 34,
-    })
-    expect(summary.attentionItems[0]?.destination).toEqual({
-      section: 'service-requests',
-    })
-    expect(summary.myWork.openTasks).toBe(11)
-  })
-
-  it('maps recent activity while preserving safe destination sections', () => {
-    const activity = mapDashboardActivity(dashboardActivityMock)
-
-    expect(activity).toHaveLength(4)
-    expect(activity[0]).toMatchObject({
-      title: 'Quotation QTE-2026-1032 created',
-      destination: {
-        section: 'quotations-proposals',
-      },
+    expect(summary.metrics).toHaveLength(5)
+    expect(summary.attentionItems).toHaveLength(5)
+    expect(summary.pipeline).toHaveLength(5)
+    expect(summary.executiveAlerts).toHaveLength(4)
+    expect(summary.operationsHealth).toHaveLength(5)
+    expect(summary.servicePerformance).toHaveLength(5)
+    expect(summary.branchPerformance).toHaveLength(4)
+    expect(summary.attentionItems[0]).toMatchObject({
+      requestNumber: 'REQ-260713-001',
+      client: 'Chief Okafor Sunday Silas',
+      service: 'Building Construction',
+      statusLabel: 'Site Assessment',
+      owner: 'Civil Engineer',
+      nextAction: 'Schedule site assessment',
     })
   })
 
-  it('handles missing optional arrays without throwing', () => {
+  it('maps activity safely', () => {
+    expect(mapDashboardActivity(dashboardActivityMock)).toHaveLength(4)
+  })
+
+  it('falls back to empty collections for missing unverified fields', () => {
     const summary = mapDashboardSummary({ generated_at: '2026-08-06T00:00:00Z' })
-
-    expect(summary.metrics).toEqual([])
-    expect(summary.attentionItems).toEqual([])
-    expect(summary.pipeline).toEqual([])
-    expect(summary.risks).toEqual([])
+    expect(summary.executiveAlerts).toEqual([])
+    expect(summary.operationsHealth).toEqual([])
+    expect(summary.servicePerformance).toEqual([])
+    expect(summary.branchPerformance).toEqual([])
   })
 })

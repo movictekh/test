@@ -3,6 +3,7 @@ export interface DashboardSummaryContract {
   greeting_name?: string
   metrics?: unknown[]
   attention_items?: unknown[]
+  requests_requiring_action?: unknown[]
   pipeline?: unknown[]
   risks?: unknown[]
   my_work?: unknown
