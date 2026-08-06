@@ -8,6 +8,9 @@
   gap: 10px;
   margin-bottom: 13px;
 }
+.commercial-kgrid-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
 .commercial-kpi,
 .commercial-card {
   border: 1px solid var(--color-border);
@@ -158,6 +161,7 @@
   background: #eef1f5;
   color: #5f687a;
 }
+.commercial-pill-red,
 .commercial-priority-red {
   background: #fee2e2;
   color: #991b1b;
@@ -245,10 +249,27 @@
 }
 
 .commercial-modal-footer {
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 6px;
   border-top: 1px solid #e1e7ef;
   padding: 10px 15px;
+}
+
+.commercial-modal-footer-start,
+.commercial-modal-footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.commercial-modal-footer-actions {
+  margin-left: auto;
+}
+
+.commercial-modal-header-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .commercial-modal-header h2,
@@ -395,6 +416,16 @@
 
 .commercial-btn-primary:hover:not(:disabled) {
   background: #132b59;
+}
+
+.commercial-btn-green {
+  border-color: #0f766e;
+  background: #0f766e;
+  color: #fff;
+}
+
+.commercial-btn-green:hover:not(:disabled) {
+  background: #0d5f59;
 }
 
 .commercial-drawer-backdrop {
@@ -719,6 +750,29 @@
   }
 }
 
+.commercial-form-section {
+  margin-bottom: 12px;
+  border: 1px solid #e1e7ef;
+  border-radius: 12px;
+  background: #fff;
+  padding: 13px;
+}
+
+.commercial-form-section:last-child {
+  margin-bottom: 0;
+}
+
+.commercial-form-section > h3 {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #15172d;
+}
+
+.commercial-form-section > .commercial-form-note {
+  margin: -6px 0 10px;
+}
+
 .commercial-form-section-heading {
   display: flex;
   align-items: center;
@@ -759,4 +813,225 @@
   color: #8a5a00;
   font-size: 9px;
   font-weight: 700;
+}
+
+.commercial-quote-lines {
+  display: grid;
+  gap: 8px;
+}
+.commercial-quote-line {
+  display: grid;
+  grid-template-columns: minmax(220px, 2fr) 90px 100px 140px 130px 34px;
+  gap: 8px;
+  align-items: end;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 10px;
+}
+.commercial-quote-amount {
+  min-height: 49px;
+  display: grid;
+  align-content: center;
+}
+.commercial-quote-amount small {
+  color: var(--color-foreground-subtle);
+  font-size: 8px;
+}
+.commercial-quote-amount b {
+  margin-top: 4px;
+  font-size: 10px;
+}
+.commercial-quote-totals,
+.commercial-quote-detail-totals {
+  width: min(420px, 100%);
+  margin: 14px 0 0 auto;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.commercial-quote-totals > div,
+.commercial-quote-detail-totals > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 9px 11px;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 9px;
+}
+.commercial-quote-grand {
+  background: var(--color-surface-muted);
+  font-size: 11px !important;
+}
+.commercial-quote-detail-table {
+  min-width: 700px;
+}
+
+.commercial-quote-preview {
+  border: 1px solid var(--color-border);
+  border-radius: 13px;
+  background: #f4f7ff;
+  box-shadow: 0 2px 9px rgb(20 32 64 / 7%);
+  padding: 14px;
+}
+
+.commercial-quote-preview-section {
+  border-color: #c7d7f5;
+  background: #f4f7ff;
+}
+
+.commercial-quote-pricing-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(220px, 0.8fr);
+  gap: 12px;
+  align-items: stretch;
+}
+
+.commercial-quote-value-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border: 1px solid var(--color-border);
+  border-radius: 13px;
+  background: #fff;
+  box-shadow: 0 2px 9px rgb(20 32 64 / 7%);
+  padding: 14px;
+}
+
+.commercial-quote-value-card .commercial-kpi-value {
+  margin-top: 5px;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.15;
+  color: #15172d;
+}
+
+.commercial-quote-total-chip {
+  display: grid;
+  gap: 2px;
+  justify-items: end;
+  text-align: right;
+}
+
+.commercial-quote-total-chip span {
+  color: var(--color-foreground-subtle);
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.commercial-quote-total-chip b {
+  font-size: 14px;
+  font-weight: 800;
+  color: #1f3d7a;
+}
+
+.commercial-quote-total-chip--lg b {
+  font-size: 20px;
+  line-height: 1.15;
+}
+
+.commercial-quote-breakdown {
+  display: grid;
+  gap: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.commercial-quote-breakdown > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 10px;
+}
+
+.commercial-quote-breakdown > div:last-child {
+  border-bottom: 0;
+}
+
+.commercial-quote-breakdown span {
+  color: var(--color-foreground-subtle);
+  font-weight: 600;
+}
+
+.commercial-quote-breakdown b {
+  font-weight: 800;
+}
+
+.commercial-quote-breakdown-total {
+  background: #f8fafc;
+}
+
+.commercial-quote-breakdown-total span,
+.commercial-quote-breakdown-total b {
+  color: #15172d;
+  font-size: 11px;
+}
+
+.commercial-quote-overview {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.commercial-quote-overview-gap {
+  margin-top: 11px;
+}
+
+.commercial-quote-terms {
+  display: grid;
+  gap: 10px;
+  margin-top: 11px;
+  font-size: 10px;
+}
+
+.commercial-quote-terms p {
+  margin-top: 3px;
+  line-height: 1.45;
+  color: var(--color-foreground);
+}
+
+.commercial-notice {
+  margin-top: 11px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  padding: 9px 10px;
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.commercial-notice-blue {
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  color: #1e3a8a;
+}
+
+@media (max-width: 700px) {
+  .commercial-quote-overview,
+  .commercial-quote-pricing-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .commercial-modal-footer {
+    flex-wrap: wrap;
+  }
+
+  .commercial-modal-footer-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 900px) {
+  .commercial-quote-line {
+    grid-template-columns: 1fr 1fr;
+  }
+  .commercial-quote-description,
+  .commercial-quote-amount {
+    grid-column: 1 / -1;
+  }
 }

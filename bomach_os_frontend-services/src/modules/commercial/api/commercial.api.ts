@@ -2,6 +2,8 @@ import { apiClient } from '@/shared/api/api-client'
 
 import type {
   CommercialWorkspace,
+  CreateQuotationInput,
+  UpdateQuotationInput,
   CreateServiceRequestInput,
   ServiceRequestStatus,
 } from '../types/commercial.types'
@@ -27,6 +29,17 @@ export const commercialApi = {
 
   createRequest(input: CreateServiceRequestInput) {
     return apiClient.post<CommercialWorkspace>('/ui-prototype/commercial/requests', input)
+  },
+
+  createQuotation(input: CreateQuotationInput) {
+    return apiClient.post<CommercialWorkspace>('/ui-prototype/commercial/quotations', input)
+  },
+
+  updateQuotation(quotationId: string, input: UpdateQuotationInput) {
+    return apiClient.patch<CommercialWorkspace>(
+      `/ui-prototype/commercial/quotations/${quotationId}`,
+      input,
+    )
   },
 
   updateRequest(requestId: string, input: UpdateServiceRequestInput) {

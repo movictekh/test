@@ -1,27 +1,8 @@
 import { IconSearch } from '@tabler/icons-react'
 import { useMemo, useState } from 'react'
 
+import { commercialMoney, requestStatusClass } from '../commercial.ui'
 import type { CommercialServiceRequest, CommercialSummary } from '../types/commercial.types'
-
-const money = new Intl.NumberFormat('en-NG', {
-  style: 'currency',
-  currency: 'NGN',
-  maximumFractionDigits: 0,
-})
-
-function statusClass(status: string) {
-  if (status === 'New' || status === 'Rejected') return 'commercial-pill-gray'
-  if (status === 'Quoted' || status === 'Converted') return 'commercial-pill-green'
-  if (
-    status === 'Awaiting Quotation' ||
-    status === 'Client Approval' ||
-    status === 'Awaiting Client' ||
-    status === 'Site Assessment'
-  ) {
-    return 'commercial-pill-yellow'
-  }
-  return 'commercial-pill-blue'
-}
 
 export function ServiceRequestsScreen({
   summary,
@@ -165,10 +146,10 @@ export function ServiceRequestsScreen({
                     </td>
                     <td>{request.source}</td>
                     <td>
-                      <b>{money.format(request.estimate || request.budget)}</b>
+                      <b>{commercialMoney.format(request.estimate || request.budget)}</b>
                     </td>
                     <td>
-                      <span className={`commercial-pill ${statusClass(request.status)}`}>
+                      <span className={`commercial-pill ${requestStatusClass(request.status)}`}>
                         {request.status}
                       </span>
                     </td>

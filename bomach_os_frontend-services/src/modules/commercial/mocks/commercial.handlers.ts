@@ -3,11 +3,18 @@ import { delay, http, HttpResponse } from 'msw'
 import { env } from '@/shared/config/env'
 
 import {
+  createMockQuotation,
   createMockServiceRequest,
   getCommercialWorkspace,
+  updateMockQuotation,
   updateMockServiceRequest,
 } from './commercial.mock-db'
-import type { CreateServiceRequestInput, ServiceRequestStatus } from '../types/commercial.types'
+import type {
+  CreateQuotationInput,
+  CreateServiceRequestInput,
+  ServiceRequestStatus,
+  UpdateQuotationInput,
+} from '../types/commercial.types'
 
 const endpoint = (path: string) => `${env.apiBaseUrl}${path}`
 
@@ -32,6 +39,34 @@ export const commercialHandlers = [
     }
     return HttpResponse.json(createMockServiceRequest(body), { status: 201 })
   }),
+
+  http.post(endpoint('/ui-prototype/commercial/quotations'), async ({ request }) => {
+    await delay(260)
+    const body = (await request.json()) as CreateQuotationInput
+    if (
+      !body.requestId ||
+      !body.validUntil ||
+      !body.paymentTerms ||
+      Number(body.serviceFee) < 0 ||
+      Number(body.otherCharges) < 0 ||
+      Number(body.discount) < 0
+    ) {
+      return HttpResponse.json(
+        { detail: 'Complete the quotation offer fields before saving.' },
+        { status: 422 },
+      )
+    }
+    return HttpResponse.json(createMockQuotation(body), { status: 201 })
+  }),
+
+  http.patch(
+    endpoint('/ui-prototype/commercial/quotations/:quotationId'),
+    async ({ params, request }) => {
+      await delay(220)
+      const body = (await request.json()) as UpdateQuotationInput
+      return HttpResponse.json(updateMockQuotation(String(params.quotationId), body))
+    },
+  ),
 
   http.patch(
     endpoint('/ui-prototype/commercial/requests/:requestId'),

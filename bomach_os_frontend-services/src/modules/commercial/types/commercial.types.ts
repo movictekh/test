@@ -74,5 +74,85 @@ export interface CommercialSummary {
 export interface CommercialWorkspace {
   summary: CommercialSummary
   requests: CommercialServiceRequest[]
+  quotations: CommercialQuotation[]
+  quotationSummary: QuotationSummary
   pendingApprovals: number
+}
+
+export type QuotationStatus =
+  'Draft' | 'Awaiting Approval' | 'Sent' | 'Accepted' | 'Rejected' | 'Expired'
+
+export interface QuotationLineItem {
+  id: string
+  description: string
+  quantity: number
+  unit: string
+  unitPrice: number
+  amount: number
+}
+
+export interface QuotationActivity {
+  id: string
+  at: string
+  title: string
+  actor: string
+  description: string
+}
+
+export interface CommercialQuotation {
+  id: string
+  requestId: string
+  client: string
+  service: string
+  branch: string
+  status: QuotationStatus
+  version: number
+  currency: 'NGN'
+  lineItems: QuotationLineItem[]
+  subtotal: number
+  discountPercent: number
+  discountAmount: number
+  taxPercent: number
+  taxAmount: number
+  total: number
+  depositPercent: number
+  validityDays: number
+  validUntil: string
+  paymentTerms: string
+  deliveryTerms: string
+  notes: string
+  approvalRoute: string
+  owner: string
+  createdAt: string
+  updatedAt: string
+  issuedAt?: string
+  clientDecisionAt?: string
+  clientDecisionNote?: string
+  activities: QuotationActivity[]
+}
+
+export interface CreateQuotationInput {
+  requestId: string
+  validUntil: string
+  scopeSummary: string
+  serviceFee: number
+  otherCharges: number
+  discount: number
+  taxPercent: number
+  depositPercent: number
+  approvalRoute: string
+  paymentTerms: string
+  status: 'Draft' | 'Awaiting Approval'
+}
+
+export interface UpdateQuotationInput {
+  action?: 'submit-approval' | 'approve-send' | 'accept' | 'reject'
+  decisionNote?: string
+}
+
+export interface QuotationSummary {
+  drafts: number
+  awaitingApproval: number
+  sent: number
+  acceptanceRate: number
 }

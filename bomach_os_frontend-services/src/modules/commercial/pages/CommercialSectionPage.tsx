@@ -15,18 +15,23 @@ import { commercialApi, type UpdateServiceRequestInput } from '../api/commercial
 import { commercialKeys } from '../api/commercial.keys'
 import { commercialQueries } from '../api/commercial.queries'
 import { ServiceRequestsScreen } from '../screens/ServiceRequestsScreen'
+import { QuotationsScreen } from '../screens/QuotationsScreen'
 import type {
   CommercialSection,
   CommercialServiceRequest,
+  CreateQuotationInput,
   CreateServiceRequestInput,
+  UpdateQuotationInput,
 } from '../types/commercial.types'
 import { CreateRequestWorkspace } from '../workspaces/CreateRequestWorkspace'
 import { Request360Workspace } from '../workspaces/Request360Workspace'
+import { QuotationBuilderWorkspace } from '../workspaces/QuotationBuilderWorkspace'
+import { QuotationDetailWorkspace } from '../workspaces/QuotationDetailWorkspace'
 import '../styles/commercial.css'
 
 const metadata: Record<CommercialSection, { title: string; breadcrumb: string }> = {
   'service-requests': { title: 'Service Requests', breadcrumb: 'Commercial flow / Requests' },
-  quotations: { title: 'Quotations', breadcrumb: 'Commercial flow / Offers' },
+  quotations: { title: 'Quotations & Proposals', breadcrumb: 'Commercial flow / Offers' },
   'invoices-payments': { title: 'Invoices & Payments', breadcrumb: 'Commercial flow / Billing' },
   approvals: { title: 'Approvals', breadcrumb: 'Commercial flow / Approvals' },
 }
@@ -39,6 +44,9 @@ export function CommercialSectionPage({ section }: { section: CommercialSection 
   const serviceAdministrationQuery = useQuery(serviceAdministrationQueries.workspace())
   const [createOpen, setCreateOpen] = useState(false)
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null)
+  const [quotationBuilderOpen, setQuotationBuilderOpen] = useState(false)
+  const [quotationSourceRequestId, setQuotationSourceRequestId] = useState<string | undefined>()
+  const [selectedQuotationId, setSelectedQuotationId] = useState<string | null>(null)
 
   const createRequest = useMutation({
     mutationFn: (input: CreateServiceRequestInput) => commercialApi.createRequest(input),
@@ -50,6 +58,37 @@ export function CommercialSectionPage({ section }: { section: CommercialSection 
     onError: (error) => {
       const e = presentError(error, 'form-submit')
       toast.error('Request could not be saved', { description: e.message })
+    },
+  })
+
+  const createQuotation = useMutation({
+    mutationFn: (input: CreateQuotationInput) => commercialApi.createQuotation(input),
+    onSuccess: (workspace, input) => {
+      queryClient.setQueryData(commercialKeys.workspace(), workspace)
+      setQuotationBuilderOpen(false)
+      setQuotationSourceRequestId(undefined)
+      toast.success(
+        input.status === 'Awaiting Approval'
+          ? 'Quotation submitted for approval'
+          : 'Quotation draft saved',
+      )
+    },
+    onError: (error) => {
+      const e = presentError(error, 'form-submit')
+      toast.error('Quotation could not be saved', { description: e.message })
+    },
+  })
+
+  const updateQuotation = useMutation({
+    mutationFn: ({ quotationId, input }: { quotationId: string; input: UpdateQuotationInput }) =>
+      commercialApi.updateQuotation(quotationId, input),
+    onSuccess: (workspace) => {
+      queryClient.setQueryData(commercialKeys.workspace(), workspace)
+      toast.success('Quotation updated')
+    },
+    onError: (error) => {
+      const e = presentError(error, 'background-action')
+      toast.error('Quotation could not be updated', { description: e.message })
     },
   })
 
@@ -71,6 +110,11 @@ export function CommercialSectionPage({ section }: { section: CommercialSection 
     if (!selectedRequestId || !query.data) return null
     return query.data.requests.find((item) => item.id === selectedRequestId) ?? null
   }, [query.data, selectedRequestId])
+
+  const selectedQuotation = useMemo(() => {
+    if (!selectedQuotationId || !query.data) return null
+    return query.data.quotations.find((item) => item.id === selectedQuotationId) ?? null
+  }, [query.data, selectedQuotationId])
 
   if (query.isPending || serviceAdministrationQuery.isPending) {
     return <DashboardSkeleton />
@@ -106,10 +150,17 @@ export function CommercialSectionPage({ section }: { section: CommercialSection 
         primaryAction={
           <PrototypeButton
             tone="primary"
-            onClick={() => section === 'service-requests' && setCreateOpen(true)}
+            onClick={() => {
+              if (section === 'service-requests') setCreateOpen(true)
+              if (section === 'quotations') setQuotationBuilderOpen(true)
+            }}
           >
             {section === 'service-requests' ? <IconFilePlus size={14} /> : <IconPlus size={14} />}{' '}
-            {section === 'service-requests' ? 'New Request' : 'Create'}
+            {section === 'service-requests'
+              ? 'New Request'
+              : section === 'quotations'
+                ? 'Build Quote'
+                : 'Create'}
           </PrototypeButton>
         }
       />
@@ -119,6 +170,12 @@ export function CommercialSectionPage({ section }: { section: CommercialSection 
           summary={query.data.summary}
           requests={query.data.requests}
           onOpenRequest={(request: CommercialServiceRequest) => setSelectedRequestId(request.id)}
+        />
+      ) : section === 'quotations' ? (
+        <QuotationsScreen
+          summary={query.data.quotationSummary}
+          quotations={query.data.quotations}
+          onOpen={(quotation) => setSelectedQuotationId(quotation.id)}
         />
       ) : (
         <main className="commercial-content">
@@ -146,12 +203,44 @@ export function CommercialSectionPage({ section }: { section: CommercialSection 
           onUpdate={(requestId, input) => updateRequest.mutate({ requestId, input })}
           onPrepareQuotation={(requestId) => {
             setSelectedRequestId(null)
-            toast.success('Opening quotation builder', {
-              description: `Quotation draft will use ${requestId}.`,
-            })
+            setQuotationSourceRequestId(requestId)
+            setQuotationBuilderOpen(true)
             void navigate({
               to: '/app/$section',
               params: { section: 'quotations' },
+            })
+          }}
+        />
+      ) : null}
+
+      {quotationBuilderOpen ? (
+        <QuotationBuilderWorkspace
+          requests={query.data.requests}
+          {...(quotationSourceRequestId ? { initialRequestId: quotationSourceRequestId } : {})}
+          saving={createQuotation.isPending}
+          onClose={() => {
+            setQuotationBuilderOpen(false)
+            setQuotationSourceRequestId(undefined)
+          }}
+          onSubmit={(input) => createQuotation.mutate(input)}
+        />
+      ) : null}
+
+      {selectedQuotation ? (
+        <QuotationDetailWorkspace
+          key={selectedQuotation.id}
+          quotation={selectedQuotation}
+          saving={updateQuotation.isPending}
+          onClose={() => setSelectedQuotationId(null)}
+          onUpdate={(quotationId, input) => updateQuotation.mutate({ quotationId, input })}
+          onCreateInvoice={(quotationId) => {
+            setSelectedQuotationId(null)
+            toast.success('Opening invoice builder', {
+              description: `Invoice draft will use ${quotationId}.`,
+            })
+            void navigate({
+              to: '/app/$section',
+              params: { section: 'invoices-payments' },
             })
           }}
         />
