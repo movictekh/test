@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 
 import { PERMISSIONS, requireRoutePermission } from '@/app/permissions'
-import { FoundationPage } from '@/modules/foundation/pages/FoundationPage'
+import { OperationsDashboardPage } from '@/modules/dashboard'
 
 export const Route = createFileRoute('/app/dashboard')({
   beforeLoad: ({ context }) => {
@@ -10,5 +10,5 @@ export const Route = createFileRoute('/app/dashboard')({
       permissions: [PERMISSIONS.dashboardRead],
     })
   },
-  component: FoundationPage,
+  component: OperationsDashboardPage,
 })

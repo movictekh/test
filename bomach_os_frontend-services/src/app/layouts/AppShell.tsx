@@ -165,7 +165,7 @@ export function AppShell({ children, navigation, variant = 'operations' }: AppSh
       >
         <div className="border-border flex items-center justify-between gap-1.5 border-b px-2 py-1.5">
           {sidebarCollapsed ? null : (
-            <span className="text-foreground-muted text-[0.5rem] font-bold leading-none tracking-[0.14em] uppercase">
+            <span className="text-foreground-muted text-[0.5rem] leading-none font-bold tracking-[0.14em] uppercase">
               Navigation
             </span>
           )}
@@ -173,7 +173,7 @@ export function AppShell({ children, navigation, variant = 'operations' }: AppSh
             variant="ghost"
             size="icon"
             aria-label={sidebarCollapsed ? 'Expand navigation' : 'Collapse navigation'}
-            className="size-7 text-foreground-muted hover:bg-surface-muted hover:text-foreground"
+            className="text-foreground-muted hover:bg-surface-muted hover:text-foreground size-7"
             onClick={() => setSidebarCollapsed((current) => !current)}
           >
             {sidebarCollapsed ? <IconChevronRight size={18} /> : <IconChevronLeft size={18} />}

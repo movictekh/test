@@ -19,14 +19,14 @@ export function StatCard({ label, value, description, trend, icon }: StatCardPro
   const TrendIcon = trend?.direction === 'down' ? IconArrowDownRight : IconArrowUpRight
 
   return (
-    <Card className="p-4">
+    <Card className="p-3">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-foreground-subtle text-xs font-medium">{label}</p>
-          <p className="text-foreground mt-1 text-2xl font-extrabold tracking-tight">{value}</p>
+          <p className="text-foreground-subtle text-[0.5625rem] font-semibold">{label}</p>
+          <p className="text-foreground mt-1 text-xl font-extrabold tracking-tight">{value}</p>
         </div>
         {icon ? (
-          <span className="bg-brand-50 text-brand-700 grid size-10 place-items-center rounded-xl">
+          <span className="bg-brand-50 text-brand-700 grid size-9 place-items-center rounded-xl">
             {icon}
           </span>
         ) : null}
