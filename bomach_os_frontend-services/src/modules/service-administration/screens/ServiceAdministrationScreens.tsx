@@ -19,9 +19,6 @@ const divisionClassNames: Record<string, string> = {
   'Information Technology': 'service-admin-service-icon--ict',
 }
 
-function statusClass
-}
-
 function statusClass(status: string) {
   if (status.toLowerCase() === 'active') return 'service-admin-pill-green'
   if (status.toLowerCase() === 'draft') return 'service-admin-pill-yellow'
@@ -91,14 +88,11 @@ export function ServiceCatalogueScreen({
         <div className="service-admin-service-grid">
           {filtered.map((service) => {
             const divisionClassName =
-              divisionClassNames[service.division] ??
-              'service-admin-service-icon--default'
+              divisionClassNames[service.division] ?? 'service-admin-service-icon--default'
 
             return (
               <article key={service.id} className="service-admin-service-card">
-                <div
-                  className={`service-admin-service-icon ${divisionClassName}`}
-                >
+                <div className={`service-admin-service-icon ${divisionClassName}`}>
                   <IconApps size={18} />
                 </div>
                 <div className="service-admin-service-name">{service.name}</div>
@@ -413,7 +407,9 @@ export function WorkflowDesignerScreen({
         <div className="service-admin-card-header">
           <div>
             <div className="service-admin-card-title">Workflow Designer</div>
-            <div className="service-admin-card-subtitle">Configure service fulfillment automation</div>
+            <div className="service-admin-card-subtitle">
+              Configure service fulfillment automation
+            </div>
           </div>
           <button
             type="button"
