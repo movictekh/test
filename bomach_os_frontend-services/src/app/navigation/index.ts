@@ -1,5 +1,10 @@
 export { clientPortalNavigation, operationsNavigation } from './navigation.config'
-export { getVisibleNavigation, isNavigationItemActive } from './navigation.utils'
+export {
+  findNavigationItemByPath,
+  getNavigationItemPath,
+  getVisibleNavigation,
+  isNavigationItemActive,
+} from './navigation.utils'
 export type {
   NavigationGroup,
   NavigationIconName,

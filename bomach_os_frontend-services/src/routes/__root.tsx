@@ -1,26 +1,14 @@
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import {
   Outlet,
   createRootRouteWithContext,
   type ErrorComponentProps,
 } from '@tanstack/react-router'
-import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 
 import type { RouterContext } from '@/app/router/router'
 import { ErrorState } from '@/shared/ui/error-state'
 
 function RootComponent() {
-  return (
-    <>
-      <Outlet />
-      {import.meta.env.DEV ? (
-        <>
-          <ReactQueryDevtools buttonPosition="bottom-left" initialIsOpen={false} />
-          <TanStackRouterDevtools position="bottom-right" />
-        </>
-      ) : null}
-    </>
-  )
+  return <Outlet />
 }
 
 function RootErrorComponent({ error, reset }: ErrorComponentProps) {

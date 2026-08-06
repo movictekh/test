@@ -21,16 +21,21 @@ export type NavigationIconName =
   | 'payments'
   | 'documents'
 
-export type NavigationPath = '/app/dashboard' | '/app/design-system' | '/portal/dashboard'
+export type NavigationPath =
+  | '/app/dashboard'
+  | '/app/design-system'
+  | '/portal/dashboard'
+  | '/app/shell/$section'
+  | '/portal/shell/$section'
 
 export interface NavigationItem {
   id: string
   label: string
   icon: NavigationIconName
-  to?: NavigationPath
+  to: NavigationPath
+  params?: Record<string, string>
   permissions?: readonly AppPermission[]
   permissionMode?: PermissionMode
-  disabled?: boolean
   badge?: string | number
   exact?: boolean
 }

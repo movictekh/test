@@ -20,9 +20,36 @@ export function getVisibleNavigation(
 }
 
 export function isNavigationItemActive(pathname: string, item: NavigationItem): boolean {
-  if (!item.to) {
-    return false
+  const targetPath = getNavigationItemPath(item)
+
+  return item.exact ? pathname === targetPath : pathname.startsWith(targetPath)
+}
+
+export function findNavigationItemByPath(
+  groups: readonly NavigationGroup[],
+  pathname: string,
+): NavigationItem | null {
+  for (const group of groups) {
+    for (const item of group.items) {
+      if (isNavigationItemActive(pathname, item)) {
+        return item
+      }
+    }
   }
 
-  return item.exact ? pathname === item.to : pathname.startsWith(item.to)
+  return null
+}
+
+export function getNavigationItemPath(item: NavigationItem): string {
+  if (!item.params) {
+    return item.to
+  }
+
+  let path: string = item.to
+
+  for (const [key, value] of Object.entries(item.params)) {
+    path = path.replace(`$${key}`, value)
+  }
+
+  return path
 }

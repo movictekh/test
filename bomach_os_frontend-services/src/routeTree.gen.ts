@@ -19,6 +19,8 @@ import { Route as AppDashboardRouteImport } from './routes/app/dashboard'
 import { Route as AppDesignSystemRouteImport } from './routes/app/design-system'
 import { Route as PortalIndexRouteImport } from './routes/portal/index'
 import { Route as PortalDashboardRouteImport } from './routes/portal/dashboard'
+import { Route as AppShellSectionRouteImport } from './routes/app/shell/$section'
+import { Route as PortalShellSectionRouteImport } from './routes/portal/shell/$section'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -70,6 +72,16 @@ const PortalDashboardRoute = PortalDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => PortalRoute,
 } as any)
+const AppShellSectionRoute = AppShellSectionRouteImport.update({
+  id: '/shell/$section',
+  path: '/shell/$section',
+  getParentRoute: () => AppRoute,
+} as any)
+const PortalShellSectionRoute = PortalShellSectionRouteImport.update({
+  id: '/shell/$section',
+  path: '/shell/$section',
+  getParentRoute: () => PortalRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -82,6 +94,8 @@ export interface FileRoutesByFullPath {
   '/portal/dashboard': typeof PortalDashboardRoute
   '/app/': typeof AppIndexRoute
   '/portal/': typeof PortalIndexRoute
+  '/app/shell/$section': typeof AppShellSectionRoute
+  '/portal/shell/$section': typeof PortalShellSectionRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -92,6 +106,8 @@ export interface FileRoutesByTo {
   '/portal/dashboard': typeof PortalDashboardRoute
   '/app': typeof AppIndexRoute
   '/portal': typeof PortalIndexRoute
+  '/app/shell/$section': typeof AppShellSectionRoute
+  '/portal/shell/$section': typeof PortalShellSectionRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -105,6 +121,8 @@ export interface FileRoutesById {
   '/portal/dashboard': typeof PortalDashboardRoute
   '/app/': typeof AppIndexRoute
   '/portal/': typeof PortalIndexRoute
+  '/app/shell/$section': typeof AppShellSectionRoute
+  '/portal/shell/$section': typeof PortalShellSectionRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -119,6 +137,8 @@ export interface FileRouteTypes {
     | '/portal/dashboard'
     | '/app/'
     | '/portal/'
+    | '/app/shell/$section'
+    | '/portal/shell/$section'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -129,6 +149,8 @@ export interface FileRouteTypes {
     | '/portal/dashboard'
     | '/app'
     | '/portal'
+    | '/app/shell/$section'
+    | '/portal/shell/$section'
   id:
     | '__root__'
     | '/'
@@ -141,6 +163,8 @@ export interface FileRouteTypes {
     | '/portal/dashboard'
     | '/app/'
     | '/portal/'
+    | '/app/shell/$section'
+    | '/portal/shell/$section'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -223,6 +247,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PortalDashboardRouteImport
       parentRoute: typeof PortalRoute
     }
+    '/app/shell/$section': {
+      id: '/app/shell/$section'
+      path: '/shell/$section'
+      fullPath: '/app/shell/$section'
+      preLoaderRoute: typeof AppShellSectionRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/portal/shell/$section': {
+      id: '/portal/shell/$section'
+      path: '/shell/$section'
+      fullPath: '/portal/shell/$section'
+      preLoaderRoute: typeof PortalShellSectionRouteImport
+      parentRoute: typeof PortalRoute
+    }
   }
 }
 
@@ -230,12 +268,14 @@ interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRoute
   AppDesignSystemRoute: typeof AppDesignSystemRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppShellSectionRoute: typeof AppShellSectionRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
   AppDesignSystemRoute: AppDesignSystemRoute,
   AppIndexRoute: AppIndexRoute,
+  AppShellSectionRoute: AppShellSectionRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
@@ -243,11 +283,13 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 interface PortalRouteChildren {
   PortalDashboardRoute: typeof PortalDashboardRoute
   PortalIndexRoute: typeof PortalIndexRoute
+  PortalShellSectionRoute: typeof PortalShellSectionRoute
 }
 
 const PortalRouteChildren: PortalRouteChildren = {
   PortalDashboardRoute: PortalDashboardRoute,
   PortalIndexRoute: PortalIndexRoute,
+  PortalShellSectionRoute: PortalShellSectionRoute,
 }
 
 const PortalRouteWithChildren =

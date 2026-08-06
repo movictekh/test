@@ -2,12 +2,10 @@ import {
   IconBook,
   IconBuildingCommunity,
   IconCalculator,
-  IconChecklist,
-  IconChevronLeft,
-  IconChevronRight,
   IconClipboardCheck,
   IconCreditCard,
-  IconFileDescription,
+  IconChevronLeft,
+  IconChevronRight,
   IconFileInvoice,
   IconForms,
   IconGitBranch,
@@ -15,14 +13,16 @@ import {
   IconLayoutDashboard,
   IconLogout,
   IconMenu2,
-  IconMessageCircle,
+  IconMessageStar,
+  IconPackage,
   IconReceipt,
-  IconReportAnalytics,
+  IconChartBar,
   IconSearch,
   IconSettings,
   IconShieldCheck,
-  IconStack2,
-  IconUserCircle,
+  IconUserScreen,
+  IconListCheck,
+  IconFolders,
   IconX,
 } from '@tabler/icons-react'
 import { Link, useNavigate, useRouter, useRouterState } from '@tanstack/react-router'
@@ -47,16 +47,16 @@ const navigationIcons: Record<NavigationIconName, typeof IconLayoutDashboard> = 
   workflow: IconGitBranch,
   branches: IconBuildingCommunity,
   requests: IconBook,
-  quotations: IconReceipt,
-  invoices: IconFileInvoice,
+  quotations: IconFileInvoice,
+  invoices: IconReceipt,
   approvals: IconShieldCheck,
-  orders: IconStack2,
-  tasks: IconChecklist,
-  deliverables: IconFileDescription,
-  feedback: IconMessageCircle,
-  reports: IconReportAnalytics,
+  orders: IconPackage,
+  tasks: IconListCheck,
+  deliverables: IconFolders,
+  feedback: IconMessageStar,
+  reports: IconChartBar,
   audit: IconHistory,
-  portal: IconUserCircle,
+  portal: IconUserScreen,
   payments: IconCreditCard,
   documents: IconClipboardCheck,
 }
@@ -159,10 +159,27 @@ export function AppShell({ children, navigation, variant = 'operations' }: AppSh
       <aside
         className={cn(
           'border-border bg-surface fixed top-16 bottom-0 left-0 z-50 flex flex-col border-r transition-[width,transform] duration-200 lg:z-30 lg:translate-x-0',
-          sidebarCollapsed ? 'w-20' : 'w-64',
+          sidebarCollapsed ? 'w-14' : 'w-52',
           mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full',
         )}
       >
+        <div className="border-border flex items-center justify-between gap-1.5 border-b px-2 py-1.5">
+          {sidebarCollapsed ? null : (
+            <span className="text-foreground-muted text-[0.5rem] font-bold leading-none tracking-[0.14em] uppercase">
+              Navigation
+            </span>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={sidebarCollapsed ? 'Expand navigation' : 'Collapse navigation'}
+            className="size-7 text-foreground-muted hover:bg-surface-muted hover:text-foreground"
+            onClick={() => setSidebarCollapsed((current) => !current)}
+          >
+            {sidebarCollapsed ? <IconChevronRight size={18} /> : <IconChevronLeft size={18} />}
+          </Button>
+        </div>
+
         <div className="border-border flex items-center justify-between border-b p-3 lg:hidden">
           <span className="text-foreground-muted text-xs font-bold">Navigation</span>
           <Button
@@ -177,77 +194,52 @@ export function AppShell({ children, navigation, variant = 'operations' }: AppSh
 
         <nav
           aria-label="Main navigation"
-          className="flex-1 scrollbar-thin space-y-5 overflow-y-auto p-3"
+          className="flex-1 scrollbar-thin space-y-3 overflow-y-auto py-1.5"
         >
           {visibleNavigation.map((group) => (
             <section key={group.id} aria-labelledby={`${group.id}-navigation-label`}>
               {group.label && !sidebarCollapsed ? (
                 <h2
                   id={`${group.id}-navigation-label`}
-                  className="text-foreground-subtle mb-1.5 px-3 text-[0.625rem] font-extrabold tracking-[0.12em] uppercase"
+                  className="text-foreground-subtle mb-1 px-3 text-[0.5rem] font-extrabold tracking-[0.14em] uppercase"
                 >
                   {group.label}
                 </h2>
               ) : null}
 
-              <div className="space-y-1">
+              <div className="space-y-0.5 px-2">
                 {group.items.map((item) => {
                   const Icon = navigationIcons[item.icon]
                   const active = isNavigationItemActive(pathname, item)
                   const itemClasses = cn(
-                    'flex min-h-10 w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-xs font-semibold transition-colors',
+                    'flex min-h-8 w-full items-center gap-2 rounded-md border-l-3 border-l-transparent px-2.5 py-1.5 text-left text-[0.65625rem] font-semibold transition-colors',
                     active
-                      ? 'bg-brand-50 text-brand-700'
+                      ? 'bg-brand-50 text-brand-700 border-l-brand-600'
                       : 'text-foreground-muted hover:bg-surface-muted hover:text-foreground',
-                    sidebarCollapsed && 'justify-center px-2',
-                    item.disabled && 'cursor-not-allowed opacity-45',
+                    sidebarCollapsed && 'justify-center px-1.5',
                   )
 
                   const content = (
                     <>
-                      <Icon size={18} className="shrink-0" aria-hidden="true" />
+                      <Icon size={16} className="shrink-0" aria-hidden="true" />
                       {sidebarCollapsed ? null : (
-                        <>
-                          <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                          {item.disabled ? (
-                            <span className="bg-surface-subtle text-foreground-subtle rounded px-1.5 py-0.5 text-[0.5625rem] font-bold uppercase">
-                              Soon
-                            </span>
-                          ) : item.badge ? (
-                            <span className="bg-accent-600 rounded-full px-1.5 py-0.5 text-[0.625rem] font-bold text-white">
-                              {item.badge}
-                            </span>
-                          ) : null}
-                        </>
+                        <span className="min-w-0 flex-1 truncate">{item.label}</span>
                       )}
                     </>
                   )
 
-                  if (item.to && !item.disabled) {
-                    return (
-                      <Link
-                        key={item.id}
-                        to={item.to}
-                        className={itemClasses}
-                        aria-current={active ? 'page' : undefined}
-                        title={sidebarCollapsed ? item.label : undefined}
-                        onClick={() => setMobileSidebarOpen(false)}
-                      >
-                        {content}
-                      </Link>
-                    )
-                  }
-
                   return (
-                    <button
+                    <Link
                       key={item.id}
-                      type="button"
-                      disabled
+                      to={item.to}
+                      {...(item.params ? { params: item.params } : {})}
                       className={itemClasses}
-                      title={sidebarCollapsed ? `${item.label} — coming soon` : undefined}
+                      aria-current={active ? 'page' : undefined}
+                      title={sidebarCollapsed ? item.label : undefined}
+                      onClick={() => setMobileSidebarOpen(false)}
                     >
                       {content}
-                    </button>
+                    </Link>
                   )
                 })}
               </div>
@@ -257,26 +249,14 @@ export function AppShell({ children, navigation, variant = 'operations' }: AppSh
 
         <div className="border-border space-y-2 border-t p-3">
           <Button
-            variant="ghost"
+            variant="danger"
             size="sm"
             fullWidth
-            className={cn(sidebarCollapsed && 'px-0')}
+            className={cn('justify-start px-2.5', sidebarCollapsed && 'justify-center px-0')}
             onClick={handleSignOut}
           >
-            <IconLogout size={17} />
+            <IconLogout size={16} />
             {sidebarCollapsed ? null : 'Sign out'}
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            fullWidth
-            className={cn('hidden lg:inline-flex', sidebarCollapsed && 'px-0')}
-            aria-label={sidebarCollapsed ? 'Expand navigation' : 'Collapse navigation'}
-            onClick={() => setSidebarCollapsed((current) => !current)}
-          >
-            {sidebarCollapsed ? <IconChevronRight size={17} /> : <IconChevronLeft size={17} />}
-            {sidebarCollapsed ? null : 'Collapse'}
           </Button>
         </div>
       </aside>
@@ -284,7 +264,7 @@ export function AppShell({ children, navigation, variant = 'operations' }: AppSh
       <div
         className={cn(
           'min-h-screen pt-16 transition-[padding] duration-200',
-          sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64',
+          sidebarCollapsed ? 'lg:pl-14' : 'lg:pl-52',
         )}
       >
         {children}
