@@ -82,6 +82,14 @@ export function AppShell({ children, navigation, variant = 'operations' }: AppSh
     [navigation, user],
   )
 
+  const toggleSidebar = () => {
+    setSidebarCollapsed((current) => {
+      const next = !current
+      window.localStorage.setItem('bomach.operations.sidebar-collapsed', String(next))
+      return next
+    })
+  }
+
   const handleSignOut = async () => {
     await signOut()
     await router.invalidate()
@@ -180,7 +188,7 @@ export function AppShell({ children, navigation, variant = 'operations' }: AppSh
             size="icon"
             aria-label={sidebarCollapsed ? 'Expand navigation' : 'Collapse navigation'}
             className="text-foreground-muted hover:bg-surface-muted hover:text-foreground size-7"
-            onClick={() => setSidebarCollapsed((current) => !current)}
+            onClick={toggleSidebar}
           >
             {sidebarCollapsed ? <IconChevronRight size={18} /> : <IconChevronLeft size={18} />}
           </Button>

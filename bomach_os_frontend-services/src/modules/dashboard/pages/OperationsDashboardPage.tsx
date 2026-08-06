@@ -142,9 +142,9 @@ function LifecycleCard({ stages }: { stages: DashboardPipelineStage[] }) {
               key={stage.key}
               className={`command-center-step${
                 state === 'done'
-                  ? ' command-center-step--done'
+                  ? 'command-center-step--done'
                   : state === 'active'
-                    ? ' command-center-step--active'
+                    ? 'command-center-step--active'
                     : ''
               }`}
             >
@@ -167,9 +167,7 @@ function RequestsTable({ items }: { items: DashboardAttentionItem[] }) {
       <div className="command-center-card-header">
         <div>
           <div className="command-center-card-title">Requests requiring action</div>
-          <div className="command-center-card-subtitle">
-            Prioritized by SLA, value and urgency
-          </div>
+          <div className="command-center-card-subtitle">Prioritized by SLA, value and urgency</div>
         </div>
         <Link
           to="/app/shell/$section"
@@ -210,9 +208,7 @@ function RequestsTable({ items }: { items: DashboardAttentionItem[] }) {
                 <td>{item.client ?? '—'}</td>
                 <td>{item.service ?? '—'}</td>
                 <td>
-                  <span
-                    className={`command-center-pill ${statusPillClass(item.statusLabel)}`}
-                  >
+                  <span className={`command-center-pill ${statusPillClass(item.statusLabel)}`}>
                     {item.statusLabel ?? item.severity}
                   </span>
                 </td>
@@ -234,10 +230,7 @@ function ExecutiveAlertsCard({ alerts }: { alerts: DashboardExecutiveAlert[] }) 
         <div className="command-center-card-title">Executive alerts</div>
       </div>
       {alerts.map((alert) => (
-        <div
-          key={alert.id}
-          className={`command-center-notice ${alertNoticeClass(alert.severity)}`}
-        >
+        <div key={alert.id} className={`command-center-notice ${alertNoticeClass(alert.severity)}`}>
           <b>{alertTitle(alert)}</b>
           <br />
           {alert.description}

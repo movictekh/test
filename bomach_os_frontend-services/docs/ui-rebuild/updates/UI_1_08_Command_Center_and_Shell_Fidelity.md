@@ -72,3 +72,17 @@ npm run build:storybook
 ```
 
 The final Phase UI-1 slice is UI-1.09: states, tests, screenshot comparison and sign-off.
+
+## Final repository verification
+
+The latest pushed source contained the local-storage initializer but did not
+write the changed collapsed state back to storage. The collapse control now:
+
+- calculates the next state;
+- stores it under `bomach.operations.sidebar-collapsed`;
+- updates the React state from the same value.
+
+The collapsed or expanded desktop navigation state therefore survives a page
+refresh as required.
+
+UI-1.08 is complete after the project checks pass.

@@ -107,7 +107,7 @@ function Field({
 }) {
   return (
     <label
-      className={`service-admin-config-field${full ? ' service-admin-config-field--full' : ''}`}
+      className={`service-admin-config-field${full ? 'service-admin-config-field--full' : ''}`}
     >
       <span>
         {label}
@@ -340,11 +340,7 @@ export function CreateServiceWizard({
       {step === 0 ? (
         <div className="service-admin-form-grid">
           <Field label="Service name" required>
-            <input
-              value={name}
-              required
-              onChange={(event) => setName(event.target.value)}
-            />
+            <input value={name} required onChange={(event) => setName(event.target.value)} />
           </Field>
           <Field label="Service code" required>
             <input
@@ -362,11 +358,7 @@ export function CreateServiceWizard({
             </select>
           </Field>
           <Field label="Owner role" required>
-            <input
-              value={owner}
-              required
-              onChange={(event) => setOwner(event.target.value)}
-            />
+            <input value={owner} required onChange={(event) => setOwner(event.target.value)} />
           </Field>
           <Field label="Description" full required>
             <textarea
