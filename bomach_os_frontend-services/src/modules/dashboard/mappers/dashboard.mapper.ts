@@ -11,6 +11,7 @@ import type {
   DashboardMyWork,
   DashboardPipelineStage,
   DashboardProgressTone,
+  DashboardRevenueByDivision,
   DashboardRiskItem,
   DashboardServicePerformance,
   DashboardSeverity,
@@ -173,6 +174,15 @@ function mapBranch(value: unknown, index: number): DashboardBranchPerformance {
   }
 }
 
+function mapDivisionRevenue(value: unknown, index: number): DashboardRevenueByDivision {
+  const x = rec(value)
+  return {
+    id: str(x.id, `division-${index + 1}`),
+    division: str(x.division_name ?? x.division ?? x.name, 'Division'),
+    verifiedRevenue: num(x.verified_revenue ?? x.revenue ?? x.amount),
+  }
+}
+
 function mapRisk(value: unknown, index: number): DashboardRiskItem {
   const x = rec(value)
   const severity = sev(x.severity)
@@ -231,6 +241,7 @@ export function mapDashboardSummary(payload: unknown): OperationsDashboardSummar
     operationsHealth: arr(source.operations_health).map(mapHealth),
     servicePerformance: arr(source.service_performance).map(mapService),
     branchPerformance: arr(source.branch_performance).map(mapBranch),
+    revenueByDivision: arr(source.revenue_by_division).map(mapDivisionRevenue),
     risks: arr(source.risks ?? source.at_risk).map(mapRisk),
     myWork: mapMyWork(source.my_work),
     ...(configuration ? { configuration } : {}),

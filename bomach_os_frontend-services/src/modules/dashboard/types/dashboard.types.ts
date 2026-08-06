@@ -87,6 +87,12 @@ export interface DashboardBranchPerformance {
   clientSatisfaction: number
 }
 
+export interface DashboardRevenueByDivision {
+  id: string
+  division: string
+  verifiedRevenue: number
+}
+
 export interface DashboardRiskItem {
   id: string
   severity: Exclude<DashboardSeverity, 'success'>
@@ -120,6 +126,7 @@ export interface OperationsDashboardSummary {
   operationsHealth: DashboardHealthMetric[]
   servicePerformance: DashboardServicePerformance[]
   branchPerformance: DashboardBranchPerformance[]
+  revenueByDivision: DashboardRevenueByDivision[]
   risks: DashboardRiskItem[]
   myWork: DashboardMyWork
   configuration?: DashboardConfigurationReadiness

@@ -68,7 +68,10 @@ interface AppShellProps extends PropsWithChildren {
 
 export function AppShell({ children, navigation, variant = 'operations' }: AppShellProps) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return window.localStorage.getItem('bomach.operations.sidebar-collapsed') === 'true'
+  })
   const { user, signOut } = useAuth()
   const router = useRouter()
   const navigate = useNavigate()
@@ -100,6 +103,8 @@ export function AppShell({ children, navigation, variant = 'operations' }: AppSh
             size="icon"
             className="shrink-0 text-white hover:bg-white/10 hover:text-white lg:hidden"
             aria-label="Open navigation"
+            aria-controls="operations-navigation"
+            aria-expanded={mobileSidebarOpen}
             onClick={() => setMobileSidebarOpen(true)}
           >
             <IconMenu2 size={20} />
@@ -157,6 +162,7 @@ export function AppShell({ children, navigation, variant = 'operations' }: AppSh
       ) : null}
 
       <aside
+        id="operations-navigation"
         className={cn(
           'border-border bg-surface fixed top-16 bottom-0 left-0 z-50 flex flex-col border-r transition-[width,transform] duration-200 lg:z-30 lg:translate-x-0',
           sidebarCollapsed ? 'w-14' : 'w-52',
@@ -263,11 +269,11 @@ export function AppShell({ children, navigation, variant = 'operations' }: AppSh
 
       <div
         className={cn(
-          'min-h-screen pt-16 transition-[padding] duration-200',
+          'min-h-screen min-w-0 pt-16 transition-[padding] duration-200',
           sidebarCollapsed ? 'lg:pl-14' : 'lg:pl-52',
         )}
       >
-        {children}
+        <div className="min-w-0">{children}</div>
       </div>
     </div>
   )

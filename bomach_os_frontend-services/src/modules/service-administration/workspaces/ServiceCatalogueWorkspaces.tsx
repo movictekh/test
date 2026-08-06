@@ -49,12 +49,14 @@ function splitLines(value: string) {
 function ModalShell({
   title,
   wide = false,
+  variant = 'default',
   children,
   footer,
   onClose,
 }: {
   title: string
   wide?: boolean
+  variant?: 'default' | 'wizard'
   children: React.ReactNode
   footer: React.ReactNode
   onClose: () => void
@@ -65,7 +67,13 @@ function ModalShell({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`service-admin-modal ${wide ? 'service-admin-modal--wide' : ''}`}
+        className={[
+          'service-admin-modal',
+          wide ? 'service-admin-modal--wide' : '',
+          variant === 'wizard' ? 'service-admin-modal--wizard' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
         onMouseDown={(event) => event.stopPropagation()}
       >
         <header className="service-admin-modal-header">
@@ -90,16 +98,23 @@ function Field({
   label,
   children,
   full = false,
+  required = false,
 }: {
   label: string
   children: React.ReactNode
   full?: boolean
+  required?: boolean
 }) {
   return (
-    <div className={`f ${full ? 'full' : ''}`}>
-      <label>{label}</label>
+    <label
+      className={`service-admin-config-field${full ? ' service-admin-config-field--full' : ''}`}
+    >
+      <span>
+        {label}
+        {required ? <em className="service-admin-required">*</em> : null}
+      </span>
       {children}
-    </div>
+    </label>
   )
 }
 
@@ -115,6 +130,7 @@ export function CreateServiceWizard({
   onSubmit: (input: CreateServiceWizardInput) => void
 }) {
   const [step, setStep] = useState(0)
+  const [maxReachedStep, setMaxReachedStep] = useState(0)
   const [name, setName] = useState('')
   const [code, setCode] = useState('')
   const [division, setDivision] = useState(divisions[0] ?? '')
@@ -143,15 +159,82 @@ export function CreateServiceWizard({
   )
   const [selectedBranches, setSelectedBranches] = useState<string[]>([...branches])
   const [status, setStatus] = useState<'active' | 'draft' | 'inactive'>('draft')
+  const [clientVisibility, setClientVisibility] = useState('Visible in catalogue')
   const [error, setError] = useState('')
 
   if (!open) return null
 
-  const next = () => {
-    if (step === 0 && (!name.trim() || !code.trim())) {
-      setError('Service name and code are required.')
+  const validateStep = (index: number): string | null => {
+    if (index === 0) {
+      if (!name.trim()) return 'Service name is required.'
+      if (!code.trim()) return 'Service code is required.'
+      if (!division.trim()) return 'Division is required.'
+      if (!owner.trim()) return 'Owner role is required.'
+      if (!description.trim()) return 'Description is required.'
+      if (!Number.isFinite(slaDays) || slaDays < 1) return 'SLA must be at least 1 day.'
+      if (!fulfilmentMode.trim()) return 'Fulfillment mode is required.'
+      return null
+    }
+
+    if (index === 1) {
+      if (splitLines(subservices).length === 0) return 'Add at least one sub-service.'
+      return null
+    }
+
+    if (index === 2) {
+      if (!pricingMethod.trim()) return 'Pricing method is required.'
+      if (!Number.isFinite(rate) || rate < 0) return 'Base / unit price is required.'
+      if (!Number.isFinite(depositPercent) || depositPercent < 0 || depositPercent > 100) {
+        return 'Deposit (%) must be between 0 and 100.'
+      }
+      if (!Number.isFinite(taxPercent) || taxPercent < 0 || taxPercent > 100) {
+        return 'Tax (%) must be between 0 and 100.'
+      }
+      if (
+        !Number.isFinite(discountApprovalPercent) ||
+        discountApprovalPercent < 0 ||
+        discountApprovalPercent > 100
+      ) {
+        return 'Discount approval (%) must be between 0 and 100.'
+      }
+      return null
+    }
+
+    if (index === 3) {
+      if (requestFields.length === 0) return 'Select at least one request form field.'
+      return null
+    }
+
+    if (index === 4) {
+      if (splitLines(workflow).length === 0) return 'Add at least one workflow stage.'
+      return null
+    }
+
+    if (index === 5) {
+      if (selectedBranches.length === 0) return 'Select at least one active branch.'
+      return null
+    }
+
+    return null
+  }
+
+  const goToStep = (index: number) => {
+    if (index === step) return
+    if (index > maxReachedStep) {
+      setError('Complete the current step before opening a later step.')
       return
     }
+    setError('')
+    setStep(index)
+  }
+
+  const next = () => {
+    const validationError = validateStep(step)
+    if (validationError) {
+      setError(validationError)
+      return
+    }
+
     setError('')
     if (step === wizardSteps.length - 1) {
       onSubmit({
@@ -177,30 +260,43 @@ export function CreateServiceWizard({
       })
       return
     }
-    setStep((current) => Math.min(wizardSteps.length - 1, current + 1))
+
+    const following = Math.min(wizardSteps.length - 1, step + 1)
+    setMaxReachedStep((current) => Math.max(current, following))
+    setStep(following)
+  }
+
+  const previous = () => {
+    setError('')
+    setStep((current) => Math.max(0, current - 1))
+  }
+
+  const handleClose = () => {
+    setStep(0)
+    setMaxReachedStep(0)
+    setError('')
+    onClose()
   }
 
   return (
     <ModalShell
       title="Create & Activate Service"
       wide
-      onClose={onClose}
+      variant="wizard"
+      onClose={handleClose}
       footer={
         <>
-          <button type="button" className="service-admin-button" onClick={onClose}>
-            Cancel
-          </button>
           <button
             type="button"
-            className="service-admin-button"
-            disabled={step === 0}
-            onClick={() => setStep((current) => Math.max(0, current - 1))}
+            className="service-admin-button service-admin-wizard-nav-btn"
+            disabled={step === 0 || pending}
+            onClick={previous}
           >
             Previous
           </button>
           <button
             type="button"
-            className="service-admin-button service-admin-button-primary"
+            className="service-admin-button service-admin-button-primary service-admin-wizard-nav-btn service-admin-wizard-nav-btn--primary"
             disabled={pending}
             onClick={next}
           >
@@ -209,60 +305,89 @@ export function CreateServiceWizard({
         </>
       }
     >
-      <div className="service-admin-wizard-steps">
-        {wizardSteps.map((item, index) => (
-          <div
-            key={item}
-            className={`service-admin-wizard-step ${
-              index === step ? 'service-admin-wizard-step--active' : ''
-            }`}
-          >
-            {index + 1}. {item}
-          </div>
-        ))}
+      <div className="service-admin-wizard-steps" role="tablist" aria-label="Create service steps">
+        {wizardSteps.map((item, index) => {
+          const isActive = index === step
+          const isReached = index <= maxReachedStep
+          const isComplete = index < step || (index < maxReachedStep && index !== step)
+
+          return (
+            <button
+              key={item}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              aria-disabled={!isReached}
+              disabled={!isReached || pending}
+              className={[
+                'service-admin-wizard-step',
+                isActive ? 'service-admin-wizard-step--active' : '',
+                isComplete ? 'service-admin-wizard-step--complete' : '',
+                isReached ? 'service-admin-wizard-step--reachable' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+              onClick={() => goToStep(index)}
+            >
+              {index + 1}. {item}
+            </button>
+          )
+        })}
       </div>
 
       {error ? <div className="service-admin-notice service-admin-notice-red">{error}</div> : null}
 
       {step === 0 ? (
         <div className="service-admin-form-grid">
-          <Field label="Service name">
-            <input value={name} onChange={(event) => setName(event.target.value)} />
+          <Field label="Service name" required>
+            <input
+              value={name}
+              required
+              onChange={(event) => setName(event.target.value)}
+            />
           </Field>
-          <Field label="Service code">
+          <Field label="Service code" required>
             <input
               value={code}
+              required
               placeholder="ENG-REN"
               onChange={(event) => setCode(event.target.value)}
             />
           </Field>
-          <Field label="Division">
-            <select value={division} onChange={(event) => setDivision(event.target.value)}>
+          <Field label="Division" required>
+            <select value={division} required onChange={(event) => setDivision(event.target.value)}>
               {divisions.map((item) => (
                 <option key={item}>{item}</option>
               ))}
             </select>
           </Field>
-          <Field label="Owner role">
-            <input value={owner} onChange={(event) => setOwner(event.target.value)} />
+          <Field label="Owner role" required>
+            <input
+              value={owner}
+              required
+              onChange={(event) => setOwner(event.target.value)}
+            />
           </Field>
-          <Field label="Description" full>
+          <Field label="Description" full required>
             <textarea
               value={description}
+              required
               onChange={(event) => setDescription(event.target.value)}
             />
           </Field>
-          <Field label="SLA (days)">
+          <Field label="SLA (days)" required>
             <input
               type="number"
               min={1}
+              required
               value={slaDays}
               onChange={(event) => setSlaDays(Number(event.target.value))}
             />
           </Field>
-          <Field label="Fulfillment mode">
+          <Field label="Fulfillment mode" required>
             <select
               value={fulfilmentMode}
+              required
               onChange={(event) => setFulfilmentMode(event.target.value)}
             >
               <option>Quick service order</option>
@@ -276,10 +401,11 @@ export function CreateServiceWizard({
       ) : null}
 
       {step === 1 ? (
-        <Field label="Sub-services — one per line" full>
+        <Field label="Sub-services — one per line" full required>
           <textarea
             className="service-admin-wizard-textarea"
             value={subservices}
+            required
             onChange={(event) => setSubservices(event.target.value)}
           />
         </Field>
@@ -287,9 +413,10 @@ export function CreateServiceWizard({
 
       {step === 2 ? (
         <div className="service-admin-form-grid">
-          <Field label="Pricing method">
+          <Field label="Pricing method" required>
             <select
               value={pricingMethod}
+              required
               onChange={(event) => setPricingMethod(event.target.value)}
             >
               <option>Fixed</option>
@@ -298,30 +425,41 @@ export function CreateServiceWizard({
               <option>Percentage</option>
             </select>
           </Field>
-          <Field label="Base / unit price">
+          <Field label="Base / unit price" required>
             <input
               type="number"
+              min={0}
+              required
               value={rate}
               onChange={(event) => setRate(Number(event.target.value))}
             />
           </Field>
-          <Field label="Deposit (%)">
+          <Field label="Deposit (%)" required>
             <input
               type="number"
+              min={0}
+              max={100}
+              required
               value={depositPercent}
               onChange={(event) => setDepositPercent(Number(event.target.value))}
             />
           </Field>
-          <Field label="Tax (%)">
+          <Field label="Tax (%)" required>
             <input
               type="number"
+              min={0}
+              max={100}
+              required
               value={taxPercent}
               onChange={(event) => setTaxPercent(Number(event.target.value))}
             />
           </Field>
-          <Field label="Discount approval above (%)">
+          <Field label="Discount approval above (%)" required>
             <input
               type="number"
+              min={0}
+              max={100}
+              required
               value={discountApprovalPercent}
               onChange={(event) => setDiscountApprovalPercent(Number(event.target.value))}
             />
@@ -332,7 +470,8 @@ export function CreateServiceWizard({
       {step === 3 ? (
         <>
           <div className="service-admin-notice service-admin-notice-blue">
-            Select information required from clients when they submit this service request.
+            Select information required before submission.
+            <em className="service-admin-required">*</em>
           </div>
           <div className="service-admin-check-grid">
             {requestFieldOptions.map((field) => (
@@ -356,10 +495,11 @@ export function CreateServiceWizard({
       ) : null}
 
       {step === 4 ? (
-        <Field label="Workflow stages — one per line" full>
+        <Field label="Workflow stages — one per line" full required>
           <textarea
             className="service-admin-wizard-textarea"
             value={workflow}
+            required
             onChange={(event) => setWorkflow(event.target.value)}
           />
         </Field>
@@ -367,31 +507,31 @@ export function CreateServiceWizard({
 
       {step === 5 ? (
         <>
-          <div className="service-admin-notice service-admin-notice-green">
-            Review branch availability and choose the initial publication state.
-          </div>
-          <div className="service-admin-check-grid">
-            {branches.map((branch) => (
-              <label key={branch} className="service-admin-check-option">
-                <input
-                  type="checkbox"
-                  checked={selectedBranches.includes(branch)}
-                  onChange={(event) =>
-                    setSelectedBranches((current) =>
-                      event.target.checked
-                        ? [...current, branch]
-                        : current.filter((item) => item !== branch),
-                    )
-                  }
-                />
-                {branch}
-              </label>
-            ))}
-          </div>
+          <Field label="Active branches" full required>
+            <div className="service-admin-check-grid service-admin-check-grid--branches">
+              {branches.map((branch) => (
+                <label key={branch} className="service-admin-check-option">
+                  <input
+                    type="checkbox"
+                    checked={selectedBranches.includes(branch)}
+                    onChange={(event) =>
+                      setSelectedBranches((current) =>
+                        event.target.checked
+                          ? [...current, branch]
+                          : current.filter((item) => item !== branch),
+                      )
+                    }
+                  />
+                  {branch}
+                </label>
+              ))}
+            </div>
+          </Field>
           <div className="service-admin-form-grid service-admin-publish-grid">
-            <Field label="Publication status">
+            <Field label="Status" required>
               <select
                 value={status}
+                required
                 onChange={(event) => setStatus(event.target.value as typeof status)}
               >
                 <option value="draft">Draft</option>
@@ -399,6 +539,21 @@ export function CreateServiceWizard({
                 <option value="inactive">Paused</option>
               </select>
             </Field>
+            <Field label="Client visibility" required>
+              <select
+                value={clientVisibility}
+                required
+                onChange={(event) => setClientVisibility(event.target.value)}
+              >
+                <option>Visible in catalogue</option>
+                <option>Internal only</option>
+                <option>Hidden</option>
+              </select>
+            </Field>
+          </div>
+          <div className="service-admin-notice service-admin-notice-green">
+            <b>Ready to create.</b> The service, calculator, request form, workflow and branch
+            activation will be created together.
           </div>
         </>
       ) : null}

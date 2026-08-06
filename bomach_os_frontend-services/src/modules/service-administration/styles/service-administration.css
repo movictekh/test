@@ -466,6 +466,136 @@
   width: min(1020px, 100%);
 }
 
+.service-admin-modal--wizard {
+  width: min(920px, calc(100vw - 32px));
+  height: min(560px, calc(100vh - 32px));
+  max-height: min(560px, calc(100vh - 32px));
+}
+
+.service-admin-modal--wizard .service-admin-modal-body {
+  display: block;
+  overflow: auto;
+}
+
+.service-admin-modal--wizard .service-admin-wizard-steps {
+  flex-shrink: 0;
+}
+
+.service-admin-modal--wizard .service-admin-wizard-textarea {
+  min-height: 220px;
+}
+
+.service-admin-modal--wizard .service-admin-modal-footer {
+  gap: 10px;
+  padding: 14px 16px;
+  background: #f8fafc;
+}
+
+.service-admin-wizard-steps {
+  display: flex;
+  gap: 5px;
+  overflow: auto;
+  margin-bottom: 14px;
+}
+
+.service-admin-wizard-step {
+  flex: 1;
+  min-width: 90px;
+  border: 1px solid var(--proto-b);
+  border-radius: 7px;
+  background: var(--proto-s);
+  padding: 8px 7px;
+  color: var(--proto-t3);
+  font-size: 8.5px;
+  font-weight: 800;
+  text-align: center;
+  white-space: nowrap;
+  cursor: default;
+}
+
+button.service-admin-wizard-step {
+  font: inherit;
+  appearance: none;
+}
+
+button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disabled) {
+  cursor: pointer;
+}
+
+button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disabled):hover {
+  border-color: #a9c0f6;
+  background: #f4f7ff;
+  color: var(--proto-n);
+}
+
+.service-admin-wizard-step--active {
+  border-color: #a9c0f6;
+  background: #edf2ff;
+  color: var(--proto-n);
+}
+
+.service-admin-wizard-step--complete:not(.service-admin-wizard-step--active) {
+  border-color: #a7f3d0;
+  background: #ecfdf5;
+  color: #065f46;
+}
+
+.service-admin-wizard-step:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.service-admin-required {
+  margin-left: 3px;
+  color: #c71920;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.service-admin-wizard-nav-btn {
+  min-width: 128px;
+  min-height: 40px;
+  border: 1.5px solid #1f3d7a;
+  border-radius: 9px;
+  background: #fff;
+  padding: 10px 22px;
+  color: #1f3d7a;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  box-shadow: 0 2px 6px #14204018;
+  cursor: pointer;
+}
+
+.service-admin-wizard-nav-btn:hover:not(:disabled) {
+  background: #edf2ff;
+}
+
+.service-admin-wizard-nav-btn:disabled {
+  border-color: #cbd4e0;
+  color: #8c95a8;
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.service-admin-wizard-nav-btn--primary,
+.service-admin-modal-footer .service-admin-wizard-nav-btn--primary {
+  border-color: #1f3d7a;
+  background: #1f3d7a;
+  color: #fff;
+  box-shadow: 0 4px 12px #1f3d7a33;
+}
+
+.service-admin-wizard-nav-btn--primary:hover:not(:disabled),
+.service-admin-modal-footer .service-admin-wizard-nav-btn--primary:hover:not(:disabled) {
+  background: #132b59;
+}
+
+.service-admin-check-grid--branches {
+  grid-template-columns: repeat(4, 1fr);
+}
+
 .service-admin-modal-header {
   display: flex;
   flex-shrink: 0;
@@ -511,32 +641,80 @@
   display: flex;
   gap: 5px;
   overflow: auto;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
-.service-admin-wizard-step {
-  flex: 1;
-  min-width: 90px;
-  border: 1px solid var(--proto-b);
-  border-radius: 7px;
-  background: var(--proto-s);
-  padding: 7px;
-  color: var(--proto-t3);
-  font-size: 8px;
-  font-weight: 800;
-  text-align: center;
-}
-
-.service-admin-wizard-step--active {
-  border-color: #a9c0f6;
-  background: #edf2ff;
-  color: var(--proto-n);
-}
+/* Step tab base styles live with wizard modal rules above. */
 
 .service-admin-form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 9px;
+  column-gap: 12px;
+  row-gap: 0;
+}
+
+.service-admin-form-grid .service-admin-config-field {
+  margin-bottom: 12px;
+}
+
+.service-admin-form-grid .service-admin-config-field--full {
+  grid-column: 1 / -1;
+}
+
+/* Legacy .f fields inside wizard / modal forms */
+.service-admin-modal .f,
+.service-admin-form-grid .f {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 12px;
+}
+
+.service-admin-modal .f.full,
+.service-admin-form-grid .f.full {
+  grid-column: 1 / -1;
+}
+
+.service-admin-modal .f > label,
+.service-admin-form-grid .f > label {
+  color: var(--proto-t2);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.service-admin-modal .f input,
+.service-admin-modal .f select,
+.service-admin-modal .f textarea,
+.service-admin-form-grid .f input,
+.service-admin-form-grid .f select,
+.service-admin-form-grid .f textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1.5px solid var(--proto-b);
+  border-radius: 8px;
+  background: var(--proto-s);
+  padding: 9px 10px;
+  color: var(--proto-t);
+  font: inherit;
+  font-size: 11px;
+}
+
+.service-admin-modal .f textarea,
+.service-admin-form-grid .f textarea {
+  min-height: 82px;
+  resize: vertical;
+}
+
+.service-admin-modal .f input:focus,
+.service-admin-modal .f select:focus,
+.service-admin-modal .f textarea:focus,
+.service-admin-form-grid .f input:focus,
+.service-admin-form-grid .f select:focus,
+.service-admin-form-grid .f textarea:focus {
+  border-color: #93acd9;
+  background: #fff;
+  box-shadow: 0 0 0 2px #dbe7ff;
+  outline: 0;
 }
 
 .service-admin-config-field {
@@ -561,16 +739,28 @@
 .service-admin-config-field textarea,
 .service-admin-inline-entry input {
   width: 100%;
+  box-sizing: border-box;
   border: 1.5px solid var(--proto-b);
   border-radius: 8px;
   background: var(--proto-s);
   padding: 9px 10px;
   color: var(--proto-t);
+  font: inherit;
+  font-size: 11px;
 }
 
 .service-admin-config-field textarea {
   min-height: 82px;
   resize: vertical;
+}
+
+.service-admin-config-field input:focus,
+.service-admin-config-field select:focus,
+.service-admin-config-field textarea:focus {
+  border-color: #93acd9;
+  background: #fff;
+  box-shadow: 0 0 0 2px #dbe7ff;
+  outline: 0;
 }
 
 .service-admin-wizard-textarea {
@@ -963,6 +1153,12 @@
   width: min(1020px, calc(100vw - 28px));
 }
 
+.service-admin-modal.service-admin-modal--wizard {
+  width: min(920px, calc(100vw - 32px));
+  height: min(560px, calc(100vh - 32px));
+  max-height: min(560px, calc(100vh - 32px));
+}
+
 .service-admin-modal-header {
   min-height: 47px;
   border-bottom: 1px solid #e1e7ef;
@@ -1171,6 +1367,12 @@
     width: calc(100vw - 8px);
     max-height: 98vh;
     border-radius: 11px;
+  }
+
+  .service-admin-modal.service-admin-modal--wizard {
+    width: calc(100vw - 8px);
+    height: min(92vh, 640px);
+    max-height: 92vh;
   }
 
   .service-admin-modal-header {

@@ -7,9 +7,10 @@ describe('dashboard mapper', () => {
     const summary = mapDashboardSummary(dashboardSummaryMock)
     expect(summary.metrics).toHaveLength(5)
     expect(summary.attentionItems).toHaveLength(5)
-    expect(summary.pipeline).toHaveLength(5)
+    expect(summary.pipeline).toHaveLength(8)
     expect(summary.executiveAlerts).toHaveLength(4)
     expect(summary.operationsHealth).toHaveLength(5)
+    expect(summary.revenueByDivision).toHaveLength(4)
     expect(summary.servicePerformance).toHaveLength(5)
     expect(summary.branchPerformance).toHaveLength(4)
     expect(summary.attentionItems[0]).toMatchObject({
@@ -20,10 +21,14 @@ describe('dashboard mapper', () => {
       owner: 'Civil Engineer',
       nextAction: 'Schedule site assessment',
     })
+    expect(summary.revenueByDivision[0]).toMatchObject({
+      division: 'Real Estate',
+      verifiedRevenue: 4500000,
+    })
   })
 
   it('maps activity safely', () => {
-    expect(mapDashboardActivity(dashboardActivityMock)).toHaveLength(4)
+    expect(mapDashboardActivity(dashboardActivityMock)).toHaveLength(5)
   })
 
   it('falls back to empty collections for missing unverified fields', () => {
@@ -32,5 +37,6 @@ describe('dashboard mapper', () => {
     expect(summary.operationsHealth).toEqual([])
     expect(summary.servicePerformance).toEqual([])
     expect(summary.branchPerformance).toEqual([])
+    expect(summary.revenueByDivision).toEqual([])
   })
 })
