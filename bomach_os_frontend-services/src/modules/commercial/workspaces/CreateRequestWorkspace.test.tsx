@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
 import { createRequestWorkspaceRules } from './create-request-workspace.rules'
-import type { ServiceAdministrationWorkspace } from '@/modules/service-administration/types/service-administration.types'
+import type {
+  RequestFormField,
+  ServiceAdministrationWorkspace,
+} from '@/modules/service-administration/types/service-administration.types'
 
 const workspace: ServiceAdministrationWorkspace = {
   summary: {
@@ -100,6 +103,30 @@ const workspace: ServiceAdministrationWorkspace = {
   ],
 }
 
+const intakeFields: RequestFormField[] = [
+  {
+    id: 'location',
+    label: 'Location',
+    key: 'location',
+    type: 'text',
+    required: true,
+  },
+  {
+    id: 'consent-site',
+    label: 'Site access confirmed',
+    key: 'siteAccess',
+    type: 'checkbox',
+    required: true,
+  },
+  {
+    id: 'notes',
+    label: 'Notes',
+    key: 'notes',
+    type: 'textarea',
+    required: false,
+  },
+]
+
 describe('CreateRequestWorkspace rules', () => {
   it('offers only active catalogue services', () => {
     expect(createRequestWorkspaceRules.getActiveServices(workspace)).toHaveLength(1)
@@ -120,5 +147,58 @@ describe('CreateRequestWorkspace rules', () => {
     expect(
       createRequestWorkspaceRules.getActiveCalculator(workspace, 'active-service')?.sampleTotal,
     ).toBe(5000)
+  })
+})
+
+describe('CreateRequestWorkspace dynamic required validation', () => {
+  it('blocks submission when a required dynamic text field is blank', () => {
+    const values = {
+      location: '   ',
+      siteAccess: 'true',
+      notes: '',
+    }
+
+    expect(createRequestWorkspaceRules.isIntakeSubmissionAllowed(intakeFields, values)).toBe(false)
+    expect(createRequestWorkspaceRules.validateIntakeResponses(intakeFields, values)).toEqual({
+      location: 'Location is required',
+    })
+  })
+
+  it('blocks submission when a required checkbox is unchecked', () => {
+    const values = {
+      location: 'Enugu site',
+      siteAccess: 'false',
+      notes: '',
+    }
+
+    expect(createRequestWorkspaceRules.isIntakeSubmissionAllowed(intakeFields, values)).toBe(false)
+    expect(createRequestWorkspaceRules.validateIntakeResponses(intakeFields, values)).toEqual({
+      siteAccess: 'Site access confirmed is required',
+    })
+  })
+
+  it('does not block submission when optional fields are blank', () => {
+    const values = {
+      location: 'Enugu site',
+      siteAccess: 'true',
+      notes: '',
+    }
+
+    expect(createRequestWorkspaceRules.validateIntakeResponses(intakeFields, values)).toEqual({})
+    expect(createRequestWorkspaceRules.isIntakeSubmissionAllowed(intakeFields, values)).toBe(true)
+  })
+
+  it('allows submission when required configured intake is valid', () => {
+    const values = {
+      location: 'Enugu site',
+      siteAccess: 'true',
+      notes: 'Optional context',
+    }
+
+    expect(createRequestWorkspaceRules.validateDynamicField(intakeFields[0]!, '')).toBe(
+      'Location is required',
+    )
+    expect(createRequestWorkspaceRules.validateDynamicField(intakeFields[2]!, '')).toBeUndefined()
+    expect(createRequestWorkspaceRules.isIntakeSubmissionAllowed(intakeFields, values)).toBe(true)
   })
 })

@@ -15,6 +15,7 @@ import {
   getActiveCalculator,
   getActiveRequestForm,
   getActiveServices,
+  validateDynamicField,
 } from './create-request-workspace.rules'
 
 interface CreateRequestFormValues {
@@ -92,13 +93,19 @@ function DynamicRequestField({
   form: CreateRequestFormApi
 }) {
   return (
-    <form.Subscribe selector={(state) => state.values.intakeResponses[field.key] ?? ''}>
-      {(value) => {
+    <form.Field
+      name={`intakeResponses.${field.key}` as never}
+      validators={{
+        onBlur: ({ value }) => validateDynamicField(field, String(value ?? '')),
+        onSubmit: ({ value }) => validateDynamicField(field, String(value ?? '')),
+      }}
+    >
+      {(api) => {
+        const value = String(api.state.value ?? (field.type === 'checkbox' ? 'false' : ''))
+        const error = api.state.meta.errors[0] ? String(api.state.meta.errors[0]) : null
+
         const setValue = (next: string) => {
-          form.setFieldValue('intakeResponses', {
-            ...form.state.values.intakeResponses,
-            [field.key]: next,
-          })
+          api.handleChange(next as never)
         }
 
         const label = (
@@ -112,8 +119,14 @@ function DynamicRequestField({
           return (
             <label className="commercial-field commercial-field--full">
               {label}
-              <textarea rows={4} value={value} onChange={(event) => setValue(event.target.value)} />
+              <textarea
+                rows={4}
+                value={value}
+                onBlur={api.handleBlur}
+                onChange={(event) => setValue(event.target.value)}
+              />
               {field.helpText ? <small>{field.helpText}</small> : null}
+              {error ? <em>{error}</em> : null}
             </label>
           )
         }
@@ -122,7 +135,11 @@ function DynamicRequestField({
           return (
             <label className="commercial-field">
               {label}
-              <select value={value} onChange={(event) => setValue(event.target.value)}>
+              <select
+                value={value}
+                onBlur={api.handleBlur}
+                onChange={(event) => setValue(event.target.value)}
+              >
                 <option value="">Select</option>
                 {(field.options ?? []).map((option) => (
                   <option key={option} value={option}>
@@ -131,21 +148,28 @@ function DynamicRequestField({
                 ))}
               </select>
               {field.helpText ? <small>{field.helpText}</small> : null}
+              {error ? <em>{error}</em> : null}
             </label>
           )
         }
 
         if (field.type === 'checkbox') {
           return (
-            <label className="commercial-check commercial-field--full">
-              <input
-                type="checkbox"
-                checked={value === 'true'}
-                onChange={(event) => setValue(String(event.target.checked))}
-              />
-              {field.label}
-              {field.required ? ' *' : ''}
-            </label>
+            <div className="commercial-field commercial-field--full">
+              <label className="commercial-check">
+                <input
+                  type="checkbox"
+                  checked={value === 'true'}
+                  onBlur={api.handleBlur}
+                  onChange={(event) => setValue(String(event.target.checked))}
+                />
+                <span>
+                  {field.label}
+                  {field.required ? ' *' : ''}
+                </span>
+              </label>
+              {error ? <em>{error}</em> : null}
+            </div>
           )
         }
 
@@ -155,6 +179,7 @@ function DynamicRequestField({
               {label}
               <input
                 type="file"
+                onBlur={api.handleBlur}
                 onChange={(event) =>
                   setValue(
                     Array.from(event.target.files ?? [])
@@ -164,6 +189,7 @@ function DynamicRequestField({
                 }
               />
               {field.helpText ? <small>{field.helpText}</small> : null}
+              {error ? <em>{error}</em> : null}
             </label>
           )
         }
@@ -174,13 +200,15 @@ function DynamicRequestField({
             <input
               type={field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'}
               value={value}
+              onBlur={api.handleBlur}
               onChange={(event) => setValue(event.target.value)}
             />
             {field.helpText ? <small>{field.helpText}</small> : null}
+            {error ? <em>{error}</em> : null}
           </label>
         )
       }}
-    </form.Subscribe>
+    </form.Field>
   )
 }
 
@@ -241,18 +269,6 @@ export function CreateRequestWorkspace({
     onSubmit: ({ value }) => {
       if (!selectedService) {
         toast.error('Select an active service')
-        return
-      }
-
-      if (!activeBranches.includes(value.branch)) {
-        toast.error('Select an active branch', {
-          description: 'This service is not active in the selected branch.',
-        })
-        return
-      }
-
-      if (!value.consent) {
-        toast.error('Client consent is required')
         return
       }
 
@@ -376,6 +392,7 @@ export function CreateRequestWorkspace({
                 name="client"
                 validators={{
                   onBlur: ({ value }) => (value.trim() ? undefined : 'Client name is required'),
+                  onSubmit: ({ value }) => (value.trim() ? undefined : 'Client name is required'),
                 }}
               >
                 {(field) => (
@@ -413,6 +430,7 @@ export function CreateRequestWorkspace({
                 name="phone"
                 validators={{
                   onBlur: ({ value }) => (value.trim() ? undefined : 'Phone is required'),
+                  onSubmit: ({ value }) => (value.trim() ? undefined : 'Phone is required'),
                 }}
               >
                 {(field) => (
@@ -477,7 +495,14 @@ export function CreateRequestWorkspace({
               <form.Field
                 name="branch"
                 validators={{
-                  onBlur: ({ value }) => (value ? undefined : 'An active branch is required'),
+                  onBlur: ({ value }) =>
+                    value && activeBranches.includes(value)
+                      ? undefined
+                      : 'An active branch is required',
+                  onSubmit: ({ value }) =>
+                    value && activeBranches.includes(value)
+                      ? undefined
+                      : 'An active branch is required',
                 }}
               >
                 {(field) => (
@@ -646,6 +671,7 @@ export function CreateRequestWorkspace({
                 name="dueAt"
                 validators={{
                   onBlur: ({ value }) => (value ? undefined : 'Preferred date is required'),
+                  onSubmit: ({ value }) => (value ? undefined : 'Preferred date is required'),
                 }}
               >
                 {(field) => (
@@ -668,6 +694,7 @@ export function CreateRequestWorkspace({
                 name="details"
                 validators={{
                   onBlur: ({ value }) => (value.trim() ? undefined : 'Scope is required'),
+                  onSubmit: ({ value }) => (value.trim() ? undefined : 'Scope is required'),
                 }}
               >
                 {(field) => (
@@ -686,16 +713,28 @@ export function CreateRequestWorkspace({
                 )}
               </form.Field>
 
-              <form.Field name="consent">
+              <form.Field
+                name="consent"
+                validators={{
+                  onChange: ({ value }) => (value ? undefined : 'Client consent is required'),
+                  onSubmit: ({ value }) => (value ? undefined : 'Client consent is required'),
+                }}
+              >
                 {(field) => (
-                  <label className="commercial-check commercial-field--full">
-                    <input
-                      type="checkbox"
-                      checked={field.state.value}
-                      onChange={(event) => field.handleChange(event.target.checked)}
-                    />
-                    Client consent and privacy notice recorded
-                  </label>
+                  <div className="commercial-field commercial-field--full">
+                    <label className="commercial-check">
+                      <input
+                        type="checkbox"
+                        checked={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(event) => field.handleChange(event.target.checked)}
+                      />
+                      <span>Client consent and privacy notice recorded *</span>
+                    </label>
+                    {field.state.meta.errors[0] ? (
+                      <em>{String(field.state.meta.errors[0])}</em>
+                    ) : null}
+                  </div>
                 )}
               </form.Field>
             </div>
