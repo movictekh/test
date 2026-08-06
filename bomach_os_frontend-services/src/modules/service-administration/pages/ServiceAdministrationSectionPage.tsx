@@ -101,6 +101,12 @@ export function ServiceAdministrationSectionPage({
       setNewServiceOpen(false)
       toast.success('Service created successfully')
     },
+    onError: (error) => {
+      const presented = presentError(error, 'background-action')
+      toast.error('Service could not be created', {
+        description: presented.message,
+      })
+    },
   })
 
   const configureService = useMutation({
@@ -110,6 +116,12 @@ export function ServiceAdministrationSectionPage({
       setSelectedService(null)
       toast.success('Service configuration saved')
     },
+    onError: (error) => {
+      const presented = presentError(error, 'background-action')
+      toast.error('Service configuration could not be saved', {
+        description: presented.message,
+      })
+    },
   })
 
   const duplicateService = useMutation({
@@ -117,6 +129,12 @@ export function ServiceAdministrationSectionPage({
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: serviceAdministrationKeys.all })
       toast.success('Service duplicated as draft')
+    },
+    onError: (error) => {
+      const presented = presentError(error, 'background-action')
+      toast.error('Service could not be duplicated', {
+        description: presented.message,
+      })
     },
   })
 
@@ -127,6 +145,12 @@ export function ServiceAdministrationSectionPage({
       setCalculatorEditor(null)
       toast.success('Calculator saved')
     },
+    onError: (error) => {
+      const presented = presentError(error, 'background-action')
+      toast.error('Calculator could not be saved', {
+        description: presented.message,
+      })
+    },
   })
 
   const saveRequestForm = useMutation({
@@ -135,6 +159,12 @@ export function ServiceAdministrationSectionPage({
       queryClient.setQueryData(serviceAdministrationKeys.workspace(), workspace)
       setFormEditor(null)
       toast.success('Request form saved')
+    },
+    onError: (error) => {
+      const presented = presentError(error, 'background-action')
+      toast.error('Request form could not be saved', {
+        description: presented.message,
+      })
     },
   })
 
@@ -145,6 +175,12 @@ export function ServiceAdministrationSectionPage({
       setWorkflowEditor(null)
       toast.success('Workflow saved')
     },
+    onError: (error) => {
+      const presented = presentError(error, 'background-action')
+      toast.error('Workflow could not be saved', {
+        description: presented.message,
+      })
+    },
   })
 
   const saveBranchActivationMatrix = useMutation({
@@ -153,6 +189,12 @@ export function ServiceAdministrationSectionPage({
     onSuccess: (workspace) => {
       queryClient.setQueryData(serviceAdministrationKeys.workspace(), workspace)
       toast.success('Branch settings saved')
+    },
+    onError: (error) => {
+      const presented = presentError(error, 'background-action')
+      toast.error('Branch settings could not be saved', {
+        description: presented.message,
+      })
     },
   })
 

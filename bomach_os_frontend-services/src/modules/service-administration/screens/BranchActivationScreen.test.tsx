@@ -1,0 +1,105 @@
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { describe, expect, it, vi } from 'vitest'
+
+import { BranchActivationScreen } from './BranchActivationScreen'
+
+import type { BranchActivation, ServiceCatalogueItem } from '../types/service-administration.types'
+
+const services: ServiceCatalogueItem[] = [
+  {
+    id: 'service-one',
+    code: 'SRV-001',
+    name: 'Estate Plot Sales',
+    division: 'Real Estate',
+    description: 'Plot sales',
+    owner: 'Head of Real Estate',
+    status: 'active',
+    branchNames: ['Enugu'],
+    subserviceCount: 1,
+    readiness: 100,
+    slaDays: 5,
+  },
+]
+
+const activations: BranchActivation[] = [
+  {
+    id: 'activation-one',
+    serviceId: 'service-one',
+    serviceName: 'Estate Plot Sales',
+    branchId: 'enugu',
+    branchName: 'Enugu',
+    state: 'active',
+    capacity: 80,
+    activeOrders: 2,
+    ownerName: 'Branch Owner',
+  },
+]
+
+describe('BranchActivationScreen', () => {
+  it('renders an empty state when no services exist', () => {
+    render(
+      <BranchActivationScreen services={[]} activations={[]} saving={false} onSave={vi.fn()} />,
+    )
+
+    expect(screen.getByRole('status')).toHaveTextContent('No services available')
+  })
+
+  it('keeps branch edits local until Save Changes is pressed', async () => {
+    const user = userEvent.setup()
+    const onSave = vi.fn()
+
+    render(
+      <BranchActivationScreen
+        services={services}
+        activations={activations}
+        saving={false}
+        onSave={onSave}
+      />,
+    )
+
+    const checkboxes = screen.getAllByRole('checkbox')
+    const activeCheckbox = checkboxes[0]
+    const inactiveCheckbox = checkboxes[1]
+    expect(activeCheckbox).toBeDefined()
+    expect(inactiveCheckbox).toBeDefined()
+    if (!activeCheckbox || !inactiveCheckbox) {
+      throw new Error('Expected active and inactive branch checkboxes')
+    }
+
+    expect(activeCheckbox).toBeChecked()
+    expect(inactiveCheckbox).not.toBeChecked()
+
+    await user.click(inactiveCheckbox)
+
+    expect(inactiveCheckbox).toBeChecked()
+    expect(onSave).not.toHaveBeenCalled()
+
+    await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+
+    expect(onSave).toHaveBeenCalledTimes(1)
+    expect(onSave).toHaveBeenCalledWith({
+      updates: expect.arrayContaining([
+        expect.objectContaining({
+          serviceId: 'service-one',
+          branchName: 'Port Harcourt',
+          active: true,
+          slaDays: 5,
+        }),
+      ]),
+    })
+  })
+
+  it('disables the save action while the matrix is saving', () => {
+    render(
+      <BranchActivationScreen
+        services={services}
+        activations={activations}
+        saving
+        onSave={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByRole('button', { name: 'Saving...' })).toBeDisabled()
+  })
+})

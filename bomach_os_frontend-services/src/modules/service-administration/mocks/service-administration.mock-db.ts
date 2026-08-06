@@ -817,7 +817,9 @@ export function configureMockService(input: ConfigureServiceInput) {
     owner: input.owner,
     description: input.description,
     slaDays: input.slaDays,
+    fulfilmentMode: input.fulfilmentMode,
     status: input.status,
+    branchNames: input.branchNames,
     subservices: input.subservices,
     subserviceCount: input.subservices.length,
     requestFields: input.requestFields,
@@ -856,13 +858,67 @@ export function configureMockService(input: ConfigureServiceInput) {
   }
 
   const calculator = calculators.find((item) => item.serviceId === input.id)
-  if (calculator) calculator.serviceName = input.name
+  if (calculator) {
+    calculator.serviceName = input.name
+    calculator.sampleTotal = input.pricing.rate
+    calculator.description = `${input.pricing.method} calculator for ${input.name}.`
+    calculator.charges = [
+      {
+        id:
+          calculator.charges.find((charge) => charge.kind === 'formula')?.id ??
+          `formula-${Date.now()}`,
+        label: 'Formula',
+        kind: input.pricing.method === 'Fixed' ? 'fixed' : 'formula',
+        value:
+          input.pricing.method === 'Fixed'
+            ? input.pricing.rate
+            : 'quantity * unit_rate + logistics',
+      },
+      {
+        id:
+          calculator.charges.find((charge) => charge.label.toLowerCase().includes('deposit'))?.id ??
+          `deposit-${Date.now()}`,
+        label: 'Deposit',
+        kind: 'percentage',
+        value: input.pricing.depositPercent,
+      },
+      {
+        id:
+          calculator.charges.find((charge) => charge.label.toLowerCase().includes('tax'))?.id ??
+          `tax-${Date.now()}`,
+        label: 'Tax',
+        kind: 'percentage',
+        value: input.pricing.taxPercent,
+      },
+    ]
+  }
 
+  const existingBranchNames = new Set(input.branchNames)
   branchActivations
     .filter((item) => item.serviceId === input.id)
     .forEach((item) => {
       item.serviceName = input.name
+      item.state = existingBranchNames.has(item.branchName) ? 'active' : 'inactive'
     })
+
+  for (const branchName of input.branchNames) {
+    const exists = branchActivations.some(
+      (item) => item.serviceId === input.id && item.branchName === branchName,
+    )
+    if (!exists) {
+      branchActivations.push({
+        id: `activation-${input.id}-${branchName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+        serviceId: input.id,
+        serviceName: input.name,
+        branchId: branchName.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        branchName,
+        state: 'active',
+        capacity: 80,
+        activeOrders: 0,
+        ownerName: input.owner,
+      })
+    }
+  }
 
   return getServiceAdministrationWorkspace()
 }

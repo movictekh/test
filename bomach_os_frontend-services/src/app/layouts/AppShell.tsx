@@ -179,27 +179,25 @@ export function AppShell({ children, navigation, variant = 'operations' }: AppSh
       >
         <div className="border-border flex items-center justify-between gap-1.5 border-b px-2 py-1.5">
           {sidebarCollapsed ? null : (
-            <span className="text-foreground-muted text-[0.5rem] leading-none font-bold tracking-[0.14em] uppercase">
+            <span className="text-foreground-muted hidden text-[0.5rem] leading-none font-bold tracking-[0.14em] uppercase lg:inline">
               Navigation
             </span>
           )}
+          <span className="text-foreground-muted text-xs font-bold lg:hidden">Navigation</span>
           <Button
             variant="ghost"
             size="icon"
             aria-label={sidebarCollapsed ? 'Expand navigation' : 'Collapse navigation'}
-            className="text-foreground-muted hover:bg-surface-muted hover:text-foreground size-7"
+            className="text-foreground-muted hover:bg-surface-muted hover:text-foreground hidden size-7 lg:inline-flex"
             onClick={toggleSidebar}
           >
             {sidebarCollapsed ? <IconChevronRight size={18} /> : <IconChevronLeft size={18} />}
           </Button>
-        </div>
-
-        <div className="border-border flex items-center justify-between border-b p-3 lg:hidden">
-          <span className="text-foreground-muted text-xs font-bold">Navigation</span>
           <Button
             variant="ghost"
             size="icon"
             aria-label="Close navigation"
+            className="text-foreground-muted hover:bg-surface-muted hover:text-foreground size-7 lg:hidden"
             onClick={() => setMobileSidebarOpen(false)}
           >
             <IconX size={18} />

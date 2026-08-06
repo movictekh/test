@@ -73,6 +73,19 @@ export function BranchActivationScreen({
     })
   }
 
+  if (services.length === 0) {
+    return (
+      <main className="service-admin-page service-admin-content">
+        <section className="service-admin-card p-6 text-center" role="status" aria-live="polite">
+          <h2 className="service-admin-card-title">No services available</h2>
+          <p className="service-admin-card-subtitle mt-1">
+            Create a service before configuring branch availability.
+          </p>
+        </section>
+      </main>
+    )
+  }
+
   return (
     <div className="service-admin-page service-admin-content">
       <section className="service-admin-card service-admin-branch-card">

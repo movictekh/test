@@ -208,8 +208,11 @@ export interface ConfigureServiceInput {
   owner: string
   description: string
   slaDays: number
+  fulfilmentMode: string
   status: ServiceStatus
+  branchNames: string[]
   subservices: string[]
+  pricing: ServicePricingSetup
   requestFields: string[]
   workflowStages: string[]
 }
