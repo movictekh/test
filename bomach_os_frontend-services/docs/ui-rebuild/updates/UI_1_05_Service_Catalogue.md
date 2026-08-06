@@ -118,3 +118,29 @@ src/modules/service-administration/styles/service-administration.css
 ```
 
 No inline style object and no additional CSS file were introduced.
+
+## Configure Service screenshot parity — 2026-08-06
+
+The HTML and React screenshots exposed a CSS scoping defect.
+
+The Service Administration colour and border variables were declared only on
+`.service-admin-page`, while the modal is rendered as its sibling under the
+backdrop. As a result, modal declarations such as `var(--proto-b)` and
+`var(--proto-s)` were unresolved. The browser discarded those values, which
+made the React inputs, textarea, tabs, separators, and footer look almost
+unstyled.
+
+The parity correction:
+
+- gives the modal backdrop the same HTML design variables;
+- restores the 1020px extra-wide modal;
+- restores the header and footer separators;
+- restores the grey tab container and selected Overview tab;
+- restores bordered light-grey inputs, select and textarea;
+- restores the two-column form and notices;
+- restores both Cancel and Save Configuration footer actions;
+- keeps responsive one-column behaviour;
+- changes no API or service configuration behaviour.
+
+No additional stylesheet was created. The correction remains in the existing
+Service Administration stylesheet.
