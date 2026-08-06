@@ -1,4 +1,4 @@
-import { IconApps, IconCopy, IconForms, IconSettings } from '@tabler/icons-react'
+import { IconApps, IconCopy, IconForms } from '@tabler/icons-react'
 import { useMemo, useState } from 'react'
 
 import type {
@@ -28,10 +28,14 @@ function statusClass(status: string) {
 export function ServiceCatalogueScreen({
   services,
   onConfigure,
+  onCreate,
+  onBranchAvailability,
   onDuplicate,
 }: {
   services: ServiceCatalogueItem[]
   onConfigure: (service: ServiceCatalogueItem) => void
+  onCreate: () => void
+  onBranchAvailability: () => void
   onDuplicate: (service: ServiceCatalogueItem) => void
 }) {
   const [query, setQuery] = useState('')
@@ -54,17 +58,8 @@ export function ServiceCatalogueScreen({
 
   return (
     <div className="service-admin-page service-admin-content">
-      <div className="service-admin-card">
-        <div className="service-admin-card-header">
-          <div>
-            <div className="service-admin-card-title">Service Catalogue</div>
-            <div className="service-admin-card-subtitle">
-              Configure, activate and manage Bomach services
-            </div>
-          </div>
-        </div>
-
-        <div className="service-admin-filter-group">
+      <div className="service-admin-card service-admin-catalog-shell">
+        <div className="service-admin-filter-group service-admin-catalog-filter">
           <input
             className="service-admin-grow"
             value={query}
@@ -83,6 +78,17 @@ export function ServiceCatalogueScreen({
             <option value="draft">Draft</option>
             <option value="inactive">Inactive</option>
           </select>
+          <span className="service-admin-grow" />
+          <button type="button" className="service-admin-button" onClick={onBranchAvailability}>
+            Branch Availability
+          </button>
+          <button
+            type="button"
+            className="service-admin-button service-admin-button-primary"
+            onClick={onCreate}
+          >
+            Create Service
+          </button>
         </div>
 
         <div className="service-admin-service-grid">
@@ -96,39 +102,30 @@ export function ServiceCatalogueScreen({
                   <IconApps size={18} />
                 </div>
                 <div className="service-admin-service-name">{service.name}</div>
-                <div className="service-admin-row-subtitle">
-                  {service.code} · {service.division}
-                </div>
                 <p className="service-admin-service-description">{service.description}</p>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="service-admin-row-subtitle service-admin-service-meta">
+                  {service.code} · {service.subserviceCount} sub-services · {service.slaDays ?? '—'}
+                  d SLA
+                </div>
+                <div className="service-admin-service-footer">
                   <span className={`service-admin-pill ${statusClass(service.status)}`}>
                     {service.status}
                   </span>
-                  <span className="service-admin-pill service-admin-pill-gray">
-                    {service.branchNames.length} branches
-                  </span>
-                  <span className="service-admin-pill service-admin-pill-gray">
-                    {service.subserviceCount} sub-services
-                  </span>
-                </div>
-                <div className="service-admin-service-footer">
-                  <span className="service-admin-row-subtitle">{service.owner}</span>
                   <div className="flex gap-1">
                     <button
                       type="button"
                       className="service-admin-button service-admin-button-small"
-                      onClick={() => onDuplicate(service)}
+                      onClick={() => onConfigure(service)}
                     >
-                      <IconCopy size={13} />
-                      Duplicate
+                      Configure
                     </button>
                     <button
                       type="button"
-                      className="service-admin-button service-admin-button-small service-admin-button-primary"
-                      onClick={() => onConfigure(service)}
+                      className="service-admin-button service-admin-button-small"
+                      aria-label="Duplicate service"
+                      onClick={() => onDuplicate(service)}
                     >
-                      <IconSettings size={13} />
-                      Configure
+                      <IconCopy size={13} />
                     </button>
                   </div>
                 </div>

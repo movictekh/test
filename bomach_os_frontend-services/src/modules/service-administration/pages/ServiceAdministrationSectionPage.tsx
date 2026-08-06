@@ -1,5 +1,6 @@
 import { IconPlus, IconRefresh } from '@tabler/icons-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 
 import {
@@ -7,6 +8,10 @@ import {
   RequestFormEditor,
   WorkflowEditor,
 } from '../editors/ServiceAdministrationEditors'
+import {
+  ConfigureServiceWorkspace,
+  CreateServiceWizard,
+} from '../workspaces/ServiceCatalogueWorkspaces'
 
 import { presentError } from '@/shared/errors'
 import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
@@ -17,10 +22,8 @@ import { serviceAdministrationQueries } from '../api/service-administration.quer
 import {
   BranchMatrix,
   CompactPageToolbar,
-  NewServiceDialog,
   PrototypeButton,
   SectionCard,
-  ServiceDetailPanel,
 } from '../components/ServiceAdministrationUi'
 import { serviceAdministrationIcons } from '../components/service-administration.icons'
 import {
@@ -31,7 +34,8 @@ import {
 } from '../screens/ServiceAdministrationScreens'
 import type {
   BranchActivation,
-  CreateServiceInput,
+  ConfigureServiceInput,
+  CreateServiceWizardInput,
   PricingCalculator,
   ServiceCatalogueItem,
   ServiceRequestForm,
@@ -55,27 +59,27 @@ const metadata: Record<
 > = {
   'service-catalogue': {
     title: 'Service Catalogue',
-    breadcrumb: 'Services / Service Administration / Catalogue',
+    breadcrumb: 'Services / Setup and activation',
     description: 'Configure the services Bomach can sell and fulfil.',
   },
   'calculator-library': {
     title: 'Calculator Library',
-    breadcrumb: 'Services / Service Administration / Calculators',
+    breadcrumb: 'Services / Pricing engine',
     description: 'Create and manage reusable service pricing calculators.',
   },
   'request-form-builder': {
     title: 'Request Form Builder',
-    breadcrumb: 'Services / Service Administration / Request Forms',
+    breadcrumb: 'Services / Form design',
     description: 'Design the intake fields used for each service request.',
   },
   'workflow-designer': {
     title: 'Workflow Designer',
-    breadcrumb: 'Services / Service Administration / Workflows',
+    breadcrumb: 'Services / Fulfillment automation',
     description: 'Define fulfilment stages, ownership, SLA and controls.',
   },
   'branch-activation': {
     title: 'Branch Activation',
-    breadcrumb: 'Services / Service Administration / Branches',
+    breadcrumb: 'Services / Availability and capacity',
     description: 'Control where each service can be offered and delivered.',
   },
 }
@@ -86,6 +90,7 @@ export function ServiceAdministrationSectionPage({
   section: ServiceAdministrationSection
 }) {
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const toast = useToast()
   const query = useQuery(serviceAdministrationQueries.workspace())
   const [selectedService, setSelectedService] = useState<ServiceCatalogueItem | null>(null)
@@ -94,18 +99,22 @@ export function ServiceAdministrationSectionPage({
   const [formEditor, setFormEditor] = useState<ServiceRequestForm | null | 'new'>(null)
   const [workflowEditor, setWorkflowEditor] = useState<ServiceWorkflow | null | 'new'>(null)
 
-  const createService = useMutation<
-    Awaited<ReturnType<typeof serviceAdministrationApi.createService>>,
-    Error,
-    CreateServiceInput
-  >({
-    mutationFn: (input) => serviceAdministrationApi.createService(input),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: serviceAdministrationKeys.all })
+  const createService = useMutation({
+    mutationFn: (input: CreateServiceWizardInput) =>
+      serviceAdministrationApi.createServiceWizard(input),
+    onSuccess: (workspace) => {
+      queryClient.setQueryData(serviceAdministrationKeys.workspace(), workspace)
       setNewServiceOpen(false)
-      toast.success('Draft service created', {
-        description: 'Continue with pricing, request form, workflow and branch activation.',
-      })
+      toast.success('Service created successfully')
+    },
+  })
+
+  const configureService = useMutation({
+    mutationFn: (input: ConfigureServiceInput) => serviceAdministrationApi.configureService(input),
+    onSuccess: (workspace) => {
+      queryClient.setQueryData(serviceAdministrationKeys.workspace(), workspace)
+      setSelectedService(null)
+      toast.success('Service configuration saved')
     },
   })
 
@@ -170,6 +179,15 @@ export function ServiceAdministrationSectionPage({
 
   const workspace = query.data
   const page = metadata[section]
+  const selectedCalculator = workspace.calculators.find(
+    (item) => item.serviceId === selectedService?.id,
+  )
+  const selectedRequestForm = workspace.requestForms.find(
+    (item) => item.serviceId === selectedService?.id,
+  )
+  const selectedWorkflow = workspace.workflows.find(
+    (item) => item.serviceId === selectedService?.id,
+  )
 
   const toolbarPrimary =
     section === 'service-catalogue' ? (
@@ -215,6 +233,13 @@ export function ServiceAdministrationSectionPage({
         <ServiceCatalogueScreen
           services={workspace.services}
           onConfigure={setSelectedService}
+          onCreate={() => setNewServiceOpen(true)}
+          onBranchAvailability={() =>
+            void navigate({
+              to: '/app/shell/$section',
+              params: { section: 'branch-activation' },
+            })
+          }
           onDuplicate={(service) => duplicateService.mutate({ id: service.id })}
         />
       ) : null}
@@ -267,9 +292,38 @@ export function ServiceAdministrationSectionPage({
         </main>
       ) : null}
 
-      {selectedService ? (
-        <ServiceDetailPanel service={selectedService} onClose={() => setSelectedService(null)} />
-      ) : null}
+      {selectedService
+        ? (() => {
+            const configureWorkspaceProps: {
+              service: ServiceCatalogueItem
+              pending: boolean
+              onClose: () => void
+              onSave: (input: ConfigureServiceInput) => void
+              calculator?: PricingCalculator
+              requestForm?: ServiceRequestForm
+              workflow?: ServiceWorkflow
+            } = {
+              service: selectedService,
+              pending: configureService.isPending,
+              onClose: () => setSelectedService(null),
+              onSave: (input) => configureService.mutate(input),
+            }
+
+            if (selectedCalculator) {
+              configureWorkspaceProps.calculator = selectedCalculator
+            }
+
+            if (selectedRequestForm) {
+              configureWorkspaceProps.requestForm = selectedRequestForm
+            }
+
+            if (selectedWorkflow) {
+              configureWorkspaceProps.workflow = selectedWorkflow
+            }
+
+            return <ConfigureServiceWorkspace {...configureWorkspaceProps} />
+          })()
+        : null}
 
       {calculatorEditor ? (
         <CalculatorEditor
@@ -301,7 +355,7 @@ export function ServiceAdministrationSectionPage({
         />
       ) : null}
 
-      <NewServiceDialog
+      <CreateServiceWizard
         open={newServiceOpen}
         onClose={() => setNewServiceOpen(false)}
         pending={createService.isPending}

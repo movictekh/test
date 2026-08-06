@@ -1,5 +1,7 @@
 import type {
   BranchActivation,
+  ConfigureServiceInput,
+  CreateServiceWizardInput,
   CalculatorCharge,
   CalculatorVariable,
   PricingCalculator,
@@ -643,4 +645,223 @@ export function saveMockWorkflow(input: {
       updatedAt: new Date().toISOString(),
     })
   }
+}
+
+export function createMockServiceWizard(input: CreateServiceWizardInput) {
+  const stamp = Date.now()
+  const serviceId = `service-${stamp}`
+  const calculatorId = `calculator-${stamp}`
+  const formId = `form-${stamp}`
+  const workflowId = `workflow-${stamp}`
+
+  const formula =
+    input.pricing.method === 'Percentage'
+      ? 'base_amount × rate ÷ 100'
+      : input.pricing.method === 'Fixed'
+        ? 'rate'
+        : 'quantity × rate'
+
+  const service: ServiceCatalogueItem = {
+    id: serviceId,
+    code: input.code,
+    name: input.name,
+    division: input.division,
+    description: input.description,
+    owner: input.owner,
+    status: input.status,
+    branchNames: input.branchNames,
+    subserviceCount: input.subservices.length,
+    calculatorName: `${input.name} Calculator`,
+    requestFormName: `${input.name} Request Form`,
+    workflowName: `${input.name} Workflow`,
+    readiness: input.status === 'active' ? 100 : 82,
+    slaDays: input.slaDays,
+    fulfilmentMode: input.fulfilmentMode,
+    subservices: input.subservices,
+    requestFields: input.requestFields,
+    workflowStages: input.workflowStages,
+  }
+
+  services.unshift(service)
+
+  calculators.unshift({
+    id: calculatorId,
+    name: `${input.name} Calculator`,
+    code: `CAL-${input.code}`,
+    serviceId,
+    serviceName: input.name,
+    description: `${input.pricing.method} pricing configuration for ${input.name}.`,
+    status: input.status,
+    version: 1,
+    variables:
+      input.pricing.method === 'Percentage'
+        ? [
+            {
+              id: `variable-base-${stamp}`,
+              label: 'Base amount',
+              key: 'base_amount',
+              type: 'number',
+            },
+            { id: `variable-rate-${stamp}`, label: 'Rate', key: 'rate', type: 'number', unit: '%' },
+          ]
+        : input.pricing.method === 'Fixed'
+          ? [{ id: `variable-rate-${stamp}`, label: 'Fixed price', key: 'rate', type: 'number' }]
+          : [
+              {
+                id: `variable-quantity-${stamp}`,
+                label: 'Quantity / area',
+                key: 'quantity',
+                type: 'number',
+              },
+              { id: `variable-rate-${stamp}`, label: 'Unit rate', key: 'rate', type: 'number' },
+            ],
+    charges: [
+      {
+        id: `charge-formula-${stamp}`,
+        label: input.pricing.method,
+        kind: 'formula',
+        value: formula,
+      },
+      {
+        id: `charge-deposit-${stamp}`,
+        label: 'Deposit',
+        kind: 'percentage',
+        value: input.pricing.depositPercent,
+      },
+      {
+        id: `charge-tax-${stamp}`,
+        label: 'Tax',
+        kind: 'percentage',
+        value: input.pricing.taxPercent,
+      },
+      {
+        id: `charge-approval-${stamp}`,
+        label: 'Discount approval threshold',
+        kind: 'percentage',
+        value: input.pricing.discountApprovalPercent,
+      },
+    ],
+    sampleTotal: input.pricing.rate,
+    updatedAt: new Date().toISOString(),
+  })
+
+  requestForms.unshift({
+    id: formId,
+    name: `${input.name} Request Form`,
+    serviceId,
+    serviceName: input.name,
+    status: input.status,
+    version: 1,
+    fields: input.requestFields.map((label, index) => ({
+      id: `field-${stamp}-${index}`,
+      label,
+      key: label
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/^_|_$/g, ''),
+      type: label.toLowerCase().includes('document') ? 'file' : 'text',
+      required: true,
+    })),
+    updatedAt: new Date().toISOString(),
+  })
+
+  workflows.unshift({
+    id: workflowId,
+    name: `${input.name} Workflow`,
+    serviceId,
+    serviceName: input.name,
+    status: input.status,
+    version: 1,
+    stages: input.workflowStages.map((name, index) => ({
+      id: `stage-${stamp}-${index}`,
+      name,
+      order: index + 1,
+      ownerRole: input.owner,
+      slaHours: Math.max(
+        1,
+        Math.round((input.slaDays * 24) / Math.max(1, input.workflowStages.length)),
+      ),
+      requiresEvidence: index > 0,
+      requiresApproval: name.toLowerCase().includes('approval'),
+      clientVisible: true,
+    })),
+    updatedAt: new Date().toISOString(),
+  })
+
+  for (const branchName of input.branchNames) {
+    branchActivations.unshift({
+      id: `branch-activation-${stamp}-${branchName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+      serviceId,
+      serviceName: input.name,
+      branchId: branchName.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      branchName,
+      state: input.status === 'active' ? 'active' : 'setup-required',
+      capacity: 0,
+      activeOrders: 0,
+      ownerName: input.owner,
+    })
+  }
+
+  return getServiceAdministrationWorkspace()
+}
+
+export function configureMockService(input: ConfigureServiceInput) {
+  const service = services.find((item) => item.id === input.id)
+  if (!service) return undefined
+
+  Object.assign(service, {
+    name: input.name,
+    code: input.code,
+    division: input.division,
+    owner: input.owner,
+    description: input.description,
+    slaDays: input.slaDays,
+    status: input.status,
+    subservices: input.subservices,
+    subserviceCount: input.subservices.length,
+    requestFields: input.requestFields,
+    workflowStages: input.workflowStages,
+    readiness: input.status === 'active' ? 100 : Math.min(service.readiness, 90),
+  })
+
+  const form = requestForms.find((item) => item.serviceId === input.id)
+  if (form) {
+    form.serviceName = input.name
+    form.fields = input.requestFields.map((label, index) => ({
+      id: form.fields[index]?.id ?? `field-${Date.now()}-${index}`,
+      label,
+      key: label
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/^_|_$/g, ''),
+      type: form.fields[index]?.type ?? 'text',
+      required: form.fields[index]?.required ?? true,
+    }))
+  }
+
+  const workflow = workflows.find((item) => item.serviceId === input.id)
+  if (workflow) {
+    workflow.serviceName = input.name
+    workflow.stages = input.workflowStages.map((name, index) => ({
+      id: workflow.stages[index]?.id ?? `stage-${Date.now()}-${index}`,
+      name,
+      order: index + 1,
+      ownerRole: workflow.stages[index]?.ownerRole ?? input.owner,
+      slaHours: workflow.stages[index]?.slaHours ?? 24,
+      requiresEvidence: workflow.stages[index]?.requiresEvidence ?? index > 0,
+      requiresApproval: workflow.stages[index]?.requiresApproval ?? false,
+      clientVisible: workflow.stages[index]?.clientVisible ?? true,
+    }))
+  }
+
+  const calculator = calculators.find((item) => item.serviceId === input.id)
+  if (calculator) calculator.serviceName = input.name
+
+  branchActivations
+    .filter((item) => item.serviceId === input.id)
+    .forEach((item) => {
+      item.serviceName = input.name
+    })
+
+  return getServiceAdministrationWorkspace()
 }

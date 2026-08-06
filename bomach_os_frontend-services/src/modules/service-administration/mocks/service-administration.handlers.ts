@@ -3,7 +3,9 @@ import { delay, http, HttpResponse } from 'msw'
 import { env } from '@/shared/config/env'
 
 import {
+  configureMockService,
   createMockService,
+  createMockServiceWizard,
   duplicateMockService,
   getServiceAdministrationWorkspace,
   saveMockCalculator,
@@ -58,6 +60,33 @@ export const serviceAdministrationHandlers = [
       }),
       { status: 201 },
     )
+  }),
+
+  http.post(endpoint(`${basePath}/services/wizard`), async ({ request }) => {
+    await delay(320)
+    const body = await request.json()
+
+    const input = body as Parameters<typeof createMockServiceWizard>[0]
+    if (!input.name || !input.code || !input.division || !input.owner) {
+      return HttpResponse.json(
+        { detail: 'Service name, code, division and owner are required.' },
+        { status: 422 },
+      )
+    }
+
+    return HttpResponse.json(createMockServiceWizard(input), { status: 201 })
+  }),
+
+  http.put(endpoint(`${basePath}/services/:serviceId`), async ({ request }) => {
+    await delay(260)
+    const body = await request.json()
+    const workspace = configureMockService(body as Parameters<typeof configureMockService>[0])
+
+    if (!workspace) {
+      return HttpResponse.json({ detail: 'Service was not found.' }, { status: 404 })
+    }
+
+    return HttpResponse.json(workspace)
   }),
 
   http.post(endpoint(`${basePath}/services/:serviceId/duplicate`), async ({ params }) => {

@@ -1,7 +1,9 @@
 import { apiClient } from '@/shared/api/api-client'
 
 import type {
+  ConfigureServiceInput,
   CreateServiceInput,
+  CreateServiceWizardInput,
   DuplicateServiceInput,
   SaveCalculatorInput,
   SaveRequestFormInput,
@@ -21,6 +23,14 @@ export const serviceAdministrationApi = {
 
   createService(input: CreateServiceInput) {
     return apiClient.post<ServiceCatalogueItem>(`${basePath}/services`, input)
+  },
+
+  createServiceWizard(input: CreateServiceWizardInput) {
+    return apiClient.post<ServiceAdministrationWorkspace>(`${basePath}/services/wizard`, input)
+  },
+
+  configureService(input: ConfigureServiceInput) {
+    return apiClient.put<ServiceAdministrationWorkspace>(`${basePath}/services/${input.id}`, input)
   },
 
   duplicateService(input: DuplicateServiceInput) {

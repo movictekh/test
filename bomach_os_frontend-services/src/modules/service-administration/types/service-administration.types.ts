@@ -24,6 +24,11 @@ export interface ServiceCatalogueItem {
   requestFormName?: string
   workflowName?: string
   readiness: number
+  slaDays?: number
+  fulfilmentMode?: string
+  subservices?: string[]
+  requestFields?: string[]
+  workflowStages?: string[]
 }
 
 export interface CalculatorVariable {
@@ -169,4 +174,42 @@ export interface SaveWorkflowInput {
 
 export interface DuplicateServiceInput {
   id: string
+}
+
+export interface ServicePricingSetup {
+  method: string
+  rate: number
+  depositPercent: number
+  taxPercent: number
+  discountApprovalPercent: number
+}
+
+export interface CreateServiceWizardInput {
+  name: string
+  code: string
+  division: string
+  description: string
+  owner: string
+  slaDays: number
+  fulfilmentMode: string
+  status: ServiceStatus
+  branchNames: string[]
+  subservices: string[]
+  pricing: ServicePricingSetup
+  requestFields: string[]
+  workflowStages: string[]
+}
+
+export interface ConfigureServiceInput {
+  id: string
+  name: string
+  code: string
+  division: string
+  owner: string
+  description: string
+  slaDays: number
+  status: ServiceStatus
+  subservices: string[]
+  requestFields: string[]
+  workflowStages: string[]
 }
