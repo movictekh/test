@@ -37,6 +37,7 @@ export interface NavigationItem {
   permissions?: readonly AppPermission[]
   permissionMode?: PermissionMode
   badge?: string | number
+  badgeTone?: 'default' | 'alert'
   exact?: boolean
 }
 

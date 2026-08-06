@@ -4,7 +4,11 @@ import { describe, expect, it, vi } from 'vitest'
 
 import { BranchActivationScreen } from './BranchActivationScreen'
 
-import type { BranchActivation, ServiceCatalogueItem } from '../types/service-administration.types'
+import type {
+  BranchActivation,
+  SaveBranchActivationMatrixInput,
+  ServiceCatalogueItem,
+} from '../types/service-administration.types'
 
 const services: ServiceCatalogueItem[] = [
   {
@@ -47,7 +51,7 @@ describe('BranchActivationScreen', () => {
 
   it('keeps branch edits local until Save Changes is pressed', async () => {
     const user = userEvent.setup()
-    const onSave = vi.fn()
+    const onSave = vi.fn<(input: SaveBranchActivationMatrixInput) => void>()
 
     render(
       <BranchActivationScreen
@@ -78,15 +82,18 @@ describe('BranchActivationScreen', () => {
     await user.click(screen.getByRole('button', { name: 'Save Changes' }))
 
     expect(onSave).toHaveBeenCalledTimes(1)
-    expect(onSave).toHaveBeenCalledWith({
-      updates: expect.arrayContaining([
-        expect.objectContaining({
-          serviceId: 'service-one',
-          branchName: 'Port Harcourt',
-          active: true,
-          slaDays: 5,
-        }),
-      ]),
+    const payload = onSave.mock.calls[0]?.[0]
+    expect(payload).toBeDefined()
+    const portHarcourtUpdate = payload?.updates.find(
+      (update) => update.serviceId === 'service-one' && update.branchName === 'Port Harcourt',
+    )
+    expect(portHarcourtUpdate).toEqual({
+      serviceId: 'service-one',
+      serviceName: 'Estate Plot Sales',
+      branchId: 'port-harcourt',
+      branchName: 'Port Harcourt',
+      active: true,
+      slaDays: 5,
     })
   })
 

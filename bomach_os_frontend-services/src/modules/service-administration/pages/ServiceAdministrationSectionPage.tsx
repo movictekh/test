@@ -3,10 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 
-import {
-  CalculatorEditor,
-  RequestFormEditor,
-} from '../editors/ServiceAdministrationEditors'
+import { CalculatorEditor, RequestFormEditor } from '../editors/ServiceAdministrationEditors'
 import {
   ConfigureServiceWorkspace,
   CreateServiceWizard,

@@ -233,8 +233,7 @@ export function WorkflowDesignerScreen({
   }
 
   const createRule = () => {
-    const detail =
-      ruleDescription.trim() || `${ruleTrigger} → ${ruleAction.toLowerCase()}`
+    const detail = ruleDescription.trim() || `${ruleTrigger} → ${ruleAction.toLowerCase()}`
     setRules((current) => [...current, detail])
     setRuleOpen(false)
     setRuleDescription('')
@@ -589,7 +588,11 @@ export function WorkflowDesignerScreen({
               </div>
             </div>
             <footer>
-              <button type="button" className="service-admin-button" onClick={() => setRuleOpen(false)}>
+              <button
+                type="button"
+                className="service-admin-button"
+                onClick={() => setRuleOpen(false)}
+              >
                 Cancel
               </button>
               <button

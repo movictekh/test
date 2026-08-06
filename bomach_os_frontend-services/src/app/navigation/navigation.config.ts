@@ -67,7 +67,7 @@ export const operationsNavigation = [
   },
   {
     id: 'commercial',
-    label: 'Commercial Operations',
+    label: 'Commercial Flow',
     items: [
       {
         id: 'requests',
@@ -76,10 +76,11 @@ export const operationsNavigation = [
         to: appShellRoute,
         params: { section: 'service-requests' },
         permissions: [PERMISSIONS.requestRead],
+        badge: 1,
       },
       {
         id: 'quotations',
-        label: 'Quotations & Proposals',
+        label: 'Quotations',
         icon: 'quotations',
         to: appShellRoute,
         params: { section: 'quotations-proposals' },
@@ -87,7 +88,7 @@ export const operationsNavigation = [
       },
       {
         id: 'invoices',
-        label: 'Invoices and Payments',
+        label: 'Invoices & Payments',
         icon: 'invoices',
         to: appShellRoute,
         params: { section: 'invoices-payments' },
@@ -95,11 +96,13 @@ export const operationsNavigation = [
       },
       {
         id: 'approvals',
-        label: 'Approval Queue',
+        label: 'Approvals',
         icon: 'approvals',
         to: appShellRoute,
         params: { section: 'approval-queue' },
         permissions: [PERMISSIONS.approvalRead],
+        badge: 4,
+        badgeTone: 'alert',
       },
     ],
   },

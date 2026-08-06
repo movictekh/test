@@ -107,7 +107,7 @@ function Field({
 }) {
   return (
     <label
-      className={`service-admin-config-field${full ? ' service-admin-config-field--full' : ''}`}
+      className={`service-admin-config-field${full ? 'service-admin-config-field--full' : ''}`}
     >
       <span>
         {label}

@@ -5,6 +5,7 @@ import { useState } from 'react'
 
 import { useAuth } from '@/app/auth'
 import { presentError } from '@/shared/errors'
+import { cn } from '@/shared/lib/cn'
 import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
 import { CreateServiceWizard } from '@/modules/service-administration'
 import { serviceAdministrationApi } from '@/modules/service-administration/api/service-administration.api'
@@ -140,13 +141,11 @@ function LifecycleCard({ stages }: { stages: DashboardPipelineStage[] }) {
           return (
             <div
               key={stage.key}
-              className={`command-center-step${
-                state === 'done'
-                  ? ' command-center-step--done'
-                  : state === 'active'
-                    ? ' command-center-step--active'
-                    : ''
-              }`}
+              className={cn(
+                'command-center-step',
+                state === 'done' && 'command-center-step--done',
+                state === 'active' && 'command-center-step--active',
+              )}
             >
               <small>{String(index + 1).padStart(2, '0')}</small>
               <b>{stage.label}</b>

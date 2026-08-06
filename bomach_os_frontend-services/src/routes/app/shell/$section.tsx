@@ -7,6 +7,14 @@ import {
   type ServiceAdministrationSection,
 } from '@/modules/service-administration'
 import { ModuleShellPage } from '@/modules/foundation/pages/ModuleShellPage'
+import { CommercialSectionPage, type CommercialSection } from '@/modules/commercial'
+
+const commercialSections = new Set<CommercialSection>([
+  'service-requests',
+  'quotations',
+  'invoices-payments',
+  'approvals',
+])
 
 const serviceAdministrationSections = new Set<ServiceAdministrationSection>([
   'service-catalogue',
@@ -38,6 +46,10 @@ export const Route = createFileRoute('/app/shell/$section')({
 
 function AppShellRoute() {
   const { section } = Route.useParams()
+
+  if (commercialSections.has(section as CommercialSection)) {
+    return <CommercialSectionPage section={section as CommercialSection} />
+  }
 
   if (serviceAdministrationSections.has(section as ServiceAdministrationSection)) {
     return <ServiceAdministrationSectionPage section={section as ServiceAdministrationSection} />

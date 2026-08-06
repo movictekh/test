@@ -235,7 +235,21 @@ export function AppShell({ children, navigation, variant = 'operations' }: AppSh
                     <>
                       <Icon size={16} className="shrink-0" aria-hidden="true" />
                       {sidebarCollapsed ? null : (
-                        <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                        <>
+                          <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                          {item.badge !== undefined ? (
+                            <span
+                              className={cn(
+                                'ml-auto rounded-full px-1.5 py-0.5 text-[0.5rem] font-extrabold',
+                                item.badgeTone === 'alert'
+                                  ? 'bg-danger-50 text-danger-700'
+                                  : 'bg-brand-50 text-brand-700',
+                              )}
+                            >
+                              {item.badge}
+                            </span>
+                          ) : null}
+                        </>
                       )}
                     </>
                   )
