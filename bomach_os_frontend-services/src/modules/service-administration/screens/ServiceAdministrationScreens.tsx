@@ -7,7 +7,6 @@ import type {
   ServiceCatalogueItem,
   SaveRequestFormInput,
   ServiceRequestForm,
-  ServiceWorkflow,
 } from '../types/service-administration.types'
 import '../styles/service-administration.css'
 
@@ -515,97 +514,6 @@ export function RequestFormBuilderScreen({
           </section>
         </div>
       ) : null}
-    </div>
-  )
-}
-
-export function WorkflowDesignerScreen({
-  workflows,
-  onCreate,
-}: {
-  workflows: ServiceWorkflow[]
-  onCreate: () => void
-}) {
-  const [activeId, setActiveId] = useState(workflows[0]?.id ?? '')
-  const active = workflows.find((workflow) => workflow.id === activeId) ?? workflows[0]
-
-  return (
-    <div className="service-admin-page service-admin-content">
-      <div className="service-admin-card">
-        <div className="service-admin-card-header">
-          <div>
-            <div className="service-admin-card-title">Workflow Designer</div>
-            <div className="service-admin-card-subtitle">
-              Configure service fulfillment automation
-            </div>
-          </div>
-          <button
-            type="button"
-            className="service-admin-button service-admin-button-primary"
-            onClick={onCreate}
-          >
-            New Workflow
-          </button>
-        </div>
-
-        <div className="service-admin-filter-group">
-          <select value={activeId} onChange={(event) => setActiveId(event.target.value)}>
-            {workflows.map((workflow) => (
-              <option key={workflow.id} value={workflow.id}>
-                {workflow.name} · {workflow.serviceName}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {active ? (
-          <>
-            <div className="service-admin-life">
-              {active.stages
-                .slice()
-                .sort((a, b) => a.order - b.order)
-                .map((stage, index) => (
-                  <article key={stage.id} className="service-admin-step">
-                    <small>{String(index + 1).padStart(2, '0')}</small>
-                    <b>{stage.name}</b>
-                    <span>{stage.ownerRole}</span>
-                  </article>
-                ))}
-            </div>
-
-            <div className="service-admin-table-wrap mt-3">
-              <table className="service-admin-table">
-                <thead>
-                  <tr>
-                    <th>Stage</th>
-                    <th>Owner</th>
-                    <th>SLA</th>
-                    <th>Evidence</th>
-                    <th>Approval</th>
-                    <th>Client visible</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {active.stages.map((stage) => (
-                    <tr key={stage.id}>
-                      <td>
-                        <b>
-                          {stage.order}. {stage.name}
-                        </b>
-                      </td>
-                      <td>{stage.ownerRole}</td>
-                      <td>{stage.slaHours} hours</td>
-                      <td>{stage.requiresEvidence ? 'Yes' : 'No'}</td>
-                      <td>{stage.requiresApproval ? 'Yes' : 'No'}</td>
-                      <td>{stage.clientVisible ? 'Yes' : 'No'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>
-        ) : null}
-      </div>
     </div>
   )
 }

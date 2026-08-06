@@ -6,7 +6,6 @@ import { useState } from 'react'
 import {
   CalculatorEditor,
   RequestFormEditor,
-  WorkflowEditor,
 } from '../editors/ServiceAdministrationEditors'
 import {
   ConfigureServiceWorkspace,
@@ -25,8 +24,8 @@ import {
   CalculatorLibraryScreen,
   RequestFormBuilderScreen,
   ServiceCatalogueScreen,
-  WorkflowDesignerScreen,
 } from '../screens/ServiceAdministrationScreens'
+import { WorkflowDesignerScreen } from '../screens/WorkflowDesignerScreen'
 import type {
   ConfigureServiceInput,
   CreateServiceWizardInput,
@@ -91,7 +90,6 @@ export function ServiceAdministrationSectionPage({
   const [newServiceOpen, setNewServiceOpen] = useState(false)
   const [calculatorEditor, setCalculatorEditor] = useState<PricingCalculator | null | 'new'>(null)
   const [formEditor, setFormEditor] = useState<ServiceRequestForm | null | 'new'>(null)
-  const [workflowEditor, setWorkflowEditor] = useState<ServiceWorkflow | null | 'new'>(null)
 
   const createService = useMutation({
     mutationFn: (input: CreateServiceWizardInput) =>
@@ -172,7 +170,6 @@ export function ServiceAdministrationSectionPage({
     mutationFn: (input: SaveWorkflowInput) => serviceAdministrationApi.saveWorkflow(input),
     onSuccess: (workspace) => {
       queryClient.setQueryData(serviceAdministrationKeys.workspace(), workspace)
-      setWorkflowEditor(null)
       toast.success('Workflow saved')
     },
     onError: (error) => {
@@ -291,8 +288,10 @@ export function ServiceAdministrationSectionPage({
 
       {section === 'workflow-designer' ? (
         <WorkflowDesignerScreen
+          services={workspace.services}
           workflows={workspace.workflows}
-          onCreate={() => setWorkflowEditor('new')}
+          saving={saveWorkflow.isPending}
+          onSave={(input) => saveWorkflow.mutate(input)}
         />
       ) : null}
 
@@ -355,16 +354,6 @@ export function ServiceAdministrationSectionPage({
           onClose={() => setFormEditor(null)}
           onSave={(input) => saveRequestForm.mutate(input)}
           saving={saveRequestForm.isPending}
-        />
-      ) : null}
-
-      {workflowEditor ? (
-        <WorkflowEditor
-          {...(workflowEditor === 'new' ? {} : { workflow: workflowEditor })}
-          services={workspace.services}
-          onClose={() => setWorkflowEditor(null)}
-          onSave={(input) => saveWorkflow.mutate(input)}
-          saving={saveWorkflow.isPending}
         />
       ) : null}
 

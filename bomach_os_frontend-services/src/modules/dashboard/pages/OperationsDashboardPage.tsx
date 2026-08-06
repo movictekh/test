@@ -142,9 +142,9 @@ function LifecycleCard({ stages }: { stages: DashboardPipelineStage[] }) {
               key={stage.key}
               className={`command-center-step${
                 state === 'done'
-                  ? 'command-center-step--done'
+                  ? ' command-center-step--done'
                   : state === 'active'
-                    ? 'command-center-step--active'
+                    ? ' command-center-step--active'
                     : ''
               }`}
             >

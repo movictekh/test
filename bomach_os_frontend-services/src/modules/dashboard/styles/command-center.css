@@ -215,16 +215,20 @@
   grid-auto-flow: column;
   grid-auto-columns: minmax(120px, 1fr);
   gap: 7px;
-  overflow: auto;
+  overflow-x: auto;
   padding-bottom: 4px;
 }
 
 .command-center-step {
+  display: flex;
+  min-width: 120px;
   min-height: 68px;
+  flex-direction: column;
   border: 1px solid var(--cc-b);
   border-radius: 9px;
   background: var(--cc-s);
   padding: 9px;
+  box-sizing: border-box;
 }
 
 .command-center-step--done {
@@ -240,15 +244,17 @@
 .command-center-step small {
   display: block;
   color: var(--cc-t3);
-  font-size: 8px;
+  font-size: 7.5px;
   font-weight: 800;
+  line-height: 1.2;
 }
 
 .command-center-step b {
   display: block;
   margin-top: 4px;
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 800;
+  line-height: 1.25;
 }
 
 .command-center-step span {
@@ -257,6 +263,7 @@
   color: var(--cc-t3);
   font-size: 8px;
   font-weight: 600;
+  line-height: 1.2;
 }
 
 .command-center-step--done span {
