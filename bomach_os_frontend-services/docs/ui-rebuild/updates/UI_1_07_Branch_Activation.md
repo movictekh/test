@@ -57,3 +57,12 @@ No inline style object was introduced.
 
 - UI-1.08 — Command Center and shell fidelity;
 - UI-1.09 — states, tests, screenshot comparison and sign-off.
+
+## Final completion fixes
+
+The final repository review identified and corrected two remaining issues:
+
+- removed the obsolete `Update Activations` page-toolbar action, because the HTML-matched screen owns the real `Save Changes` action;
+- synchronised the local activation matrix whenever saved or refetched workspace data changes.
+
+UI-1.07 is complete after the project checks pass.

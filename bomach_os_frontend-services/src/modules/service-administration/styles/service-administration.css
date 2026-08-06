@@ -1593,19 +1593,22 @@
   padding: 5px;
   color: var(--proto-t);
   font-size: 9px;
+  font-weight: 700;
   white-space: nowrap;
+  cursor: pointer;
 }
 
 .service-admin-branch-check input {
   width: 13px;
   height: 13px;
   accent-color: var(--proto-n);
+  cursor: pointer;
 }
 
 .service-admin-branch-check:has(input:checked) {
-  border-color: #a7f3d0;
-  background: #ecfdf5;
-  color: #065f46;
+  border-color: #a9c0f6;
+  background: #edf2ff;
+  color: var(--proto-n);
 }
 
 @media (max-width: 600px) {

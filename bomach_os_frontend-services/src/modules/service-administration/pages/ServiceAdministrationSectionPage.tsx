@@ -1,4 +1,4 @@
-import { IconPlus, IconRefresh } from '@tabler/icons-react'
+import { IconFilePlus, IconPlus, IconUserScreen } from '@tabler/icons-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
@@ -180,42 +180,40 @@ export function ServiceAdministrationSectionPage({
     (item) => item.serviceId === selectedService?.id,
   )
 
-  const toolbarPrimary =
-    section === 'service-catalogue' ? (
-      <PrototypeButton tone="primary" onClick={() => setNewServiceOpen(true)}>
-        <IconPlus size={14} />
-        Create Service
-      </PrototypeButton>
-    ) : (
-      <PrototypeButton
-        tone="primary"
-        onClick={() => {
-          if (section === 'calculator-library') setCalculatorEditor('new')
-          if (section === 'request-form-builder') setFormEditor('new')
-          if (section === 'workflow-designer') setWorkflowEditor('new')
-        }}
-      >
-        <IconPlus size={14} />
-        {section === 'calculator-library'
-          ? 'New Calculator'
-          : section === 'request-form-builder'
-            ? 'New Request Form'
-            : section === 'workflow-designer'
-              ? 'New Workflow'
-              : 'Update Activations'}
-      </PrototypeButton>
-    )
-
   return (
     <>
       <CompactPageToolbar
         title={page.title}
         breadcrumb={page.breadcrumb}
-        primaryAction={toolbarPrimary}
         secondaryAction={
-          <PrototypeButton onClick={() => void query.refetch()}>
-            <IconRefresh size={14} />
-            Refresh
+          <>
+            <PrototypeButton
+              onClick={() =>
+                void navigate({
+                  to: '/portal/dashboard',
+                })
+              }
+            >
+              <IconUserScreen size={14} />
+              Client Portal
+            </PrototypeButton>
+            <PrototypeButton
+              onClick={() =>
+                void navigate({
+                  to: '/app/shell/$section',
+                  params: { section: 'service-requests' },
+                })
+              }
+            >
+              <IconFilePlus size={14} />
+              New Request
+            </PrototypeButton>
+          </>
+        }
+        primaryAction={
+          <PrototypeButton tone="primary" onClick={() => setNewServiceOpen(true)}>
+            <IconPlus size={14} />
+            Create Service
           </PrototypeButton>
         }
       />

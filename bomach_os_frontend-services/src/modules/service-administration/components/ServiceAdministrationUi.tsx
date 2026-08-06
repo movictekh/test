@@ -33,10 +33,14 @@ export function CompactPageToolbar({
   secondaryAction?: ReactNode
 }) {
   return (
-    <section className="border-border bg-surface flex min-h-12 flex-col gap-2 border-b px-3 py-2 sm:flex-row sm:items-center sm:justify-between lg:px-5">
-      <div className="min-w-0">
-        <h1 className="text-foreground truncate text-[0.8125rem] font-extrabold">{title}</h1>
-        <p className="text-foreground-subtle mt-0.5 truncate text-[0.5625rem]">{breadcrumb}</p>
+    <section className="border-border bg-surface flex min-h-[58px] flex-col gap-2 border-b px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between lg:px-5">
+      <div className="min-w-0 flex-1">
+        <h1 className="text-foreground truncate text-[0.875rem] font-extrabold leading-tight">
+          {title}
+        </h1>
+        <p className="text-foreground-subtle mt-0.5 truncate text-[0.53125rem] font-medium">
+          {breadcrumb}
+        </p>
       </div>
       <div className="flex flex-wrap items-center gap-1.5">
         {secondaryAction}

@@ -42,7 +42,13 @@ export function BranchActivationScreen({
     [activations, services],
   )
 
-  const [matrix, setMatrix] = useState<Record<string, boolean>>(initialMatrix)
+  const [matrix, setMatrix] = useState(initialMatrix)
+  const [previousInitialMatrix, setPreviousInitialMatrix] = useState(initialMatrix)
+
+  if (initialMatrix !== previousInitialMatrix) {
+    setPreviousInitialMatrix(initialMatrix)
+    setMatrix(initialMatrix)
+  }
 
   const toggle = (serviceId: string, branchName: string) => {
     const key = `${serviceId}:${branchName}`
@@ -102,57 +108,37 @@ export function BranchActivationScreen({
             </thead>
 
             <tbody>
-              {services.map((service) => {
-                const serviceActivations = activations.filter(
-                  (item) => item.serviceId === service.id,
-                )
-                const activeOrders = serviceActivations.reduce(
-                  (total, item) => total + item.activeOrders,
-                  0,
-                )
-                const averageCapacity =
-                  serviceActivations.length > 0
-                    ? Math.round(
-                        serviceActivations.reduce((total, item) => total + item.capacity, 0) /
-                          serviceActivations.length,
-                      )
-                    : 0
+              {services.map((service) => (
+                <tr key={service.id}>
+                  <td>
+                    <b>{service.name}</b>
+                    <div className="service-admin-row-subtitle">{service.division}</div>
+                  </td>
 
-                return (
-                  <tr key={service.id}>
-                    <td>
-                      <b>{service.name}</b>
-                      <div className="service-admin-row-subtitle">{service.division}</div>
-                    </td>
+                  {branchNames.map((branchName) => {
+                    const key = `${service.id}:${branchName}`
+                    const active = matrix[key] ?? false
 
-                    {branchNames.map((branchName) => {
-                      const key = `${service.id}:${branchName}`
-                      const active = matrix[key] ?? false
+                    return (
+                      <td key={branchName}>
+                        <label className="service-admin-branch-check">
+                          <input
+                            type="checkbox"
+                            checked={active}
+                            onChange={() => toggle(service.id, branchName)}
+                          />
+                          <span>{active ? 'Active' : 'Off'}</span>
+                        </label>
+                      </td>
+                    )
+                  })}
 
-                      return (
-                        <td key={branchName}>
-                          <label className="service-admin-branch-check">
-                            <input
-                              type="checkbox"
-                              checked={active}
-                              onChange={() => toggle(service.id, branchName)}
-                            />
-                            <span>{active ? 'Active' : 'Off'}</span>
-                          </label>
-                        </td>
-                      )
-                    })}
-
-                    <td>{service.slaDays ?? 5}d</td>
-                    <td>
-                      <span className="service-admin-pill service-admin-pill-green">Available</span>
-                      <div className="service-admin-row-subtitle">
-                        {averageCapacity}% capacity / {activeOrders} active
-                      </div>
-                    </td>
-                  </tr>
-                )
-              })}
+                  <td>{service.slaDays ?? 5}d</td>
+                  <td>
+                    <span className="service-admin-pill service-admin-pill-green">Available</span>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
