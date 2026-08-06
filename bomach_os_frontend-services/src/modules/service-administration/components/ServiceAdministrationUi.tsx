@@ -341,9 +341,11 @@ export function ServiceDetailPanel({
 export function CalculatorList({
   calculators,
   onToggle,
+  onEdit,
 }: {
   calculators: PricingCalculator[]
   onToggle: (item: PricingCalculator) => void
+  onEdit: (item: PricingCalculator) => void
 }) {
   return (
     <div className="grid gap-2.5 xl:grid-cols-2">
@@ -381,9 +383,12 @@ export function CalculatorList({
             <span className="text-foreground-subtle text-[0.5625rem]">
               Updated {new Date(calculator.updatedAt).toLocaleDateString('en-NG')}
             </span>
-            <PrototypeButton onClick={() => onToggle(calculator)}>
-              {calculator.status === 'active' ? 'Deactivate' : 'Activate'}
-            </PrototypeButton>
+            <div className="flex gap-1.5">
+              <PrototypeButton onClick={() => onEdit(calculator)}>Configure</PrototypeButton>
+              <PrototypeButton onClick={() => onToggle(calculator)}>
+                {calculator.status === 'active' ? 'Deactivate' : 'Activate'}
+              </PrototypeButton>
+            </div>
           </div>
         </article>
       ))}
@@ -403,9 +408,11 @@ function MetricMini({ label, value }: { label: string; value: number | string })
 export function RequestFormCards({
   forms,
   onToggle,
+  onEdit,
 }: {
   forms: ServiceRequestForm[]
   onToggle: (item: ServiceRequestForm) => void
+  onEdit: (item: ServiceRequestForm) => void
 }) {
   return (
     <div className="grid gap-2.5 xl:grid-cols-2">
@@ -448,9 +455,12 @@ export function RequestFormCards({
             <span className="text-foreground-subtle text-[0.5625rem]">
               {form.fields.length} fields
             </span>
-            <PrototypeButton onClick={() => onToggle(form)}>
-              {form.status === 'active' ? 'Create new version' : 'Activate'}
-            </PrototypeButton>
+            <div className="flex gap-1.5">
+              <PrototypeButton onClick={() => onEdit(form)}>Open Builder</PrototypeButton>
+              <PrototypeButton onClick={() => onToggle(form)}>
+                {form.status === 'active' ? 'Create new version' : 'Activate'}
+              </PrototypeButton>
+            </div>
           </div>
         </article>
       ))}
@@ -461,9 +471,11 @@ export function RequestFormCards({
 export function WorkflowCards({
   workflows,
   onToggle,
+  onEdit,
 }: {
   workflows: ServiceWorkflow[]
   onToggle: (item: ServiceWorkflow) => void
+  onEdit: (item: ServiceWorkflow) => void
 }) {
   return (
     <div className="space-y-2.5">
@@ -480,9 +492,12 @@ export function WorkflowCards({
                 {workflow.serviceName} · Version {workflow.version}
               </p>
             </div>
-            <PrototypeButton onClick={() => onToggle(workflow)}>
-              {workflow.status === 'active' ? 'Create new version' : 'Activate workflow'}
-            </PrototypeButton>
+            <div className="flex gap-1.5">
+              <PrototypeButton onClick={() => onEdit(workflow)}>Open Designer</PrototypeButton>
+              <PrototypeButton onClick={() => onToggle(workflow)}>
+                {workflow.status === 'active' ? 'Create new version' : 'Activate workflow'}
+              </PrototypeButton>
+            </div>
           </div>
           <div className="mt-3 flex min-w-max items-stretch gap-1 overflow-x-auto pb-1">
             {workflow.stages

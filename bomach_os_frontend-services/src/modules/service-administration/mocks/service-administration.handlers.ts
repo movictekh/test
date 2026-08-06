@@ -4,7 +4,11 @@ import { env } from '@/shared/config/env'
 
 import {
   createMockService,
+  duplicateMockService,
   getServiceAdministrationWorkspace,
+  saveMockCalculator,
+  saveMockRequestForm,
+  saveMockWorkflow,
   updateMockBranchActivation,
   updateMockConfigurationStatus,
 } from './service-administration.mock-db'
@@ -54,6 +58,38 @@ export const serviceAdministrationHandlers = [
       }),
       { status: 201 },
     )
+  }),
+
+  http.post(endpoint(`${basePath}/services/:serviceId/duplicate`), async ({ params }) => {
+    await delay(220)
+    const duplicated = duplicateMockService(String(params.serviceId))
+
+    if (!duplicated) {
+      return HttpResponse.json({ detail: 'Service was not found.' }, { status: 404 })
+    }
+
+    return HttpResponse.json(duplicated, { status: 201 })
+  }),
+
+  http.put(endpoint(`${basePath}/calculators/:calculatorId`), async ({ request }) => {
+    await delay(240)
+    const body = await request.json()
+    saveMockCalculator(body as Parameters<typeof saveMockCalculator>[0])
+    return HttpResponse.json(getServiceAdministrationWorkspace())
+  }),
+
+  http.put(endpoint(`${basePath}/request-forms/:formId`), async ({ request }) => {
+    await delay(240)
+    const body = await request.json()
+    saveMockRequestForm(body as Parameters<typeof saveMockRequestForm>[0])
+    return HttpResponse.json(getServiceAdministrationWorkspace())
+  }),
+
+  http.put(endpoint(`${basePath}/workflows/:workflowId`), async ({ request }) => {
+    await delay(240)
+    const body = await request.json()
+    saveMockWorkflow(body as Parameters<typeof saveMockWorkflow>[0])
+    return HttpResponse.json(getServiceAdministrationWorkspace())
   }),
 
   http.patch(endpoint(`${basePath}/configuration-status`), async ({ request }) => {

@@ -2,6 +2,12 @@ import { IconPlus, IconRefresh } from '@tabler/icons-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 
+import {
+  CalculatorEditor,
+  RequestFormEditor,
+  WorkflowEditor,
+} from '../editors/ServiceAdministrationEditors'
+
 import { presentError } from '@/shared/errors'
 import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
 
@@ -31,6 +37,9 @@ import type {
   ServiceCatalogueItem,
   ServiceRequestForm,
   ServiceWorkflow,
+  SaveCalculatorInput,
+  SaveRequestFormInput,
+  SaveWorkflowInput,
   UpdateBranchActivationInput,
   UpdateConfigurationStatusInput,
 } from '../types/service-administration.types'
@@ -86,6 +95,9 @@ export function ServiceAdministrationSectionPage({
   const [division, setDivision] = useState('')
   const [selectedService, setSelectedService] = useState<ServiceCatalogueItem | null>(null)
   const [newServiceOpen, setNewServiceOpen] = useState(false)
+  const [calculatorEditor, setCalculatorEditor] = useState<PricingCalculator | null | 'new'>(null)
+  const [formEditor, setFormEditor] = useState<ServiceRequestForm | null | 'new'>(null)
+  const [workflowEditor, setWorkflowEditor] = useState<ServiceWorkflow | null | 'new'>(null)
 
   const createService = useMutation<
     Awaited<ReturnType<typeof serviceAdministrationApi.createService>>,
@@ -111,6 +123,33 @@ export function ServiceAdministrationSectionPage({
     onSuccess: (workspace) => {
       queryClient.setQueryData(serviceAdministrationKeys.workspace(), workspace)
       toast.success('Configuration updated')
+    },
+  })
+
+  const saveCalculator = useMutation({
+    mutationFn: (input: SaveCalculatorInput) => serviceAdministrationApi.saveCalculator(input),
+    onSuccess: (workspace) => {
+      queryClient.setQueryData(serviceAdministrationKeys.workspace(), workspace)
+      setCalculatorEditor(null)
+      toast.success('Calculator saved')
+    },
+  })
+
+  const saveRequestForm = useMutation({
+    mutationFn: (input: SaveRequestFormInput) => serviceAdministrationApi.saveRequestForm(input),
+    onSuccess: (workspace) => {
+      queryClient.setQueryData(serviceAdministrationKeys.workspace(), workspace)
+      setFormEditor(null)
+      toast.success('Request form saved')
+    },
+  })
+
+  const saveWorkflow = useMutation({
+    mutationFn: (input: SaveWorkflowInput) => serviceAdministrationApi.saveWorkflow(input),
+    onSuccess: (workspace) => {
+      queryClient.setQueryData(serviceAdministrationKeys.workspace(), workspace)
+      setWorkflowEditor(null)
+      toast.success('Workflow saved')
     },
   })
 
@@ -172,7 +211,14 @@ export function ServiceAdministrationSectionPage({
         Create Service
       </PrototypeButton>
     ) : (
-      <PrototypeButton tone="primary">
+      <PrototypeButton
+        tone="primary"
+        onClick={() => {
+          if (section === 'calculator-library') setCalculatorEditor('new')
+          if (section === 'request-form-builder') setFormEditor('new')
+          if (section === 'workflow-designer') setWorkflowEditor('new')
+        }}
+      >
         <IconPlus size={14} />
         {section === 'calculator-library'
           ? 'New Calculator'
@@ -253,6 +299,7 @@ export function ServiceAdministrationSectionPage({
             <div className="p-3">
               <CalculatorList
                 calculators={filteredCalculators}
+                onEdit={setCalculatorEditor}
                 onToggle={(item: PricingCalculator) =>
                   updateStatus.mutate({
                     entity: 'calculator',
@@ -274,6 +321,7 @@ export function ServiceAdministrationSectionPage({
             <div className="p-3">
               <RequestFormCards
                 forms={filteredForms}
+                onEdit={setFormEditor}
                 onToggle={(item: ServiceRequestForm) =>
                   updateStatus.mutate({
                     entity: 'request-form',
@@ -295,6 +343,7 @@ export function ServiceAdministrationSectionPage({
             <div className="p-3">
               <WorkflowCards
                 workflows={filteredWorkflows}
+                onEdit={setWorkflowEditor}
                 onToggle={(item: ServiceWorkflow) =>
                   updateStatus.mutate({
                     entity: 'workflow',
@@ -335,6 +384,36 @@ export function ServiceAdministrationSectionPage({
 
       {selectedService ? (
         <ServiceDetailPanel service={selectedService} onClose={() => setSelectedService(null)} />
+      ) : null}
+
+      {calculatorEditor ? (
+        <CalculatorEditor
+          {...(calculatorEditor === 'new' ? {} : { calculator: calculatorEditor })}
+          services={workspace.services}
+          onClose={() => setCalculatorEditor(null)}
+          onSave={(input) => saveCalculator.mutate(input)}
+          saving={saveCalculator.isPending}
+        />
+      ) : null}
+
+      {formEditor ? (
+        <RequestFormEditor
+          {...(formEditor === 'new' ? {} : { form: formEditor })}
+          services={workspace.services}
+          onClose={() => setFormEditor(null)}
+          onSave={(input) => saveRequestForm.mutate(input)}
+          saving={saveRequestForm.isPending}
+        />
+      ) : null}
+
+      {workflowEditor ? (
+        <WorkflowEditor
+          {...(workflowEditor === 'new' ? {} : { workflow: workflowEditor })}
+          services={workspace.services}
+          onClose={() => setWorkflowEditor(null)}
+          onSave={(input) => saveWorkflow.mutate(input)}
+          saving={saveWorkflow.isPending}
+        />
       ) : null}
 
       <NewServiceDialog

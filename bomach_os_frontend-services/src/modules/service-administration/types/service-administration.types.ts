@@ -138,3 +138,35 @@ export interface UpdateBranchActivationInput {
   id: string
   state: BranchActivationState
 }
+
+export interface SaveCalculatorInput {
+  id?: string
+  name: string
+  code: string
+  serviceId: string
+  description: string
+  status: ConfigurationStatus
+  variables: CalculatorVariable[]
+  charges: CalculatorCharge[]
+  sampleTotal: number
+}
+
+export interface SaveRequestFormInput {
+  id?: string
+  name: string
+  serviceId: string
+  status: ConfigurationStatus
+  fields: RequestFormField[]
+}
+
+export interface SaveWorkflowInput {
+  id?: string
+  name: string
+  serviceId: string
+  status: ConfigurationStatus
+  stages: WorkflowStage[]
+}
+
+export interface DuplicateServiceInput {
+  id: string
+}

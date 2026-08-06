@@ -1,10 +1,14 @@
 import type {
   BranchActivation,
+  CalculatorCharge,
+  CalculatorVariable,
   PricingCalculator,
+  RequestFormField,
   ServiceAdministrationWorkspace,
   ServiceCatalogueItem,
   ServiceRequestForm,
   ServiceWorkflow,
+  WorkflowStage,
 } from '../types/service-administration.types'
 
 const services: ServiceCatalogueItem[] = [
@@ -534,4 +538,109 @@ export function updateMockBranchActivation(
 ) {
   const item = branchActivations.find((candidate) => candidate.id === id)
   if (item) item.state = state
+}
+
+export function duplicateMockService(id: string) {
+  const source = services.find((item) => item.id === id)
+  if (!source) return undefined
+
+  const copy: ServiceCatalogueItem = {
+    ...source,
+    id: `service-${Date.now()}`,
+    name: `${source.name} Copy`,
+    code: `${source.code}-C`,
+    status: 'draft',
+    readiness: Math.min(source.readiness, 70),
+  }
+
+  services.unshift(copy)
+  return copy
+}
+
+export function saveMockCalculator(input: {
+  id?: string
+  name: string
+  code: string
+  serviceId: string
+  description: string
+  status: 'active' | 'draft' | 'inactive'
+  variables: CalculatorVariable[]
+  charges: CalculatorCharge[]
+  sampleTotal: number
+}) {
+  const service = services.find((item) => item.id === input.serviceId)
+  const existing = input.id ? calculators.find((item) => item.id === input.id) : undefined
+
+  if (existing) {
+    Object.assign(existing, {
+      ...input,
+      serviceName: service?.name ?? existing.serviceName,
+      version: existing.version + 1,
+      updatedAt: new Date().toISOString(),
+    })
+  } else {
+    calculators.unshift({
+      ...input,
+      id: `calculator-${Date.now()}`,
+      serviceName: service?.name ?? 'Unknown service',
+      version: 1,
+      updatedAt: new Date().toISOString(),
+    })
+  }
+}
+
+export function saveMockRequestForm(input: {
+  id?: string
+  name: string
+  serviceId: string
+  status: 'active' | 'draft' | 'inactive'
+  fields: RequestFormField[]
+}) {
+  const service = services.find((item) => item.id === input.serviceId)
+  const existing = input.id ? requestForms.find((item) => item.id === input.id) : undefined
+
+  if (existing) {
+    Object.assign(existing, {
+      ...input,
+      serviceName: service?.name ?? existing.serviceName,
+      version: existing.version + 1,
+      updatedAt: new Date().toISOString(),
+    })
+  } else {
+    requestForms.unshift({
+      ...input,
+      id: `form-${Date.now()}`,
+      serviceName: service?.name ?? 'Unknown service',
+      version: 1,
+      updatedAt: new Date().toISOString(),
+    })
+  }
+}
+
+export function saveMockWorkflow(input: {
+  id?: string
+  name: string
+  serviceId: string
+  status: 'active' | 'draft' | 'inactive'
+  stages: WorkflowStage[]
+}) {
+  const service = services.find((item) => item.id === input.serviceId)
+  const existing = input.id ? workflows.find((item) => item.id === input.id) : undefined
+
+  if (existing) {
+    Object.assign(existing, {
+      ...input,
+      serviceName: service?.name ?? existing.serviceName,
+      version: existing.version + 1,
+      updatedAt: new Date().toISOString(),
+    })
+  } else {
+    workflows.unshift({
+      ...input,
+      id: `workflow-${Date.now()}`,
+      serviceName: service?.name ?? 'Unknown service',
+      version: 1,
+      updatedAt: new Date().toISOString(),
+    })
+  }
 }

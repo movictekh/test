@@ -2,6 +2,10 @@ import { apiClient } from '@/shared/api/api-client'
 
 import type {
   CreateServiceInput,
+  DuplicateServiceInput,
+  SaveCalculatorInput,
+  SaveRequestFormInput,
+  SaveWorkflowInput,
   ServiceAdministrationWorkspace,
   ServiceCatalogueItem,
   UpdateBranchActivationInput,
@@ -17,6 +21,31 @@ export const serviceAdministrationApi = {
 
   createService(input: CreateServiceInput) {
     return apiClient.post<ServiceCatalogueItem>(`${basePath}/services`, input)
+  },
+
+  duplicateService(input: DuplicateServiceInput) {
+    return apiClient.post<ServiceCatalogueItem>(`${basePath}/services/${input.id}/duplicate`, {})
+  },
+
+  saveCalculator(input: SaveCalculatorInput) {
+    return apiClient.put<ServiceAdministrationWorkspace>(
+      `${basePath}/calculators/${input.id ?? 'new'}`,
+      input,
+    )
+  },
+
+  saveRequestForm(input: SaveRequestFormInput) {
+    return apiClient.put<ServiceAdministrationWorkspace>(
+      `${basePath}/request-forms/${input.id ?? 'new'}`,
+      input,
+    )
+  },
+
+  saveWorkflow(input: SaveWorkflowInput) {
+    return apiClient.put<ServiceAdministrationWorkspace>(
+      `${basePath}/workflows/${input.id ?? 'new'}`,
+      input,
+    )
   },
 
   updateStatus(input: UpdateConfigurationStatusInput) {
