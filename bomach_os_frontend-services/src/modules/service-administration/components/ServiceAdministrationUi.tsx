@@ -33,7 +33,7 @@ export function CompactPageToolbar({
   secondaryAction?: ReactNode
 }) {
   return (
-    <section className="border-border bg-surface flex min-h-[58px] flex-col gap-2 border-b px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between lg:px-5">
+    <section className="border-border bg-surface sticky top-0 z-20 flex min-h-[58px] flex-col gap-2 border-b px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between lg:px-5">
       <div className="min-w-0 flex-1">
         <h1 className="text-foreground truncate text-[0.875rem] leading-tight font-extrabold">
           {title}

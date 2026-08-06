@@ -103,7 +103,7 @@ export function AppShell({ children, navigation, variant = 'operations' }: AppSh
       : 'Search requests, clients, and orders'
 
   return (
-    <div className="bg-background min-h-screen">
+    <div className="bg-background h-dvh overflow-hidden">
       <header className="bg-brand-600 fixed inset-x-0 top-0 z-40 flex h-16 items-center justify-between px-4 text-white shadow-sm lg:px-5">
         <div className="flex min-w-0 items-center gap-3">
           <Button
@@ -289,11 +289,11 @@ export function AppShell({ children, navigation, variant = 'operations' }: AppSh
 
       <div
         className={cn(
-          'min-h-screen min-w-0 pt-16 transition-[padding] duration-200',
+          'flex h-dvh min-w-0 flex-col overflow-hidden pt-16 transition-[padding] duration-200',
           sidebarCollapsed ? 'lg:pl-14' : 'lg:pl-52',
         )}
       >
-        <div className="min-w-0">{children}</div>
+        <div className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto">{children}</div>
       </div>
     </div>
   )

@@ -20,6 +20,9 @@
 }
 
 .command-center-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
   display: flex;
   min-height: 58px;
   flex-wrap: wrap;

@@ -22,6 +22,7 @@ export const mockAuthUsers = {
         service: ['read', 'create', 'update'],
         request: ['read', 'create', 'update'],
         quote: ['read', 'create'],
+        invoice: ['read'],
         approval: ['read'],
         order: ['read'],
         task: ['read'],
