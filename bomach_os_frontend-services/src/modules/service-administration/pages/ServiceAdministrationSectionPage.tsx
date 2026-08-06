@@ -19,13 +19,8 @@ import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
 import { serviceAdministrationApi } from '../api/service-administration.api'
 import { serviceAdministrationKeys } from '../api/service-administration.keys'
 import { serviceAdministrationQueries } from '../api/service-administration.queries'
-import {
-  BranchMatrix,
-  CompactPageToolbar,
-  PrototypeButton,
-  SectionCard,
-} from '../components/ServiceAdministrationUi'
-import { serviceAdministrationIcons } from '../components/service-administration.icons'
+import { CompactPageToolbar, PrototypeButton } from '../components/ServiceAdministrationUi'
+import { BranchActivationScreen } from '../screens/BranchActivationScreen'
 import {
   CalculatorLibraryScreen,
   RequestFormBuilderScreen,
@@ -33,17 +28,16 @@ import {
   WorkflowDesignerScreen,
 } from '../screens/ServiceAdministrationScreens'
 import type {
-  BranchActivation,
   ConfigureServiceInput,
   CreateServiceWizardInput,
   PricingCalculator,
   ServiceCatalogueItem,
   ServiceRequestForm,
   ServiceWorkflow,
+  SaveBranchActivationMatrixInput,
   SaveCalculatorInput,
   SaveRequestFormInput,
   SaveWorkflowInput,
-  UpdateBranchActivationInput,
 } from '../types/service-administration.types'
 
 export type ServiceAdministrationSection =
@@ -153,15 +147,12 @@ export function ServiceAdministrationSectionPage({
     },
   })
 
-  const updateBranch = useMutation<
-    Awaited<ReturnType<typeof serviceAdministrationApi.updateBranchActivation>>,
-    Error,
-    UpdateBranchActivationInput
-  >({
-    mutationFn: (input) => serviceAdministrationApi.updateBranchActivation(input),
+  const saveBranchActivationMatrix = useMutation({
+    mutationFn: (input: SaveBranchActivationMatrixInput) =>
+      serviceAdministrationApi.saveBranchActivationMatrix(input),
     onSuccess: (workspace) => {
       queryClient.setQueryData(serviceAdministrationKeys.workspace(), workspace)
-      toast.success('Branch activation updated')
+      toast.success('Branch settings saved')
     },
   })
 
@@ -266,30 +257,12 @@ export function ServiceAdministrationSectionPage({
       ) : null}
 
       {section === 'branch-activation' ? (
-        <main className="service-admin-page service-admin-content">
-          <SectionCard
-            title="Branch Activation"
-            description="Service availability and branch capacity"
-            icon={serviceAdministrationIcons.branches}
-          >
-            <div className="p-3">
-              <BranchMatrix
-                activations={workspace.branchActivations}
-                onToggle={(item: BranchActivation) =>
-                  updateBranch.mutate({
-                    id: item.id,
-                    state:
-                      item.state === 'active'
-                        ? 'inactive'
-                        : item.state === 'inactive'
-                          ? 'setup-required'
-                          : 'active',
-                  })
-                }
-              />
-            </div>
-          </SectionCard>
-        </main>
+        <BranchActivationScreen
+          services={workspace.services}
+          activations={workspace.branchActivations}
+          saving={saveBranchActivationMatrix.isPending}
+          onSave={(input) => saveBranchActivationMatrix.mutate(input)}
+        />
       ) : null}
 
       {selectedService

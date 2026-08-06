@@ -213,3 +213,16 @@ export interface ConfigureServiceInput {
   requestFields: string[]
   workflowStages: string[]
 }
+
+export interface BranchActivationMatrixUpdate {
+  serviceId: string
+  serviceName: string
+  branchId: string
+  branchName: string
+  active: boolean
+  slaDays: number
+}
+
+export interface SaveBranchActivationMatrixInput {
+  updates: BranchActivationMatrixUpdate[]
+}

@@ -133,9 +133,7 @@ export function CalculatorEditor({
   const [name, setName] = useState(calculator?.name ?? '')
   const [serviceId, setServiceId] = useState(calculator?.serviceId ?? services[0]?.id ?? '')
   const [template, setTemplate] = useState(
-    calculator?.charges.some((charge) => charge.kind === 'formula')
-      ? 'Custom formula'
-      : 'Fixed',
+    calculator?.charges.some((charge) => charge.kind === 'formula') ? 'Custom formula' : 'Fixed',
   )
   const [formula, setFormula] = useState(
     String(

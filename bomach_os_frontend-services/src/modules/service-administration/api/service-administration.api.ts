@@ -5,6 +5,7 @@ import type {
   CreateServiceInput,
   CreateServiceWizardInput,
   DuplicateServiceInput,
+  SaveBranchActivationMatrixInput,
   SaveCalculatorInput,
   SaveRequestFormInput,
   SaveWorkflowInput,
@@ -67,5 +68,12 @@ export const serviceAdministrationApi = {
 
   updateBranchActivation(input: UpdateBranchActivationInput) {
     return apiClient.patch<ServiceAdministrationWorkspace>(`${basePath}/branch-activation`, input)
+  },
+
+  saveBranchActivationMatrix(input: SaveBranchActivationMatrixInput) {
+    return apiClient.put<ServiceAdministrationWorkspace>(
+      `${basePath}/branch-activation-matrix`,
+      input,
+    )
   },
 }

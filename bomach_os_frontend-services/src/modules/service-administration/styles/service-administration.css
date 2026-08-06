@@ -1564,3 +1564,52 @@
     width: 100%;
   }
 }
+
+/* UI-1.07 — Branch Activation */
+.service-admin-branch-card {
+  padding: 15px;
+}
+
+.service-admin-branch-table {
+  min-width: 980px;
+}
+
+.service-admin-branch-table th:not(:first-child),
+.service-admin-branch-table td:not(:first-child) {
+  text-align: center;
+}
+
+.service-admin-branch-table td:first-child {
+  min-width: 220px;
+}
+
+.service-admin-branch-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--proto-b);
+  border-radius: 7px;
+  background: var(--proto-s);
+  padding: 5px;
+  color: var(--proto-t);
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.service-admin-branch-check input {
+  width: 13px;
+  height: 13px;
+  accent-color: var(--proto-n);
+}
+
+.service-admin-branch-check:has(input:checked) {
+  border-color: #a7f3d0;
+  background: #ecfdf5;
+  color: #065f46;
+}
+
+@media (max-width: 600px) {
+  .service-admin-branch-card {
+    padding: 12px;
+  }
+}

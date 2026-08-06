@@ -6,6 +6,7 @@ import type {
   CalculatorVariable,
   PricingCalculator,
   RequestFormField,
+  SaveBranchActivationMatrixInput,
   ServiceAdministrationWorkspace,
   ServiceCatalogueItem,
   ServiceRequestForm,
@@ -862,6 +863,48 @@ export function configureMockService(input: ConfigureServiceInput) {
     .forEach((item) => {
       item.serviceName = input.name
     })
+
+  return getServiceAdministrationWorkspace()
+}
+
+export function saveMockBranchActivationMatrix(input: SaveBranchActivationMatrixInput) {
+  for (const update of input.updates) {
+    const service = services.find((item) => item.id === update.serviceId)
+    if (!service) continue
+
+    if (update.active && !service.branchNames.includes(update.branchName)) {
+      service.branchNames = [...service.branchNames, update.branchName]
+    }
+
+    if (!update.active) {
+      service.branchNames = service.branchNames.filter(
+        (branchName) => branchName !== update.branchName,
+      )
+    }
+
+    const existing = branchActivations.find(
+      (item) => item.serviceId === update.serviceId && item.branchName === update.branchName,
+    )
+
+    if (existing) {
+      existing.state = update.active ? 'active' : 'inactive'
+      existing.serviceName = update.serviceName
+    } else {
+      branchActivations.push({
+        id: `branch-activation-${update.serviceId}-${update.branchId}`,
+        serviceId: update.serviceId,
+        serviceName: update.serviceName,
+        branchId: update.branchId,
+        branchName: update.branchName,
+        state: update.active ? 'active' : 'inactive',
+        capacity: 0,
+        activeOrders: 0,
+        ownerName: service.owner,
+      })
+    }
+
+    service.slaDays = update.slaDays
+  }
 
   return getServiceAdministrationWorkspace()
 }

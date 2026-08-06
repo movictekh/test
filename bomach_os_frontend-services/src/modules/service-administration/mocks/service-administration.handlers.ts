@@ -8,6 +8,7 @@ import {
   createMockServiceWizard,
   duplicateMockService,
   getServiceAdministrationWorkspace,
+  saveMockBranchActivationMatrix,
   saveMockCalculator,
   saveMockRequestForm,
   saveMockWorkflow,
@@ -130,6 +131,15 @@ export const serviceAdministrationHandlers = [
     }
     updateMockConfigurationStatus(body.entity, body.id, body.status)
     return HttpResponse.json(getServiceAdministrationWorkspace())
+  }),
+
+  http.put(endpoint(`${basePath}/branch-activation-matrix`), async ({ request }) => {
+    await delay(260)
+    const body = await request.json()
+    const workspace = saveMockBranchActivationMatrix(
+      body as Parameters<typeof saveMockBranchActivationMatrix>[0],
+    )
+    return HttpResponse.json(workspace)
   }),
 
   http.patch(endpoint(`${basePath}/branch-activation`), async ({ request }) => {

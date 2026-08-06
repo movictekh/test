@@ -244,7 +244,7 @@ export function CalculatorLibraryScreen({
                         <button
                           type="button"
                           className={`service-admin-button service-admin-button-small${
-                            isActive ? ' service-admin-button-primary' : ''
+                            isActive ? 'service-admin-button-primary' : ''
                           }`}
                           aria-pressed={isActive}
                           onClick={() => {
