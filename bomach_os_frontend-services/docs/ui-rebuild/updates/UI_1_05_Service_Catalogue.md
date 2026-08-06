@@ -90,3 +90,31 @@ They follow the HTML design regardless of current backend coverage.
 - Branch Activation literal screen;
 - Command Center and shell parity;
 - tests and screenshot sign-off.
+
+## Configure Service pixel-match correction
+
+The Configure Service popup was reviewed again against the literal HTML renderer.
+
+The HTML behaviour is:
+
+- open a wide `xl` modal;
+- show five tab labels;
+- keep Overview visually selected;
+- render the Overview form directly below the tabs;
+- render Sub-services and Assigned calculator in a two-column notice row;
+- render Request fields in a yellow notice;
+- render Workflow in a blue notice;
+- Cancel closes the modal;
+- Save Configuration updates only the editable Overview fields.
+
+The HTML does not attach tab-switch actions to the five tab labels in this popup. The earlier React version made those tabs interactive and rendered extra editing screens, which was not a literal match.
+
+This correction removes that invented behaviour and reproduces the HTML structure and interaction model exactly.
+
+CSS remains in:
+
+```text
+src/modules/service-administration/styles/service-administration.css
+```
+
+No inline style object and no additional CSS file were introduced.

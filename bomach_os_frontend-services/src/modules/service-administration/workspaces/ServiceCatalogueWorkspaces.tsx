@@ -406,8 +406,6 @@ export function CreateServiceWizard({
   )
 }
 
-type ConfigureTab = 'overview' | 'subservices' | 'pricing' | 'request-form' | 'workflow'
-
 export function ConfigureServiceWorkspace({
   service,
   calculator,
@@ -425,7 +423,6 @@ export function ConfigureServiceWorkspace({
   onClose: () => void
   onSave: (input: ConfigureServiceInput) => void
 }) {
-  const [tab, setTab] = useState<ConfigureTab>('overview')
   const [name, setName] = useState(service.name)
   const [code, setCode] = useState(service.code)
   const [division, setDivision] = useState(service.division)
@@ -434,13 +431,10 @@ export function ConfigureServiceWorkspace({
   const [slaDays, setSlaDays] = useState(service.slaDays ?? 5)
   const [status, setStatus] = useState(service.status)
 
-  const tabs: { id: ConfigureTab; label: string }[] = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'subservices', label: 'Sub-services' },
-    { id: 'pricing', label: 'Pricing' },
-    { id: 'request-form', label: 'Request Form' },
-    { id: 'workflow', label: 'Workflow' },
-  ]
+  const subservices = service.subservices ?? []
+  const requestFields =
+    requestForm?.fields.map((field) => field.label) ?? service.requestFields ?? []
+  const workflowStages = workflow?.stages.map((stage) => stage.name) ?? service.workflowStages ?? []
 
   const save = () => {
     onSave({
@@ -452,9 +446,9 @@ export function ConfigureServiceWorkspace({
       description,
       slaDays,
       status,
-      subservices: service.subservices ?? [],
-      requestFields: requestForm?.fields.map((field) => field.label) ?? service.requestFields ?? [],
-      workflowStages: workflow?.stages.map((stage) => stage.name) ?? service.workflowStages ?? [],
+      subservices,
+      requestFields,
+      workflowStages,
     })
   }
 
@@ -479,122 +473,80 @@ export function ConfigureServiceWorkspace({
         </>
       }
     >
-      <div className="service-admin-html-config">
-        <div className="tabs">
-          {tabs.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              className={`tab ${tab === item.id ? 'on' : ''}`}
-              onClick={() => setTab(item.id)}
-            >
-              {item.label}
-            </button>
-          ))}
+      <div className="service-admin-configure-html">
+        <div className="service-admin-configure-tabs" aria-label="Service configuration sections">
+          <div className="service-admin-configure-tab service-admin-configure-tab--active">
+            Overview
+          </div>
+          <div className="service-admin-configure-tab">Sub-services</div>
+          <div className="service-admin-configure-tab">Pricing</div>
+          <div className="service-admin-configure-tab">Request Form</div>
+          <div className="service-admin-configure-tab">Workflow</div>
         </div>
 
-        {tab === 'overview' ? (
-          <>
-            <div className="formgrid">
-              <Field label="Service name">
-                <input value={name} onChange={(event) => setName(event.target.value)} />
-              </Field>
-              <Field label="Code">
-                <input value={code} onChange={(event) => setCode(event.target.value)} />
-              </Field>
-              <Field label="Division">
-                <select value={division} onChange={(event) => setDivision(event.target.value)}>
-                  {divisions.map((item) => (
-                    <option key={item}>{item}</option>
-                  ))}
-                </select>
-              </Field>
-              <Field label="Owner role">
-                <input value={owner} onChange={(event) => setOwner(event.target.value)} />
-              </Field>
-              <Field label="Description" full>
-                <textarea
-                  value={description}
-                  onChange={(event) => setDescription(event.target.value)}
-                />
-              </Field>
-              <Field label="SLA (days)">
-                <input
-                  type="number"
-                  min={1}
-                  value={slaDays}
-                  onChange={(event) => setSlaDays(Number(event.target.value))}
-                />
-              </Field>
-              <Field label="Status">
-                <select
-                  value={status}
-                  onChange={(event) => setStatus(event.target.value as typeof status)}
-                >
-                  <option value="active">Active</option>
-                  <option value="draft">Draft</option>
-                  <option value="inactive">Paused</option>
-                </select>
-              </Field>
-            </div>
+        <div className="service-admin-configure-form-grid">
+          <Field label="Service name">
+            <input value={name} onChange={(event) => setName(event.target.value)} />
+          </Field>
+          <Field label="Code">
+            <input value={code} onChange={(event) => setCode(event.target.value)} />
+          </Field>
+          <Field label="Division">
+            <select value={division} onChange={(event) => setDivision(event.target.value)}>
+              {divisions.map((item) => (
+                <option key={item}>{item}</option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Owner role">
+            <input value={owner} onChange={(event) => setOwner(event.target.value)} />
+          </Field>
+          <Field label="Description" full>
+            <textarea
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+            />
+          </Field>
+          <Field label="SLA (days)">
+            <input
+              type="number"
+              min={1}
+              value={slaDays}
+              onChange={(event) => setSlaDays(Number(event.target.value))}
+            />
+          </Field>
+          <Field label="Status">
+            <select
+              value={status}
+              onChange={(event) => setStatus(event.target.value as typeof status)}
+            >
+              <option value="active">Active</option>
+              <option value="draft">Draft</option>
+              <option value="inactive">Paused</option>
+            </select>
+          </Field>
+        </div>
 
-            <div className="g2">
-              <div className="notice blue">
-                <b>Sub-services</b>
-                <br />
-                {service.subservices?.length ? service.subservices.join(' · ') : ''}
-              </div>
-              <div className="notice greenbox">
-                <b>Assigned calculator</b>
-                <br />
-                {calculator?.name ?? 'None'}
-              </div>
-            </div>
-
-            <div className="notice yellow">
-              <b>Request fields:</b>{' '}
-              {requestForm?.fields.length
-                ? requestForm.fields.map((field) => field.label).join(', ')
-                : ''}
-            </div>
-            <div className="notice blue">
-              <b>Workflow:</b>{' '}
-              {workflow?.stages.length
-                ? workflow.stages.map((stage) => stage.name).join(' → ')
-                : ''}
-            </div>
-          </>
-        ) : null}
-
-        {tab === 'subservices' ? (
-          <div className="notice blue">
-            {service.subservices?.length ? service.subservices.join(' · ') : ''}
+        <div className="service-admin-configure-two-column">
+          <div className="service-admin-configure-notice service-admin-configure-notice--blue">
+            <b>Sub-services</b>
+            <br />
+            {subservices.length ? subservices.join(' · ') : 'None'}
           </div>
-        ) : null}
-
-        {tab === 'pricing' ? (
-          <div className="notice greenbox">
+          <div className="service-admin-configure-notice service-admin-configure-notice--green">
             <b>Assigned calculator</b>
             <br />
             {calculator?.name ?? 'None'}
           </div>
-        ) : null}
+        </div>
 
-        {tab === 'request-form' ? (
-          <div className="notice yellow">
-            <b>Request fields:</b>{' '}
-            {requestForm?.fields.length
-              ? requestForm.fields.map((field) => field.label).join(', ')
-              : ''}
-          </div>
-        ) : null}
+        <div className="service-admin-configure-notice service-admin-configure-notice--yellow">
+          <b>Request fields:</b> {requestFields.join(', ')}
+        </div>
 
-        {tab === 'workflow' ? (
-          <div className="notice blue">
-            <b>Workflow:</b>{' '}
-            {workflow?.stages.length ? workflow.stages.map((stage) => stage.name).join(' → ') : ''}
-          </div>
-        ) : null}
+        <div className="service-admin-configure-notice service-admin-configure-notice--blue">
+          <b>Workflow:</b> {workflowStages.join(' → ')}
+        </div>
       </div>
     </ModalShell>
   )
