@@ -7,25 +7,28 @@ import type {
   ServiceRequestForm,
   ServiceWorkflow,
 } from '../types/service-administration.types'
-import './service-operations-prototype.css'
+import '../styles/service-administration.css'
 
-const divisionVisuals: Record<string, { background: string; color: string }> = {
-  'Real Estate': { background: '#dbeafe', color: '#1e40af' },
-  Engineering: { background: '#fef3c7', color: '#92400e' },
-  'Engineering & Construction': { background: '#fef3c7', color: '#92400e' },
-  Survey: { background: '#d1fae5', color: '#065f46' },
-  'Land Surveying & Geospatial': { background: '#d1fae5', color: '#065f46' },
-  ICT: { background: '#ccfbf1', color: '#115e59' },
-  'Information Technology': { background: '#ccfbf1', color: '#115e59' },
+const divisionClassNames: Record<string, string> = {
+  'Real Estate': 'service-admin-service-icon--real-estate',
+  Engineering: 'service-admin-service-icon--engineering',
+  'Engineering & Construction': 'service-admin-service-icon--engineering',
+  Survey: 'service-admin-service-icon--survey',
+  'Land Surveying & Geospatial': 'service-admin-service-icon--survey',
+  ICT: 'service-admin-service-icon--ict',
+  'Information Technology': 'service-admin-service-icon--ict',
+}
+
+function statusClass
 }
 
 function statusClass(status: string) {
-  if (status.toLowerCase() === 'active') return 'prototype-pill-green'
-  if (status.toLowerCase() === 'draft') return 'prototype-pill-yellow'
-  return 'prototype-pill-gray'
+  if (status.toLowerCase() === 'active') return 'service-admin-pill-green'
+  if (status.toLowerCase() === 'draft') return 'service-admin-pill-yellow'
+  return 'service-admin-pill-gray'
 }
 
-export function ExactServiceCatalogue({
+export function ServiceCatalogueScreen({
   services,
   onConfigure,
   onDuplicate,
@@ -53,20 +56,20 @@ export function ExactServiceCatalogue({
   })
 
   return (
-    <div className="prototype-page prototype-content">
-      <div className="prototype-card">
-        <div className="prototype-card-header">
+    <div className="service-admin-page service-admin-content">
+      <div className="service-admin-card">
+        <div className="service-admin-card-header">
           <div>
-            <div className="prototype-card-title">Service Catalogue</div>
-            <div className="prototype-card-subtitle">
+            <div className="service-admin-card-title">Service Catalogue</div>
+            <div className="service-admin-card-subtitle">
               Configure, activate and manage Bomach services
             </div>
           </div>
         </div>
 
-        <div className="prototype-filter-group">
+        <div className="service-admin-filter-group">
           <input
-            className="prototype-grow"
+            className="service-admin-grow"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search services..."
@@ -85,46 +88,41 @@ export function ExactServiceCatalogue({
           </select>
         </div>
 
-        <div className="prototype-service-grid">
+        <div className="service-admin-service-grid">
           {filtered.map((service) => {
-            const visual = divisionVisuals[service.division] ?? {
-              background: '#edf1f6',
-              color: '#566075',
-            }
+            const divisionClassName =
+              divisionClassNames[service.division] ??
+              'service-admin-service-icon--default'
 
             return (
-              <article key={service.id} className="prototype-service-card">
+              <article key={service.id} className="service-admin-service-card">
                 <div
-                  className="prototype-service-icon"
-                  style={{
-                    background: visual.background,
-                    color: visual.color,
-                  }}
+                  className={`service-admin-service-icon ${divisionClassName}`}
                 >
                   <IconApps size={18} />
                 </div>
-                <div className="prototype-service-name">{service.name}</div>
-                <div className="prototype-row-subtitle">
+                <div className="service-admin-service-name">{service.name}</div>
+                <div className="service-admin-row-subtitle">
                   {service.code} · {service.division}
                 </div>
-                <p className="prototype-service-description">{service.description}</p>
+                <p className="service-admin-service-description">{service.description}</p>
                 <div className="flex flex-wrap gap-1.5">
-                  <span className={`prototype-pill ${statusClass(service.status)}`}>
+                  <span className={`service-admin-pill ${statusClass(service.status)}`}>
                     {service.status}
                   </span>
-                  <span className="prototype-pill prototype-pill-gray">
+                  <span className="service-admin-pill service-admin-pill-gray">
                     {service.branchNames.length} branches
                   </span>
-                  <span className="prototype-pill prototype-pill-gray">
+                  <span className="service-admin-pill service-admin-pill-gray">
                     {service.subserviceCount} sub-services
                   </span>
                 </div>
-                <div className="prototype-service-footer">
-                  <span className="prototype-row-subtitle">{service.owner}</span>
+                <div className="service-admin-service-footer">
+                  <span className="service-admin-row-subtitle">{service.owner}</span>
                   <div className="flex gap-1">
                     <button
                       type="button"
-                      className="prototype-button prototype-button-small"
+                      className="service-admin-button service-admin-button-small"
                       onClick={() => onDuplicate(service)}
                     >
                       <IconCopy size={13} />
@@ -132,7 +130,7 @@ export function ExactServiceCatalogue({
                     </button>
                     <button
                       type="button"
-                      className="prototype-button prototype-button-small prototype-button-primary"
+                      className="service-admin-button service-admin-button-small service-admin-button-primary"
                       onClick={() => onConfigure(service)}
                     >
                       <IconSettings size={13} />
@@ -159,7 +157,7 @@ function calculatorNumericFields(calculator: PricingCalculator) {
     }))
 }
 
-export function ExactCalculatorLibrary({
+export function CalculatorLibraryScreen({
   calculators,
   onCreate,
 }: {
@@ -183,27 +181,27 @@ export function ExactCalculatorLibrary({
     active.charges.map((charge) => charge.label).join(' + ')
 
   return (
-    <div className="prototype-page prototype-content">
-      <div className="prototype-grid-2-1">
-        <section className="prototype-card">
-          <div className="prototype-card-header">
+    <div className="service-admin-page service-admin-content">
+      <div className="service-admin-grid-2-1">
+        <section className="service-admin-card">
+          <div className="service-admin-card-header">
             <div>
-              <div className="prototype-card-title">Service Calculator Library</div>
-              <div className="prototype-card-subtitle">
+              <div className="service-admin-card-title">Service Calculator Library</div>
+              <div className="service-admin-card-subtitle">
                 Reusable formulas for estimates, quotes and invoices
               </div>
             </div>
             <button
               type="button"
-              className="prototype-button prototype-button-primary"
+              className="service-admin-button service-admin-button-primary"
               onClick={onCreate}
             >
               New Calculator
             </button>
           </div>
 
-          <div className="prototype-table-wrap">
-            <table className="prototype-table">
+          <div className="service-admin-table-wrap">
+            <table className="service-admin-table">
               <thead>
                 <tr>
                   <th>Calculator</th>
@@ -220,7 +218,7 @@ export function ExactCalculatorLibrary({
                   <tr key={calculator.id}>
                     <td>
                       <b>{calculator.name}</b>
-                      <div className="prototype-row-subtitle">{calculator.code}</div>
+                      <div className="service-admin-row-subtitle">{calculator.code}</div>
                     </td>
                     <td>{calculator.serviceName}</td>
                     <td>
@@ -245,7 +243,7 @@ export function ExactCalculatorLibrary({
                     <td>
                       <button
                         type="button"
-                        className="prototype-button prototype-button-small"
+                        className="service-admin-button service-admin-button-small"
                         onClick={() => {
                           setActiveId(calculator.id)
                           setInputs({})
@@ -261,16 +259,16 @@ export function ExactCalculatorLibrary({
           </div>
         </section>
 
-        <section className="prototype-card">
-          <div className="prototype-card-header">
+        <section className="service-admin-card">
+          <div className="service-admin-card-header">
             <div>
-              <div className="prototype-card-title">Live Calculator Test</div>
-              <div className="prototype-card-subtitle">{active.name}</div>
+              <div className="service-admin-card-title">Live Calculator Test</div>
+              <div className="service-admin-card-subtitle">{active.name}</div>
             </div>
           </div>
 
           {fields.map((field) => (
-            <div className="prototype-field" key={field.key}>
+            <div className="service-admin-field" key={field.key}>
               <label>{field.label}</label>
               <input
                 type="number"
@@ -285,22 +283,22 @@ export function ExactCalculatorLibrary({
             </div>
           ))}
 
-          <div className="prototype-notice prototype-notice-blue">
+          <div className="service-admin-notice service-admin-notice-blue">
             <b>Formula</b>
             <br />
             <code>{String(formula)}</code>
           </div>
 
-          <div className="prototype-kpi prototype-kpi-blue">
-            <div className="prototype-kpi-label">Estimated client price</div>
-            <div className="prototype-kpi-value">
+          <div className="service-admin-kpi service-admin-kpi-blue">
+            <div className="service-admin-kpi-label">Estimated client price</div>
+            <div className="service-admin-kpi-value">
               {new Intl.NumberFormat('en-NG', {
                 style: 'currency',
                 currency: 'NGN',
                 maximumFractionDigits: 0,
               }).format(estimated)}
             </div>
-            <div className="prototype-kpi-subtitle">
+            <div className="service-admin-kpi-subtitle">
               Tax, deposit and approval rules apply as configured.
             </div>
           </div>
@@ -320,7 +318,7 @@ const palette = [
   ['Checkbox', 'checkbox'],
 ] as const
 
-export function ExactRequestFormBuilder({
+export function RequestFormBuilderScreen({
   forms,
   onCreate,
 }: {
@@ -331,23 +329,23 @@ export function ExactRequestFormBuilder({
   const active = forms.find((form) => form.id === activeId) ?? forms[0]
 
   return (
-    <div className="prototype-page prototype-content">
-      <div className="prototype-card">
-        <div className="prototype-card-header">
+    <div className="service-admin-page service-admin-content">
+      <div className="service-admin-card">
+        <div className="service-admin-card-header">
           <div>
-            <div className="prototype-card-title">Request Form Builder</div>
-            <div className="prototype-card-subtitle">Design service-specific intake forms</div>
+            <div className="service-admin-card-title">Request Form Builder</div>
+            <div className="service-admin-card-subtitle">Design service-specific intake forms</div>
           </div>
           <button
             type="button"
-            className="prototype-button prototype-button-primary"
+            className="service-admin-button service-admin-button-primary"
             onClick={onCreate}
           >
             New Request Form
           </button>
         </div>
 
-        <div className="prototype-filter-group">
+        <div className="service-admin-filter-group">
           <select value={activeId} onChange={(event) => setActiveId(event.target.value)}>
             {forms.map((form) => (
               <option key={form.id} value={form.id}>
@@ -358,35 +356,35 @@ export function ExactRequestFormBuilder({
         </div>
 
         {active ? (
-          <div className="prototype-builder">
-            <aside className="prototype-palette">
-              <div className="prototype-card-title">Field palette</div>
-              <div className="prototype-card-subtitle mb-3">Add fields to the request form</div>
+          <div className="service-admin-builder">
+            <aside className="service-admin-palette">
+              <div className="service-admin-card-title">Field palette</div>
+              <div className="service-admin-card-subtitle mb-3">Add fields to the request form</div>
               {palette.map(([label]) => (
-                <div key={label} className="prototype-palette-item">
+                <div key={label} className="service-admin-palette-item">
                   <IconForms size={14} />
                   {label}
                 </div>
               ))}
             </aside>
 
-            <section className="prototype-canvas">
-              <div className="prototype-card-title">{active.name}</div>
-              <div className="prototype-card-subtitle mb-3">
+            <section className="service-admin-canvas">
+              <div className="service-admin-card-title">{active.name}</div>
+              <div className="service-admin-card-subtitle mb-3">
                 {active.serviceName} · Version {active.version}
               </div>
               {active.fields.map((field, index) => (
-                <div key={field.id} className="prototype-canvas-field">
-                  <span className="prototype-row-subtitle">{index + 1}</span>
+                <div key={field.id} className="service-admin-canvas-field">
+                  <span className="service-admin-row-subtitle">{index + 1}</span>
                   <IconForms size={14} />
-                  <div className="prototype-grow">
+                  <div className="service-admin-grow">
                     <b className="text-[9px]">{field.label}</b>
-                    <div className="prototype-row-subtitle">
+                    <div className="service-admin-row-subtitle">
                       {field.type}
                       {field.required ? ' · Required' : ''}
                     </div>
                   </div>
-                  <button type="button" className="prototype-button prototype-button-small">
+                  <button type="button" className="service-admin-button service-admin-button-small">
                     Configure
                   </button>
                 </div>
@@ -399,7 +397,7 @@ export function ExactRequestFormBuilder({
   )
 }
 
-export function ExactWorkflowDesigner({
+export function WorkflowDesignerScreen({
   workflows,
   onCreate,
 }: {
@@ -410,23 +408,23 @@ export function ExactWorkflowDesigner({
   const active = workflows.find((workflow) => workflow.id === activeId) ?? workflows[0]
 
   return (
-    <div className="prototype-page prototype-content">
-      <div className="prototype-card">
-        <div className="prototype-card-header">
+    <div className="service-admin-page service-admin-content">
+      <div className="service-admin-card">
+        <div className="service-admin-card-header">
           <div>
-            <div className="prototype-card-title">Workflow Designer</div>
-            <div className="prototype-card-subtitle">Configure service fulfillment automation</div>
+            <div className="service-admin-card-title">Workflow Designer</div>
+            <div className="service-admin-card-subtitle">Configure service fulfillment automation</div>
           </div>
           <button
             type="button"
-            className="prototype-button prototype-button-primary"
+            className="service-admin-button service-admin-button-primary"
             onClick={onCreate}
           >
             New Workflow
           </button>
         </div>
 
-        <div className="prototype-filter-group">
+        <div className="service-admin-filter-group">
           <select value={activeId} onChange={(event) => setActiveId(event.target.value)}>
             {workflows.map((workflow) => (
               <option key={workflow.id} value={workflow.id}>
@@ -438,12 +436,12 @@ export function ExactWorkflowDesigner({
 
         {active ? (
           <>
-            <div className="prototype-life">
+            <div className="service-admin-life">
               {active.stages
                 .slice()
                 .sort((a, b) => a.order - b.order)
                 .map((stage, index) => (
-                  <article key={stage.id} className="prototype-step">
+                  <article key={stage.id} className="service-admin-step">
                     <small>{String(index + 1).padStart(2, '0')}</small>
                     <b>{stage.name}</b>
                     <span>{stage.ownerRole}</span>
@@ -451,8 +449,8 @@ export function ExactWorkflowDesigner({
                 ))}
             </div>
 
-            <div className="prototype-table-wrap mt-3">
-              <table className="prototype-table">
+            <div className="service-admin-table-wrap mt-3">
+              <table className="service-admin-table">
                 <thead>
                   <tr>
                     <th>Stage</th>

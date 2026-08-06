@@ -24,11 +24,11 @@ import {
 } from '../components/ServiceAdministrationUi'
 import { serviceAdministrationIcons } from '../components/service-administration.icons'
 import {
-  ExactCalculatorLibrary,
-  ExactRequestFormBuilder,
-  ExactServiceCatalogue,
-  ExactWorkflowDesigner,
-} from '../prototype/PrototypeExactScreens'
+  CalculatorLibraryScreen,
+  RequestFormBuilderScreen,
+  ServiceCatalogueScreen,
+  WorkflowDesignerScreen,
+} from '../screens/ServiceAdministrationScreens'
 import type {
   BranchActivation,
   CreateServiceInput,
@@ -212,7 +212,7 @@ export function ServiceAdministrationSectionPage({
       />
 
       {section === 'service-catalogue' ? (
-        <ExactServiceCatalogue
+        <ServiceCatalogueScreen
           services={workspace.services}
           onConfigure={setSelectedService}
           onDuplicate={(service) => duplicateService.mutate({ id: service.id })}
@@ -220,28 +220,28 @@ export function ServiceAdministrationSectionPage({
       ) : null}
 
       {section === 'calculator-library' ? (
-        <ExactCalculatorLibrary
+        <CalculatorLibraryScreen
           calculators={workspace.calculators}
           onCreate={() => setCalculatorEditor('new')}
         />
       ) : null}
 
       {section === 'request-form-builder' ? (
-        <ExactRequestFormBuilder
+        <RequestFormBuilderScreen
           forms={workspace.requestForms}
           onCreate={() => setFormEditor('new')}
         />
       ) : null}
 
       {section === 'workflow-designer' ? (
-        <ExactWorkflowDesigner
+        <WorkflowDesignerScreen
           workflows={workspace.workflows}
           onCreate={() => setWorkflowEditor('new')}
         />
       ) : null}
 
       {section === 'branch-activation' ? (
-        <main className="prototype-page prototype-content">
+        <main className="service-admin-page service-admin-content">
           <SectionCard
             title="Branch Activation"
             description="Service availability and branch capacity"
