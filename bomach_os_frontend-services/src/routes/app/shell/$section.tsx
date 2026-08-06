@@ -1,9 +1,20 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { IconArrowLeft } from '@tabler/icons-react'
 
 import { findNavigationItemByPath, operationsNavigation } from '@/app/navigation'
 import { PERMISSIONS, requireRoutePermission } from '@/app/permissions'
+import {
+  ServiceAdministrationSectionPage,
+  type ServiceAdministrationSection,
+} from '@/modules/service-administration'
 import { ModuleShellPage } from '@/modules/foundation/pages/ModuleShellPage'
+
+const serviceAdministrationSections = new Set<ServiceAdministrationSection>([
+  'service-catalogue',
+  'calculator-library',
+  'request-form-builder',
+  'workflow-designer',
+  'branch-activation',
+])
 
 function formatSectionTitle(section: string): string {
   return section
@@ -27,28 +38,20 @@ export const Route = createFileRoute('/app/shell/$section')({
 
 function AppShellRoute() {
   const { section } = Route.useParams()
+
+  if (serviceAdministrationSections.has(section as ServiceAdministrationSection)) {
+    return <ServiceAdministrationSectionPage section={section as ServiceAdministrationSection} />
+  }
+
   const title = formatSectionTitle(section)
 
   return (
     <ModuleShellPage
       eyebrow="Service Operations"
       title={title}
-      description="This is the first shell for the module. The full workspace will be layered in here."
+      description="This section will be replaced during its prototype-first UI phase."
       backTo="/app/dashboard"
       backLabel="Back to dashboard"
-      footerNote={
-        <div className="flex items-start gap-3">
-          <span className="bg-brand-50 text-brand-700 grid size-10 shrink-0 place-items-center rounded-full">
-            <IconArrowLeft size={18} aria-hidden="true" />
-          </span>
-          <div>
-            <p className="text-foreground text-sm font-semibold">{title}</p>
-            <p className="text-foreground-subtle mt-1 text-xs leading-5">
-              The shell is ready for the real module implementation.
-            </p>
-          </div>
-        </div>
-      }
     />
   )
 }
