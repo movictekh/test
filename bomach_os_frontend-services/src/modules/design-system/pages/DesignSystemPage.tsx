@@ -66,7 +66,7 @@ export function DesignSystemPage() {
         <Alert
           tone="info"
           title="Phase 2 visual review"
-          description="Review these components against the prototype before business pages begin."
+          description="Review the shared component states and interaction patterns."
         />
 
         <section className="grid gap-5 xl:grid-cols-2">
@@ -176,7 +176,7 @@ export function DesignSystemPage() {
         open={confirmOpen}
         tone="danger"
         title="Delete this draft?"
-        description="This demonstration shows the destructive confirmation pattern."
+        description="This example shows the destructive confirmation pattern."
         confirmLabel="Delete draft"
         onCancel={() => setConfirmOpen(false)}
         onConfirm={() => {

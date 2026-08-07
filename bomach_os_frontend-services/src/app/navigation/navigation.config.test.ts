@@ -4,7 +4,7 @@ import { operationsNavigation } from './navigation.config'
 import { PERMISSIONS } from '@/app/permissions'
 
 describe('specialized services navigation', () => {
-  it('uses the exact specialized services prototype labels', () => {
+  it('uses the required specialized services labels', () => {
     const group = operationsNavigation.find((item) => item.id === 'specialized-services')
     expect(group?.label).toBe('Specialized Services')
     expect(group?.items.map((item) => item.label)).toEqual([

@@ -5,10 +5,7 @@ import { IconFilePlus, IconPlus } from '@tabler/icons-react'
 
 import { commercialQueries } from '@/modules/commercial/api/commercial.queries'
 import { fulfillmentQueries } from '@/modules/fulfillment/api/fulfillment.queries'
-import {
-  CompactPageToolbar,
-  CompactActionButton,
-} from '@/modules/service-administration/components/ServiceAdministrationUi'
+import { CompactPageToolbar, CompactActionButton } from '@/shared/ui/module-controls'
 import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
 import { presentError } from '@/shared/errors'
 import { specializedServicesApi } from '../api/specialized-services.api'

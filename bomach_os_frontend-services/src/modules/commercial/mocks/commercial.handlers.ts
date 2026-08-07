@@ -1,4 +1,5 @@
 import { delay, http, HttpResponse } from 'msw'
+import { MOCK_API_PREFIX } from '@/mocks/mock-api'
 
 import { env } from '@/shared/config/env'
 import { ensureMockOrderFromCommercialSource } from '@/modules/fulfillment/mocks/fulfillment.mock-db'
@@ -27,12 +28,12 @@ import type {
 const endpoint = (path: string) => `${env.apiBaseUrl}${path}`
 
 export const commercialHandlers = [
-  http.get(endpoint('/ui-prototype/commercial'), async () => {
+  http.get(endpoint(`${MOCK_API_PREFIX}/commercial`), async () => {
     await delay(180)
     return HttpResponse.json(getCommercialWorkspace())
   }),
 
-  http.post(endpoint('/ui-prototype/commercial/requests'), async ({ request }) => {
+  http.post(endpoint(`${MOCK_API_PREFIX}/commercial/requests`), async ({ request }) => {
     await delay(260)
     const body = (await request.json()) as CreateServiceRequestInput
     if (
@@ -48,7 +49,7 @@ export const commercialHandlers = [
     return HttpResponse.json(createMockServiceRequest(body), { status: 201 })
   }),
 
-  http.post(endpoint('/ui-prototype/commercial/quotations'), async ({ request }) => {
+  http.post(endpoint(`${MOCK_API_PREFIX}/commercial/quotations`), async ({ request }) => {
     await delay(260)
     const body = (await request.json()) as CreateQuotationInput
     if (
@@ -68,7 +69,7 @@ export const commercialHandlers = [
   }),
 
   http.patch(
-    endpoint('/ui-prototype/commercial/quotations/:quotationId'),
+    endpoint(`${MOCK_API_PREFIX}/commercial/quotations/:quotationId`),
     async ({ params, request }) => {
       await delay(220)
       const body = (await request.json()) as UpdateQuotationInput
@@ -76,7 +77,7 @@ export const commercialHandlers = [
     },
   ),
 
-  http.post(endpoint('/ui-prototype/commercial/invoices'), async ({ request }) => {
+  http.post(endpoint(`${MOCK_API_PREFIX}/commercial/invoices`), async ({ request }) => {
     await delay(220)
     const body = (await request.json()) as CreateInvoiceInput
 
@@ -93,7 +94,7 @@ export const commercialHandlers = [
   }),
 
   http.post(
-    endpoint('/ui-prototype/commercial/invoices/:invoiceId/payments'),
+    endpoint(`${MOCK_API_PREFIX}/commercial/invoices/:invoiceId/payments`),
     async ({ params, request }) => {
       await delay(220)
       const body = (await request.json()) as RecordPaymentInput
@@ -145,7 +146,7 @@ export const commercialHandlers = [
   ),
 
   http.patch(
-    endpoint('/ui-prototype/commercial/approvals/:approvalId'),
+    endpoint(`${MOCK_API_PREFIX}/commercial/approvals/:approvalId`),
     async ({ params, request }) => {
       await delay(180)
       const body = (await request.json()) as DecideApprovalInput
@@ -160,7 +161,7 @@ export const commercialHandlers = [
   ),
 
   http.patch(
-    endpoint('/ui-prototype/commercial/requests/:requestId'),
+    endpoint(`${MOCK_API_PREFIX}/commercial/requests/:requestId`),
     async ({ params, request }) => {
       await delay(180)
       const body = (await request.json()) as {

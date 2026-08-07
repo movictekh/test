@@ -11,11 +11,11 @@ import {
 
 import { presentError } from '@/shared/errors'
 import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
+import { CompactPageToolbar, CompactActionButton } from '@/shared/ui/module-controls'
 
 import { serviceAdministrationApi } from '../api/service-administration.api'
 import { serviceAdministrationKeys } from '../api/service-administration.keys'
 import { serviceAdministrationQueries } from '../api/service-administration.queries'
-import { CompactPageToolbar, CompactActionButton } from '../components/ServiceAdministrationUi'
 import { BranchActivationScreen } from '../screens/BranchActivationScreen'
 import {
   CalculatorLibraryScreen,

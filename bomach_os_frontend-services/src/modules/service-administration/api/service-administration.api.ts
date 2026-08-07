@@ -1,4 +1,5 @@
 import { apiClient } from '@/shared/api/api-client'
+import { MOCK_API_PREFIX } from '@/mocks/mock-api'
 
 import type {
   ConfigureServiceInput,
@@ -15,7 +16,7 @@ import type {
   UpdateConfigurationStatusInput,
 } from '../types/service-administration.types'
 
-const basePath = '/ui-prototype/service-administration'
+const basePath = `${MOCK_API_PREFIX}/service-administration`
 
 export const serviceAdministrationApi = {
   getWorkspace() {

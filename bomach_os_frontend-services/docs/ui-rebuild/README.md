@@ -1,15 +1,24 @@
-# Bomach Service Operations — Prototype-First UI Rebuild
+# Bomach Service Operations — UI Engineering Reference
 
-This folder contains the current frontend delivery roadmap.
+This directory preserves the design-rebuild strategy, fidelity rules, and implementation history used to establish the current Service Operations frontend.
 
-The Service Operations HTML prototype is the primary product and visual specification.
+## Current engineering guidance
 
-Use the documents in this order:
+Use these documents when maintaining or extending the existing frontend:
 
-1. `01_Prototype_First_Strategy.md`
-2. `02_Four_Phase_UI_Roadmap.md`
-3. `03_Mock_API_and_Frontend_Contract_Standard.md`
-4. `04_Pixel_Match_Review_Checklist.md`
-5. `05_Implementation_Log_Template.md`
+1. `03_Mock_API_and_Frontend_Contract_Standard.md`
+2. `04_Pixel_Match_Review_Checklist.md`
+3. `standards/CSS_Architecture_Standard.md`
 
-The previous backend-first phase sequence remains useful as backend-planning material, but it does not control the order of the prototype-first UI rebuild.
+The HTML reference remains useful for product language, information hierarchy, and workflow intent where no later product decision overrides it.
+
+## Historical rebuild material
+
+The following documents describe how the current UI was originally reconstructed and should be treated as implementation history rather than current runtime architecture:
+
+- `01_Prototype_First_Strategy.md`
+- `02_Four_Phase_UI_Roadmap.md`
+- `05_Implementation_Log_Template.md`
+- everything under `updates/`
+
+Historical files remain in place for traceability and to avoid breaking relative documentation links. New engineering decisions should be documented as current architecture or standards rather than added as another rebuild phase.

@@ -1,4 +1,5 @@
 import { delay, http, HttpResponse } from 'msw'
+import { MOCK_API_PREFIX } from '@/mocks/mock-api'
 
 import { env } from '@/shared/config/env'
 
@@ -17,7 +18,7 @@ import {
 } from './service-administration.mock-db'
 
 const endpoint = (path: string) => `${env.apiBaseUrl}${path}`
-const basePath = '/ui-prototype/service-administration'
+const basePath = `${MOCK_API_PREFIX}/service-administration`
 
 export const serviceAdministrationHandlers = [
   http.get(endpoint(basePath), async () => {

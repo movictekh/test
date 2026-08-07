@@ -11,7 +11,7 @@ import {
 } from './fulfillment-workflow.rules'
 
 describe('fulfillment workflow rules', () => {
-  it('clamps progress into the prototype range', () => {
+  it('clamps progress into the supported range', () => {
     expect(clampProgress(-10)).toBe(0)
     expect(clampProgress(47.4)).toBe(47)
     expect(clampProgress(140)).toBe(100)
@@ -40,7 +40,7 @@ describe('fulfillment workflow rules', () => {
     expect(result.completed).toBe(true)
   })
 
-  it('moves tasks through the exact prototype columns', () => {
+  it('moves tasks through the configured workflow columns', () => {
     expect(nextTaskStatus('To Do')).toBe('In Progress')
     expect(nextTaskStatus('In Progress')).toBe('Review')
     expect(nextTaskStatus('Review')).toBe('Done')

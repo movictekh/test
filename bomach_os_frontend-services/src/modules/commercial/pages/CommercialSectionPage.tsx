@@ -3,10 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
 
-import {
-  CompactPageToolbar,
-  CompactActionButton,
-} from '@/modules/service-administration/components/ServiceAdministrationUi'
+import { CompactPageToolbar, CompactActionButton } from '@/shared/ui/module-controls'
 import { presentError } from '@/shared/errors'
 import { serviceAdministrationQueries } from '@/modules/service-administration/api/service-administration.queries'
 import { fulfillmentKeys } from '@/modules/fulfillment/api/fulfillment.keys'

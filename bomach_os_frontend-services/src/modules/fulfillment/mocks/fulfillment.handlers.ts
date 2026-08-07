@@ -1,4 +1,5 @@
 import { delay, http, HttpResponse } from 'msw'
+import { MOCK_API_PREFIX } from '@/mocks/mock-api'
 
 import { env } from '@/shared/config/env'
 
@@ -28,12 +29,12 @@ import {
 const endpoint = (path: string) => `${env.apiBaseUrl}${path}`
 
 export const fulfillmentHandlers = [
-  http.get(endpoint('/ui-prototype/fulfillment'), async () => {
+  http.get(endpoint(`${MOCK_API_PREFIX}/fulfillment`), async () => {
     await delay(160)
     return HttpResponse.json(getFulfillmentWorkspace())
   }),
 
-  http.post(endpoint('/ui-prototype/fulfillment/orders'), async ({ request }) => {
+  http.post(endpoint(`${MOCK_API_PREFIX}/fulfillment/orders`), async ({ request }) => {
     await delay(240)
     const body = (await request.json()) as CreateServiceOrderInput
 
@@ -54,19 +55,25 @@ export const fulfillmentHandlers = [
     return HttpResponse.json(createMockOrder(body), { status: 201 })
   }),
 
-  http.patch(endpoint('/ui-prototype/fulfillment/orders/:orderId'), async ({ params, request }) => {
-    await delay(180)
-    const body = (await request.json()) as UpdateServiceOrderInput
-    return HttpResponse.json(updateMockOrder(String(params.orderId), body))
-  }),
-
-  http.post(endpoint('/ui-prototype/fulfillment/orders/:orderId/advance'), async ({ params }) => {
-    await delay(180)
-    return HttpResponse.json(advanceMockOrder(String(params.orderId)))
-  }),
+  http.patch(
+    endpoint(`${MOCK_API_PREFIX}/fulfillment/orders/:orderId`),
+    async ({ params, request }) => {
+      await delay(180)
+      const body = (await request.json()) as UpdateServiceOrderInput
+      return HttpResponse.json(updateMockOrder(String(params.orderId), body))
+    },
+  ),
 
   http.post(
-    endpoint('/ui-prototype/fulfillment/orders/:orderId/activities'),
+    endpoint(`${MOCK_API_PREFIX}/fulfillment/orders/:orderId/advance`),
+    async ({ params }) => {
+      await delay(180)
+      return HttpResponse.json(advanceMockOrder(String(params.orderId)))
+    },
+  ),
+
+  http.post(
+    endpoint(`${MOCK_API_PREFIX}/fulfillment/orders/:orderId/activities`),
     async ({ params, request }) => {
       await delay(180)
       const body = (await request.json()) as AddOrderUpdateInput
@@ -80,7 +87,7 @@ export const fulfillmentHandlers = [
   ),
 
   http.post(
-    endpoint('/ui-prototype/fulfillment/orders/:orderId/milestones'),
+    endpoint(`${MOCK_API_PREFIX}/fulfillment/orders/:orderId/milestones`),
     async ({ params, request }) => {
       await delay(160)
       const body = (await request.json()) as AddMilestoneInput
@@ -93,7 +100,7 @@ export const fulfillmentHandlers = [
     },
   ),
 
-  http.post(endpoint('/ui-prototype/fulfillment/deliverables'), async ({ request }) => {
+  http.post(endpoint(`${MOCK_API_PREFIX}/fulfillment/deliverables`), async ({ request }) => {
     await delay(180)
     const body = (await request.json()) as CreateDeliverableInput
     if (!body.orderId || !body.title || !body.version)
@@ -104,7 +111,7 @@ export const fulfillmentHandlers = [
     return HttpResponse.json(createMockDeliverable(body), { status: 201 })
   }),
   http.patch(
-    endpoint('/ui-prototype/fulfillment/deliverables/:deliverableId'),
+    endpoint(`${MOCK_API_PREFIX}/fulfillment/deliverables/:deliverableId`),
     async ({ params, request }) => {
       await delay(150)
       const body = (await request.json()) as DecideDeliverableInput
@@ -112,7 +119,7 @@ export const fulfillmentHandlers = [
     },
   ),
 
-  http.post(endpoint('/ui-prototype/fulfillment/tasks'), async ({ request }) => {
+  http.post(endpoint(`${MOCK_API_PREFIX}/fulfillment/tasks`), async ({ request }) => {
     await delay(220)
     const body = (await request.json()) as CreateExecutionTaskInput
 
@@ -126,9 +133,12 @@ export const fulfillmentHandlers = [
     return HttpResponse.json(createMockTask(body), { status: 201 })
   }),
 
-  http.patch(endpoint('/ui-prototype/fulfillment/tasks/:taskId'), async ({ params, request }) => {
-    await delay(150)
-    const body = (await request.json()) as UpdateExecutionTaskInput
-    return HttpResponse.json(updateMockTask(String(params.taskId), body))
-  }),
+  http.patch(
+    endpoint(`${MOCK_API_PREFIX}/fulfillment/tasks/:taskId`),
+    async ({ params, request }) => {
+      await delay(150)
+      const body = (await request.json()) as UpdateExecutionTaskInput
+      return HttpResponse.json(updateMockTask(String(params.taskId), body))
+    },
+  ),
 ]

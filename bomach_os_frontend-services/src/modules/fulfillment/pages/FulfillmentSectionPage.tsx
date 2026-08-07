@@ -2,10 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { IconFilePlus, IconPlus } from '@tabler/icons-react'
 
-import {
-  CompactPageToolbar,
-  CompactActionButton,
-} from '@/modules/service-administration/components/ServiceAdministrationUi'
+import { CompactPageToolbar, CompactActionButton } from '@/shared/ui/module-controls'
 import { serviceAdministrationQueries } from '@/modules/service-administration/api/service-administration.queries'
 import { presentError } from '@/shared/errors'
 import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'

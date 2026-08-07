@@ -4,10 +4,7 @@ import { useMemo, useState } from 'react'
 
 import { commercialQueries } from '@/modules/commercial/api/commercial.queries'
 import { fulfillmentQueries } from '@/modules/fulfillment/api/fulfillment.queries'
-import {
-  CompactPageToolbar,
-  CompactActionButton,
-} from '@/modules/service-administration/components/ServiceAdministrationUi'
+import { CompactPageToolbar, CompactActionButton } from '@/shared/ui/module-controls'
 import { presentError } from '@/shared/errors'
 import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
 import { useDeepLinkedSelection, type AppRecordSearch } from '@/shared/navigation'

@@ -10,7 +10,7 @@ describe('formatCurrency', () => {
     expect(formatCurrency(999_999)).toBe('₦999,999')
   })
 
-  it('abbreviates millions like the HTML prototype', () => {
+  it('abbreviates million-scale values consistently', () => {
     expect(formatCurrency(1_000_000)).toBe('₦1M')
     expect(formatCurrency(3_200_000)).toBe('₦3.2M')
     expect(formatCurrency(11_300_000)).toBe('₦11.3M')

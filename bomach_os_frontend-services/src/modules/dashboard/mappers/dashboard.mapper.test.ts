@@ -3,7 +3,7 @@ import { dashboardActivityMock, dashboardSummaryMock } from '../mocks/dashboard.
 import { mapDashboardActivity, mapDashboardSummary } from './dashboard.mapper'
 
 describe('dashboard mapper', () => {
-  it('maps all prototype-aligned dashboard sections', () => {
+  it('maps all dashboard sections', () => {
     const summary = mapDashboardSummary(dashboardSummaryMock)
     expect(summary.metrics).toHaveLength(5)
     expect(summary.attentionItems).toHaveLength(5)

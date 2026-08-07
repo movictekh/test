@@ -102,7 +102,7 @@ function branchPerformance(
       ? percentage(branchFeedback.filter((item) => item.rating >= 4).length, branchFeedback.length)
       : 0
 
-    // The prototype exposes SLA as a branch KPI, but current mock contracts do
+    // SLA is exposed as a branch KPI, but current mock contracts do
     // not yet carry completion timestamps. Use a transparent deterministic
     // placeholder until the backend analytics contract provides SLA history.
     const sla = branchOrders.length
@@ -142,7 +142,7 @@ export function deriveReportSnapshot(
 
   return {
     quoteToOrderConversion,
-    // Exact prototype labels retained. These two measures need richer backend
+    // These measures need richer backend
     // event/cost history than the current contracts provide.
     averageResponseMinutes: 38,
     grossServiceMargin: 29,
