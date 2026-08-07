@@ -1,11 +1,16 @@
+import { IconMessageStar } from '@tabler/icons-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 
 import { commercialQueries } from '@/modules/commercial/api/commercial.queries'
 import { fulfillmentQueries } from '@/modules/fulfillment/api/fulfillment.queries'
-import { CompactPageToolbar } from '@/modules/service-administration/components/ServiceAdministrationUi'
+import {
+  CompactPageToolbar,
+  PrototypeButton,
+} from '@/modules/service-administration/components/ServiceAdministrationUi'
 import { presentError } from '@/shared/errors'
 import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
+import { useDeepLinkedSelection, type AppRecordSearch } from '@/shared/navigation'
 
 import { experienceIntelligenceApi } from '../api/experience-intelligence.api'
 import { experienceIntelligenceKeys } from '../api/experience-intelligence.keys'
@@ -43,8 +48,10 @@ const metadata: Record<ExperienceIntelligenceSection, { title: string; breadcrum
 
 export function ExperienceIntelligenceSectionPage({
   section,
+  recordSearch,
 }: {
   section: ExperienceIntelligenceSection
+  recordSearch?: AppRecordSearch
 }) {
   const queryClient = useQueryClient()
   const toast = useToast()
@@ -54,7 +61,7 @@ export function ExperienceIntelligenceSectionPage({
   const fulfillmentQuery = useQuery(fulfillmentQueries.workspace())
 
   const [recordFeedbackOpen, setRecordFeedbackOpen] = useState(false)
-  const [selectedFeedbackId, setSelectedFeedbackId] = useState<string | null>(null)
+  const [selectedFeedbackId, setSelectedFeedbackId] = useDeepLinkedSelection(recordSearch?.feedback)
 
   const updateCache = (workspace: NonNullable<typeof experienceQuery.data>) => {
     queryClient.setQueryData(experienceIntelligenceKeys.workspace(), workspace)
@@ -126,13 +133,22 @@ export function ExperienceIntelligenceSectionPage({
 
   return (
     <>
-      <CompactPageToolbar title={page.title} breadcrumb={page.breadcrumb} />
+      <CompactPageToolbar
+        title={page.title}
+        breadcrumb={page.breadcrumb}
+        primaryAction={
+          section === 'feedback-quality' ? (
+            <PrototypeButton tone="primary" onClick={() => setRecordFeedbackOpen(true)}>
+              <IconMessageStar size={14} /> Record Feedback
+            </PrototypeButton>
+          ) : undefined
+        }
+      />
 
       {section === 'feedback-quality' ? (
         <FeedbackQualityScreen
           feedback={experienceQuery.data.feedback}
           summary={feedbackSummary}
-          onRecord={() => setRecordFeedbackOpen(true)}
           onOpen={(feedback) => setSelectedFeedbackId(feedback.id)}
         />
       ) : section === 'reports-analytics' ? (

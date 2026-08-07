@@ -1,12 +1,16 @@
 import { IconAlertTriangle, IconBell, IconCircleCheck, IconInfoCircle } from '@tabler/icons-react'
-import { useMemo, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
+import { useState } from 'react'
 
+import { getRecordDestination } from '@/shared/navigation'
 import { Button } from '@/shared/ui/button'
 import { Drawer } from '@/shared/ui/drawer'
 import { EmptyState } from '@/shared/ui/empty-state'
 
-import { mockNotifications } from './notification.data'
-import type { NotificationTone } from './notification.types'
+import { notificationApi } from './notification.api'
+import { notificationKeys, notificationQueries } from './notification.queries'
+import type { AppNotification, NotificationTone } from './notification.types'
 
 const toneIcons = {
   info: IconInfoCircle,
@@ -24,17 +28,44 @@ const toneClasses: Record<NotificationTone, string> = {
 
 export function NotificationPanel() {
   const [open, setOpen] = useState(false)
-  const [readIds, setReadIds] = useState<Set<string>>(
-    () => new Set(mockNotifications.filter((item) => item.read).map((item) => item.id)),
-  )
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const query = useQuery(notificationQueries.list())
 
-  const unreadCount = useMemo(
-    () => mockNotifications.filter((item) => !readIds.has(item.id)).length,
-    [readIds],
-  )
+  const markRead = useMutation({
+    mutationFn: (notificationId: string) => notificationApi.markRead(notificationId),
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: notificationKeys.list(),
+      }),
+  })
 
-  const markAllRead = () => {
-    setReadIds(new Set(mockNotifications.map((item) => item.id)))
+  const markAllRead = useMutation({
+    mutationFn: () => notificationApi.markAllRead(),
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: notificationKeys.list(),
+      }),
+  })
+
+  const notifications = query.data?.notifications ?? []
+  const unreadCount = notifications.filter((item) => !item.read).length
+
+  const openNotification = async (notification: AppNotification) => {
+    if (!notification.read) {
+      await markRead.mutateAsync(notification.id)
+    }
+
+    const destination = getRecordDestination(notification.entityType, notification.entityId)
+
+    if (destination) {
+      setOpen(false)
+      await navigate({
+        to: '/app/$section',
+        params: { section: destination.section },
+        search: destination.search,
+      })
+    }
   }
 
   return (
@@ -61,22 +92,50 @@ export function NotificationPanel() {
         size="md"
         onClose={() => setOpen(false)}
         footer={
-          unreadCount > 0 ? (
-            <Button variant="outline" size="sm" onClick={markAllRead}>
+          unreadCount > 0 && query.data?.configured ? (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={markAllRead.isPending}
+              onClick={() => markAllRead.mutate()}
+            >
               Mark all as read
             </Button>
           ) : null
         }
       >
-        {mockNotifications.length === 0 ? (
+        {query.isPending ? (
+          <div className="space-y-2" aria-label="Loading notifications">
+            {[1, 2, 3].map((item) => (
+              <div
+                key={item}
+                className="border-border bg-surface-muted rounded-control h-20 animate-pulse border"
+              />
+            ))}
+          </div>
+        ) : query.isError ? (
+          <EmptyState
+            title="Notifications unavailable"
+            description="The notification service could not be reached. Try again."
+            action={
+              <Button variant="outline" size="sm" onClick={() => void query.refetch()}>
+                Retry
+              </Button>
+            }
+          />
+        ) : !query.data?.configured ? (
+          <EmptyState
+            title="Notification API awaiting backend contract"
+            description="The frontend notification UI is ready. Configure the backend list/read endpoints when the notification module contract is published."
+          />
+        ) : notifications.length === 0 ? (
           <EmptyState
             title="No notifications"
-            description="Important activity and reminders will appear here."
+            description="Important backend-generated activity will appear here."
           />
         ) : (
           <div className="space-y-2">
-            {mockNotifications.map((notification) => {
-              const read = readIds.has(notification.id)
+            {notifications.map((notification) => {
               const Icon = toneIcons[notification.tone]
 
               return (
@@ -84,7 +143,7 @@ export function NotificationPanel() {
                   key={notification.id}
                   type="button"
                   className="border-border hover:bg-surface-muted rounded-control flex w-full items-start gap-3 border p-3 text-left transition-colors"
-                  onClick={() => setReadIds((current) => new Set([...current, notification.id]))}
+                  onClick={() => void openNotification(notification)}
                 >
                   <span
                     className={`grid size-9 shrink-0 place-items-center rounded-full ${toneClasses[notification.tone]}`}
@@ -96,16 +155,18 @@ export function NotificationPanel() {
                       <span className="text-foreground text-xs font-bold">
                         {notification.title}
                       </span>
-                      {!read ? (
+                      {!notification.read ? (
                         <span className="bg-accent-600 mt-1 size-2 shrink-0 rounded-full" />
                       ) : null}
                     </span>
                     <span className="text-foreground-muted mt-1 block text-xs leading-5">
                       {notification.description}
                     </span>
-                    <span className="text-foreground-subtle mt-1.5 block text-[0.6875rem]">
-                      {notification.timestamp}
-                    </span>
+                    {notification.timestamp ? (
+                      <span className="text-foreground-subtle mt-1.5 block text-[0.6875rem]">
+                        {notification.timestamp}
+                      </span>
+                    ) : null}
                   </span>
                 </button>
               )

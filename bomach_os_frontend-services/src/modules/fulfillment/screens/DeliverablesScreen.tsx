@@ -1,3 +1,5 @@
+import { RecordLink } from '@/shared/navigation'
+
 import type { Deliverable } from '../types/fulfillment.types'
 
 export function DeliverablesScreen({
@@ -40,7 +42,11 @@ export function DeliverablesScreen({
                     <b>{item.title}</b>
                     <div className="fulfillment-row-sub">{item.id}</div>
                   </td>
-                  <td>{item.orderId}</td>
+                  <td>
+                    <RecordLink entityType="order" entityId={item.orderId}>
+                      {item.orderId}
+                    </RecordLink>
+                  </td>
                   <td>{item.type}</td>
                   <td>{item.version}</td>
                   <td>{item.owner}</td>

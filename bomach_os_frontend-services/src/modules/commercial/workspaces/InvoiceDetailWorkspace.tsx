@@ -12,11 +12,13 @@ export function InvoiceDetailWorkspace({
   invoice,
   saving,
   onClose,
+  canConfirmPayment,
   onRecordPayment,
 }: {
   invoice: CommercialInvoice
   saving: boolean
   onClose: () => void
+  canConfirmPayment: boolean
   onRecordPayment: (input: RecordPaymentInput) => void
 }) {
   const [errors, setErrors] = useState<Partial<Record<keyof RecordPaymentInput, string>>>({})
@@ -111,7 +113,7 @@ export function InvoiceDetailWorkspace({
             </div>
           </section>
 
-          {invoice.balance > 0 ? (
+          {invoice.balance > 0 && canConfirmPayment ? (
             <section className="commercial-form-section">
               <h3>Record payment</h3>
               <p className="commercial-form-note">
@@ -229,7 +231,7 @@ export function InvoiceDetailWorkspace({
             </button>
           </div>
           <div className="commercial-modal-footer-actions">
-            {invoice.balance > 0 ? (
+            {invoice.balance > 0 && canConfirmPayment ? (
               <button
                 type="button"
                 className="commercial-btn commercial-btn-green"

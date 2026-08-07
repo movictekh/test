@@ -11,6 +11,9 @@ import { presentError } from '@/shared/errors'
 import { serviceAdministrationQueries } from '@/modules/service-administration/api/service-administration.queries'
 import { fulfillmentKeys } from '@/modules/fulfillment/api/fulfillment.keys'
 import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
+import { canPerformAction } from '@/app/permissions'
+import { useAuth } from '@/app/auth'
+import { useDeepLinkedSelection, type AppRecordSearch } from '@/shared/navigation'
 
 import { commercialApi, type UpdateServiceRequestInput } from '../api/commercial.api'
 import { commercialKeys } from '../api/commercial.keys'
@@ -48,21 +51,30 @@ const metadata: Record<CommercialSection, { title: string; breadcrumb: string }>
   approvals: { title: 'Approvals', breadcrumb: 'Commercial flow / Approvals' },
 }
 
-export function CommercialSectionPage({ section }: { section: CommercialSection }) {
+export function CommercialSectionPage({
+  section,
+  recordSearch,
+}: {
+  section: CommercialSection
+  recordSearch?: AppRecordSearch
+}) {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const queryClient = useQueryClient()
   const toast = useToast()
   const query = useQuery(commercialQueries.workspace())
   const serviceAdministrationQuery = useQuery(serviceAdministrationQueries.workspace())
   const [createOpen, setCreateOpen] = useState(false)
-  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null)
+  const [selectedRequestId, setSelectedRequestId] = useDeepLinkedSelection(recordSearch?.request)
   const [quotationBuilderOpen, setQuotationBuilderOpen] = useState(false)
   const [quotationSourceRequestId, setQuotationSourceRequestId] = useState<string | undefined>()
-  const [selectedQuotationId, setSelectedQuotationId] = useState<string | null>(null)
+  const [selectedQuotationId, setSelectedQuotationId] = useDeepLinkedSelection(
+    recordSearch?.quotation,
+  )
   const [invoiceBuilderOpen, setInvoiceBuilderOpen] = useState(false)
   const [invoiceSourceQuotationId, setInvoiceSourceQuotationId] = useState<string | undefined>()
-  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null)
-  const [selectedApprovalId, setSelectedApprovalId] = useState<string | null>(null)
+  const [selectedInvoiceId, setSelectedInvoiceId] = useDeepLinkedSelection(recordSearch?.invoice)
+  const [selectedApprovalId, setSelectedApprovalId] = useDeepLinkedSelection(recordSearch?.approval)
 
   const createRequest = useMutation({
     mutationFn: (input: CreateServiceRequestInput) => commercialApi.createRequest(input),
@@ -207,6 +219,15 @@ export function CommercialSectionPage({ section }: { section: CommercialSection 
   }
 
   const page = metadata[section]
+  const canCreatePrimary =
+    section === 'service-requests' || section === 'approvals'
+      ? canPerformAction(user, 'requestCreate')
+      : section === 'quotations'
+        ? canPerformAction(user, 'quoteCreate')
+        : canPerformAction(user, 'invoiceCreate')
+
+  const canConfirmPayment = canPerformAction(user, 'paymentConfirm')
+  const canActApproval = canPerformAction(user, 'approvalAct')
 
   return (
     <>
@@ -214,36 +235,38 @@ export function CommercialSectionPage({ section }: { section: CommercialSection 
         title={page.title}
         breadcrumb={page.breadcrumb}
         primaryAction={
-          <PrototypeButton
-            tone="primary"
-            onClick={() => {
-              if (section === 'service-requests' || section === 'approvals') {
-                if (section === 'approvals') {
-                  void navigate({
-                    to: '/app/$section',
-                    params: { section: 'service-requests' },
-                  })
+          canCreatePrimary ? (
+            <PrototypeButton
+              tone="primary"
+              onClick={() => {
+                if (section === 'service-requests' || section === 'approvals') {
+                  if (section === 'approvals') {
+                    void navigate({
+                      to: '/app/$section',
+                      params: { section: 'service-requests' },
+                    })
+                  }
+                  setCreateOpen(true)
+                  return
                 }
-                setCreateOpen(true)
-                return
-              }
-              if (section === 'quotations') setQuotationBuilderOpen(true)
-              if (section === 'invoices-payments') setInvoiceBuilderOpen(true)
-            }}
-          >
-            {section === 'service-requests' || section === 'approvals' ? (
-              <IconFilePlus size={14} />
-            ) : (
-              <IconPlus size={14} />
-            )}{' '}
-            {section === 'service-requests' || section === 'approvals'
-              ? 'New Request'
-              : section === 'quotations'
-                ? 'Build Quote'
-                : section === 'invoices-payments'
-                  ? 'New Invoice'
-                  : 'Create'}
-          </PrototypeButton>
+                if (section === 'quotations') setQuotationBuilderOpen(true)
+                if (section === 'invoices-payments') setInvoiceBuilderOpen(true)
+              }}
+            >
+              {section === 'service-requests' || section === 'approvals' ? (
+                <IconFilePlus size={14} />
+              ) : (
+                <IconPlus size={14} />
+              )}{' '}
+              {section === 'service-requests' || section === 'approvals'
+                ? 'New Request'
+                : section === 'quotations'
+                  ? 'Build Quote'
+                  : section === 'invoices-payments'
+                    ? 'New Invoice'
+                    : 'Create'}
+            </PrototypeButton>
+          ) : undefined
         }
       />
 
@@ -353,6 +376,7 @@ export function CommercialSectionPage({ section }: { section: CommercialSection 
           invoice={selectedInvoice}
           saving={recordPayment.isPending}
           onClose={() => setSelectedInvoiceId(null)}
+          canConfirmPayment={canConfirmPayment}
           onRecordPayment={(input) => recordPayment.mutate(input)}
         />
       ) : null}
@@ -363,6 +387,7 @@ export function CommercialSectionPage({ section }: { section: CommercialSection 
           approval={selectedApproval}
           saving={decideApproval.isPending}
           onClose={() => setSelectedApprovalId(null)}
+          canAct={canActApproval}
           onDecide={(input) => decideApproval.mutate(input)}
         />
       ) : null}

@@ -28,6 +28,9 @@ export function OrderControlRoomWorkspace({
   order,
   relatedTasks,
   saving,
+  canEditOrder,
+  canCreateTask,
+  canCreateDeliverable,
   onClose,
   onSave,
   onAdvance,
@@ -39,6 +42,9 @@ export function OrderControlRoomWorkspace({
   order: ServiceOrder
   relatedTasks: ExecutionTask[]
   saving: boolean
+  canEditOrder: boolean
+  canCreateTask: boolean
+  canCreateDeliverable: boolean
   onClose: () => void
   onSave: (input: UpdateServiceOrderInput) => void
   onAdvance: () => void
@@ -114,16 +120,18 @@ export function OrderControlRoomWorkspace({
                         Evidence, review and acceptance are retained
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      className="fulfillment-btn fulfillment-btn-primary"
-                      onClick={() => setShowMilestone((value) => !value)}
-                    >
-                      Add Milestone
-                    </button>
+                    {canEditOrder ? (
+                      <button
+                        type="button"
+                        className="fulfillment-btn fulfillment-btn-primary"
+                        onClick={() => setShowMilestone((value) => !value)}
+                      >
+                        Add Milestone
+                      </button>
+                    ) : null}
                   </header>
 
-                  {showMilestone ? (
+                  {showMilestone && canEditOrder ? (
                     <div className="fulfillment-inline-create">
                       <input
                         value={milestoneName}
@@ -174,13 +182,15 @@ export function OrderControlRoomWorkspace({
                 <section className="fulfillment-card">
                   <header className="fulfillment-card-header">
                     <div className="fulfillment-card-title">Execution Tasks</div>
-                    <button
-                      type="button"
-                      className="fulfillment-btn fulfillment-btn-small"
-                      onClick={() => setShowTask(true)}
-                    >
-                      New Task
-                    </button>
+                    {canCreateTask ? (
+                      <button
+                        type="button"
+                        className="fulfillment-btn fulfillment-btn-small"
+                        onClick={() => setShowTask(true)}
+                      >
+                        New Task
+                      </button>
+                    ) : null}
                   </header>
                   <div className="fulfillment-table-wrap">
                     <table className="fulfillment-table">
@@ -226,13 +236,15 @@ export function OrderControlRoomWorkspace({
                         Internal and client-facing history
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      className="fulfillment-btn"
-                      onClick={() => setShowUpdate(true)}
-                    >
-                      Add Update
-                    </button>
+                    {canEditOrder ? (
+                      <button
+                        type="button"
+                        className="fulfillment-btn"
+                        onClick={() => setShowUpdate(true)}
+                      >
+                        Add Update
+                      </button>
+                    ) : null}
                   </header>
 
                   <div className="fulfillment-timeline">
@@ -252,95 +264,97 @@ export function OrderControlRoomWorkspace({
               </div>
 
               <aside>
-                <section className="fulfillment-card">
-                  <header className="fulfillment-card-header">
-                    <div className="fulfillment-card-title">Order Controls</div>
-                  </header>
+                {canEditOrder ? (
+                  <section className="fulfillment-card">
+                    <header className="fulfillment-card-header">
+                      <div className="fulfillment-card-title">Order Controls</div>
+                    </header>
 
-                  <form.Field name="status">
-                    {(field) => (
-                      <label className="fulfillment-field">
-                        <span>Status</span>
-                        <select
-                          value={field.state.value}
-                          onChange={(event) =>
-                            field.handleChange(event.target.value as typeof field.state.value)
-                          }
-                        >
-                          {[
-                            'Pending Mobilisation',
-                            'Active',
-                            'Quality Review',
-                            'Awaiting Client',
-                            'Completed',
-                            'On Hold',
-                            'Cancelled',
-                          ].map((status) => (
-                            <option key={status}>{status}</option>
-                          ))}
-                        </select>
-                      </label>
-                    )}
-                  </form.Field>
+                    <form.Field name="status">
+                      {(field) => (
+                        <label className="fulfillment-field">
+                          <span>Status</span>
+                          <select
+                            value={field.state.value}
+                            onChange={(event) =>
+                              field.handleChange(event.target.value as typeof field.state.value)
+                            }
+                          >
+                            {[
+                              'Pending Mobilisation',
+                              'Active',
+                              'Quality Review',
+                              'Awaiting Client',
+                              'Completed',
+                              'On Hold',
+                              'Cancelled',
+                            ].map((status) => (
+                              <option key={status}>{status}</option>
+                            ))}
+                          </select>
+                        </label>
+                      )}
+                    </form.Field>
 
-                  <form.Field name="progress">
-                    {(field) => (
-                      <label className="fulfillment-field">
-                        <span>Progress (%)</span>
-                        <input
-                          type="number"
-                          min="0"
-                          max="100"
-                          value={formatNumberFieldValue(field.state.value)}
-                          onChange={(event) =>
-                            field.handleChange(parseNumberFieldValue(event.target.value))
-                          }
-                        />
-                      </label>
-                    )}
-                  </form.Field>
+                    <form.Field name="progress">
+                      {(field) => (
+                        <label className="fulfillment-field">
+                          <span>Progress (%)</span>
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={formatNumberFieldValue(field.state.value)}
+                            onChange={(event) =>
+                              field.handleChange(parseNumberFieldValue(event.target.value))
+                            }
+                          />
+                        </label>
+                      )}
+                    </form.Field>
 
-                  <form.Field name="stage">
-                    {(field) => (
-                      <label className="fulfillment-field">
-                        <span>Current stage</span>
-                        <input
-                          value={field.state.value}
-                          onChange={(event) => field.handleChange(event.target.value)}
-                        />
-                      </label>
-                    )}
-                  </form.Field>
+                    <form.Field name="stage">
+                      {(field) => (
+                        <label className="fulfillment-field">
+                          <span>Current stage</span>
+                          <input
+                            value={field.state.value}
+                            onChange={(event) => field.handleChange(event.target.value)}
+                          />
+                        </label>
+                      )}
+                    </form.Field>
 
-                  <form.Field name="nextAction">
-                    {(field) => (
-                      <label className="fulfillment-field">
-                        <span>Next action</span>
-                        <input
-                          value={field.state.value}
-                          onChange={(event) => field.handleChange(event.target.value)}
-                        />
-                      </label>
-                    )}
-                  </form.Field>
+                    <form.Field name="nextAction">
+                      {(field) => (
+                        <label className="fulfillment-field">
+                          <span>Next action</span>
+                          <input
+                            value={field.state.value}
+                            onChange={(event) => field.handleChange(event.target.value)}
+                          />
+                        </label>
+                      )}
+                    </form.Field>
 
-                  <button
-                    type="button"
-                    className="fulfillment-btn fulfillment-btn-primary fulfillment-btn-block"
-                    disabled={saving}
-                    onClick={() => onSave(form.state.values)}
-                  >
-                    {saving ? 'Saving...' : 'Save Update'}
-                  </button>
-                  <button
-                    type="button"
-                    className="fulfillment-btn fulfillment-btn-green fulfillment-btn-block fulfillment-top-gap"
-                    disabled={saving || order.status === 'Completed'}
-                    onClick={onAdvance}
-                  >
-                    Advance Stage
-                  </button>
-                </section>
+                    <button
+                      type="button"
+                      className="fulfillment-btn fulfillment-btn-primary fulfillment-btn-block"
+                      disabled={saving}
+                      onClick={() => onSave(form.state.values)}
+                    >
+                      {saving ? 'Saving...' : 'Save Update'}
+                    </button>
+                    <button
+                      type="button"
+                      className="fulfillment-btn fulfillment-btn-green fulfillment-btn-block fulfillment-top-gap"
+                      disabled={saving || order.status === 'Completed'}
+                      onClick={onAdvance}
+                    >
+                      Advance Stage
+                    </button>
+                  </section>
+                ) : null}
 
                 <section className="fulfillment-card">
                   <header className="fulfillment-card-header">
@@ -364,27 +378,33 @@ export function OrderControlRoomWorkspace({
                   <header className="fulfillment-card-header">
                     <div className="fulfillment-card-title">Quick Actions</div>
                   </header>
-                  <button
-                    type="button"
-                    className="fulfillment-btn fulfillment-btn-block"
-                    onClick={() => onFutureAction('Add Deliverable')}
-                  >
-                    Add Deliverable
-                  </button>
-                  <button
-                    type="button"
-                    className="fulfillment-btn fulfillment-btn-block fulfillment-top-gap"
-                    onClick={() => onFutureAction('Request Client Approval')}
-                  >
-                    Request Client Approval
-                  </button>
-                  <button
-                    type="button"
-                    className="fulfillment-btn fulfillment-btn-block fulfillment-top-gap"
-                    onClick={() => onFutureAction('Record Feedback')}
-                  >
-                    Record Feedback
-                  </button>
+                  {canCreateDeliverable ? (
+                    <button
+                      type="button"
+                      className="fulfillment-btn fulfillment-btn-block"
+                      onClick={() => onFutureAction('Add Deliverable')}
+                    >
+                      Add Deliverable
+                    </button>
+                  ) : null}
+                  {canEditOrder ? (
+                    <>
+                      <button
+                        type="button"
+                        className="fulfillment-btn fulfillment-btn-block fulfillment-top-gap"
+                        onClick={() => onFutureAction('Request Client Approval')}
+                      >
+                        Request Client Approval
+                      </button>
+                      <button
+                        type="button"
+                        className="fulfillment-btn fulfillment-btn-block fulfillment-top-gap"
+                        onClick={() => onFutureAction('Record Feedback')}
+                      >
+                        Record Feedback
+                      </button>
+                    </>
+                  ) : null}
                 </section>
               </aside>
             </div>
@@ -398,7 +418,7 @@ export function OrderControlRoomWorkspace({
         </section>
       </div>
 
-      {showUpdate ? (
+      {showUpdate && canEditOrder ? (
         <OrderUpdateWorkspace
           order={order}
           saving={saving}
@@ -410,7 +430,7 @@ export function OrderControlRoomWorkspace({
         />
       ) : null}
 
-      {showTask ? (
+      {showTask && canCreateTask ? (
         <CreateTaskWorkspace
           initialOrderId={order.id}
           saving={saving}

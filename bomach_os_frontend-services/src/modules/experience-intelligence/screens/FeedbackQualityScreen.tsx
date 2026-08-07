@@ -1,3 +1,4 @@
+import { RecordLink } from '@/shared/navigation'
 import type { FeedbackSummary, ServiceFeedback } from '../types/experience-intelligence.types'
 
 function statusClass(status: ServiceFeedback['status']) {
@@ -9,12 +10,10 @@ function statusClass(status: ServiceFeedback['status']) {
 export function FeedbackQualityScreen({
   feedback,
   summary,
-  onRecord,
   onOpen,
 }: {
   feedback: ServiceFeedback[]
   summary: FeedbackSummary
-  onRecord: () => void
   onOpen: (feedback: ServiceFeedback) => void
 }) {
   return (
@@ -46,13 +45,6 @@ export function FeedbackQualityScreen({
               Completion feedback, defects, complaints and testimonials
             </div>
           </div>
-          <button
-            type="button"
-            className="experience-btn experience-btn-primary"
-            onClick={onRecord}
-          >
-            Record Feedback
-          </button>
         </header>
 
         <div className="experience-table-wrap">
@@ -89,7 +81,11 @@ export function FeedbackQualityScreen({
                   </td>
                   <td>{item.client}</td>
                   <td>{item.service}</td>
-                  <td>{item.orderId}</td>
+                  <td>
+                    <RecordLink entityType="order" entityId={item.orderId}>
+                      {item.orderId}
+                    </RecordLink>
+                  </td>
                   <td>{item.rating}/5</td>
                   <td>{item.type}</td>
                   <td className="experience-comment-cell">{item.comment}</td>

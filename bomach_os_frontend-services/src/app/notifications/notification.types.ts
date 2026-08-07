@@ -7,4 +7,11 @@ export interface AppNotification {
   timestamp: string
   tone: NotificationTone
   read: boolean
+  entityType?: string
+  entityId?: string
+}
+
+export interface NotificationListResult {
+  configured: boolean
+  notifications: AppNotification[]
 }

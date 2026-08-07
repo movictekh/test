@@ -4,12 +4,14 @@ import type { Deliverable } from '../types/fulfillment.types'
 export function DeliverableDetailWorkspace({
   deliverable,
   saving,
+  canApprove,
   onClose,
   onApprove,
   onReject,
 }: {
   deliverable: Deliverable
   saving: boolean
+  canApprove: boolean
   onClose: () => void
   onApprove: () => void
   onReject: () => void
@@ -59,7 +61,7 @@ export function DeliverableDetailWorkspace({
           <button type="button" className="fulfillment-btn" onClick={onClose}>
             Close
           </button>
-          {deliverable.status === 'Under Review' ? (
+          {deliverable.status === 'Under Review' && canApprove ? (
             <>
               <button
                 type="button"

@@ -1,3 +1,4 @@
+import { RecordLink } from '@/shared/navigation'
 import { downloadCsv } from '../lib/csv'
 import type { AuditEvent } from '../types/experience-intelligence.types'
 
@@ -41,7 +42,15 @@ export function AuditLogScreen({ events }: { events: AuditEvent[] }) {
                   <td>{item.occurredAt}</td>
                   <td>{item.actor}</td>
                   <td>{item.area}</td>
-                  <td>{item.action}</td>
+                  <td>
+                    {item.entityType && item.entityId ? (
+                      <RecordLink entityType={item.entityType} entityId={item.entityId}>
+                        {item.action}
+                      </RecordLink>
+                    ) : (
+                      item.action
+                    )}
+                  </td>
                 </tr>
               ))}
               {events.length === 0 ? (

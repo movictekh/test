@@ -9,11 +9,13 @@ export function ApprovalDecisionWorkspace({
   approval,
   saving,
   onClose,
+  canAct,
   onDecide,
 }: {
   approval: CommercialApproval
   saving: boolean
   onClose: () => void
+  canAct: boolean
   onDecide: (input: DecideApprovalInput) => void
 }) {
   const [note, setNote] = useState('')
@@ -110,7 +112,7 @@ export function ApprovalDecisionWorkspace({
             </div>
           </section>
 
-          {approval.status === 'Pending' ? (
+          {approval.status === 'Pending' && canAct ? (
             <section className="commercial-form-section">
               <h3>Decision note</h3>
               <p className="commercial-form-note">
@@ -145,7 +147,7 @@ export function ApprovalDecisionWorkspace({
             </button>
           </div>
           <div className="commercial-modal-footer-actions">
-            {approval.status === 'Pending' ? (
+            {approval.status === 'Pending' && canAct ? (
               <>
                 <button
                   type="button"

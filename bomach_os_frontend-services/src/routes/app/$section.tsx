@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 
 import { findNavigationItemByPath, operationsNavigation } from '@/app/navigation'
 import { PERMISSIONS, requireRoutePermission } from '@/app/permissions'
+import type { AppRecordSearch } from '@/shared/navigation'
 import {
   ServiceAdministrationSectionPage,
   type ServiceAdministrationSection,
@@ -50,6 +51,32 @@ const experienceIntelligenceSections = new Set<ExperienceIntelligenceSection>([
   'audit-log',
 ])
 
+function parseRecordSearch(search: Record<string, unknown>): AppRecordSearch {
+  const stringValue = (value: unknown): string | undefined =>
+    typeof value === 'string' && value.trim() ? value : undefined
+
+  const result: AppRecordSearch = {}
+  const request = stringValue(search.request)
+  const quotation = stringValue(search.quotation)
+  const invoice = stringValue(search.invoice)
+  const approval = stringValue(search.approval)
+  const order = stringValue(search.order)
+  const task = stringValue(search.task)
+  const deliverable = stringValue(search.deliverable)
+  const feedback = stringValue(search.feedback)
+
+  if (request) result.request = request
+  if (quotation) result.quotation = quotation
+  if (invoice) result.invoice = invoice
+  if (approval) result.approval = approval
+  if (order) result.order = order
+  if (task) result.task = task
+  if (deliverable) result.deliverable = deliverable
+  if (feedback) result.feedback = feedback
+
+  return result
+}
+
 function formatSectionTitle(section: string): string {
   return section
     .split('-')
@@ -59,6 +86,7 @@ function formatSectionTitle(section: string): string {
 }
 
 export const Route = createFileRoute('/app/$section')({
+  validateSearch: parseRecordSearch,
   beforeLoad: ({ context, location }) => {
     const matchingItem = findNavigationItemByPath(operationsNavigation, location.pathname)
 
@@ -72,9 +100,12 @@ export const Route = createFileRoute('/app/$section')({
 
 function AppShellRoute() {
   const { section } = Route.useParams()
+  const recordSearch = Route.useSearch()
 
   if (commercialSections.has(section as CommercialSection)) {
-    return <CommercialSectionPage section={section as CommercialSection} />
+    return (
+      <CommercialSectionPage section={section as CommercialSection} recordSearch={recordSearch} />
+    )
   }
 
   if (serviceAdministrationSections.has(section as ServiceAdministrationSection)) {
@@ -82,7 +113,9 @@ function AppShellRoute() {
   }
 
   if (fulfillmentSections.has(section as FulfillmentSection)) {
-    return <FulfillmentSectionPage section={section as FulfillmentSection} />
+    return (
+      <FulfillmentSectionPage section={section as FulfillmentSection} recordSearch={recordSearch} />
+    )
   }
 
   if (specializedSections.has(section as SpecializedServicesSection)) {
@@ -90,7 +123,12 @@ function AppShellRoute() {
   }
 
   if (experienceIntelligenceSections.has(section as ExperienceIntelligenceSection)) {
-    return <ExperienceIntelligenceSectionPage section={section as ExperienceIntelligenceSection} />
+    return (
+      <ExperienceIntelligenceSectionPage
+        section={section as ExperienceIntelligenceSection}
+        recordSearch={recordSearch}
+      />
+    )
   }
 
   const title = formatSectionTitle(section)

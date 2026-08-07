@@ -9,6 +9,9 @@ import {
 import { serviceAdministrationQueries } from '@/modules/service-administration/api/service-administration.queries'
 import { presentError } from '@/shared/errors'
 import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
+import { canPerformAction } from '@/app/permissions'
+import { useAuth } from '@/app/auth'
+import { useDeepLinkedSelection, type AppRecordSearch } from '@/shared/navigation'
 
 import { fulfillmentApi } from '../api/fulfillment.api'
 import { fulfillmentKeys } from '../api/fulfillment.keys'
@@ -46,8 +49,15 @@ const metadata: Record<FulfillmentSection, { title: string; breadcrumb: string }
   deliverables: { title: 'Deliverables & Documents', breadcrumb: 'Fulfillment / Documents' },
 }
 
-export function FulfillmentSectionPage({ section }: { section: FulfillmentSection }) {
+export function FulfillmentSectionPage({
+  section,
+  recordSearch,
+}: {
+  section: FulfillmentSection
+  recordSearch?: AppRecordSearch
+}) {
   const queryClient = useQueryClient()
+  const { user } = useAuth()
   const toast = useToast()
 
   const query = useQuery(fulfillmentQueries.workspace())
@@ -55,10 +65,12 @@ export function FulfillmentSectionPage({ section }: { section: FulfillmentSectio
 
   const [createOrderOpen, setCreateOrderOpen] = useState(false)
   const [createTaskOpen, setCreateTaskOpen] = useState(false)
-  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
+  const [selectedOrderId, setSelectedOrderId] = useDeepLinkedSelection(recordSearch?.order)
+  const [selectedTaskId, setSelectedTaskId] = useDeepLinkedSelection(recordSearch?.task)
   const [createDeliverableOrderId, setCreateDeliverableOrderId] = useState<string | null>(null)
-  const [selectedDeliverableId, setSelectedDeliverableId] = useState<string | null>(null)
+  const [selectedDeliverableId, setSelectedDeliverableId] = useDeepLinkedSelection(
+    recordSearch?.deliverable,
+  )
 
   const updateCache = (workspace: NonNullable<typeof query.data>) => {
     queryClient.setQueryData(fulfillmentKeys.workspace(), workspace)
@@ -220,6 +232,17 @@ export function FulfillmentSectionPage({ section }: { section: FulfillmentSectio
     decideDeliverable.isPending ||
     updateTask.isPending
 
+  const canUpdateOrder = canPerformAction(user, 'orderUpdate')
+  const canUpdateTask = canPerformAction(user, 'taskUpdate')
+  const canUpdateDeliverable = canPerformAction(user, 'deliverableUpdate')
+  const canApproveDeliverable = canPerformAction(user, 'deliverableApprove')
+  const canCreatePrimary =
+    section === 'service-orders'
+      ? canUpdateOrder
+      : section === 'execution-tasks'
+        ? canUpdateTask
+        : canUpdateDeliverable
+
   const primaryLabel =
     section === 'service-orders'
       ? 'Create Order'
@@ -233,17 +256,19 @@ export function FulfillmentSectionPage({ section }: { section: FulfillmentSectio
         title={page.title}
         breadcrumb={page.breadcrumb}
         primaryAction={
-          <PrototypeButton
-            tone="primary"
-            onClick={() => {
-              if (section === 'service-orders') setCreateOrderOpen(true)
-              if (section === 'execution-tasks') setCreateTaskOpen(true)
-              if (section === 'deliverables') setCreateDeliverableOrderId('')
-            }}
-          >
-            {section === 'deliverables' ? <IconFilePlus size={14} /> : <IconPlus size={14} />}{' '}
-            {primaryLabel}
-          </PrototypeButton>
+          canCreatePrimary ? (
+            <PrototypeButton
+              tone="primary"
+              onClick={() => {
+                if (section === 'service-orders') setCreateOrderOpen(true)
+                if (section === 'execution-tasks') setCreateTaskOpen(true)
+                if (section === 'deliverables') setCreateDeliverableOrderId('')
+              }}
+            >
+              {section === 'deliverables' ? <IconFilePlus size={14} /> : <IconPlus size={14} />}{' '}
+              {primaryLabel}
+            </PrototypeButton>
+          ) : undefined
         }
       />
 
@@ -304,6 +329,7 @@ export function FulfillmentSectionPage({ section }: { section: FulfillmentSectio
         <DeliverableDetailWorkspace
           deliverable={selectedDeliverable}
           saving={decideDeliverable.isPending}
+          canApprove={canApproveDeliverable}
           onClose={() => setSelectedDeliverableId(null)}
           onApprove={() =>
             decideDeliverable.mutate({ deliverableId: selectedDeliverable.id, action: 'approve' })
@@ -319,6 +345,7 @@ export function FulfillmentSectionPage({ section }: { section: FulfillmentSectio
           task={selectedTask}
           {...(selectedTaskOrder ? { order: selectedTaskOrder } : {})}
           saving={updateTask.isPending}
+          canEdit={canUpdateTask}
           onClose={() => setSelectedTaskId(null)}
           onUpdate={(input) =>
             updateTask.mutate({
@@ -335,6 +362,9 @@ export function FulfillmentSectionPage({ section }: { section: FulfillmentSectio
           order={selectedOrder}
           relatedTasks={query.data.tasks.filter((task) => task.orderId === selectedOrder.id)}
           saving={busy}
+          canEditOrder={canUpdateOrder}
+          canCreateTask={canUpdateTask}
+          canCreateDeliverable={canUpdateDeliverable}
           onClose={() => setSelectedOrderId(null)}
           onSave={(input) =>
             updateOrder.mutate({

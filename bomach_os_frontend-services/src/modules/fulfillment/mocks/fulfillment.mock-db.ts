@@ -22,6 +22,7 @@ import {
   commercialSourceAlreadyOrdered,
   canCompleteOrderWithDeliverables,
 } from '../workspaces/fulfillment-workflow.rules'
+import { appendMockAuditEvent } from '@/shared/audit/mock-audit-store'
 
 const nowIso = () => new Date().toISOString()
 const today = () => new Date().toISOString().slice(0, 10)
@@ -490,6 +491,15 @@ export function ensureMockOrderFromCommercialSource(
     ],
   })
 
+  const created = orders.find((order) => order.invoiceId === input.invoiceId)
+  if (created) {
+    appendMockAuditEvent({
+      area: 'Order',
+      action: `Created ${created.id} from paid commercial work`,
+      entityType: 'order',
+      entityId: created.id,
+    })
+  }
   return getFulfillmentWorkspace()
 }
 
@@ -537,6 +547,12 @@ export function createMockOrder(input: CreateServiceOrderInput): FulfillmentWork
     ],
   })
 
+  appendMockAuditEvent({
+    area: 'Order',
+    action: `Created ${id} for ${input.client}`,
+    entityType: 'order',
+    entityId: id,
+  })
   return getFulfillmentWorkspace()
 }
 
@@ -561,6 +577,12 @@ export function updateMockOrder(
     ),
   )
 
+  appendMockAuditEvent({
+    area: 'Order',
+    action: `Updated ${orderId}`,
+    entityType: 'order',
+    entityId: orderId,
+  })
   return getFulfillmentWorkspace()
 }
 
@@ -596,6 +618,12 @@ export function advanceMockOrder(orderId: string): FulfillmentWorkspace {
     ),
   )
 
+  appendMockAuditEvent({
+    area: 'Order',
+    action: `Advanced ${orderId} to ${order.stage}`,
+    entityType: 'order',
+    entityId: orderId,
+  })
   return getFulfillmentWorkspace()
 }
 
@@ -614,6 +642,12 @@ export function addMockOrderUpdate(input: AddOrderUpdateInput): FulfillmentWorks
     visibility: input.visibility,
   })
 
+  appendMockAuditEvent({
+    area: 'Order',
+    action: `Recorded progress update for ${order.id}`,
+    entityType: 'order',
+    entityId: order.id,
+  })
   return getFulfillmentWorkspace()
 }
 
@@ -625,6 +659,12 @@ export function addMockMilestone(input: AddMilestoneInput): FulfillmentWorkspace
     id: `${order.id}-M${order.milestones.length + 1}`,
     name: input.name.trim(),
     status: 'Pending',
+  })
+  appendMockAuditEvent({
+    area: 'Milestone',
+    action: `Added milestone "${input.name.trim()}" to ${order.id}`,
+    entityType: 'order',
+    entityId: order.id,
   })
   return getFulfillmentWorkspace()
 }
@@ -668,6 +708,12 @@ export function createMockTask(input: CreateExecutionTaskInput): FulfillmentWork
     )
   }
 
+  appendMockAuditEvent({
+    area: 'Task',
+    action: `Created ${id} for ${input.orderId}`,
+    entityType: 'task',
+    entityId: id,
+  })
   return getFulfillmentWorkspace()
 }
 
@@ -752,6 +798,12 @@ export function updateMockTask(
     )
   }
 
+  appendMockAuditEvent({
+    area: 'Task',
+    action: `${taskId}: ${input.action}`,
+    entityType: 'task',
+    entityId: taskId,
+  })
   return getFulfillmentWorkspace()
 }
 
@@ -781,6 +833,12 @@ export function createMockDeliverable(input: CreateDeliverableInput): Fulfillmen
         `${input.title} (${input.version}) added to the order.`,
       ),
     )
+  appendMockAuditEvent({
+    area: 'Deliverable',
+    action: `Created ${id} for ${input.orderId}`,
+    entityType: 'deliverable',
+    entityId: id,
+  })
   return getFulfillmentWorkspace()
 }
 export function decideMockDeliverable(
@@ -790,5 +848,11 @@ export function decideMockDeliverable(
   const item = deliverables.find((d) => d.id === deliverableId)
   if (!item) return getFulfillmentWorkspace()
   item.status = input.action === 'approve' ? 'Approved' : 'Rejected'
+  appendMockAuditEvent({
+    area: 'Deliverable',
+    action: `${input.action === 'approve' ? 'Approved' : 'Rejected'} ${deliverableId}`,
+    entityType: 'deliverable',
+    entityId: deliverableId,
+  })
   return getFulfillmentWorkspace()
 }

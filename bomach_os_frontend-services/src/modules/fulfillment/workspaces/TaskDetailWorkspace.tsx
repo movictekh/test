@@ -23,12 +23,14 @@ export function TaskDetailWorkspace({
   task,
   order,
   saving,
+  canEdit,
   onClose,
   onUpdate,
 }: {
   task: ExecutionTask
   order?: ServiceOrder
   saving: boolean
+  canEdit: boolean
   onClose: () => void
   onUpdate: (input: UpdateExecutionTaskInput) => void
 }) {
@@ -155,36 +157,38 @@ export function TaskDetailWorkspace({
                 ) : (
                   <div className="fulfillment-empty">No evidence added yet.</div>
                 )}
-                <div className="fulfillment-inline-evidence">
-                  <input
-                    placeholder="Evidence label"
-                    value={evidenceLabel}
-                    onChange={(event) => setEvidenceLabel(event.target.value)}
-                  />
-                  <input
-                    placeholder="File name / upload reference"
-                    value={evidenceFileName}
-                    onChange={(event) => setEvidenceFileName(event.target.value)}
-                  />
-                  <button
-                    type="button"
-                    className="fulfillment-btn"
-                    disabled={saving || !evidenceLabel.trim() || !evidenceFileName.trim()}
-                    onClick={() => {
-                      onUpdate({
-                        action: 'add-evidence',
-                        evidence: {
-                          label: evidenceLabel.trim(),
-                          fileName: evidenceFileName.trim(),
-                        },
-                      })
-                      setEvidenceLabel('')
-                      setEvidenceFileName('')
-                    }}
-                  >
-                    Add Evidence
-                  </button>
-                </div>
+                {canEdit ? (
+                  <div className="fulfillment-inline-evidence">
+                    <input
+                      placeholder="Evidence label"
+                      value={evidenceLabel}
+                      onChange={(event) => setEvidenceLabel(event.target.value)}
+                    />
+                    <input
+                      placeholder="File name / upload reference"
+                      value={evidenceFileName}
+                      onChange={(event) => setEvidenceFileName(event.target.value)}
+                    />
+                    <button
+                      type="button"
+                      className="fulfillment-btn"
+                      disabled={saving || !evidenceLabel.trim() || !evidenceFileName.trim()}
+                      onClick={() => {
+                        onUpdate({
+                          action: 'add-evidence',
+                          evidence: {
+                            label: evidenceLabel.trim(),
+                            fileName: evidenceFileName.trim(),
+                          },
+                        })
+                        setEvidenceLabel('')
+                        setEvidenceFileName('')
+                      }}
+                    >
+                      Add Evidence
+                    </button>
+                  </div>
+                ) : null}
               </section>
 
               <section className="fulfillment-card">
@@ -209,188 +213,195 @@ export function TaskDetailWorkspace({
                     </article>
                   ))}
                 </div>
-                <div className="fulfillment-inline-create">
-                  <input
-                    placeholder="Add task activity..."
-                    value={activityNote}
-                    onChange={(event) => setActivityNote(event.target.value)}
-                  />
-                  <button
-                    type="button"
-                    className="fulfillment-btn"
-                    disabled={saving || !activityNote.trim()}
-                    onClick={() => {
-                      onUpdate({ action: 'add-activity', note: activityNote.trim() })
-                      setActivityNote('')
-                    }}
-                  >
-                    Add
-                  </button>
-                </div>
+                {canEdit ? (
+                  <div className="fulfillment-inline-create">
+                    <input
+                      placeholder="Add task activity..."
+                      value={activityNote}
+                      onChange={(event) => setActivityNote(event.target.value)}
+                    />
+                    <button
+                      type="button"
+                      className="fulfillment-btn"
+                      disabled={saving || !activityNote.trim()}
+                      onClick={() => {
+                        onUpdate({ action: 'add-activity', note: activityNote.trim() })
+                        setActivityNote('')
+                      }}
+                    >
+                      Add
+                    </button>
+                  </div>
+                ) : null}
               </section>
             </div>
 
-            <aside>
-              <section className="fulfillment-card">
-                <header className="fulfillment-card-header">
-                  <div className="fulfillment-card-title">Task Controls</div>
-                </header>
-                <form.Field name="owner">
-                  {(field) => (
-                    <label className="fulfillment-field">
-                      <span>Owner</span>
-                      <input
-                        value={field.state.value}
-                        onChange={(event) => field.handleChange(event.target.value)}
-                      />
-                    </label>
-                  )}
-                </form.Field>
-                <form.Field name="dueAt">
-                  {(field) => (
-                    <label className="fulfillment-field">
-                      <span>Due date</span>
-                      <input
-                        type="date"
-                        value={field.state.value}
-                        onChange={(event) => field.handleChange(event.target.value)}
-                      />
-                    </label>
-                  )}
-                </form.Field>
-                <form.Field name="priority">
-                  {(field) => (
-                    <label className="fulfillment-field">
-                      <span>Priority</span>
-                      <select
-                        value={field.state.value}
-                        onChange={(event) =>
-                          field.handleChange(event.target.value as typeof field.state.value)
-                        }
-                      >
-                        <option>Normal</option>
-                        <option>High</option>
-                        <option>Critical</option>
-                      </select>
-                    </label>
-                  )}
-                </form.Field>
-                <form.Field name="progress">
-                  {(field) => (
-                    <label className="fulfillment-field">
-                      <span>Progress (%)</span>
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={formatNumberFieldValue(field.state.value)}
-                        onChange={(event) =>
-                          field.handleChange(parseNumberFieldValue(event.target.value))
-                        }
-                      />
-                    </label>
-                  )}
-                </form.Field>
-                <button
-                  type="button"
-                  className="fulfillment-btn fulfillment-btn-primary fulfillment-btn-block"
-                  disabled={saving}
-                  onClick={() =>
-                    onUpdate({
-                      action: 'save',
-                      progress: form.state.values.progress,
-                      owner: form.state.values.owner,
-                      dueAt: form.state.values.dueAt,
-                      priority: form.state.values.priority,
-                      note: 'Task controls saved.',
-                    })
-                  }
-                >
-                  Save Task
-                </button>
-                {task.status !== 'Done' && task.status !== 'Blocked' ? (
+            {canEdit ? (
+              <aside>
+                <section className="fulfillment-card">
+                  <header className="fulfillment-card-header">
+                    <div className="fulfillment-card-title">Task Controls</div>
+                  </header>
+                  <form.Field name="owner">
+                    {(field) => (
+                      <label className="fulfillment-field">
+                        <span>Owner</span>
+                        <input
+                          value={field.state.value}
+                          onChange={(event) => field.handleChange(event.target.value)}
+                        />
+                      </label>
+                    )}
+                  </form.Field>
+                  <form.Field name="dueAt">
+                    {(field) => (
+                      <label className="fulfillment-field">
+                        <span>Due date</span>
+                        <input
+                          type="date"
+                          value={field.state.value}
+                          onChange={(event) => field.handleChange(event.target.value)}
+                        />
+                      </label>
+                    )}
+                  </form.Field>
+                  <form.Field name="priority">
+                    {(field) => (
+                      <label className="fulfillment-field">
+                        <span>Priority</span>
+                        <select
+                          value={field.state.value}
+                          onChange={(event) =>
+                            field.handleChange(event.target.value as typeof field.state.value)
+                          }
+                        >
+                          <option>Normal</option>
+                          <option>High</option>
+                          <option>Critical</option>
+                        </select>
+                      </label>
+                    )}
+                  </form.Field>
+                  <form.Field name="progress">
+                    {(field) => (
+                      <label className="fulfillment-field">
+                        <span>Progress (%)</span>
+                        <input
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={formatNumberFieldValue(field.state.value)}
+                          onChange={(event) =>
+                            field.handleChange(parseNumberFieldValue(event.target.value))
+                          }
+                        />
+                      </label>
+                    )}
+                  </form.Field>
                   <button
                     type="button"
-                    className="fulfillment-btn fulfillment-btn-green fulfillment-btn-block fulfillment-top-gap"
+                    className="fulfillment-btn fulfillment-btn-primary fulfillment-btn-block"
                     disabled={saving}
-                    onClick={() => onUpdate({ action: 'advance' })}
+                    onClick={() =>
+                      onUpdate({
+                        action: 'save',
+                        progress: form.state.values.progress,
+                        owner: form.state.values.owner,
+                        dueAt: form.state.values.dueAt,
+                        priority: form.state.values.priority,
+                        note: 'Task controls saved.',
+                      })
+                    }
                   >
-                    Advance Task
+                    Save Task
                   </button>
-                ) : null}
-              </section>
-
-              <section className="fulfillment-card">
-                <header className="fulfillment-card-header">
-                  <div className="fulfillment-card-title">Blocker Control</div>
-                </header>
-                {task.status === 'Blocked' ? (
-                  <>
-                    <div className="fulfillment-notice fulfillment-notice-red">
-                      {task.blockedReason}
-                    </div>
+                  {task.status !== 'Done' && task.status !== 'Blocked' ? (
                     <button
                       type="button"
-                      className="fulfillment-btn fulfillment-btn-block"
+                      className="fulfillment-btn fulfillment-btn-green fulfillment-btn-block fulfillment-top-gap"
                       disabled={saving}
-                      onClick={() =>
-                        onUpdate({
-                          action: 'unblock',
-                          note: 'Blocker resolved and task returned to execution.',
-                        })
-                      }
+                      onClick={() => onUpdate({ action: 'advance' })}
                     >
-                      Resolve Blocker
+                      Advance Task
                     </button>
-                  </>
-                ) : task.status !== 'Done' ? (
-                  <>
-                    <label className="fulfillment-field">
-                      <span>Blocked reason</span>
-                      <textarea
-                        value={blockReason}
-                        onChange={(event) => setBlockReason(event.target.value)}
-                      />
-                    </label>
-                    <button
-                      type="button"
-                      className="fulfillment-btn fulfillment-btn-block"
-                      disabled={saving || !blockReason.trim()}
-                      onClick={() =>
-                        onUpdate({ action: 'block', blockedReason: blockReason.trim() })
-                      }
-                    >
-                      Mark Blocked
-                    </button>
-                  </>
-                ) : (
-                  <div className="fulfillment-notice fulfillment-notice-green">
-                    Task is completed.
-                  </div>
-                )}
-              </section>
+                  ) : null}
+                </section>
 
-              <section className="fulfillment-card">
-                <header className="fulfillment-card-header">
-                  <div className="fulfillment-card-title">Completion</div>
-                </header>
-                {!canComplete ? (
-                  <div className="fulfillment-notice fulfillment-notice-yellow">
-                    Add the required evidence before completing this task.
-                  </div>
-                ) : null}
-                <button
-                  type="button"
-                  className="fulfillment-btn fulfillment-btn-green fulfillment-btn-block"
-                  disabled={saving || task.status === 'Done' || !canComplete}
-                  onClick={() =>
-                    onUpdate({ action: 'complete', note: 'Execution task completed and accepted.' })
-                  }
-                >
-                  {task.status === 'Done' ? 'Task Completed' : 'Complete Task'}
-                </button>
-              </section>
-            </aside>
+                <section className="fulfillment-card">
+                  <header className="fulfillment-card-header">
+                    <div className="fulfillment-card-title">Blocker Control</div>
+                  </header>
+                  {task.status === 'Blocked' ? (
+                    <>
+                      <div className="fulfillment-notice fulfillment-notice-red">
+                        {task.blockedReason}
+                      </div>
+                      <button
+                        type="button"
+                        className="fulfillment-btn fulfillment-btn-block"
+                        disabled={saving}
+                        onClick={() =>
+                          onUpdate({
+                            action: 'unblock',
+                            note: 'Blocker resolved and task returned to execution.',
+                          })
+                        }
+                      >
+                        Resolve Blocker
+                      </button>
+                    </>
+                  ) : task.status !== 'Done' ? (
+                    <>
+                      <label className="fulfillment-field">
+                        <span>Blocked reason</span>
+                        <textarea
+                          value={blockReason}
+                          onChange={(event) => setBlockReason(event.target.value)}
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        className="fulfillment-btn fulfillment-btn-block"
+                        disabled={saving || !blockReason.trim()}
+                        onClick={() =>
+                          onUpdate({ action: 'block', blockedReason: blockReason.trim() })
+                        }
+                      >
+                        Mark Blocked
+                      </button>
+                    </>
+                  ) : (
+                    <div className="fulfillment-notice fulfillment-notice-green">
+                      Task is completed.
+                    </div>
+                  )}
+                </section>
+
+                <section className="fulfillment-card">
+                  <header className="fulfillment-card-header">
+                    <div className="fulfillment-card-title">Completion</div>
+                  </header>
+                  {!canComplete ? (
+                    <div className="fulfillment-notice fulfillment-notice-yellow">
+                      Add the required evidence before completing this task.
+                    </div>
+                  ) : null}
+                  <button
+                    type="button"
+                    className="fulfillment-btn fulfillment-btn-green fulfillment-btn-block"
+                    disabled={saving || task.status === 'Done' || !canComplete}
+                    onClick={() =>
+                      onUpdate({
+                        action: 'complete',
+                        note: 'Execution task completed and accepted.',
+                      })
+                    }
+                  >
+                    {task.status === 'Done' ? 'Task Completed' : 'Complete Task'}
+                  </button>
+                </section>
+              </aside>
+            ) : null}
           </div>
         </div>
 
