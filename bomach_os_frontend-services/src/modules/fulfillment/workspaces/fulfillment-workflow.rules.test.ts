@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 
-import { advanceMilestones, clampProgress, nextTaskStatus } from './fulfillment-workflow.rules'
+import {
+  advanceMilestones,
+  canCompleteTask,
+  clampProgress,
+  nextTaskStatus,
+  taskProgressForStatus,
+} from './fulfillment-workflow.rules'
 
 describe('fulfillment workflow rules', () => {
   it('clamps progress into the prototype range', () => {
@@ -37,5 +43,17 @@ describe('fulfillment workflow rules', () => {
     expect(nextTaskStatus('In Progress')).toBe('Review')
     expect(nextTaskStatus('Review')).toBe('Done')
     expect(nextTaskStatus('Done')).toBe('Done')
+  })
+
+  it('requires evidence before completion when configured', () => {
+    expect(canCompleteTask({ evidenceRequired: true, evidenceCount: 0 })).toBe(false)
+    expect(canCompleteTask({ evidenceRequired: true, evidenceCount: 1 })).toBe(true)
+    expect(canCompleteTask({ evidenceRequired: false, evidenceCount: 0 })).toBe(true)
+  })
+
+  it('keeps task progress aligned with workflow state', () => {
+    expect(taskProgressForStatus('In Progress', 5)).toBe(25)
+    expect(taskProgressForStatus('Review', 45)).toBe(80)
+    expect(taskProgressForStatus('Done', 80)).toBe(100)
   })
 })

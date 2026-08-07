@@ -14,6 +14,7 @@ import {
   advanceMilestones,
   clampProgress,
   nextTaskStatus,
+  taskProgressForStatus,
 } from '../workspaces/fulfillment-workflow.rules'
 
 const nowIso = () => new Date().toISOString()
@@ -255,56 +256,116 @@ const tasks: ExecutionTask[] = [
     id: 'TSK-701',
     title: 'Schedule Ezeagu site assessment',
     orderId: 'REQ-260713-001',
+    stageName: 'Site Assessment',
     status: 'To Do',
     owner: 'Civil Engineer',
     dueAt: '2026-07-14',
     priority: 'High',
     evidenceRequired: true,
     instructions: 'Confirm site access and assessment schedule.',
+    progress: 0,
+    evidence: [],
+    activities: [
+      {
+        id: 'TASK-SEED-1',
+        at: '2026-07-13T09:00:00.000Z',
+        title: 'Task created',
+        actor: 'Service Manager',
+        description: 'Task created from fulfillment workflow.',
+      },
+    ],
   },
   {
     id: 'TSK-702',
     title: 'Verify Fortress plot 39 availability',
     orderId: 'REQ-260712-014',
+    stageName: 'Availability & reservation',
     status: 'In Progress',
     owner: 'Property Manager',
     dueAt: '2026-07-13',
     priority: 'High',
     evidenceRequired: false,
     instructions: 'Confirm inventory and reservation position.',
+    progress: 45,
+    evidence: [],
+    activities: [
+      {
+        id: 'TASK-SEED-2',
+        at: '2026-07-13T09:00:00.000Z',
+        title: 'Task created',
+        actor: 'Service Manager',
+        description: 'Task created from fulfillment workflow.',
+      },
+    ],
   },
   {
     id: 'TSK-703',
     title: 'Review Greenview survey plan',
     orderId: 'ORD-260701-019',
+    stageName: 'Professional review',
     status: 'Review',
     owner: 'Chief Surveyor',
     dueAt: '2026-07-14',
     priority: 'Normal',
     evidenceRequired: true,
     instructions: 'Review draft plan before delivery.',
+    progress: 85,
+    evidence: [],
+    activities: [
+      {
+        id: 'TASK-SEED-3',
+        at: '2026-07-13T09:00:00.000Z',
+        title: 'Task created',
+        actor: 'Service Manager',
+        description: 'Task created from fulfillment workflow.',
+      },
+    ],
   },
   {
     id: 'TSK-704',
     title: 'Prepare Apex product specification',
     orderId: 'ORD-260710-002',
+    stageName: 'Requirements',
     status: 'In Progress',
     owner: 'Business Analyst',
     dueAt: '2026-07-16',
     priority: 'Normal',
     evidenceRequired: true,
     instructions: 'Prepare specification from approved requirements.',
+    progress: 55,
+    evidence: [],
+    activities: [
+      {
+        id: 'TASK-SEED-4',
+        at: '2026-07-13T09:00:00.000Z',
+        title: 'Task created',
+        actor: 'Service Manager',
+        description: 'Task created from fulfillment workflow.',
+      },
+    ],
   },
   {
     id: 'TSK-705',
     title: 'Upload delivery proof',
     orderId: 'ORD-260712-033',
+    stageName: 'Delivery',
     status: 'Done',
     owner: 'Rider EN-04',
     dueAt: '2026-07-12',
     priority: 'Normal',
     evidenceRequired: true,
     instructions: 'Attach recipient proof of delivery.',
+    progress: 100,
+    evidence: [],
+    activities: [
+      {
+        id: 'TASK-SEED-5',
+        at: '2026-07-13T09:00:00.000Z',
+        title: 'Task created',
+        actor: 'Service Manager',
+        description: 'Task created from fulfillment workflow.',
+      },
+    ],
   },
 ]
 
@@ -465,19 +526,31 @@ export function addMockMilestone(input: AddMilestoneInput): FulfillmentWorkspace
 
 export function createMockTask(input: CreateExecutionTaskInput): FulfillmentWorkspace {
   const id = `TSK-${Date.now().toString().slice(-5)}`
+  const order = orders.find((item) => item.id === input.orderId)
+
   tasks.unshift({
     id,
     title: input.title,
     orderId: input.orderId,
+    stageName: order?.stage ?? 'Unassigned stage',
     status: 'To Do',
     owner: input.owner,
     dueAt: input.dueAt,
     priority: input.priority,
     evidenceRequired: input.evidenceRequired,
     instructions: input.instructions,
+    progress: 0,
+    evidence: [],
+    activities: [
+      {
+        id: `${id}-A1`,
+        at: nowIso(),
+        title: 'Task created',
+        actor: 'Service Manager',
+        description: input.instructions || 'Execution task created.',
+      },
+    ],
   })
-
-  const order = orders.find((item) => item.id === input.orderId)
   if (order) {
     order.activities.push(
       activity(
@@ -500,8 +573,78 @@ export function updateMockTask(
   const task = tasks.find((item) => item.id === taskId)
   if (!task) return getFulfillmentWorkspace()
 
+  const addActivity = (title: string, description: string) => {
+    task.activities.push({
+      id: `${task.id}-A${task.activities.length + 1}`,
+      at: nowIso(),
+      title,
+      actor: 'Service Manager',
+      description,
+    })
+  }
+
   if (input.action === 'advance') {
-    task.status = nextTaskStatus(task.status)
+    const next = nextTaskStatus(task.status)
+    task.status = next
+    task.progress = taskProgressForStatus(next, task.progress)
+    addActivity('Task advanced', `Task moved to ${next}.`)
+  }
+
+  if (input.action === 'save') {
+    if (input.progress !== undefined) task.progress = clampProgress(input.progress)
+    if (input.owner !== undefined) task.owner = input.owner
+    if (input.dueAt !== undefined) task.dueAt = input.dueAt
+    if (input.priority !== undefined) task.priority = input.priority
+    addActivity('Task updated', input.note || 'Task controls updated.')
+  }
+
+  if (input.action === 'block') {
+    task.status = 'Blocked'
+    task.blockedReason = input.blockedReason?.trim() || 'Blocked pending resolution.'
+    addActivity('Task blocked', task.blockedReason)
+  }
+
+  if (input.action === 'unblock') {
+    task.status = 'In Progress'
+    delete task.blockedReason
+    task.progress = taskProgressForStatus('In Progress', task.progress)
+    addActivity('Task unblocked', input.note || 'Blocker resolved.')
+  }
+
+  if (input.action === 'complete') {
+    task.status = 'Done'
+    task.progress = 100
+    task.completedAt = nowIso()
+    delete task.blockedReason
+    addActivity('Task completed', input.note || 'Task completed.')
+  }
+
+  if (input.action === 'add-evidence' && input.evidence) {
+    task.evidence.push({
+      id: `${task.id}-E${task.evidence.length + 1}`,
+      label: input.evidence.label,
+      fileName: input.evidence.fileName,
+      addedAt: nowIso(),
+      addedBy: 'Service Manager',
+    })
+    addActivity('Evidence added', `${input.evidence.label}: ${input.evidence.fileName}`)
+  }
+
+  if (input.action === 'add-activity') {
+    addActivity('Task activity', input.note || 'Task activity recorded.')
+  }
+
+  const order = orders.find((item) => item.id === task.orderId)
+  if (order) {
+    order.activities.push(
+      activity(
+        `${order.id}-A${order.activities.length + 1}`,
+        nowIso(),
+        'Execution task updated',
+        task.owner,
+        `${task.id}: ${task.status}; ${task.progress}% complete.`,
+      ),
+    )
   }
 
   return getFulfillmentWorkspace()

@@ -17,9 +17,7 @@ export function parseNumberFieldValue(raw: string): number {
 }
 
 /** For string-backed dynamic numeric fields (intake forms, calculators). */
-export function formatNumericStringFieldValue(
-  value: string | number | null | undefined,
-): string {
+export function formatNumericStringFieldValue(value: string | number | null | undefined): string {
   if (value === null || value === undefined) return ''
 
   const text = String(value).trim()

@@ -8,10 +8,7 @@ import type {
   SaveRequestFormInput,
   ServiceRequestForm,
 } from '../types/service-administration.types'
-import {
-  formatNumberFieldValue,
-  parseNumberFieldValue,
-} from '@/shared/lib/number-input'
+import { formatNumberFieldValue, parseNumberFieldValue } from '@/shared/lib/number-input'
 
 const divisionClassNames: Record<string, string> = {
   'Real Estate': 'service-admin-service-icon--real-estate',

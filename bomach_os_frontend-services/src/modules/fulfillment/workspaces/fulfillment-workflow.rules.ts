@@ -76,3 +76,23 @@ export function nextTaskStatus(status: ExecutionTaskStatus): ExecutionTaskStatus
   if (index < 0) return 'To Do'
   return taskBoardColumns[Math.min(index + 1, taskBoardColumns.length - 1)] ?? 'To Do'
 }
+
+export function canCompleteTask({
+  evidenceRequired,
+  evidenceCount,
+}: {
+  evidenceRequired: boolean
+  evidenceCount: number
+}): boolean {
+  return !evidenceRequired || evidenceCount > 0
+}
+
+export function taskProgressForStatus(
+  status: ExecutionTaskStatus,
+  currentProgress: number,
+): number {
+  if (status === 'Done') return 100
+  if (status === 'Review') return Math.max(currentProgress, 80)
+  if (status === 'In Progress') return Math.max(currentProgress, 25)
+  return clampProgress(currentProgress)
+}

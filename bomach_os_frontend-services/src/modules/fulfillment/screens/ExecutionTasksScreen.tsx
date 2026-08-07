@@ -10,11 +10,11 @@ function priorityClass(priority: ExecutionTask['priority']) {
 export function ExecutionTasksScreen({
   tasks,
   onCreateTask,
-  onAdvanceTask,
+  onOpenTask,
 }: {
   tasks: ExecutionTask[]
   onCreateTask: () => void
-  onAdvanceTask: (task: ExecutionTask) => void
+  onOpenTask: (task: ExecutionTask) => void
 }) {
   return (
     <main className="fulfillment-content">
@@ -56,8 +56,8 @@ export function ExecutionTasksScreen({
                       type="button"
                       className="fulfillment-task-card"
                       key={task.id}
-                      onClick={() => onAdvanceTask(task)}
-                      title="Move task to the next workflow column"
+                      onClick={() => onOpenTask(task)}
+                      title="Open task details"
                     >
                       <b>{task.title}</b>
                       <small>

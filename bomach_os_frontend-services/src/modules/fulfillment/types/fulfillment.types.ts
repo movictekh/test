@@ -52,16 +52,38 @@ export type ExecutionTaskStatus = 'To Do' | 'In Progress' | 'Review' | 'Done' | 
 
 export type ExecutionTaskPriority = 'Normal' | 'High' | 'Critical'
 
+export interface TaskEvidence {
+  id: string
+  label: string
+  fileName: string
+  addedAt: string
+  addedBy: string
+}
+
+export interface TaskActivity {
+  id: string
+  at: string
+  title: string
+  actor: string
+  description: string
+}
+
 export interface ExecutionTask {
   id: string
   title: string
   orderId: string
+  stageName: string
   status: ExecutionTaskStatus
   owner: string
   dueAt: string
   priority: ExecutionTaskPriority
   evidenceRequired: boolean
   instructions: string
+  progress: number
+  blockedReason?: string
+  completedAt?: string
+  evidence: TaskEvidence[]
+  activities: TaskActivity[]
 }
 
 export interface FulfillmentSummary {
@@ -126,5 +148,15 @@ export interface CreateExecutionTaskInput {
 }
 
 export interface UpdateExecutionTaskInput {
-  action: 'advance'
+  action: 'advance' | 'save' | 'block' | 'unblock' | 'complete' | 'add-evidence' | 'add-activity'
+  progress?: number
+  owner?: string
+  dueAt?: string
+  priority?: ExecutionTaskPriority
+  note?: string
+  blockedReason?: string
+  evidence?: {
+    label: string
+    fileName: string
+  }
 }

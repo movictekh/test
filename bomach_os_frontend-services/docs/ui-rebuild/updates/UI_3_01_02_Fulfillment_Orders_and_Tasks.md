@@ -140,3 +140,16 @@ Manual acceptance:
 8. New Task from an order appears in the order task table and global task board.
 9. Execution Task click advances To Do → In Progress → Review → Done.
 10. Refresh keeps the in-memory MSW workspace for the active dev session.
+
+## Final UI-3.01 / UI-3.02 completion pass
+
+UI-3.02 keeps the exact four-column HTML Kanban and moves operational depth
+behind the task card. Task detail now includes progress, order/stage context,
+evidence, activity history, blocking/unblocking, explicit completion and
+evidence-gated completion.
+
+UI-3.01 retains the exact HTML manual Create Order form. When a matching
+commercial record exists, the fulfillment domain stores request, quotation,
+invoice and payment-readiness identifiers without inventing extra prototype
+fields. The production backend handoff should use the commercial record ID
+directly when the real API replaces MSW.

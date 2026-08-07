@@ -2,10 +2,7 @@ import { IconBolt, IconSubtask } from '@tabler/icons-react'
 import { useMemo, useState } from 'react'
 
 import { useToast } from '@/shared/ui'
-import {
-  formatNumberFieldValue,
-  parseNumberFieldValue,
-} from '@/shared/lib/number-input'
+import { formatNumberFieldValue, parseNumberFieldValue } from '@/shared/lib/number-input'
 
 import type {
   SaveWorkflowInput,

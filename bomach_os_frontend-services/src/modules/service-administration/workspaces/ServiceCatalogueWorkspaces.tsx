@@ -1,10 +1,7 @@
 import { IconX } from '@tabler/icons-react'
 import { useState } from 'react'
 
-import {
-  formatNumberFieldValue,
-  parseNumberFieldValue,
-} from '@/shared/lib/number-input'
+import { formatNumberFieldValue, parseNumberFieldValue } from '@/shared/lib/number-input'
 
 import type {
   ConfigureServiceInput,

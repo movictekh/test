@@ -22,13 +22,14 @@ import type {
   AddOrderUpdateInput,
   CreateExecutionTaskInput,
   CreateServiceOrderInput,
-  ExecutionTask,
   FulfillmentSection,
   UpdateServiceOrderInput,
+  UpdateExecutionTaskInput,
 } from '../types/fulfillment.types'
 import { CreateOrderWorkspace } from '../workspaces/CreateOrderWorkspace'
 import { CreateTaskWorkspace } from '../workspaces/CreateTaskWorkspace'
 import { OrderControlRoomWorkspace } from '../workspaces/OrderControlRoomWorkspace'
+import { TaskDetailWorkspace } from '../workspaces/TaskDetailWorkspace'
 import '../styles/fulfillment.css'
 
 const metadata: Record<FulfillmentSection, { title: string; breadcrumb: string }> = {
@@ -54,6 +55,7 @@ export function FulfillmentSectionPage({ section }: { section: FulfillmentSectio
   const [createOrderOpen, setCreateOrderOpen] = useState(false)
   const [createTaskOpen, setCreateTaskOpen] = useState(false)
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
 
   const updateCache = (workspace: NonNullable<typeof query.data>) => {
     queryClient.setQueryData(fulfillmentKeys.workspace(), workspace)
@@ -120,11 +122,16 @@ export function FulfillmentSectionPage({ section }: { section: FulfillmentSectio
     },
   })
 
-  const advanceTask = useMutation({
-    mutationFn: (task: ExecutionTask) => fulfillmentApi.updateTask(task.id, { action: 'advance' }),
+  const updateTask = useMutation({
+    mutationFn: ({ taskId, input }: { taskId: string; input: UpdateExecutionTaskInput }) =>
+      fulfillmentApi.updateTask(taskId, input),
     onSuccess: (workspace) => {
       updateCache(workspace)
-      toast.success('Task moved to next stage')
+      toast.success('Task updated')
+    },
+    onError: (error) => {
+      const e = presentError(error, 'background-action')
+      toast.error('Task could not be updated', { description: e.message })
     },
   })
 
@@ -132,6 +139,16 @@ export function FulfillmentSectionPage({ section }: { section: FulfillmentSectio
     if (!selectedOrderId || !query.data) return null
     return query.data.orders.find((order) => order.id === selectedOrderId) ?? null
   }, [query.data, selectedOrderId])
+
+  const selectedTask = useMemo(() => {
+    if (!selectedTaskId || !query.data) return null
+    return query.data.tasks.find((task) => task.id === selectedTaskId) ?? null
+  }, [query.data, selectedTaskId])
+
+  const selectedTaskOrder = useMemo(() => {
+    if (!selectedTask || !query.data) return null
+    return query.data.orders.find((order) => order.id === selectedTask.orderId) ?? null
+  }, [query.data, selectedTask])
 
   if (query.isPending || commercialQuery.isPending || serviceQuery.isPending) {
     return <DashboardSkeleton />
@@ -170,7 +187,7 @@ export function FulfillmentSectionPage({ section }: { section: FulfillmentSectio
     addOrderUpdate.isPending ||
     addMilestone.isPending ||
     createTask.isPending ||
-    advanceTask.isPending
+    updateTask.isPending
 
   return (
     <>
@@ -195,7 +212,7 @@ export function FulfillmentSectionPage({ section }: { section: FulfillmentSectio
         <ExecutionTasksScreen
           tasks={query.data.tasks}
           onCreateTask={() => setCreateTaskOpen(true)}
-          onAdvanceTask={(task) => advanceTask.mutate(task)}
+          onOpenTask={(task) => setSelectedTaskId(task.id)}
         />
       )}
 
@@ -245,6 +262,21 @@ export function FulfillmentSectionPage({ section }: { section: FulfillmentSectio
           saving={createTask.isPending}
           onClose={() => setCreateTaskOpen(false)}
           onSubmit={(input) => createTask.mutate(input)}
+        />
+      ) : null}
+
+      {selectedTask ? (
+        <TaskDetailWorkspace
+          task={selectedTask}
+          {...(selectedTaskOrder ? { order: selectedTaskOrder } : {})}
+          saving={updateTask.isPending}
+          onClose={() => setSelectedTaskId(null)}
+          onUpdate={(input) =>
+            updateTask.mutate({
+              taskId: selectedTask.id,
+              input,
+            })
+          }
         />
       ) : null}
 

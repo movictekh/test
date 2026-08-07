@@ -1,10 +1,7 @@
 import { IconX } from '@tabler/icons-react'
 import { useMemo, useState, type ReactNode } from 'react'
 
-import {
-  formatNumberFieldValue,
-  parseNumberFieldValue,
-} from '@/shared/lib/number-input'
+import { formatNumberFieldValue, parseNumberFieldValue } from '@/shared/lib/number-input'
 
 import type {
   CalculatorCharge,
