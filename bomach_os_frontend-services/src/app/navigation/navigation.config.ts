@@ -3,7 +3,6 @@ import { PERMISSIONS } from '@/app/permissions'
 import type { NavigationGroup, NavigationPath } from './navigation.types'
 
 const appSectionRoute = '/app/$section' as NavigationPath
-const portalShellRoute = '/portal/shell/$section' as NavigationPath
 
 export const operationsNavigation = [
   {
@@ -185,68 +184,6 @@ export const operationsNavigation = [
         to: appSectionRoute,
         params: { section: 'audit-log' },
         permissions: [PERMISSIONS.auditRead],
-      },
-    ],
-  },
-] as const satisfies readonly NavigationGroup[]
-
-export const clientPortalNavigation = [
-  {
-    id: 'portal-overview',
-    items: [
-      {
-        id: 'portal-dashboard',
-        label: 'Portal Dashboard',
-        icon: 'portal',
-        to: '/portal/dashboard',
-        permissions: [PERMISSIONS.portalRead],
-        exact: true,
-      },
-    ],
-  },
-  {
-    id: 'portal-services',
-    label: 'My Services',
-    items: [
-      {
-        id: 'portal-requests',
-        label: 'My Requests',
-        icon: 'requests',
-        to: portalShellRoute,
-        params: { section: 'my-requests' },
-        permissions: [PERMISSIONS.portalRead],
-      },
-      {
-        id: 'portal-orders',
-        label: 'My Orders',
-        icon: 'orders',
-        to: portalShellRoute,
-        params: { section: 'my-orders' },
-        permissions: [PERMISSIONS.portalRead],
-      },
-      {
-        id: 'portal-payments',
-        label: 'Payments',
-        icon: 'payments',
-        to: portalShellRoute,
-        params: { section: 'payments' },
-        permissions: [PERMISSIONS.portalRead],
-      },
-      {
-        id: 'portal-documents',
-        label: 'Documents',
-        icon: 'documents',
-        to: portalShellRoute,
-        params: { section: 'documents' },
-        permissions: [PERMISSIONS.portalRead],
-      },
-      {
-        id: 'portal-approvals',
-        label: 'Approvals',
-        icon: 'approvals',
-        to: portalShellRoute,
-        params: { section: 'approvals' },
-        permissions: [PERMISSIONS.portalRead],
       },
     ],
   },

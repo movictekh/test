@@ -6,7 +6,7 @@ import { AppShell } from './AppShell'
 
 export function OperationsLayout() {
   return (
-    <AppShell navigation={operationsNavigation} variant="operations">
+    <AppShell navigation={operationsNavigation}>
       <Outlet />
     </AppShell>
   )

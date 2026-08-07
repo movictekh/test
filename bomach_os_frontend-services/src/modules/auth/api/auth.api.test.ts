@@ -33,21 +33,6 @@ describe('authApi', () => {
     })
   })
 
-  it('detects the mock client profile', async () => {
-    await authApi.login({
-      email: 'client@bomach.local',
-      password: 'demo-password',
-    })
-
-    const user = await authApi.currentUser()
-
-    expect(user).toMatchObject({
-      email: 'client@bomach.local',
-      kind: 'client',
-      role: 'CLIENT',
-    })
-  })
-
   it('rejects invalid credentials', async () => {
     await expect(
       authApi.login({

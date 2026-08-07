@@ -17,16 +17,10 @@ export type NavigationIconName =
   | 'feedback'
   | 'reports'
   | 'audit'
-  | 'portal'
   | 'payments'
   | 'documents'
 
-export type NavigationPath =
-  | '/app/dashboard'
-  | '/app/design-system'
-  | '/portal/dashboard'
-  | '/app/$section'
-  | '/portal/shell/$section'
+export type NavigationPath = '/app/dashboard' | '/app/design-system' | '/app/$section'
 
 export interface NavigationItem {
   id: string

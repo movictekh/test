@@ -53,9 +53,8 @@ export const authHandlers = [
     })
   }),
 
-  http.post(endpoint('/auth/refresh'), async ({ request }) => {
-    const body = (await request.json()) as { refresh_token?: string }
-    const profile = body.refresh_token?.includes('client') ? 'client' : 'service-administrator'
+  http.post(endpoint('/auth/refresh'), () => {
+    const profile = activeProfile ?? 'service-administrator'
     activeProfile = profile
 
     return HttpResponse.json({
@@ -77,19 +76,11 @@ export const authHandlers = [
   }),
 
   http.get(endpoint('/roles/employees/:userId'), ({ request }) => {
-    if (!isAuthorized(request) || activeProfile !== 'service-administrator') {
+    if (!isAuthorized(request) || !activeProfile) {
       return HttpResponse.json({ detail: 'Role was not found.' }, { status: 404 })
     }
 
-    return HttpResponse.json(mockAuthUsers['service-administrator'].role)
-  }),
-
-  http.get(endpoint('/clients/clients/profile'), ({ request }) => {
-    if (!isAuthorized(request) || activeProfile !== 'client') {
-      return HttpResponse.json({ detail: 'Client profile was not found.' }, { status: 404 })
-    }
-
-    return HttpResponse.json({ id: mockAuthUsers.client.user.id })
+    return HttpResponse.json(mockAuthUsers[activeProfile].role)
   }),
 
   http.post(endpoint('/auth/logout'), () => {

@@ -24,7 +24,6 @@ export const APP_PERMISSION_VALUES = [
   'real-estate.read',
   'report.read',
   'audit.read',
-  'portal.read',
 ] as const
 
 export type AppPermission = (typeof APP_PERMISSION_VALUES)[number]

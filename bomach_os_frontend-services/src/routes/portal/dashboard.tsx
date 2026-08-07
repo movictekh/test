@@ -1,14 +1,11 @@
-import { createFileRoute } from '@tanstack/react-router'
-
-import { PERMISSIONS, requireRoutePermission } from '@/app/permissions'
-import { ClientPortalFoundationPage } from '@/modules/foundation/pages/ClientPortalFoundationPage'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/portal/dashboard')({
-  beforeLoad: ({ context }) => {
-    return requireRoutePermission({
-      auth: context.auth,
-      permissions: [PERMISSIONS.portalRead],
+  beforeLoad: () => {
+    return redirect({
+      to: '/app/dashboard',
+      replace: true,
     })
   },
-  component: ClientPortalFoundationPage,
+  component: () => null,
 })

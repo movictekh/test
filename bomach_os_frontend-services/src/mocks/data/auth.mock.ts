@@ -31,23 +31,9 @@ export const mockAuthUsers = {
         'real-estate': ['read'],
         report: ['read'],
         audit: ['read'],
-        portal: ['read'],
       },
       created_at: '2026-08-01T08:00:00Z',
       updated_at: '2026-08-01T08:00:00Z',
     } satisfies RoleResponseDto,
-  },
-  client: {
-    password: 'demo-password',
-    user: {
-      id: 202,
-      email: 'client@bomach.local',
-      username: 'chief.okafor',
-      first_name: 'Chief',
-      last_name: 'Okafor',
-      phone_number: null,
-      is_verified: true,
-      created_at: '2026-08-01T08:00:00Z',
-    } satisfies UserResponseDto,
   },
 } as const

@@ -1,4 +1,4 @@
-import { IconFilePlus, IconPlus, IconUserScreen } from '@tabler/icons-react'
+import { IconFilePlus, IconPlus } from '@tabler/icons-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
@@ -213,12 +213,6 @@ export function CommercialSectionPage({ section }: { section: CommercialSection 
       <CompactPageToolbar
         title={page.title}
         breadcrumb={page.breadcrumb}
-        secondaryAction={
-          <PrototypeButton onClick={() => void navigate({ to: '/portal/dashboard' })}>
-            <IconUserScreen size={14} />
-            Client Portal
-          </PrototypeButton>
-        }
         primaryAction={
           <PrototypeButton
             tone="primary"

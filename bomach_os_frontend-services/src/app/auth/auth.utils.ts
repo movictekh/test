@@ -11,15 +11,17 @@ const roleLabels: Record<AppRole, string> = {
   LAND_SURVEYOR: 'Land Surveyor',
   PROPERTY_MANAGER: 'Property Manager',
   PROJECT_MANAGER: 'Project Manager',
-  CLIENT: 'Client',
+  UNKNOWN: 'Staff User',
 }
 
 export function formatRoleLabel(role: AppRole, roleLabel?: string): string {
   return roleLabel || roleLabels[role]
 }
 
-export function getAuthenticatedHome(user: AuthUser): '/app/dashboard' | '/portal/dashboard' {
-  return user.kind === 'client' ? '/portal/dashboard' : '/app/dashboard'
+/** Staff app always lands on the operations dashboard. */
+export function getAuthenticatedHome(_user: AuthUser): '/app/dashboard' {
+  void _user
+  return '/app/dashboard'
 }
 
 export function isUserKind(user: AuthUser | null, allowedKinds: readonly AuthUserKind[]): boolean {

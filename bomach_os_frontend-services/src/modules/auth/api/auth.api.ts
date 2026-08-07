@@ -28,16 +28,9 @@ function persistLoginTokens(response: LoginResponseDto): void {
   })
 }
 
-async function detectUserContext(user: UserResponseDto): Promise<AuthenticatedUser> {
-  try {
-    const role = await apiClient.get<RoleResponseDto>(`/roles/employees/${user.id}`)
-    return mapAuthenticatedUser(user, role, 'staff')
-  } catch (error) {
-    if (!(error instanceof ApiError) || ![403, 404].includes(error.status)) throw error
-
-    await apiClient.get<unknown>('/clients/clients/profile')
-    return mapAuthenticatedUser(user, null, 'client')
-  }
+async function loadStaffUser(user: UserResponseDto): Promise<AuthenticatedUser> {
+  const role = await apiClient.get<RoleResponseDto>(`/roles/employees/${user.id}`)
+  return mapAuthenticatedUser(user, role)
 }
 
 async function login(credentials: LoginCredentials): Promise<LoginResult> {
@@ -78,7 +71,7 @@ async function currentUser(): Promise<AuthenticatedUser | null> {
 
   try {
     const user = await apiClient.get<UserResponseDto>('/auth/me')
-    return await detectUserContext(user)
+    return await loadStaffUser(user)
   } catch (error) {
     if (error instanceof ApiError && error.status === 401) return null
     throw error

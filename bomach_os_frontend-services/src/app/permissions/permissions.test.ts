@@ -4,62 +4,57 @@ import type { AuthUser } from '@/app/auth'
 
 import { PERMISSIONS, hasPermission, hasPermissions } from './permissions'
 
-const serviceAdministrator: AuthUser = {
-  id: 'service-admin',
-  name: 'Service Administrator',
-  email: 'service.admin@bomach.local',
-  username: 'service.admin',
-  initials: 'SA',
-  role: 'SERVICE_ADMINISTRATOR',
-  roleLabel: 'Service Administrator',
-  kind: 'staff',
-  permissions: [],
-  backendPermissions: [],
-  isVerified: true,
-}
-
-const client: AuthUser = {
-  id: 'client',
-  name: 'Client',
-  email: 'client@bomach.local',
-  username: 'chief.okafor',
-  initials: 'CL',
-  role: 'CLIENT',
-  roleLabel: 'Client',
-  kind: 'client',
-  permissions: [],
-  backendPermissions: [],
-  isVerified: true,
+function makeUser(
+  permissions: AuthUser['permissions'],
+  role: AuthUser['role'] = 'SERVICE_ADMINISTRATOR',
+): AuthUser {
+  return {
+    id: 'staff-1',
+    name: 'Staff User',
+    email: 'staff@bomach.local',
+    username: 'staff',
+    initials: 'SU',
+    role,
+    roleLabel: role,
+    kind: 'staff',
+    permissions,
+    backendPermissions: [...permissions],
+    isVerified: true,
+  }
 }
 
 describe('permission helpers', () => {
-  it('allows a service administrator to create a service', () => {
-    expect(hasPermission(serviceAdministrator, PERMISSIONS.serviceCreate)).toBe(true)
+  it('treats an empty backend permission payload as zero access', () => {
+    const user = makeUser([])
+
+    expect(hasPermission(user, PERMISSIONS.dashboardRead)).toBe(false)
+    expect(hasPermission(user, PERMISSIONS.serviceCreate)).toBe(false)
+    expect(hasPermission(user, PERMISSIONS.realEstateRead)).toBe(false)
   })
 
-  it('gives the service administrator full read/write access across the app', () => {
-    expect(hasPermission(serviceAdministrator, PERMISSIONS.realEstateRead)).toBe(true)
-    expect(hasPermission(serviceAdministrator, PERMISSIONS.portalRead)).toBe(true)
-    expect(hasPermission(serviceAdministrator, PERMISSIONS.approvalAct)).toBe(true)
-    expect(hasPermission(serviceAdministrator, PERMISSIONS.invoiceCreate)).toBe(true)
-    expect(hasPermission(serviceAdministrator, PERMISSIONS.paymentConfirm)).toBe(true)
-    expect(hasPermission(serviceAdministrator, PERMISSIONS.orderUpdate)).toBe(true)
-    expect(hasPermission(serviceAdministrator, PERMISSIONS.taskUpdate)).toBe(true)
-    expect(hasPermission(serviceAdministrator, PERMISSIONS.deliverableApprove)).toBe(true)
-    expect(hasPermission(serviceAdministrator, PERMISSIONS.quoteApprove)).toBe(true)
+  it('does not grant access from a frontend role name', () => {
+    expect(hasPermission(makeUser([], 'SERVICE_ADMINISTRATOR'), PERMISSIONS.serviceCreate)).toBe(
+      false,
+    )
+
+    expect(hasPermission(makeUser([], 'HEAD_OF_OPERATIONS'), PERMISSIONS.orderUpdate)).toBe(false)
   })
 
-  it('does not allow a client to read internal audit records', () => {
-    expect(hasPermission(client, PERMISSIONS.auditRead)).toBe(false)
+  it('grants only explicit backend-provided permissions', () => {
+    const user = makeUser([PERMISSIONS.dashboardRead, PERMISSIONS.orderRead, PERMISSIONS.taskRead])
+
+    expect(hasPermission(user, PERMISSIONS.dashboardRead)).toBe(true)
+    expect(hasPermission(user, PERMISSIONS.orderRead)).toBe(true)
+    expect(hasPermission(user, PERMISSIONS.taskRead)).toBe(true)
+    expect(hasPermission(user, PERMISSIONS.orderUpdate)).toBe(false)
+    expect(hasPermission(user, PERMISSIONS.realEstateRead)).toBe(false)
   })
 
-  it('supports any-permission checks', () => {
-    expect(
-      hasPermissions(
-        serviceAdministrator,
-        [PERMISSIONS.paymentConfirm, PERMISSIONS.requestRead],
-        'any',
-      ),
-    ).toBe(true)
+  it('supports any-permission checks using only the backend permission set', () => {
+    const user = makeUser([PERMISSIONS.requestRead])
+
+    expect(hasPermissions(user, [PERMISSIONS.paymentConfirm, PERMISSIONS.requestRead], 'any')).toBe(
+      true,
+    )
   })
 })

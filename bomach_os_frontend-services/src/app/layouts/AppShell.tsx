@@ -20,7 +20,6 @@ import {
   IconSearch,
   IconSettings,
   IconShieldCheck,
-  IconUserScreen,
   IconListCheck,
   IconFolders,
   IconX,
@@ -56,17 +55,15 @@ const navigationIcons: Record<NavigationIconName, typeof IconLayoutDashboard> = 
   feedback: IconMessageStar,
   reports: IconChartBar,
   audit: IconHistory,
-  portal: IconUserScreen,
   payments: IconCreditCard,
   documents: IconClipboardCheck,
 }
 
 interface AppShellProps extends PropsWithChildren {
   navigation: readonly NavigationGroup[]
-  variant?: 'operations' | 'portal'
 }
 
-export function AppShell({ children, navigation, variant = 'operations' }: AppShellProps) {
+export function AppShell({ children, navigation }: AppShellProps) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     if (typeof window === 'undefined') return false
@@ -96,11 +93,8 @@ export function AppShell({ children, navigation, variant = 'operations' }: AppSh
     await navigate({ to: '/login', replace: true })
   }
 
-  const productName = variant === 'portal' ? 'Client Service Portal' : 'Service Operations OS'
-  const searchPlaceholder =
-    variant === 'portal'
-      ? 'Search your requests, orders, and documents'
-      : 'Search requests, clients, and orders'
+  const productName = 'Service Operations OS'
+  const searchPlaceholder = 'Search requests, clients, and orders'
 
   return (
     <div className="bg-background h-dvh overflow-hidden">

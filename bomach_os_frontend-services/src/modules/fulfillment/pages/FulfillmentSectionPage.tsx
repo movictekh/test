@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useNavigate } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
-import { IconFilePlus, IconPlus, IconUserScreen } from '@tabler/icons-react'
+import { IconFilePlus, IconPlus } from '@tabler/icons-react'
 
 import {
   CompactPageToolbar,
@@ -48,7 +47,6 @@ const metadata: Record<FulfillmentSection, { title: string; breadcrumb: string }
 }
 
 export function FulfillmentSectionPage({ section }: { section: FulfillmentSection }) {
-  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const toast = useToast()
 
@@ -234,12 +232,6 @@ export function FulfillmentSectionPage({ section }: { section: FulfillmentSectio
       <CompactPageToolbar
         title={page.title}
         breadcrumb={page.breadcrumb}
-        secondaryAction={
-          <PrototypeButton onClick={() => void navigate({ to: '/portal/dashboard' })}>
-            <IconUserScreen size={14} />
-            Client Portal
-          </PrototypeButton>
-        }
         primaryAction={
           <PrototypeButton
             tone="primary"

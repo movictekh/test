@@ -12,11 +12,11 @@ export const APP_ROLES = [
   'LAND_SURVEYOR',
   'PROPERTY_MANAGER',
   'PROJECT_MANAGER',
-  'CLIENT',
+  'UNKNOWN',
 ] as const
 
 export type AppRole = (typeof APP_ROLES)[number]
-export const AUTH_USER_KINDS = ['staff', 'client'] as const
+export const AUTH_USER_KINDS = ['staff'] as const
 export type AuthUserKind = (typeof AUTH_USER_KINDS)[number]
 
 export interface AuthUser {

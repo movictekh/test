@@ -1,4 +1,4 @@
-export { clientPortalNavigation, operationsNavigation } from './navigation.config'
+export { operationsNavigation } from './navigation.config'
 export {
   findNavigationItemByPath,
   getNavigationItemPath,

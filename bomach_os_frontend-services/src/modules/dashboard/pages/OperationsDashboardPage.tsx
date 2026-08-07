@@ -1,4 +1,4 @@
-import { IconFilePlus, IconPlus, IconUserScreen } from '@tabler/icons-react'
+import { IconFilePlus, IconPlus } from '@tabler/icons-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
@@ -346,10 +346,6 @@ export function OperationsDashboardPage() {
           Service Command Center
           <small>Services / Executive overview</small>
         </div>
-        <Link to="/portal/dashboard" className="command-center-btn">
-          <IconUserScreen size={14} />
-          Client Portal
-        </Link>
         <Link
           to="/app/$section"
           params={{ section: 'service-requests' }}

@@ -5,7 +5,7 @@ import { cn } from '@/shared/lib/cn'
 
 export interface BreadcrumbItem {
   label: string
-  to?: '/app/dashboard' | '/portal/dashboard'
+  to?: '/app/dashboard'
 }
 
 export interface BreadcrumbsProps {
