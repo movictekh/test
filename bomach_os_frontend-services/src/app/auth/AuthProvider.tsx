@@ -58,11 +58,19 @@ export function AuthProvider({ children }: PropsWithChildren) {
       const result = await loginMutateAsync(credentials)
 
       if (result.type === 'authenticated') {
-        await queryClient.invalidateQueries({
-          queryKey: currentUserQueryOptions.queryKey,
-        })
-        const user = await loadCurrentUser()
-        return { type: 'authenticated', user }
+        try {
+          await queryClient.invalidateQueries({
+            queryKey: currentUserQueryOptions.queryKey,
+          })
+          const user = await loadCurrentUser()
+          return { type: 'authenticated', user }
+        } catch (error) {
+          // Login issued tokens, but staff bootstrap failed. Clear the half-session
+          // so the login form can show a single recoverable error.
+          tokenStore.clear('manual')
+          queryClient.setQueryData(currentUserQueryOptions.queryKey, null)
+          throw error
+        }
       }
 
       return result
@@ -72,11 +80,19 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const verifyTwoFactor = useCallback(
     async (sessionToken: string, code: string): Promise<AuthUser> => {
-      await verifyTwoFactorMutateAsync({ session_token: sessionToken, code })
-      await queryClient.invalidateQueries({
-        queryKey: currentUserQueryOptions.queryKey,
-      })
-      return loadCurrentUser()
+      try {
+        await verifyTwoFactorMutateAsync({ session_token: sessionToken, code })
+        await queryClient.invalidateQueries({
+          queryKey: currentUserQueryOptions.queryKey,
+        })
+        return await loadCurrentUser()
+      } catch (error) {
+        if (tokenStore.getAccessToken()) {
+          tokenStore.clear('manual')
+          queryClient.setQueryData(currentUserQueryOptions.queryKey, null)
+        }
+        throw error
+      }
     },
     [currentUserQueryOptions.queryKey, loadCurrentUser, queryClient, verifyTwoFactorMutateAsync],
   )

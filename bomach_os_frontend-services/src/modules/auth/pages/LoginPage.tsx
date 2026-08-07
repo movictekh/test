@@ -1,3 +1,6 @@
+import { useNavigate } from '@tanstack/react-router'
+import { useCallback, useEffect, useState } from 'react'
+
 import { Alert } from '@/shared/ui'
 
 import { LoginForm } from '../components/LoginForm'
@@ -8,6 +11,30 @@ interface LoginPageProps {
 }
 
 export function LoginPage({ redirectTo, reason }: LoginPageProps) {
+  const navigate = useNavigate()
+  const [showSessionExpired, setShowSessionExpired] = useState(reason === 'session-expired')
+  const [hasFormAlert, setHasFormAlert] = useState(false)
+
+  useEffect(() => {
+    setShowSessionExpired(reason === 'session-expired')
+  }, [reason])
+
+  const dismissSessionExpired = useCallback(() => {
+    setShowSessionExpired(false)
+
+    if (reason !== 'session-expired') return
+
+    void navigate({
+      to: '/login',
+      search: (previous) => {
+        const next = { ...previous }
+        delete next.reason
+        return next
+      },
+      replace: true,
+    })
+  }, [navigate, reason])
+
   return (
     <main className="min-h-screen bg-[linear-gradient(135deg,#112957,#1f3d7a_58%,#3159aa)] px-4 py-8 sm:grid sm:place-items-center">
       <section className="mx-auto w-full max-w-[420px] rounded-[22px] bg-white px-6 py-8 shadow-[0_24px_80px_rgba(4,12,32,0.35)] sm:px-[38px] sm:py-[38px]">
@@ -21,7 +48,7 @@ export function LoginPage({ redirectTo, reason }: LoginPageProps) {
           </p>
         </header>
 
-        {reason === 'session-expired' ? (
+        {showSessionExpired && !hasFormAlert ? (
           <Alert
             className="mb-4"
             tone="warning"
@@ -30,7 +57,11 @@ export function LoginPage({ redirectTo, reason }: LoginPageProps) {
           />
         ) : null}
 
-        <LoginForm {...(redirectTo ? { redirectTo } : {})} />
+        <LoginForm
+          {...(redirectTo ? { redirectTo } : {})}
+          onDismissSessionContext={dismissSessionExpired}
+          onFormAlertChange={setHasFormAlert}
+        />
 
         <p className="text-foreground-subtle mt-6 text-center text-[0.6875rem] leading-5">
           Secure access for authorised Bomach staff and clients.

@@ -1,5 +1,5 @@
-import { APP_PERMISSION_VALUES, PERMISSIONS, type AppPermission } from '@/app/permissions'
-
+import { PERMISSIONS } from '@/app/permissions/permissions'
+import { APP_PERMISSION_VALUES, type AppPermission } from '@/app/permissions/permission.types'
 const canonicalAppPermissions = new Set<string>(APP_PERMISSION_VALUES)
 
 /**

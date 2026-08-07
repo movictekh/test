@@ -1,15 +1,23 @@
 import { useForm } from '@tanstack/react-form'
 import { useNavigate, useRouter } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { getAuthenticatedHome, useAuth } from '@/app/auth'
-import { getUserFacingErrorMessage } from '@/shared/errors'
+import { isAuthAccessError } from '@/modules/auth/errors/auth-access-error'
+import { presentError } from '@/shared/errors'
 import { Alert, Button, FormControl, Input } from '@/shared/ui'
 
 import { loginSchema, twoFactorSchema } from '../schemas/login.schema'
 
 interface LoginFormProps {
   redirectTo?: string
+  onDismissSessionContext?: () => void
+  onFormAlertChange?: (hasAlert: boolean) => void
+}
+
+interface FormAlertState {
+  title: string
+  description: string
 }
 
 /** Prefill Service Administrator credentials in local/dev (see mocks/data/auth.mock.ts). */
@@ -17,13 +25,70 @@ const loginDefaults = import.meta.env.DEV
   ? { email: 'service.admin@bomach.local', password: 'demo-password' }
   : { email: '', password: '' }
 
-export function LoginForm({ redirectTo }: LoginFormProps) {
+function accessIssueAlert(error: unknown): FormAlertState | null {
+  if (!isAuthAccessError(error)) return null
+
+  if (error.issue === 'employee-profile-missing') {
+    return {
+      title: 'Account setup incomplete',
+      description:
+        'Your credentials are valid, but this account is not linked to a staff profile. Contact your system administrator to complete account provisioning.',
+    }
+  }
+
+  if (error.issue === 'role-missing') {
+    return {
+      title: 'Access not configured',
+      description:
+        'Your credentials are valid, but no role has been assigned to this account. Contact your system administrator to request access.',
+    }
+  }
+
+  return {
+    title: 'Access denied',
+    description:
+      'You are not authorised to access this workspace. Contact your system administrator if you believe this is an error.',
+  }
+}
+
+function toFormAlert(error: unknown, context: 'login' | 'two-factor'): FormAlertState {
+  const accessAlert = accessIssueAlert(error)
+  if (accessAlert) return accessAlert
+
+  const presented = presentError(error, context)
+  return {
+    title: presented.title,
+    description: presented.message,
+  }
+}
+
+export function LoginForm({
+  redirectTo,
+  onDismissSessionContext,
+  onFormAlertChange,
+}: LoginFormProps) {
   const auth = useAuth()
   const router = useRouter()
   const navigate = useNavigate()
-  const [formError, setFormError] = useState<string | null>(null)
+  const [formAlert, setFormAlert] = useState<FormAlertState | null>(null)
   const [twoFactorSession, setTwoFactorSession] = useState<string | null>(null)
   const [twoFactorMessage, setTwoFactorMessage] = useState<string | null>(null)
+
+  const clearFormAlert = () => setFormAlert(null)
+
+  const beginSubmitAttempt = () => {
+    onDismissSessionContext?.()
+    clearFormAlert()
+  }
+
+  const showFormAlert = (alert: FormAlertState) => {
+    onDismissSessionContext?.()
+    setFormAlert(alert)
+  }
+
+  useEffect(() => {
+    onFormAlertChange?.(formAlert !== null)
+  }, [formAlert, onFormAlertChange])
 
   const loginForm = useForm({
     defaultValues: {
@@ -32,7 +97,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
     },
     validators: { onSubmit: loginSchema },
     onSubmit: async ({ value }) => {
-      setFormError(null)
+      beginSubmitAttempt()
 
       try {
         const result = await auth.login(value)
@@ -48,7 +113,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
         else if (result.user)
           await navigate({ to: getAuthenticatedHome(result.user), replace: true })
       } catch (error) {
-        setFormError(getUserFacingErrorMessage(error, 'login'))
+        showFormAlert(toFormAlert(error, 'login'))
       }
     },
   })
@@ -58,7 +123,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
     validators: { onSubmit: twoFactorSchema },
     onSubmit: async ({ value }) => {
       if (!twoFactorSession) return
-      setFormError(null)
+      beginSubmitAttempt()
 
       try {
         const user = await auth.verifyTwoFactor(twoFactorSession, value.code)
@@ -67,7 +132,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
         if (redirectTo) router.history.push(redirectTo)
         else await navigate({ to: getAuthenticatedHome(user), replace: true })
       } catch (error) {
-        setFormError(getUserFacingErrorMessage(error, 'two-factor'))
+        showFormAlert(toFormAlert(error, 'two-factor'))
       }
     },
   })
@@ -88,8 +153,8 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
         {twoFactorMessage ? (
           <Alert tone="info" title="Verification required" description={twoFactorMessage} />
         ) : null}
-        {formError ? (
-          <Alert tone="danger" title="Verification failed" description={formError} />
+        {formAlert ? (
+          <Alert tone="danger" title={formAlert.title} description={formAlert.description} />
         ) : null}
 
         <twoFactorForm.Field name="code">
@@ -107,7 +172,9 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
                 value={field.state.value}
                 invalid={field.state.meta.errors.length > 0}
                 onBlur={field.handleBlur}
-                onChange={(event) => field.handleChange(event.target.value.replace(/\D/g, ''))}
+                onChange={(event) => {
+                  field.handleChange(event.target.value.replace(/\D/g, ''))
+                }}
               />
             </FormControl>
           )}
@@ -130,7 +197,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
           onClick={() => {
             setTwoFactorSession(null)
             setTwoFactorMessage(null)
-            setFormError(null)
+            clearFormAlert()
           }}
         >
           Back to login
@@ -148,7 +215,9 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
         void loginForm.handleSubmit()
       }}
     >
-      {formError ? <Alert tone="danger" title="Login failed" description={formError} /> : null}
+      {formAlert ? (
+        <Alert tone="danger" title={formAlert.title} description={formAlert.description} />
+      ) : null}
 
       <loginForm.Field name="email">
         {(field) => (
@@ -164,7 +233,9 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
               value={field.state.value}
               invalid={field.state.meta.errors.length > 0}
               onBlur={field.handleBlur}
-              onChange={(event) => field.handleChange(event.target.value)}
+              onChange={(event) => {
+                field.handleChange(event.target.value)
+              }}
             />
           </FormControl>
         )}
@@ -184,7 +255,9 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
               value={field.state.value}
               invalid={field.state.meta.errors.length > 0}
               onBlur={field.handleBlur}
-              onChange={(event) => field.handleChange(event.target.value)}
+              onChange={(event) => {
+                field.handleChange(event.target.value)
+              }}
             />
           </FormControl>
         )}

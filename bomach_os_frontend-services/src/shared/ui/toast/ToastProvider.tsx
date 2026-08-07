@@ -33,14 +33,22 @@ export function ToastProvider({ children }: PropsWithChildren) {
   const showToast = useCallback((input: ToastInput): string => {
     counterRef.current += 1
     const id = createToastId(counterRef.current)
+    const tone = input.tone ?? 'info'
     const nextToast: ToastRecord = {
       ...input,
       id,
-      tone: input.tone ?? 'info',
+      tone,
       duration: input.duration ?? DEFAULT_DURATION,
     }
 
-    setToasts((current) => [...current, nextToast].slice(-MAX_VISIBLE_TOASTS))
+    setToasts((current) => {
+      // A new error/warning replaces prior ones of the same tone so they don't stack.
+      const remaining =
+        tone === 'danger' || tone === 'warning'
+          ? current.filter((toast) => toast.tone !== tone)
+          : current
+      return [...remaining, nextToast].slice(-MAX_VISIBLE_TOASTS)
+    })
 
     return id
   }, [])
