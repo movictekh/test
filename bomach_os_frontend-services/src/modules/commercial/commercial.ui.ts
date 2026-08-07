@@ -1,8 +1,9 @@
-export const commercialMoney = new Intl.NumberFormat('en-NG', {
-  style: 'currency',
-  currency: 'NGN',
-  maximumFractionDigits: 0,
-})
+import { formatCurrency } from '@/shared/lib/formatters'
+
+/** Shared naira formatter — matches Service Operations HTML `money()`. */
+export const commercialMoney = {
+  format: formatCurrency,
+}
 
 export function requestStatusClass(status: string) {
   if (status === 'New' || status === 'Rejected') return 'commercial-pill-gray'

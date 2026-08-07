@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
-import { IconUserScreen } from '@tabler/icons-react'
+import { IconFilePlus, IconPlus, IconUserScreen } from '@tabler/icons-react'
 
 import {
   CompactPageToolbar,
@@ -222,6 +222,13 @@ export function FulfillmentSectionPage({ section }: { section: FulfillmentSectio
     decideDeliverable.isPending ||
     updateTask.isPending
 
+  const primaryLabel =
+    section === 'service-orders'
+      ? 'Create Order'
+      : section === 'execution-tasks'
+        ? 'New Task'
+        : 'Add Deliverable'
+
   return (
     <>
       <CompactPageToolbar
@@ -233,24 +240,34 @@ export function FulfillmentSectionPage({ section }: { section: FulfillmentSectio
             Client Portal
           </PrototypeButton>
         }
+        primaryAction={
+          <PrototypeButton
+            tone="primary"
+            onClick={() => {
+              if (section === 'service-orders') setCreateOrderOpen(true)
+              if (section === 'execution-tasks') setCreateTaskOpen(true)
+              if (section === 'deliverables') setCreateDeliverableOrderId('')
+            }}
+          >
+            {section === 'deliverables' ? <IconFilePlus size={14} /> : <IconPlus size={14} />}{' '}
+            {primaryLabel}
+          </PrototypeButton>
+        }
       />
 
       {section === 'service-orders' ? (
         <ServiceOrdersScreen
           orders={query.data.orders}
-          onCreateOrder={() => setCreateOrderOpen(true)}
           onOpenOrder={(order) => setSelectedOrderId(order.id)}
         />
       ) : section === 'execution-tasks' ? (
         <ExecutionTasksScreen
           tasks={query.data.tasks}
-          onCreateTask={() => setCreateTaskOpen(true)}
           onOpenTask={(task) => setSelectedTaskId(task.id)}
         />
       ) : (
         <DeliverablesScreen
           deliverables={query.data.deliverables}
-          onCreate={() => setCreateDeliverableOrderId('')}
           onOpen={(item) => setSelectedDeliverableId(item.id)}
         />
       )}

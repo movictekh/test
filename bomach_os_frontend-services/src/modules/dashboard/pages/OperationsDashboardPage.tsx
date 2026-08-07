@@ -5,6 +5,7 @@ import { useState } from 'react'
 
 import { useAuth } from '@/app/auth'
 import { presentError } from '@/shared/errors'
+import { formatCurrency } from '@/shared/lib/formatters'
 import { cn } from '@/shared/lib/cn'
 import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
 import { CreateServiceWizard } from '@/modules/service-administration'
@@ -25,21 +26,8 @@ import type {
 } from '../types/dashboard.types'
 import '../styles/command-center.css'
 
-const money = new Intl.NumberFormat('en-NG', {
-  style: 'currency',
-  currency: 'NGN',
-  maximumFractionDigits: 0,
-})
-
-const compactMoney = new Intl.NumberFormat('en-NG', {
-  style: 'currency',
-  currency: 'NGN',
-  notation: 'compact',
-  maximumFractionDigits: 1,
-})
-
 function formatMetricValue(metric: DashboardMetric) {
-  if (metric.valueFormat === 'currency') return compactMoney.format(metric.value)
+  if (metric.valueFormat === 'currency') return formatCurrency(metric.value)
   if (metric.valueFormat === 'percent') return `${metric.value}%`
   return metric.value.toLocaleString('en-NG')
 }
@@ -68,7 +56,7 @@ function statusPillClass(status?: string) {
 
 function alertTitle(alert: DashboardExecutiveAlert) {
   if (alert.value === undefined) return alert.title
-  if (alert.valueFormat === 'currency') return `${money.format(alert.value)} ${alert.title}`
+  if (alert.valueFormat === 'currency') return `${formatCurrency(alert.value)} ${alert.title}`
   if (alert.valueFormat === 'percent') return `${alert.title}`
   return `${alert.value} ${alert.title}`
 }
@@ -275,7 +263,7 @@ function RevenueByDivisionCard({ rows }: { rows: DashboardRevenueByDivision[] })
           <div className="command-center-progress" style={{ flex: 1 }}>
             <i style={{ width: `${Math.max(8, (row.verifiedRevenue / max) * 100)}%` }} />
           </div>
-          <strong>{money.format(row.verifiedRevenue)}</strong>
+          <strong>{formatCurrency(row.verifiedRevenue)}</strong>
         </div>
       ))}
     </section>

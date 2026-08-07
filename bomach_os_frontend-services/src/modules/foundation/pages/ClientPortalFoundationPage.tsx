@@ -17,6 +17,7 @@ import {
   PageHeader,
   StatCard,
 } from '@/shared/ui'
+import { formatCurrency } from '@/shared/lib/formatters'
 
 export function ClientPortalFoundationPage() {
   return (
@@ -32,7 +33,11 @@ export function ClientPortalFoundationPage() {
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard label="Open requests" value="2" icon={<IconRoute size={20} />} />
           <StatCard label="Active orders" value="1" icon={<IconClipboardCheck size={20} />} />
-          <StatCard label="Outstanding balance" value="₦350K" icon={<IconReceipt size={20} />} />
+          <StatCard
+            label="Outstanding balance"
+            value={formatCurrency(350_000)}
+            icon={<IconReceipt size={20} />}
+          />
           <StatCard label="Documents" value="4" icon={<IconFileDescription size={20} />} />
         </div>
 

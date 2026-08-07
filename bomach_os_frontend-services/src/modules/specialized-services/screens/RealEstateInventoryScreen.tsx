@@ -1,7 +1,9 @@
 import { formatCurrency } from '@/shared/lib/formatters'
 import type { BrokerageProperty, Estate, EstatePlot } from '../types/specialized-services.types'
 import { estateCounts } from '../workspaces/specialized-services.rules'
+
 const cls = { Available: 'av', Reserved: 'rs', Sold: 'sd', Hold: 'hd' } as const
+
 export function RealEstateInventoryScreen({
   estates,
   brokerage,
@@ -9,8 +11,6 @@ export function RealEstateInventoryScreen({
   selectedPlotNo,
   onSelectEstate,
   onSelectPlot,
-  onAddEstate,
-  onAddProperty,
   onSavePlot,
 }: {
   estates: Estate[]
@@ -19,8 +19,6 @@ export function RealEstateInventoryScreen({
   selectedPlotNo: string | null
   onSelectEstate: (id: string) => void
   onSelectPlot: (no: string) => void
-  onAddEstate: () => void
-  onAddProperty: () => void
   onSavePlot: (plot: EstatePlot) => void
 }) {
   const estate = estates.find((x) => x.id === selectedEstateId) ?? estates[0]
@@ -37,13 +35,6 @@ export function RealEstateInventoryScreen({
             </option>
           ))}
         </select>
-        <span className="specialized-grow" />
-        <button className="specialized-btn" onClick={onAddProperty}>
-          Add Brokerage Property
-        </button>
-        <button className="specialized-btn specialized-btn-primary" onClick={onAddEstate}>
-          Add Estate
-        </button>
       </div>
       <div className="specialized-kpi-grid">
         {[
@@ -110,11 +101,16 @@ export function RealEstateInventoryScreen({
                 onSubmit={(e) => {
                   e.preventDefault()
                   const d = new FormData(e.currentTarget)
+                  const status = d.get('status')
+                  const client = d.get('client')
+                  const price = d.get('price')
                   onSavePlot({
                     ...selected,
-                    status: String(d.get('status')) as EstatePlot['status'],
-                    client: String(d.get('client') ?? ''),
-                    price: Number(d.get('price') ?? selected.price),
+                    status: (typeof status === 'string'
+                      ? status
+                      : selected.status) as EstatePlot['status'],
+                    client: typeof client === 'string' ? client : '',
+                    price: Number(typeof price === 'string' ? price : selected.price),
                   })
                 }}
               >

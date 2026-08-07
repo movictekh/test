@@ -5,13 +5,13 @@ import type {
   SpecializedProfileId,
   SpecializedServiceProfile,
 } from '../types/specialized-services.types'
+
 export function SpecializedServiceControlScreen({
   profiles,
   selectedId,
   requests,
   orders,
   onSelect,
-  onNewRequest,
   onOpenOrder,
 }: {
   profiles: SpecializedServiceProfile[]
@@ -19,7 +19,6 @@ export function SpecializedServiceControlScreen({
   requests: CommercialServiceRequest[]
   orders: ServiceOrder[]
   onSelect: (id: SpecializedProfileId) => void
-  onNewRequest: () => void
   onOpenOrder: (id: string) => void
 }) {
   const p = profiles.find((x) => x.id === selectedId) ?? profiles[0]
@@ -33,6 +32,7 @@ export function SpecializedServiceControlScreen({
         {profiles.map((x) => (
           <button
             key={x.id}
+            type="button"
             className={`specialized-tab ${x.id === p.id ? 'on' : ''}`}
             onClick={() => onSelect(x.id)}
           >
@@ -59,9 +59,6 @@ export function SpecializedServiceControlScreen({
             <div className="specialized-card-title">{p.title}</div>
             <div className="specialized-card-subtitle">{p.description}</div>
           </div>
-          <button className="specialized-btn specialized-btn-primary" onClick={onNewRequest}>
-            New Request
-          </button>
         </header>
         <div className="specialized-lifecycle">
           {p.stages.map((s, i) => (
@@ -109,6 +106,7 @@ export function SpecializedServiceControlScreen({
                   <td>{o.owner}</td>
                   <td>
                     <button
+                      type="button"
                       className="specialized-btn specialized-btn-small"
                       onClick={() => onOpenOrder(o.id)}
                     >

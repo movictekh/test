@@ -37,6 +37,18 @@ describe('permission helpers', () => {
     expect(hasPermission(serviceAdministrator, PERMISSIONS.serviceCreate)).toBe(true)
   })
 
+  it('gives the service administrator full read/write access across the app', () => {
+    expect(hasPermission(serviceAdministrator, PERMISSIONS.realEstateRead)).toBe(true)
+    expect(hasPermission(serviceAdministrator, PERMISSIONS.portalRead)).toBe(true)
+    expect(hasPermission(serviceAdministrator, PERMISSIONS.approvalAct)).toBe(true)
+    expect(hasPermission(serviceAdministrator, PERMISSIONS.invoiceCreate)).toBe(true)
+    expect(hasPermission(serviceAdministrator, PERMISSIONS.paymentConfirm)).toBe(true)
+    expect(hasPermission(serviceAdministrator, PERMISSIONS.orderUpdate)).toBe(true)
+    expect(hasPermission(serviceAdministrator, PERMISSIONS.taskUpdate)).toBe(true)
+    expect(hasPermission(serviceAdministrator, PERMISSIONS.deliverableApprove)).toBe(true)
+    expect(hasPermission(serviceAdministrator, PERMISSIONS.quoteApprove)).toBe(true)
+  })
+
   it('does not allow a client to read internal audit records', () => {
     expect(hasPermission(client, PERMISSIONS.auditRead)).toBe(false)
   })

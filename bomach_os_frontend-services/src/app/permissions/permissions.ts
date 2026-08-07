@@ -35,24 +35,8 @@ const allPermissions: readonly AppPermission[] = Object.values(PERMISSIONS)
 
 export const rolePermissions: Record<AppRole, readonly AppPermission[]> = {
   CEO: allPermissions,
-  SERVICE_ADMINISTRATOR: [
-    PERMISSIONS.dashboardRead,
-    PERMISSIONS.serviceRead,
-    PERMISSIONS.serviceCreate,
-    PERMISSIONS.serviceUpdate,
-    PERMISSIONS.requestRead,
-    PERMISSIONS.requestCreate,
-    PERMISSIONS.requestUpdate,
-    PERMISSIONS.quoteRead,
-    PERMISSIONS.quoteCreate,
-    PERMISSIONS.invoiceRead,
-    PERMISSIONS.approvalRead,
-    PERMISSIONS.orderRead,
-    PERMISSIONS.taskRead,
-    PERMISSIONS.deliverableRead,
-    PERMISSIONS.reportRead,
-    PERMISSIONS.auditRead,
-  ],
+  // Demo login role: full staff + portal access for local prototype work.
+  SERVICE_ADMINISTRATOR: allPermissions,
   HEAD_OF_OPERATIONS: [
     PERMISSIONS.dashboardRead,
     PERMISSIONS.serviceRead,
@@ -68,6 +52,7 @@ export const rolePermissions: Record<AppRole, readonly AppPermission[]> = {
     PERMISSIONS.taskRead,
     PERMISSIONS.taskUpdate,
     PERMISSIONS.deliverableRead,
+    PERMISSIONS.realEstateRead,
     PERMISSIONS.deliverableApprove,
     PERMISSIONS.reportRead,
   ],
@@ -86,6 +71,7 @@ export const rolePermissions: Record<AppRole, readonly AppPermission[]> = {
     PERMISSIONS.taskRead,
     PERMISSIONS.taskUpdate,
     PERMISSIONS.deliverableRead,
+    PERMISSIONS.realEstateRead,
     PERMISSIONS.deliverableUpdate,
   ],
   FINANCE: [

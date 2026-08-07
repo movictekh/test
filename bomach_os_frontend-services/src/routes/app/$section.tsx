@@ -37,7 +37,7 @@ const fulfillmentSections = new Set<FulfillmentSection>([
 
 const specializedSections = new Set<SpecializedServicesSection>([
   'real-estate-inventory',
-  'specialized-service-control',
+  'survey-engineering-others',
 ])
 
 function formatSectionTitle(section: string): string {

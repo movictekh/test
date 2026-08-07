@@ -9,11 +9,9 @@ function priorityClass(priority: ExecutionTask['priority']) {
 
 export function ExecutionTasksScreen({
   tasks,
-  onCreateTask,
   onOpenTask,
 }: {
   tasks: ExecutionTask[]
-  onCreateTask: () => void
   onOpenTask: (task: ExecutionTask) => void
 }) {
   return (
@@ -26,13 +24,6 @@ export function ExecutionTasksScreen({
               Tasks from workflows, inspections and handoffs
             </div>
           </div>
-          <button
-            type="button"
-            className="fulfillment-btn fulfillment-btn-primary"
-            onClick={onCreateTask}
-          >
-            New Task
-          </button>
         </header>
 
         <div className="fulfillment-kanban">

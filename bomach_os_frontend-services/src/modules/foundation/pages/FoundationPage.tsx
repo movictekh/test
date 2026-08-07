@@ -81,7 +81,7 @@ export function FoundationPage() {
             />
             <StatCard
               label="Confirmed revenue"
-              value={formatCurrency(11_300_000, true)}
+              value={formatCurrency(11_300_000)}
               description="Example formatting utility"
               icon={<IconCash size={20} />}
             />

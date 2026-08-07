@@ -5,11 +5,9 @@ import { orderBoardColumns } from '../workspaces/fulfillment-workflow.rules'
 
 export function ServiceOrdersScreen({
   orders,
-  onCreateOrder,
   onOpenOrder,
 }: {
   orders: ServiceOrder[]
-  onCreateOrder: () => void
   onOpenOrder: (order: ServiceOrder) => void
 }) {
   const [search, setSearch] = useState('')
@@ -34,14 +32,6 @@ export function ServiceOrdersScreen({
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />
-        <span className="fulfillment-grow" />
-        <button
-          type="button"
-          className="fulfillment-btn fulfillment-btn-primary"
-          onClick={onCreateOrder}
-        >
-          Create Order
-        </button>
       </div>
 
       <div className="fulfillment-kanban" id="orderBoard">

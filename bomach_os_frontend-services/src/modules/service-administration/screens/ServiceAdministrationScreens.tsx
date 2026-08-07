@@ -9,6 +9,7 @@ import type {
   ServiceRequestForm,
 } from '../types/service-administration.types'
 import { formatNumberFieldValue, parseNumberFieldValue } from '@/shared/lib/number-input'
+import { formatCurrency } from '@/shared/lib/formatters'
 
 const divisionClassNames: Record<string, string> = {
   'Real Estate': 'service-admin-service-icon--real-estate',
@@ -294,13 +295,7 @@ export function CalculatorLibraryScreen({
 
           <div className="service-admin-kpi service-admin-kpi-blue">
             <div className="service-admin-kpi-label">Estimated client price</div>
-            <div className="service-admin-kpi-value">
-              {new Intl.NumberFormat('en-NG', {
-                style: 'currency',
-                currency: 'NGN',
-                maximumFractionDigits: 0,
-              }).format(estimated)}
-            </div>
+            <div className="service-admin-kpi-value">{formatCurrency(estimated)}</div>
             <div className="service-admin-kpi-subtitle">
               Tax, deposit and approval rules apply as configured.
             </div>

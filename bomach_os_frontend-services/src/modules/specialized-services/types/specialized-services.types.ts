@@ -1,4 +1,4 @@
-export type SpecializedServicesSection = 'real-estate-inventory' | 'specialized-service-control'
+export type SpecializedServicesSection = 'real-estate-inventory' | 'survey-engineering-others'
 export type PlotStatus = 'Available' | 'Reserved' | 'Sold' | 'Hold'
 export interface EstatePlot {
   no: string

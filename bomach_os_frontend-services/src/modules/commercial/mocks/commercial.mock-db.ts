@@ -12,6 +12,7 @@ import type {
   UpdateQuotationInput,
 } from '../types/commercial.types'
 import type { UpdateServiceRequestInput } from '../api/commercial.api'
+import { formatCurrency } from '@/shared/lib/formatters'
 
 const requests: CommercialServiceRequest[] = [
   {
@@ -667,13 +668,7 @@ const approvals: CommercialApproval[] = [
 ]
 
 function formatApprovalSubject(quotation: CommercialQuotation): string {
-  const total = new Intl.NumberFormat('en-NG', {
-    style: 'currency',
-    currency: 'NGN',
-    maximumFractionDigits: 0,
-  }).format(quotation.total)
-
-  return `${total} ${quotation.service} quotation`
+  return `${formatCurrency(quotation.total)} ${quotation.service} quotation`
 }
 
 function defaultApprovalDueAt(requestedAt: string): string {

@@ -11,6 +11,7 @@ import {
 import { useMemo, useState, type ReactNode } from 'react'
 
 import { cn } from '@/shared/lib/cn'
+import { formatCurrency } from '@/shared/lib/formatters'
 
 import type {
   BranchActivation,
@@ -375,13 +376,7 @@ export function CalculatorList({
           <div className="mt-2.5 grid grid-cols-3 gap-1.5">
             <MetricMini label="Variables" value={calculator.variables.length} />
             <MetricMini label="Charges" value={calculator.charges.length} />
-            <MetricMini
-              label="Sample"
-              value={new Intl.NumberFormat('en-NG', {
-                notation: 'compact',
-                maximumFractionDigits: 1,
-              }).format(calculator.sampleTotal)}
-            />
+            <MetricMini label="Sample" value={formatCurrency(calculator.sampleTotal)} />
           </div>
           <div className="mt-2.5 flex items-center justify-between">
             <span className="text-foreground-subtle text-[0.5625rem]">

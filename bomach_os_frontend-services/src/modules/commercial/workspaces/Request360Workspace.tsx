@@ -2,15 +2,10 @@ import { IconX } from '@tabler/icons-react'
 import { useState, type FormEvent } from 'react'
 
 import { useToast } from '@/shared/ui'
+import { formatCurrency } from '@/shared/lib/formatters'
 
 import type { CommercialServiceRequest, ServiceRequestStatus } from '../types/commercial.types'
 import type { UpdateServiceRequestInput } from '../api/commercial.api'
-
-const money = new Intl.NumberFormat('en-NG', {
-  style: 'currency',
-  currency: 'NGN',
-  maximumFractionDigits: 0,
-})
 
 const lifecycle = [
   'Request',
@@ -250,11 +245,11 @@ export function Request360Workspace({
                     </div>
                     <div>
                       <div className="commercial-kl">Budget</div>
-                      <b>{money.format(request.budget)}</b>
+                      <b>{formatCurrency(request.budget)}</b>
                     </div>
                     <div>
                       <div className="commercial-kl">Estimate</div>
-                      <b>{money.format(request.estimate)}</b>
+                      <b>{formatCurrency(request.estimate)}</b>
                     </div>
                     <div className="commercial-info-full">
                       <div className="commercial-kl">Scope / Request</div>

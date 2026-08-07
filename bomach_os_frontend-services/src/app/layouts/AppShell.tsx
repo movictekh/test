@@ -173,7 +173,7 @@ export function AppShell({ children, navigation, variant = 'operations' }: AppSh
         id="operations-navigation"
         className={cn(
           'border-border bg-surface fixed top-16 bottom-0 left-0 z-50 flex flex-col border-r transition-[width,transform] duration-200 lg:z-30 lg:translate-x-0',
-          sidebarCollapsed ? 'w-14' : 'w-52',
+          sidebarCollapsed ? 'w-14' : 'w-60',
           mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full',
         )}
       >
@@ -290,7 +290,7 @@ export function AppShell({ children, navigation, variant = 'operations' }: AppSh
       <div
         className={cn(
           'flex h-dvh min-w-0 flex-col overflow-hidden pt-16 transition-[padding] duration-200',
-          sidebarCollapsed ? 'lg:pl-14' : 'lg:pl-52',
+          sidebarCollapsed ? 'lg:pl-14' : 'lg:pl-60',
         )}
       >
         <div className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto">{children}</div>

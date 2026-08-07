@@ -2,11 +2,9 @@ import type { Deliverable } from '../types/fulfillment.types'
 
 export function DeliverablesScreen({
   deliverables,
-  onCreate,
   onOpen,
 }: {
   deliverables: Deliverable[]
-  onCreate: () => void
   onOpen: (deliverable: Deliverable) => void
 }) {
   return (
@@ -19,13 +17,6 @@ export function DeliverablesScreen({
               Reports, drawings, plans, certificates and client approvals
             </div>
           </div>
-          <button
-            type="button"
-            className="fulfillment-btn fulfillment-btn-primary"
-            onClick={onCreate}
-          >
-            Add Deliverable
-          </button>
         </header>
         <div className="fulfillment-table-wrap">
           <table className="fulfillment-table fulfillment-deliverables-table">

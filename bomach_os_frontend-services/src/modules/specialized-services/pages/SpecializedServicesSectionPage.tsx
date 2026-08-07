@@ -1,9 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
+import { IconFilePlus, IconPlus } from '@tabler/icons-react'
+
 import { commercialQueries } from '@/modules/commercial/api/commercial.queries'
 import { fulfillmentQueries } from '@/modules/fulfillment/api/fulfillment.queries'
-import { CompactPageToolbar } from '@/modules/service-administration/components/ServiceAdministrationUi'
+import {
+  CompactPageToolbar,
+  PrototypeButton,
+} from '@/modules/service-administration/components/ServiceAdministrationUi'
 import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
 import { presentError } from '@/shared/errors'
 import { specializedServicesApi } from '../api/specialized-services.api'
@@ -18,16 +23,18 @@ import type {
 import { CreateBrokerageWorkspace } from '../workspaces/CreateBrokerageWorkspace'
 import { CreateEstateWorkspace } from '../workspaces/CreateEstateWorkspace'
 import '../styles/specialized-services.css'
+
 const meta: Record<SpecializedServicesSection, { title: string; breadcrumb: string }> = {
   'real-estate-inventory': {
     title: 'Real Estate Inventory',
     breadcrumb: 'Specialized services / Real estate',
   },
-  'specialized-service-control': {
-    title: 'Specialized Service Control',
-    breadcrumb: 'Specialized services',
+  'survey-engineering-others': {
+    title: 'Survey / Engineering / Others',
+    breadcrumb: 'Specialized Services / Survey / Engineering / Others',
   },
 }
+
 export function SpecializedServicesSectionPage({
   section,
 }: {
@@ -85,9 +92,44 @@ export function SpecializedServicesSectionPage({
     )
   }
   const estateId = selectedEstateId || q.data.estates[0]?.id || ''
+
   return (
     <>
-      <CompactPageToolbar title={meta[section].title} breadcrumb={meta[section].breadcrumb} />
+      <CompactPageToolbar
+        title={meta[section].title}
+        breadcrumb={meta[section].breadcrumb}
+        {...(section === 'real-estate-inventory'
+          ? {
+              secondaryAction: (
+                <PrototypeButton onClick={() => setPropertyOpen(true)}>
+                  <IconPlus size={14} />
+                  Add Brokerage Property
+                </PrototypeButton>
+              ),
+              primaryAction: (
+                <PrototypeButton tone="primary" onClick={() => setEstateOpen(true)}>
+                  <IconPlus size={14} />
+                  Add Estate
+                </PrototypeButton>
+              ),
+            }
+          : {
+              primaryAction: (
+                <PrototypeButton
+                  tone="primary"
+                  onClick={() =>
+                    void navigate({
+                      to: '/app/$section',
+                      params: { section: 'service-requests' },
+                    })
+                  }
+                >
+                  <IconFilePlus size={14} />
+                  New Request
+                </PrototypeButton>
+              ),
+            })}
+      />
       {section === 'real-estate-inventory' ? (
         <RealEstateInventoryScreen
           estates={q.data.estates}
@@ -99,8 +141,6 @@ export function SpecializedServicesSectionPage({
             setSelectedPlotNo(null)
           }}
           onSelectPlot={setSelectedPlotNo}
-          onAddEstate={() => setEstateOpen(true)}
-          onAddProperty={() => setPropertyOpen(true)}
           onSavePlot={(p) =>
             up.mutate({
               estateId,
@@ -118,14 +158,11 @@ export function SpecializedServicesSectionPage({
           requests={cq.data.requests}
           orders={fq.data.orders}
           onSelect={setProfileId}
-          onNewRequest={() =>
-            void navigate({ to: '/app/$section', params: { section: 'service-requests' } })
-          }
           onOpenOrder={() =>
             void navigate({ to: '/app/$section', params: { section: 'service-orders' } })
           }
         />
-      )}{' '}
+      )}
       {estateOpen ? (
         <CreateEstateWorkspace
           saving={ce.isPending}

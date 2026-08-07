@@ -2,6 +2,7 @@ import { IconActivity } from '@tabler/icons-react'
 import { Link } from '@tanstack/react-router'
 
 import { Card, CardContent, EmptyState, ProgressBar } from '@/shared/ui'
+import { formatCurrency } from '@/shared/lib/formatters'
 
 import type {
   DashboardActivityItem,
@@ -19,21 +20,9 @@ const alertClasses: Record<DashboardSeverity, string> = {
   success: 'border-success-200 bg-success-50 text-success-700',
 }
 
-const fullMoney = new Intl.NumberFormat('en-NG', {
-  style: 'currency',
-  currency: 'NGN',
-  maximumFractionDigits: 0,
-})
-const compactMoney = new Intl.NumberFormat('en-NG', {
-  style: 'currency',
-  currency: 'NGN',
-  notation: 'compact',
-  maximumFractionDigits: 1,
-})
-
 function alertValue(alert: DashboardExecutiveAlert) {
   if (alert.value === undefined) return ''
-  if (alert.valueFormat === 'currency') return fullMoney.format(alert.value)
+  if (alert.valueFormat === 'currency') return formatCurrency(alert.value)
   if (alert.valueFormat === 'percent') return `${alert.value}%`
   return alert.value.toLocaleString('en-NG')
 }
@@ -125,7 +114,7 @@ export function ServicePerformance({ rows }: { rows: DashboardServicePerformance
                   </p>
                 </div>
                 <strong className="text-foreground whitespace-nowrap">
-                  {fullMoney.format(row.verifiedRevenue)}
+                  {formatCurrency(row.verifiedRevenue)}
                 </strong>
               </div>
               <ProgressBar
@@ -176,7 +165,7 @@ export function BranchPerformance({ rows }: { rows: DashboardBranchPerformance[]
                   <td className="px-3 py-2.5">{row.requests}</td>
                   <td className="px-3 py-2.5">{row.activeOrders}</td>
                   <td className="px-3 py-2.5 font-semibold">
-                    {compactMoney.format(row.verifiedRevenue)}
+                    {formatCurrency(row.verifiedRevenue)}
                   </td>
                   <td className="px-3 py-2.5">{row.slaPerformance}%</td>
                   <td className="px-3 py-2.5">{row.clientSatisfaction}%</td>

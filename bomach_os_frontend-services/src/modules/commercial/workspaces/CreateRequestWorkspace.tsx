@@ -9,6 +9,7 @@ import {
   parseNumberFieldValue,
   parseNumericStringFieldValue,
 } from '@/shared/lib/number-input'
+import { formatCurrency } from '@/shared/lib/formatters'
 import type {
   RequestFormField,
   ServiceAdministrationWorkspace,
@@ -84,12 +85,6 @@ const priorities: Array<{
   { label: 'High', value: 'High' },
   { label: 'Critical', value: 'Urgent' },
 ]
-
-const money = new Intl.NumberFormat('en-NG', {
-  style: 'currency',
-  currency: 'NGN',
-  maximumFractionDigits: 0,
-})
 
 function DynamicRequestField({
   field,
@@ -336,7 +331,7 @@ export function CreateRequestWorkspace({
 
     setEstimate(calculator.sampleTotal)
     form.setFieldValue('budget', calculator.sampleTotal)
-    toast.success(`Estimate calculated: ${money.format(calculator.sampleTotal)}`)
+    toast.success(`Estimate calculated: ${formatCurrency(calculator.sampleTotal)}`)
   }
 
   if (activeServices.length === 0) {
@@ -648,7 +643,7 @@ export function CreateRequestWorkspace({
                           field.handleChange(parseNumberFieldValue(event.target.value))
                         }
                       />
-                      {estimate != null ? <small>{money.format(estimate)}</small> : null}
+                      {estimate != null ? <small>{formatCurrency(estimate)}</small> : null}
                     </label>
                   )}
                 </form.Field>
