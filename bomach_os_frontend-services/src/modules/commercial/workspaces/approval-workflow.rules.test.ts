@@ -2,17 +2,20 @@ import { describe, expect, it } from 'vitest'
 
 import type { CommercialApproval, CommercialQuotation } from '../types/commercial.types'
 
+import { validateApprovalDecision } from './approval-workflow.rules'
+
 function makeApproval(quotation: CommercialQuotation, sequence: number): CommercialApproval {
   return {
-    id: `APR-Q-${String(sequence).padStart(3, '0')}`,
+    id: `APR-${String(sequence).padStart(3, '0')}`,
     entityType: 'Quotation',
     entityId: quotation.id,
+    subject: `${quotation.service} quotation`,
     client: quotation.client,
-    reason: `Quotation approval via ${quotation.approvalRoute}`,
     amount: quotation.total,
     requestedBy: quotation.owner,
     assignedTo: quotation.approvalRoute,
-    requestedAt: '2026-08-07T08:00:00.000Z',
+    requestedAt: '2026-08-07',
+    dueAt: '2026-08-08',
     status: 'Pending',
   }
 }
@@ -33,6 +36,7 @@ describe('commercial approval queue regression', () => {
     approvalRoute: 'CEO / Founder',
     total: 12_000_000,
     owner: 'Head of Operations',
+    service: 'Building Construction',
   } as CommercialQuotation
 
   it('represents a newly submitted quotation as a pending approval', () => {
@@ -64,5 +68,19 @@ describe('commercial approval queue regression', () => {
     }
 
     expect(hasPendingApproval([decided], quotation.id)).toBe(false)
+  })
+})
+
+describe('validateApprovalDecision', () => {
+  it('requires a decision note', () => {
+    expect(
+      validateApprovalDecision({
+        approvalId: 'APR-099',
+        decision: 'approve',
+        note: '   ',
+      }),
+    ).toEqual({
+      note: 'Add a decision note before submitting.',
+    })
   })
 })

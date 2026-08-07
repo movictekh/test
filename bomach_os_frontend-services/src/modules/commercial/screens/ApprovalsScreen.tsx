@@ -1,7 +1,10 @@
-import { IconChevronRight } from '@tabler/icons-react'
-
-import { commercialMoney } from '../commercial.ui'
+import { approvalStatusClass, commercialMoney } from '../commercial.ui'
 import type { ApprovalSummary, CommercialApproval } from '../types/commercial.types'
+
+function formatOldestWaiting(days: number) {
+  if (days <= 0) return '0d'
+  return `${days}d`
+}
 
 export function ApprovalsScreen({
   summary,
@@ -14,17 +17,16 @@ export function ApprovalsScreen({
 }) {
   return (
     <main className="commercial-content">
-      <section className="commercial-kgrid">
+      <section className="commercial-kgrid commercial-kgrid-4" aria-label="Approval summary">
         {[
-          ['Pending', summary.pending, 'Awaiting decision'],
-          ['High Value', summary.highValue, 'Above approval threshold'],
-          ['Approved Today', summary.approvedToday, 'Completed decisions'],
-          ['Rejected', summary.rejected, 'Returned to requester'],
-        ].map(([label, value, note]) => (
+          ['Pending approvals', summary.pending],
+          ['High-value approvals', summary.highValue],
+          ['Oldest waiting', formatOldestWaiting(summary.oldestWaitingDays)],
+          ['Approval SLA', `${summary.approvalSlaPercent}%`],
+        ].map(([label, value]) => (
           <article className="commercial-kpi" key={label}>
             <div className="commercial-kpi-label">{label}</div>
             <div className="commercial-kpi-value">{value}</div>
-            <div className="commercial-kpi-note">{note}</div>
           </article>
         ))}
       </section>
@@ -32,9 +34,10 @@ export function ApprovalsScreen({
       <section className="commercial-card">
         <header className="commercial-card-header">
           <div>
-            <h2>Commercial Approval Queue</h2>
-            <p>Quotations and invoices requiring accountable decisions</p>
+            <h2>Approval & Escalation Queue</h2>
+            <p>Quotes, discounts, deliverables, milestones and closure</p>
           </div>
+          <span className="commercial-count">{approvals.length} records</span>
         </header>
 
         <div className="commercial-table-wrap">
@@ -43,13 +46,13 @@ export function ApprovalsScreen({
               <tr>
                 <th>Approval</th>
                 <th>Type</th>
-                <th>Record</th>
-                <th>Client</th>
-                <th>Reason</th>
+                <th>Subject</th>
+                <th>Requester</th>
+                <th>Approver</th>
                 <th>Amount</th>
-                <th>Assigned To</th>
+                <th>Due</th>
                 <th>Status</th>
-                <th />
+                <th aria-label="Actions" />
               </tr>
             </thead>
             <tbody>
@@ -57,29 +60,28 @@ export function ApprovalsScreen({
                 <tr key={approval.id}>
                   <td>
                     <b>{approval.id}</b>
-                    <small>{approval.requestedAt}</small>
+                    <small>{approval.entityId}</small>
                   </td>
                   <td>{approval.entityType}</td>
-                  <td>{approval.entityId}</td>
-                  <td>{approval.client}</td>
-                  <td>{approval.reason}</td>
-                  <td>
-                    <b>{commercialMoney.format(approval.amount)}</b>
-                  </td>
+                  <td>{approval.subject}</td>
+                  <td>{approval.requestedBy}</td>
                   <td>{approval.assignedTo}</td>
                   <td>
-                    <span className="commercial-pill commercial-pill-yellow">
+                    <b>{approval.amount > 0 ? commercialMoney.format(approval.amount) : '—'}</b>
+                  </td>
+                  <td>{approval.dueAt}</td>
+                  <td>
+                    <span className={`commercial-pill ${approvalStatusClass(approval.status)}`}>
                       {approval.status}
                     </span>
                   </td>
                   <td>
                     <button
                       type="button"
-                      className="commercial-row-open"
+                      className="commercial-btn commercial-btn-small"
                       onClick={() => onOpen(approval)}
-                      aria-label={`Open ${approval.id}`}
                     >
-                      <IconChevronRight size={15} />
+                      {approval.status === 'Pending' ? 'Review' : 'Open'}
                     </button>
                   </td>
                 </tr>
@@ -87,7 +89,9 @@ export function ApprovalsScreen({
             </tbody>
           </table>
           {approvals.length === 0 ? (
-            <div className="commercial-empty">No commercial approvals are waiting.</div>
+            <div className="commercial-empty" role="status">
+              No approvals are waiting in the queue.
+            </div>
           ) : null}
         </div>
       </section>

@@ -609,20 +609,78 @@ const invoices: CommercialInvoice[] = [
   },
 ]
 
-const approvals: CommercialApproval[] = quotations
-  .filter((quotation) => quotation.status === 'Awaiting Approval')
-  .map((quotation, index) => ({
-    id: `APR-Q-${String(index + 1).padStart(3, '0')}`,
+const approvals: CommercialApproval[] = [
+  {
+    id: 'APR-099',
     entityType: 'Quotation',
-    entityId: quotation.id,
-    client: quotation.client,
-    reason: `Quotation approval via ${quotation.approvalRoute}`,
-    amount: quotation.total,
-    requestedBy: quotation.owner,
-    assignedTo: quotation.approvalRoute,
-    requestedAt: quotation.updatedAt,
+    entityId: 'Q-260713-012',
+    subject: '₦165M duplex construction quotation',
+    client: 'Chief Okafor Sunday Silas',
+    amount: 165_000_000,
+    requestedBy: 'Head of Operations',
+    assignedTo: 'CEO / Founder',
+    requestedAt: '2026-07-13',
+    dueAt: '2026-07-14',
     status: 'Pending',
-  }))
+  },
+  {
+    id: 'APR-100',
+    entityType: 'Discount',
+    entityId: 'Q-260710-003',
+    subject: '₦500,000 software project discount',
+    client: 'Nexa Logistics',
+    amount: 500_000,
+    requestedBy: 'Tech Director',
+    assignedTo: 'CEO / Founder',
+    requestedAt: '2026-07-12',
+    dueAt: '2026-07-13',
+    status: 'Pending',
+  },
+  {
+    id: 'APR-101',
+    entityType: 'Deliverable',
+    entityId: 'ORD-260701-019',
+    subject: 'Greenview survey plan professional review',
+    client: 'Greenview Cooperative',
+    amount: 0,
+    requestedBy: 'Land Surveyor',
+    assignedTo: 'Chief Surveyor',
+    requestedAt: '2026-07-12',
+    dueAt: '2026-07-14',
+    status: 'Pending',
+  },
+  {
+    id: 'APR-102',
+    entityType: 'Milestone',
+    entityId: 'ORD-260630-011',
+    subject: 'First-floor reinforcement inspection',
+    client: 'Noble Homes Ltd',
+    amount: 0,
+    requestedBy: 'Site Engineer',
+    assignedTo: 'Civil Engineer',
+    requestedAt: '2026-07-11',
+    dueAt: '2026-07-14',
+    status: 'Approved',
+    decidedAt: '2026-07-13T09:30:00.000Z',
+    decisionNote: 'Inspection window confirmed with the client.',
+  },
+]
+
+function formatApprovalSubject(quotation: CommercialQuotation): string {
+  const total = new Intl.NumberFormat('en-NG', {
+    style: 'currency',
+    currency: 'NGN',
+    maximumFractionDigits: 0,
+  }).format(quotation.total)
+
+  return `${total} ${quotation.service} quotation`
+}
+
+function defaultApprovalDueAt(requestedAt: string): string {
+  const due = new Date(requestedAt)
+  due.setDate(due.getDate() + 1)
+  return due.toISOString().slice(0, 10)
+}
 
 function ensureQuotationApproval(
   quotation: CommercialQuotation,
@@ -637,15 +695,16 @@ function ensureQuotationApproval(
   if (pending) return pending
 
   const approval: CommercialApproval = {
-    id: `APR-Q-${String(approvals.length + 1).padStart(3, '0')}`,
+    id: `APR-${String(approvals.length + 1).padStart(3, '0')}`,
     entityType: 'Quotation',
     entityId: quotation.id,
+    subject: formatApprovalSubject(quotation),
     client: quotation.client,
-    reason: `Quotation approval via ${quotation.approvalRoute}`,
     amount: quotation.total,
     requestedBy: quotation.owner,
     assignedTo: quotation.approvalRoute,
-    requestedAt,
+    requestedAt: requestedAt.slice(0, 10),
+    dueAt: defaultApprovalDueAt(requestedAt.slice(0, 10)),
     status: 'Pending',
   }
 
@@ -685,17 +744,32 @@ function invoiceSummary() {
 }
 
 function approvalSummary() {
-  const today = new Date().toISOString().slice(0, 10)
+  const pendingApprovals = approvals.filter((approval) => approval.status === 'Pending')
+  const now = Date.now()
+  const oldestWaitingDays =
+    pendingApprovals.length === 0
+      ? 0
+      : Math.max(
+          ...pendingApprovals.map((approval) =>
+            Math.max(
+              0,
+              Math.floor((now - new Date(approval.requestedAt).getTime()) / (1000 * 60 * 60 * 24)),
+            ),
+          ),
+        )
+  const decided = approvals.filter((approval) => approval.status !== 'Pending')
+  const approvedOnTime = decided.filter((approval) => {
+    if (!approval.decidedAt) return false
+    return approval.decidedAt.slice(0, 10) <= approval.dueAt
+  }).length
+  const approvalSlaPercent =
+    decided.length === 0 ? 100 : Math.round((approvedOnTime / decided.length) * 100)
 
   return {
-    pending: approvals.filter((approval) => approval.status === 'Pending').length,
-    highValue: approvals.filter(
-      (approval) => approval.status === 'Pending' && approval.amount >= 5000000,
-    ).length,
-    approvedToday: approvals.filter(
-      (approval) => approval.status === 'Approved' && approval.decidedAt?.slice(0, 10) === today,
-    ).length,
-    rejected: approvals.filter((approval) => approval.status === 'Rejected').length,
+    pending: pendingApprovals.length,
+    highValue: pendingApprovals.filter((approval) => approval.amount >= 5_000_000).length,
+    oldestWaitingDays,
+    approvalSlaPercent,
   }
 }
 

@@ -217,16 +217,20 @@ export interface RecordPaymentInput {
 
 export type ApprovalStatus = 'Pending' | 'Approved' | 'Rejected'
 
+export type ApprovalEntityType =
+  'Quotation' | 'Discount' | 'Deliverable' | 'Milestone' | 'Client Approval' | 'Invoice'
+
 export interface CommercialApproval {
   id: string
-  entityType: 'Quotation' | 'Invoice'
+  entityType: ApprovalEntityType
   entityId: string
+  subject: string
   client: string
-  reason: string
   amount: number
   requestedBy: string
   assignedTo: string
   requestedAt: string
+  dueAt: string
   status: ApprovalStatus
   decidedAt?: string
   decisionNote?: string
@@ -248,6 +252,6 @@ export interface InvoiceSummary {
 export interface ApprovalSummary {
   pending: number
   highValue: number
-  approvedToday: number
-  rejected: number
+  oldestWaitingDays: number
+  approvalSlaPercent: number
 }

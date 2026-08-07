@@ -41,6 +41,13 @@ export function invoiceStatusClass(status: string) {
   return 'commercial-pill-blue'
 }
 
+export function approvalStatusClass(status: string) {
+  if (status === 'Approved') return 'commercial-pill-green'
+  if (status === 'Rejected') return 'commercial-pill-red'
+  if (status === 'Pending') return 'commercial-pill-yellow'
+  return 'commercial-pill-gray'
+}
+
 export const quotationApprovers = [
   'Service Manager',
   'Head of Operations',
