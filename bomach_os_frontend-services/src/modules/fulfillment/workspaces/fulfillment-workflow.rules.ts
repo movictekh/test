@@ -108,3 +108,16 @@ export function commercialSourceAlreadyOrdered(
       order.requestId === source.requestId,
   )
 }
+
+export function canCompleteOrderWithDeliverables(
+  deliverables: Array<{
+    orderId: string
+    approvalMode: 'Supervisor approval' | 'Client approval' | 'No approval'
+    status: 'Under Review' | 'Approved' | 'Rejected'
+  }>,
+  orderId: string,
+): boolean {
+  return deliverables
+    .filter((item) => item.orderId === orderId && item.approvalMode !== 'No approval')
+    .every((item) => item.status === 'Approved')
+}

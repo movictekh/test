@@ -137,6 +137,28 @@ export const operationsNavigation = [
     ],
   },
   {
+    id: 'specialized-services',
+    label: 'Specialized Services',
+    items: [
+      {
+        id: 'real-estate-inventory',
+        label: 'Real Estate Inventory',
+        icon: 'services',
+        to: appSectionRoute,
+        params: { section: 'real-estate-inventory' },
+        permissions: [PERMISSIONS.realEstateRead],
+      },
+      {
+        id: 'specialized-service-control',
+        label: 'Specialized Service Control',
+        icon: 'orders',
+        to: appSectionRoute,
+        params: { section: 'specialized-service-control' },
+        permissions: [PERMISSIONS.orderRead],
+      },
+    ],
+  },
+  {
     id: 'intelligence',
     label: 'Experience and Intelligence',
     items: [

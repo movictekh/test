@@ -3,6 +3,8 @@ import { apiClient } from '@/shared/api/api-client'
 import type {
   AddMilestoneInput,
   AddOrderUpdateInput,
+  CreateDeliverableInput,
+  DecideDeliverableInput,
   CreateExecutionTaskInput,
   CreateServiceOrderInput,
   FulfillmentWorkspace,
@@ -50,6 +52,15 @@ export const fulfillmentApi = {
     return apiClient.post<FulfillmentWorkspace>('/ui-prototype/fulfillment/tasks', input)
   },
 
+  createDeliverable(input: CreateDeliverableInput) {
+    return apiClient.post<FulfillmentWorkspace>('/ui-prototype/fulfillment/deliverables', input)
+  },
+  decideDeliverable(deliverableId: string, input: DecideDeliverableInput) {
+    return apiClient.patch<FulfillmentWorkspace>(
+      `/ui-prototype/fulfillment/deliverables/${deliverableId}`,
+      input,
+    )
+  },
   updateTask(taskId: string, input: UpdateExecutionTaskInput) {
     return apiClient.patch<FulfillmentWorkspace>(`/ui-prototype/fulfillment/tasks/${taskId}`, input)
   },

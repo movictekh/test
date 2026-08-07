@@ -621,3 +621,25 @@
     grid-template-columns: 1fr;
   }
 }
+
+.fulfillment-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.fulfillment-kl {
+  color: #8c95a8;
+  font-size: 8.5px;
+}
+.fulfillment-notice-blue {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+}
+.fulfillment-deliverables-table {
+  min-width: 920px;
+}
+@media (max-width: 680px) {
+  .fulfillment-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}

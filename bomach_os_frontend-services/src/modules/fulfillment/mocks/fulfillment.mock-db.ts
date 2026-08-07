@@ -1,6 +1,9 @@
 import type {
   AddMilestoneInput,
   AddOrderUpdateInput,
+  CreateDeliverableInput,
+  DecideDeliverableInput,
+  Deliverable,
   CreateExecutionTaskInput,
   CommercialOrderHandoffInput,
   CreateServiceOrderInput,
@@ -17,6 +20,7 @@ import {
   nextTaskStatus,
   taskProgressForStatus,
   commercialSourceAlreadyOrdered,
+  canCompleteOrderWithDeliverables,
 } from '../workspaces/fulfillment-workflow.rules'
 
 const nowIso = () => new Date().toISOString()
@@ -371,6 +375,35 @@ const tasks: ExecutionTask[] = [
   },
 ]
 
+const deliverables: Deliverable[] = [
+  {
+    id: 'DEL-701',
+    orderId: 'ORD-260701-019',
+    title: 'Greenview cadastral survey plan',
+    type: 'Survey Plan',
+    version: 'v2',
+    owner: 'Land Surveyor',
+    status: 'Under Review',
+    clientVisible: true,
+    date: '2026-07-12',
+    approvalMode: 'Supervisor approval',
+    fileName: 'greenview-survey-plan-v2.pdf',
+  },
+  {
+    id: 'DEL-702',
+    orderId: 'ORD-260712-033',
+    title: 'Proof of delivery',
+    type: 'Progress Evidence',
+    version: 'v1',
+    owner: 'Rider EN-04',
+    status: 'Approved',
+    clientVisible: true,
+    date: '2026-07-12',
+    approvalMode: 'No approval',
+    fileName: 'pod-260712-033.jpg',
+  },
+]
+
 function summary(): FulfillmentWorkspace['summary'] {
   const openStatuses = new Set([
     'Pending Mobilisation',
@@ -399,6 +432,7 @@ export function getFulfillmentWorkspace(): FulfillmentWorkspace {
     summary: summary(),
     orders,
     tasks,
+    deliverables,
   }
 }
 
@@ -535,6 +569,18 @@ export function advanceMockOrder(orderId: string): FulfillmentWorkspace {
   if (!order) return getFulfillmentWorkspace()
 
   const result = advanceMilestones(order.milestones)
+  if (result.completed && !canCompleteOrderWithDeliverables(deliverables, order.id)) {
+    order.activities.push(
+      activity(
+        `${order.id}-A${order.activities.length + 1}`,
+        nowIso(),
+        'Completion blocked',
+        'System',
+        'Required deliverables must be approved before order completion.',
+      ),
+    )
+    return getFulfillmentWorkspace()
+  }
   order.milestones = result.milestones
   order.progress = result.progress
   order.stage = result.stage
@@ -706,5 +752,43 @@ export function updateMockTask(
     )
   }
 
+  return getFulfillmentWorkspace()
+}
+
+export function createMockDeliverable(input: CreateDeliverableInput): FulfillmentWorkspace {
+  const order = orders.find((item) => item.id === input.orderId)
+  const id = `DEL-${Date.now().toString().slice(-5)}`
+  deliverables.unshift({
+    id,
+    orderId: input.orderId,
+    title: input.title,
+    type: input.type,
+    version: input.version,
+    owner: order?.owner ?? 'Service Manager',
+    status: input.approvalMode === 'No approval' ? 'Approved' : 'Under Review',
+    clientVisible: input.clientVisible,
+    date: today(),
+    approvalMode: input.approvalMode,
+    fileName: input.fileName,
+  })
+  if (order)
+    order.activities.push(
+      activity(
+        `${order.id}-A${order.activities.length + 1}`,
+        nowIso(),
+        'Deliverable added',
+        order.owner,
+        `${input.title} (${input.version}) added to the order.`,
+      ),
+    )
+  return getFulfillmentWorkspace()
+}
+export function decideMockDeliverable(
+  deliverableId: string,
+  input: DecideDeliverableInput,
+): FulfillmentWorkspace {
+  const item = deliverables.find((d) => d.id === deliverableId)
+  if (!item) return getFulfillmentWorkspace()
+  item.status = input.action === 'approve' ? 'Approved' : 'Rejected'
   return getFulfillmentWorkspace()
 }

@@ -7,6 +7,7 @@ import {
   nextTaskStatus,
   taskProgressForStatus,
   commercialSourceAlreadyOrdered,
+  canCompleteOrderWithDeliverables,
 } from './fulfillment-workflow.rules'
 
 describe('fulfillment workflow rules', () => {
@@ -90,6 +91,20 @@ describe('fulfillment workflow rules', () => {
         quotationId: 'Q-10',
         invoiceId: 'INV-99',
       }),
+    ).toBe(true)
+  })
+  it('blocks order completion while a governed deliverable is pending', () => {
+    expect(
+      canCompleteOrderWithDeliverables(
+        [{ orderId: 'ORD-1', approvalMode: 'Supervisor approval', status: 'Under Review' }],
+        'ORD-1',
+      ),
+    ).toBe(false)
+    expect(
+      canCompleteOrderWithDeliverables(
+        [{ orderId: 'ORD-1', approvalMode: 'Supervisor approval', status: 'Approved' }],
+        'ORD-1',
+      ),
     ).toBe(true)
   })
 })

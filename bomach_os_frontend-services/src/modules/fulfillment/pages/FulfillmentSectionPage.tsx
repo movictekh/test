@@ -14,10 +14,12 @@ import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
 import { fulfillmentApi } from '../api/fulfillment.api'
 import { fulfillmentKeys } from '../api/fulfillment.keys'
 import { fulfillmentQueries } from '../api/fulfillment.queries'
+import { DeliverablesScreen } from '../screens/DeliverablesScreen'
 import { ExecutionTasksScreen } from '../screens/ExecutionTasksScreen'
 import { ServiceOrdersScreen } from '../screens/ServiceOrdersScreen'
 import type {
   AddMilestoneInput,
+  CreateDeliverableInput,
   AddOrderUpdateInput,
   CreateExecutionTaskInput,
   CreateServiceOrderInput,
@@ -25,8 +27,10 @@ import type {
   UpdateServiceOrderInput,
   UpdateExecutionTaskInput,
 } from '../types/fulfillment.types'
+import { CreateDeliverableWorkspace } from '../workspaces/CreateDeliverableWorkspace'
 import { CreateOrderWorkspace } from '../workspaces/CreateOrderWorkspace'
 import { CreateTaskWorkspace } from '../workspaces/CreateTaskWorkspace'
+import { DeliverableDetailWorkspace } from '../workspaces/DeliverableDetailWorkspace'
 import { OrderControlRoomWorkspace } from '../workspaces/OrderControlRoomWorkspace'
 import { TaskDetailWorkspace } from '../workspaces/TaskDetailWorkspace'
 import '../styles/fulfillment.css'
@@ -40,6 +44,7 @@ const metadata: Record<FulfillmentSection, { title: string; breadcrumb: string }
     title: 'Execution Tasks',
     breadcrumb: 'Fulfillment / Tasks',
   },
+  deliverables: { title: 'Deliverables & Documents', breadcrumb: 'Fulfillment / Documents' },
 }
 
 export function FulfillmentSectionPage({ section }: { section: FulfillmentSection }) {
@@ -54,6 +59,8 @@ export function FulfillmentSectionPage({ section }: { section: FulfillmentSectio
   const [createTaskOpen, setCreateTaskOpen] = useState(false)
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
+  const [createDeliverableOrderId, setCreateDeliverableOrderId] = useState<string | null>(null)
+  const [selectedDeliverableId, setSelectedDeliverableId] = useState<string | null>(null)
 
   const updateCache = (workspace: NonNullable<typeof query.data>) => {
     queryClient.setQueryData(fulfillmentKeys.workspace(), workspace)
@@ -120,6 +127,28 @@ export function FulfillmentSectionPage({ section }: { section: FulfillmentSectio
     },
   })
 
+  const createDeliverable = useMutation({
+    mutationFn: (input: CreateDeliverableInput) => fulfillmentApi.createDeliverable(input),
+    onSuccess: (workspace) => {
+      updateCache(workspace)
+      setCreateDeliverableOrderId(null)
+      toast.success('Deliverable added')
+    },
+  })
+  const decideDeliverable = useMutation({
+    mutationFn: ({
+      deliverableId,
+      action,
+    }: {
+      deliverableId: string
+      action: 'approve' | 'reject'
+    }) => fulfillmentApi.decideDeliverable(deliverableId, { action }),
+    onSuccess: (workspace) => {
+      updateCache(workspace)
+      toast.success('Deliverable updated')
+    },
+  })
+
   const updateTask = useMutation({
     mutationFn: ({ taskId, input }: { taskId: string; input: UpdateExecutionTaskInput }) =>
       fulfillmentApi.updateTask(taskId, input),
@@ -142,6 +171,11 @@ export function FulfillmentSectionPage({ section }: { section: FulfillmentSectio
     if (!selectedTaskId || !query.data) return null
     return query.data.tasks.find((task) => task.id === selectedTaskId) ?? null
   }, [query.data, selectedTaskId])
+
+  const selectedDeliverable = useMemo(() => {
+    if (!selectedDeliverableId || !query.data) return null
+    return query.data.deliverables.find((item) => item.id === selectedDeliverableId) ?? null
+  }, [query.data, selectedDeliverableId])
 
   const selectedTaskOrder = useMemo(() => {
     if (!selectedTask || !query.data) return null
@@ -184,6 +218,8 @@ export function FulfillmentSectionPage({ section }: { section: FulfillmentSectio
     addOrderUpdate.isPending ||
     addMilestone.isPending ||
     createTask.isPending ||
+    createDeliverable.isPending ||
+    decideDeliverable.isPending ||
     updateTask.isPending
 
   return (
@@ -205,11 +241,17 @@ export function FulfillmentSectionPage({ section }: { section: FulfillmentSectio
           onCreateOrder={() => setCreateOrderOpen(true)}
           onOpenOrder={(order) => setSelectedOrderId(order.id)}
         />
-      ) : (
+      ) : section === 'execution-tasks' ? (
         <ExecutionTasksScreen
           tasks={query.data.tasks}
           onCreateTask={() => setCreateTaskOpen(true)}
           onOpenTask={(task) => setSelectedTaskId(task.id)}
+        />
+      ) : (
+        <DeliverablesScreen
+          deliverables={query.data.deliverables}
+          onCreate={() => setCreateDeliverableOrderId('')}
+          onOpen={(item) => setSelectedDeliverableId(item.id)}
         />
       )}
 
@@ -238,6 +280,28 @@ export function FulfillmentSectionPage({ section }: { section: FulfillmentSectio
           saving={createTask.isPending}
           onClose={() => setCreateTaskOpen(false)}
           onSubmit={(input) => createTask.mutate(input)}
+        />
+      ) : null}
+
+      {createDeliverableOrderId !== null ? (
+        <CreateDeliverableWorkspace
+          initialOrderId={createDeliverableOrderId}
+          saving={createDeliverable.isPending}
+          onClose={() => setCreateDeliverableOrderId(null)}
+          onSubmit={(input) => createDeliverable.mutate(input)}
+        />
+      ) : null}
+      {selectedDeliverable ? (
+        <DeliverableDetailWorkspace
+          deliverable={selectedDeliverable}
+          saving={decideDeliverable.isPending}
+          onClose={() => setSelectedDeliverableId(null)}
+          onApprove={() =>
+            decideDeliverable.mutate({ deliverableId: selectedDeliverable.id, action: 'approve' })
+          }
+          onReject={() =>
+            decideDeliverable.mutate({ deliverableId: selectedDeliverable.id, action: 'reject' })
+          }
         />
       ) : null}
 
@@ -274,11 +338,12 @@ export function FulfillmentSectionPage({ section }: { section: FulfillmentSectio
           onAddMilestone={(input) => addMilestone.mutate(input)}
           onCreateTask={(input) => createTask.mutate(input)}
           onFutureAction={(action) => {
+            if (action === 'Add Deliverable') {
+              setCreateDeliverableOrderId(selectedOrder.id)
+              return
+            }
             toast.success(action, {
-              description:
-                action === 'Add Deliverable'
-                  ? 'The control is retained for UI-3.03 Deliverables.'
-                  : 'The prototype action is retained and connects in its owning phase.',
+              description: 'The prototype action is retained and connects in its owning phase.',
             })
           }}
         />

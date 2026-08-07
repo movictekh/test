@@ -5,6 +5,8 @@ import { env } from '@/shared/config/env'
 import type {
   AddMilestoneInput,
   AddOrderUpdateInput,
+  CreateDeliverableInput,
+  DecideDeliverableInput,
   CreateExecutionTaskInput,
   CreateServiceOrderInput,
   UpdateExecutionTaskInput,
@@ -14,8 +16,10 @@ import {
   addMockMilestone,
   addMockOrderUpdate,
   advanceMockOrder,
+  createMockDeliverable,
   createMockOrder,
   createMockTask,
+  decideMockDeliverable,
   getFulfillmentWorkspace,
   updateMockOrder,
   updateMockTask,
@@ -86,6 +90,25 @@ export const fulfillmentHandlers = [
           orderId: String(params.orderId),
         }),
       )
+    },
+  ),
+
+  http.post(endpoint('/ui-prototype/fulfillment/deliverables'), async ({ request }) => {
+    await delay(180)
+    const body = (await request.json()) as CreateDeliverableInput
+    if (!body.orderId || !body.title || !body.version)
+      return HttpResponse.json(
+        { detail: 'Complete the deliverable order, title and version.' },
+        { status: 422 },
+      )
+    return HttpResponse.json(createMockDeliverable(body), { status: 201 })
+  }),
+  http.patch(
+    endpoint('/ui-prototype/fulfillment/deliverables/:deliverableId'),
+    async ({ params, request }) => {
+      await delay(150)
+      const body = (await request.json()) as DecideDeliverableInput
+      return HttpResponse.json(decideMockDeliverable(String(params.deliverableId), body))
     },
   ),
 

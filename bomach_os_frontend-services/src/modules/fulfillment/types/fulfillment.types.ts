@@ -1,4 +1,4 @@
-export type FulfillmentSection = 'service-orders' | 'execution-tasks'
+export type FulfillmentSection = 'service-orders' | 'execution-tasks' | 'deliverables'
 
 export type ServiceOrderStatus =
   | 'Pending Mobilisation'
@@ -86,6 +86,41 @@ export interface ExecutionTask {
   activities: TaskActivity[]
 }
 
+export type DeliverableStatus = 'Under Review' | 'Approved' | 'Rejected'
+export type DeliverableType =
+  | 'Report'
+  | 'Drawing'
+  | 'Survey Plan'
+  | 'Certificate'
+  | 'Legal Document'
+  | 'Progress Evidence'
+  | 'Handover File'
+export interface Deliverable {
+  id: string
+  orderId: string
+  title: string
+  type: DeliverableType
+  version: string
+  owner: string
+  status: DeliverableStatus
+  clientVisible: boolean
+  date: string
+  approvalMode: 'Supervisor approval' | 'Client approval' | 'No approval'
+  fileName: string
+}
+export interface CreateDeliverableInput {
+  orderId: string
+  title: string
+  type: DeliverableType
+  version: string
+  clientVisible: boolean
+  approvalMode: Deliverable['approvalMode']
+  fileName: string
+}
+export interface DecideDeliverableInput {
+  action: 'approve' | 'reject'
+}
+
 export interface FulfillmentSummary {
   activeOrders: number
   dueSoon: number
@@ -99,6 +134,7 @@ export interface FulfillmentWorkspace {
   summary: FulfillmentSummary
   orders: ServiceOrder[]
   tasks: ExecutionTask[]
+  deliverables: Deliverable[]
 }
 
 export interface CreateServiceOrderInput {
