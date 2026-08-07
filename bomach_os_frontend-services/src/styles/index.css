@@ -1,5 +1,4 @@
 @import 'tailwindcss';
-@import './responsive.css';
 
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
@@ -150,7 +149,7 @@
   }
 }
 
-/* state-components:start */
+/* Shared state component tokens */
 @theme inline {
   --color-purple-50: #faf5ff;
   --color-purple-100: #f3e8ff;
@@ -168,4 +167,136 @@
     transform: scaleX(0);
   }
 }
-/* state-components:end */
+
+/* Cross-module responsive behavior */
+:is(
+  .service-admin-content,
+  .commercial-content,
+  .fulfillment-content,
+  .specialized-content,
+  .experience-content
+) {
+  min-width: 0;
+}
+
+:is(.commercial-card, .fulfillment-card, .specialized-card, .experience-card) > * {
+  min-width: 0;
+}
+
+:is(
+  .commercial-table-wrap,
+  .fulfillment-table-wrap,
+  .specialized-table-wrap,
+  .experience-table-wrap,
+  .commercial-life,
+  .fulfillment-kanban,
+  .fulfillment-lifecycle,
+  .specialized-lifecycle,
+  .specialized-tabs
+) {
+  overscroll-behavior-inline: contain;
+  scrollbar-gutter: stable;
+  -webkit-overflow-scrolling: touch;
+}
+
+:is(
+  .commercial-modal,
+  .fulfillment-modal,
+  .specialized-modal,
+  .experience-modal,
+  .service-admin-modal
+) {
+  max-width: 100%;
+}
+
+.specialized-modal {
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.specialized-modal-body {
+  min-height: 0;
+  overflow: auto;
+}
+
+.specialized-legend {
+  flex-wrap: wrap;
+}
+
+@media (max-width: 700px) {
+  .commercial-content,
+  .experience-content {
+    padding: 12px;
+  }
+
+  .commercial-card-header,
+  .fulfillment-card-header,
+  .specialized-card-header,
+  .experience-card-header {
+    align-items: flex-start;
+  }
+
+  .commercial-filter-row > *,
+  .fulfillment-filter-row > *,
+  .specialized-filter-row > * {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 680px) {
+  .specialized-modal-backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .specialized-modal {
+    width: 100%;
+    max-height: 94vh;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .specialized-modal-footer,
+  .commercial-modal-footer,
+  .fulfillment-modal-footer,
+  .experience-modal-footer,
+  .service-admin-modal-footer {
+    flex-wrap: wrap;
+  }
+
+  .specialized-tabs {
+    padding-bottom: 3px;
+  }
+}
+
+@media (max-width: 480px) {
+  .specialized-kpi-grid,
+  .experience-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .specialized-plot-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .fulfillment-filter-row input {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .commercial-modal-footer-actions,
+  .commercial-modal-footer-start {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

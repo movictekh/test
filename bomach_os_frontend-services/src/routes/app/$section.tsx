@@ -137,7 +137,7 @@ function AppShellRoute() {
     <ModuleShellPage
       eyebrow="Service Operations"
       title={title}
-      description="i will replace this section during its prototype UI phase."
+      description="This Service Operations section is not available."
       backTo="/app/dashboard"
       backLabel="Back to dashboard"
     />

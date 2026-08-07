@@ -135,7 +135,7 @@ export function CreateDeliverableWorkspace({
                   <span>Upload file</span>
                   <input
                     value={f.state.value}
-                    placeholder="Prototype file name / upload reference"
+                    placeholder="File name or document reference"
                     onChange={(e) => f.handleChange(e.target.value)}
                   />
                 </label>

@@ -379,12 +379,12 @@ export function FulfillmentSectionPage({
           onAddDeliverable={() => setCreateDeliverableOrderId(selectedOrder.id)}
           onRequestClientApproval={() =>
             toast.success('Request Client Approval', {
-              description: 'The prototype action is retained and connects in its owning phase.',
+              description: 'Client approval requests are not connected in this frontend yet.',
             })
           }
           onRecordFeedback={() =>
             toast.success('Record Feedback', {
-              description: 'The prototype action is retained and connects in its owning phase.',
+              description: 'Feedback recording from the Order Control Room is not connected yet.',
             })
           }
         />

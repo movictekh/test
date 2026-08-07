@@ -140,7 +140,7 @@ describe('Service Operations integration', () => {
     expect(report.branches.length).toBeGreaterThan(0)
   })
 
-  it('keeps specialized-service structures aligned with the prototype', () => {
+  it('keeps specialized-service families aligned with product requirements', () => {
     const specialized = getSpecializedWorkspace()
 
     expect(specialized.estates.length).toBeGreaterThan(0)

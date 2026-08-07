@@ -1,19 +1,19 @@
 .service-admin-page {
-  --proto-n: #1f3d7a;
-  --proto-n2: #132b59;
-  --proto-r: #c71920;
-  --proto-g: #087344;
-  --proto-y: #b77700;
-  --proto-bg: #f3f5f9;
-  --proto-w: #fff;
-  --proto-s: #f8fafc;
-  --proto-s2: #edf1f6;
-  --proto-t: #15172d;
-  --proto-t2: #566075;
-  --proto-t3: #8c95a8;
-  --proto-b: #e1e7ef;
-  --proto-shadow: 0 2px 9px #14204012;
-  color: var(--proto-t);
+  --service-admin-brand: #1f3d7a;
+  --service-admin-brand-strong: #132b59;
+  --service-admin-danger: #c71920;
+  --service-admin-success: #087344;
+  --service-admin-warning: #b77700;
+  --service-admin-background: #f3f5f9;
+  --service-admin-surface: #fff;
+  --service-admin-surface-muted: #f8fafc;
+  --service-admin-surface-subtle: #edf1f6;
+  --service-admin-foreground: #15172d;
+  --service-admin-foreground-muted: #566075;
+  --service-admin-foreground-subtle: #8c95a8;
+  --service-admin-border: #e1e7ef;
+  --service-admin-shadow: 0 2px 9px #14204012;
+  color: var(--service-admin-foreground);
   font-size: 12px;
 }
 
@@ -23,10 +23,10 @@
 
 .service-admin-card {
   margin-bottom: 12px;
-  border: 1px solid var(--proto-b);
+  border: 1px solid var(--service-admin-border);
   border-radius: 13px;
-  background: var(--proto-w);
-  box-shadow: var(--proto-shadow);
+  background: var(--service-admin-surface);
+  box-shadow: var(--service-admin-shadow);
   padding: 15px;
 }
 
@@ -50,7 +50,7 @@
 
 .service-admin-card-subtitle {
   margin-top: 3px;
-  color: var(--proto-t3);
+  color: var(--service-admin-foreground-subtle);
   font-size: 9px;
 }
 
@@ -67,10 +67,10 @@
 }
 
 .service-admin-service-card {
-  border: 1px solid var(--proto-b);
+  border: 1px solid var(--service-admin-border);
   border-radius: 13px;
-  background: var(--proto-w);
-  box-shadow: var(--proto-shadow);
+  background: var(--service-admin-surface);
+  box-shadow: var(--service-admin-shadow);
   padding: 13px;
 }
 
@@ -121,7 +121,7 @@
 .service-admin-service-description {
   margin: 6px 0 4px;
   min-height: 36px;
-  color: var(--proto-t3);
+  color: var(--service-admin-foreground-subtle);
   font-size: 9px;
   line-height: 1.45;
 }
@@ -135,7 +135,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-top: 1px solid var(--proto-b);
+  border-top: 1px solid var(--service-admin-border);
   padding-top: 8px;
 }
 
@@ -153,7 +153,7 @@
 
 .service-admin-filter-group input,
 .service-admin-filter-group select {
-  border: 1px solid var(--proto-b);
+  border: 1px solid var(--service-admin-border);
   border-radius: 7px;
   background: #fff;
   padding: 7px 9px;
@@ -175,29 +175,29 @@
 }
 
 .service-admin-table th {
-  border-bottom: 1.5px solid var(--proto-b);
+  border-bottom: 1.5px solid var(--service-admin-border);
   padding: 8px 9px;
-  color: var(--proto-t3);
+  color: var(--service-admin-foreground-subtle);
   font-size: 8.5px;
   text-align: left;
   white-space: nowrap;
 }
 
 .service-admin-table td {
-  border-bottom: 1px solid var(--proto-b);
+  border-bottom: 1px solid var(--service-admin-border);
   padding: 9px;
   font-size: 10px;
   vertical-align: middle;
 }
 
 .service-admin-table tbody tr:hover {
-  background: var(--proto-s);
+  background: var(--service-admin-surface-muted);
 }
 
 .service-admin-table tbody tr.service-admin-table-row--active {
   background: #edf2ff;
-  box-shadow: inset 3px 0 0 var(--proto-n);
-  color: var(--proto-n);
+  box-shadow: inset 3px 0 0 var(--service-admin-brand);
+  color: var(--service-admin-brand);
 }
 
 .service-admin-table tbody tr.service-admin-table-row--active:hover {
@@ -206,7 +206,7 @@
 
 .service-admin-row-subtitle {
   margin-top: 3px;
-  color: var(--proto-t3);
+  color: var(--service-admin-foreground-subtle);
   font-size: 8.5px;
 }
 
@@ -219,23 +219,23 @@
   border-radius: 8px;
   background: #fff;
   padding: 7px 11px;
-  color: var(--proto-t);
+  color: var(--service-admin-foreground);
   font-size: 10.5px;
   font-weight: 700;
 }
 
 .service-admin-button:hover {
-  background: var(--proto-s);
+  background: var(--service-admin-surface-muted);
 }
 
 .service-admin-button-primary {
-  border-color: var(--proto-n);
-  background: var(--proto-n);
+  border-color: var(--service-admin-brand);
+  background: var(--service-admin-brand);
   color: #fff;
 }
 
 .service-admin-button-primary:hover {
-  background: var(--proto-n2);
+  background: var(--service-admin-brand-strong);
 }
 
 .service-admin-button-small {
@@ -251,7 +251,7 @@
 }
 
 .service-admin-field label {
-  color: var(--proto-t2);
+  color: var(--service-admin-foreground-muted);
   font-size: 10px;
   font-weight: 700;
 }
@@ -260,11 +260,11 @@
 .service-admin-field select,
 .service-admin-field textarea {
   width: 100%;
-  border: 1.5px solid var(--proto-b);
+  border: 1.5px solid var(--service-admin-border);
   border-radius: 8px;
-  background: var(--proto-s);
+  background: var(--service-admin-surface-muted);
   padding: 9px 10px;
-  color: var(--proto-t);
+  color: var(--service-admin-foreground);
 }
 
 .service-admin-notice {
@@ -281,10 +281,10 @@
 }
 
 .service-admin-kpi {
-  border: 1px solid var(--proto-b);
+  border: 1px solid var(--service-admin-border);
   border-radius: 13px;
   background: #fff;
-  box-shadow: var(--proto-shadow);
+  box-shadow: var(--service-admin-shadow);
   padding: 14px;
 }
 
@@ -293,7 +293,7 @@
 }
 
 .service-admin-kpi-label {
-  color: var(--proto-t3);
+  color: var(--service-admin-foreground-subtle);
   font-size: 9px;
   font-weight: 600;
 }
@@ -306,7 +306,7 @@
 
 .service-admin-kpi-subtitle {
   margin-top: 4px;
-  color: var(--proto-t3);
+  color: var(--service-admin-foreground-subtle);
   font-size: 8.5px;
 }
 
@@ -318,7 +318,7 @@
 
 .service-admin-palette,
 .service-admin-canvas {
-  border: 1px solid var(--proto-b);
+  border: 1px solid var(--service-admin-border);
   border-radius: 12px;
   background: #fff;
   padding: 12px;
@@ -331,7 +331,7 @@
   gap: 7px;
   border: 1px dashed #cbd3e0;
   border-radius: 7px;
-  background: var(--proto-s);
+  background: var(--service-admin-surface-muted);
   padding: 8px;
   font-size: 9px;
 }
@@ -341,9 +341,9 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  border: 1px solid var(--proto-b);
+  border: 1px solid var(--service-admin-border);
   border-radius: 8px;
-  background: var(--proto-s);
+  background: var(--service-admin-surface-muted);
   padding: 8px;
 }
 
@@ -364,16 +364,16 @@
   min-width: 0;
   min-height: 68px;
   flex-direction: column;
-  border: 1px solid var(--proto-b);
+  border: 1px solid var(--service-admin-border);
   border-radius: 9px;
-  background: var(--proto-s);
+  background: var(--service-admin-surface-muted);
   padding: 9px;
   box-sizing: border-box;
 }
 
 .service-admin-step small {
   display: block;
-  color: var(--proto-t3);
+  color: var(--service-admin-foreground-subtle);
   font-size: 7.5px;
   font-weight: 800;
   line-height: 1.2;
@@ -392,7 +392,7 @@
 .service-admin-step span {
   display: block;
   margin-top: 4px;
-  color: var(--proto-t3);
+  color: var(--service-admin-foreground-subtle);
   font-size: 8px;
   line-height: 1.2;
 }
@@ -448,13 +448,13 @@
 }
 
 .service-admin-modal-backdrop {
-  --proto-n: #1f3d7a;
-  --proto-n2: #132b59;
-  --proto-s: #f8fafc;
-  --proto-t: #15172d;
-  --proto-t2: #566075;
-  --proto-t3: #8c95a8;
-  --proto-b: #e1e7ef;
+  --service-admin-brand: #1f3d7a;
+  --service-admin-brand-strong: #132b59;
+  --service-admin-surface-muted: #f8fafc;
+  --service-admin-foreground: #15172d;
+  --service-admin-foreground-muted: #566075;
+  --service-admin-foreground-subtle: #8c95a8;
+  --service-admin-border: #e1e7ef;
   position: fixed;
   inset: 0;
   z-index: 80;
@@ -515,11 +515,11 @@
 .service-admin-wizard-step {
   flex: 1;
   min-width: 90px;
-  border: 1px solid var(--proto-b);
+  border: 1px solid var(--service-admin-border);
   border-radius: 7px;
-  background: var(--proto-s);
+  background: var(--service-admin-surface-muted);
   padding: 8px 7px;
-  color: var(--proto-t3);
+  color: var(--service-admin-foreground-subtle);
   font-size: 8.5px;
   font-weight: 800;
   text-align: center;
@@ -539,13 +539,13 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
 button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disabled):hover {
   border-color: #a9c0f6;
   background: #f4f7ff;
-  color: var(--proto-n);
+  color: var(--service-admin-brand);
 }
 
 .service-admin-wizard-step--active {
   border-color: #a9c0f6;
   background: #edf2ff;
-  color: var(--proto-n);
+  color: var(--service-admin-brand);
 }
 
 .service-admin-wizard-step--complete:not(.service-admin-wizard-step--active) {
@@ -615,7 +615,7 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
   flex-shrink: 0;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid var(--proto-b);
+  border-bottom: 1px solid var(--service-admin-border);
   padding: 13px 16px;
 }
 
@@ -632,7 +632,7 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
   place-items: center;
   border: 0;
   border-radius: 7px;
-  background: var(--proto-s);
+  background: var(--service-admin-surface-muted);
 }
 
 .service-admin-modal-body {
@@ -647,7 +647,7 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
   flex-shrink: 0;
   justify-content: flex-end;
   gap: 6px;
-  border-top: 1px solid var(--proto-b);
+  border-top: 1px solid var(--service-admin-border);
   padding: 10px 15px;
 }
 
@@ -675,7 +675,7 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
   grid-column: 1 / -1;
 }
 
-/* Legacy .f fields inside wizard / modal forms */
+/* Shared field styles used by wizard and modal forms */
 .service-admin-modal .f,
 .service-admin-form-grid .f {
   display: flex;
@@ -691,7 +691,7 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
 
 .service-admin-modal .f > label,
 .service-admin-form-grid .f > label {
-  color: var(--proto-t2);
+  color: var(--service-admin-foreground-muted);
   font-size: 10px;
   font-weight: 700;
 }
@@ -704,11 +704,11 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
 .service-admin-form-grid .f textarea {
   width: 100%;
   box-sizing: border-box;
-  border: 1.5px solid var(--proto-b);
+  border: 1.5px solid var(--service-admin-border);
   border-radius: 8px;
-  background: var(--proto-s);
+  background: var(--service-admin-surface-muted);
   padding: 9px 10px;
-  color: var(--proto-t);
+  color: var(--service-admin-foreground);
   font: inherit;
   font-size: 11px;
 }
@@ -746,7 +746,7 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
 
 .service-admin-config-field > span {
   display: block;
-  color: var(--proto-t2);
+  color: var(--service-admin-foreground-muted);
   font-size: 10px;
   font-weight: 700;
 }
@@ -759,11 +759,11 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
-  border: 1.5px solid var(--proto-b);
+  border: 1.5px solid var(--service-admin-border);
   border-radius: 8px;
-  background: var(--proto-s);
+  background: var(--service-admin-surface-muted);
   padding: 9px 10px;
-  color: var(--proto-t);
+  color: var(--service-admin-foreground);
   font: inherit;
   font-size: 11px;
 }
@@ -776,7 +776,7 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
 .service-admin-config-field input:focus,
 .service-admin-config-field select:focus,
 .service-admin-config-field textarea:focus {
-  border-color: var(--proto-n, #1f3d7a);
+  border-color: var(--service-admin-brand, #1f3d7a);
   background: #fff;
   outline: 0;
 }
@@ -796,9 +796,9 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
   display: flex;
   align-items: center;
   gap: 6px;
-  border: 1px solid var(--proto-b);
+  border: 1px solid var(--service-admin-border);
   border-radius: 7px;
-  background: var(--proto-s);
+  background: var(--service-admin-surface-muted);
   padding: 7px;
   font-size: 9px;
 }
@@ -812,9 +812,9 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
   gap: 3px;
   overflow: auto;
   margin-bottom: 12px;
-  border: 1px solid var(--proto-b);
+  border: 1px solid var(--service-admin-border);
   border-radius: 8px;
-  background: var(--proto-s);
+  background: var(--service-admin-surface-muted);
   padding: 3px;
 }
 
@@ -825,17 +825,17 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
   border-radius: 6px;
   background: transparent;
   padding: 7px 9px;
-  color: var(--proto-t3);
+  color: var(--service-admin-foreground-subtle);
   font-size: 9px;
   font-weight: 700;
   text-align: center;
 }
 
 .service-admin-tab--active {
-  border: 1px solid var(--proto-b);
+  border: 1px solid var(--service-admin-border);
   background: #fff;
-  box-shadow: var(--proto-shadow);
-  color: var(--proto-t);
+  box-shadow: var(--service-admin-shadow);
+  color: var(--service-admin-foreground);
 }
 
 .service-admin-config-summary-grid {
@@ -876,9 +876,9 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  border: 1px solid var(--proto-b);
+  border: 1px solid var(--service-admin-border);
   border-radius: 8px;
-  background: var(--proto-s);
+  background: var(--service-admin-surface-muted);
   padding: 8px 10px;
   font-size: 9px;
 }
@@ -893,9 +893,9 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
   display: flex;
   gap: 3px;
   overflow: auto;
-  border: 1px solid var(--proto-b);
+  border: 1px solid var(--service-admin-border);
   border-radius: 8px;
-  background: var(--proto-s);
+  background: var(--service-admin-surface-muted);
   padding: 3px;
 }
 
@@ -906,17 +906,17 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
   border-radius: 6px;
   background: transparent;
   padding: 7px 9px;
-  color: var(--proto-t3);
+  color: var(--service-admin-foreground-subtle);
   font-size: 9px;
   font-weight: 700;
   text-align: center;
 }
 
 .service-admin-html-config .tab.on {
-  border: 1px solid var(--proto-b);
+  border: 1px solid var(--service-admin-border);
   background: #fff;
-  box-shadow: var(--proto-shadow);
-  color: var(--proto-t);
+  box-shadow: var(--service-admin-shadow);
+  color: var(--service-admin-foreground);
 }
 
 .service-admin-html-config .formgrid {
@@ -936,7 +936,7 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
 }
 
 .service-admin-html-config .f > label {
-  color: var(--proto-t2);
+  color: var(--service-admin-foreground-muted);
   font-size: 10px;
   font-weight: 700;
 }
@@ -945,11 +945,11 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
 .service-admin-html-config .f select,
 .service-admin-html-config .f textarea {
   width: 100%;
-  border: 1.5px solid var(--proto-b);
+  border: 1.5px solid var(--service-admin-border);
   border-radius: 8px;
-  background: var(--proto-s);
+  background: var(--service-admin-surface-muted);
   padding: 9px 10px;
-  color: var(--proto-t);
+  color: var(--service-admin-foreground);
 }
 
 .service-admin-html-config .f textarea {
@@ -1024,9 +1024,9 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
   }
 }
 
-/* Configure Service — literal translation of the Service Operations HTML modal. */
+/* Configure Service modal */
 .service-admin-configure-html {
-  color: var(--proto-t);
+  color: var(--service-admin-foreground);
   font-size: 12px;
 }
 
@@ -1035,9 +1035,9 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
   gap: 3px;
   overflow-x: auto;
   margin-bottom: 12px;
-  border: 1px solid var(--proto-b);
+  border: 1px solid var(--service-admin-border);
   border-radius: 8px;
-  background: var(--proto-s);
+  background: var(--service-admin-surface-muted);
   padding: 3px;
 }
 
@@ -1046,17 +1046,17 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
   min-width: max-content;
   border-radius: 6px;
   padding: 7px 9px;
-  color: var(--proto-t3);
+  color: var(--service-admin-foreground-subtle);
   font-size: 9px;
   font-weight: 700;
   text-align: center;
 }
 
 .service-admin-configure-tab--active {
-  border: 1px solid var(--proto-b);
+  border: 1px solid var(--service-admin-border);
   background: #fff;
-  box-shadow: var(--proto-shadow);
-  color: var(--proto-t);
+  box-shadow: var(--service-admin-shadow);
+  color: var(--service-admin-foreground);
 }
 
 .service-admin-configure-form-grid {
@@ -1077,7 +1077,7 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
 }
 
 .service-admin-configure-form-grid .f label {
-  color: var(--proto-t2);
+  color: var(--service-admin-foreground-muted);
   font-size: 10px;
   font-weight: 700;
 }
@@ -1086,11 +1086,11 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
 .service-admin-configure-form-grid .f select,
 .service-admin-configure-form-grid .f textarea {
   width: 100%;
-  border: 1.5px solid var(--proto-b);
+  border: 1.5px solid var(--service-admin-border);
   border-radius: 8px;
-  background: var(--proto-s);
+  background: var(--service-admin-surface-muted);
   padding: 9px 10px;
-  color: var(--proto-t);
+  color: var(--service-admin-foreground);
 }
 
 .service-admin-configure-form-grid .f textarea {
@@ -1138,22 +1138,22 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
   }
 }
 
-/* UI-1.05 Configure Service screenshot parity correction */
+/* Configure Service layout and visual rules */
 .service-admin-modal-backdrop {
-  --proto-n: #1f3d7a;
-  --proto-n2: #132b59;
-  --proto-r: #c71920;
-  --proto-g: #087344;
-  --proto-y: #b77700;
-  --proto-bg: #f3f5f9;
-  --proto-w: #ffffff;
-  --proto-s: #f8fafc;
-  --proto-s2: #edf1f6;
-  --proto-t: #15172d;
-  --proto-t2: #566075;
-  --proto-t3: #8c95a8;
-  --proto-b: #e1e7ef;
-  --proto-shadow: 0 2px 9px #14204012;
+  --service-admin-brand: #1f3d7a;
+  --service-admin-brand-strong: #132b59;
+  --service-admin-danger: #c71920;
+  --service-admin-success: #087344;
+  --service-admin-warning: #b77700;
+  --service-admin-background: #f3f5f9;
+  --service-admin-surface: #ffffff;
+  --service-admin-surface-muted: #f8fafc;
+  --service-admin-surface-subtle: #edf1f6;
+  --service-admin-foreground: #15172d;
+  --service-admin-foreground-muted: #566075;
+  --service-admin-foreground-subtle: #8c95a8;
+  --service-admin-border: #e1e7ef;
+  --service-admin-shadow: 0 2px 9px #14204012;
   background: #0f172a88;
   color: #15172d;
   font-size: 12px;
@@ -1409,20 +1409,20 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
 
 /* UI-1.06 exact editors */
 .service-admin-editor-backdrop {
-  --proto-n: #1f3d7a;
-  --proto-n2: #132b59;
-  --proto-r: #c71920;
-  --proto-g: #087344;
-  --proto-y: #b77700;
-  --proto-bg: #f3f5f9;
-  --proto-w: #fff;
-  --proto-s: #f8fafc;
-  --proto-s2: #edf1f6;
-  --proto-t: #15172d;
-  --proto-t2: #566075;
-  --proto-t3: #8c95a8;
-  --proto-b: #e1e7ef;
-  --proto-shadow: 0 2px 9px #14204012;
+  --service-admin-brand: #1f3d7a;
+  --service-admin-brand-strong: #132b59;
+  --service-admin-danger: #c71920;
+  --service-admin-success: #087344;
+  --service-admin-warning: #b77700;
+  --service-admin-background: #f3f5f9;
+  --service-admin-surface: #fff;
+  --service-admin-surface-muted: #f8fafc;
+  --service-admin-surface-subtle: #edf1f6;
+  --service-admin-foreground: #15172d;
+  --service-admin-foreground-muted: #566075;
+  --service-admin-foreground-subtle: #8c95a8;
+  --service-admin-border: #e1e7ef;
+  --service-admin-shadow: 0 2px 9px #14204012;
   --editor-navy: #1f3d7a;
   --editor-navy-dark: #132b59;
   --editor-surface: #f8fafc;
@@ -1508,17 +1508,17 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
 }
 
 .service-admin-editor-footer .service-admin-button:hover {
-  background: var(--proto-s);
+  background: var(--service-admin-surface-muted);
 }
 
 .service-admin-editor-footer .service-admin-button-primary {
-  border-color: var(--proto-n);
-  background: var(--proto-n);
+  border-color: var(--service-admin-brand);
+  background: var(--service-admin-brand);
   color: #ffffff;
 }
 
 .service-admin-editor-footer .service-admin-button-primary:hover {
-  background: var(--proto-n2);
+  background: var(--service-admin-brand-strong);
 }
 
 .service-admin-editor-footer .service-admin-button-primary:disabled {
@@ -1544,7 +1544,7 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
 }
 
 .service-admin-editor-field > span {
-  color: var(--proto-t2);
+  color: var(--service-admin-foreground-muted);
   font-size: 10px;
   font-weight: 700;
 }
@@ -1808,11 +1808,11 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  border: 1px solid var(--proto-b);
+  border: 1px solid var(--service-admin-border);
   border-radius: 7px;
-  background: var(--proto-s);
+  background: var(--service-admin-surface-muted);
   padding: 5px;
-  color: var(--proto-t);
+  color: var(--service-admin-foreground);
   font-size: 9px;
   font-weight: 700;
   white-space: nowrap;
@@ -1822,14 +1822,14 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
 .service-admin-branch-check input {
   width: 13px;
   height: 13px;
-  accent-color: var(--proto-n);
+  accent-color: var(--service-admin-brand);
   cursor: pointer;
 }
 
 .service-admin-branch-check:has(input:checked) {
   border-color: #a9c0f6;
   background: #edf2ff;
-  color: var(--proto-n);
+  color: var(--service-admin-brand);
 }
 
 @media (max-width: 600px) {
@@ -1848,11 +1848,11 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
 
 .service-admin-acts select {
   min-height: 32px;
-  border: 1px solid var(--proto-b);
+  border: 1px solid var(--service-admin-border);
   border-radius: 8px;
-  background: var(--proto-s);
+  background: var(--service-admin-surface-muted);
   padding: 6px 9px;
-  color: var(--proto-t);
+  color: var(--service-admin-foreground);
   font: inherit;
   font-size: 10.5px;
 }
@@ -1868,7 +1868,7 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
   align-items: center;
   gap: 9px;
   padding: 9px 0;
-  border-bottom: 1px solid var(--proto-b);
+  border-bottom: 1px solid var(--service-admin-border);
 }
 
 .service-admin-list-row:last-child {
@@ -1886,7 +1886,7 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
 
 .service-admin-list-ico--bolt {
   background: #edf2ff;
-  color: var(--proto-n);
+  color: var(--service-admin-brand);
 }
 
 .service-admin-list-ico--mode {
@@ -1906,7 +1906,7 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
 
 .service-admin-list-sub {
   margin-top: 3px;
-  color: var(--proto-t3);
+  color: var(--service-admin-foreground-subtle);
   font-size: 8.5px;
 }
 
@@ -1938,7 +1938,7 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
 
 .service-admin-stage-editor-modal header p {
   margin: 4px 0 0;
-  color: var(--proto-t3, #8c95a8);
+  color: var(--service-admin-foreground-subtle, #8c95a8);
   font-size: 10px;
   line-height: 1.35;
 }
@@ -2083,8 +2083,8 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
 }
 
 .service-admin-field-editor-modal footer button:last-child {
-  border-color: var(--proto-n);
-  background: var(--proto-n);
+  border-color: var(--service-admin-brand);
+  background: var(--service-admin-brand);
   color: #fff;
 }
 
