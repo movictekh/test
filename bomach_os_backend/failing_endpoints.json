@@ -1,0 +1,220 @@
+{
+  "total": 43,
+  "endpoints": [
+    {
+      "endpoint": "POST /api/v1/auth/reset-password",
+      "status": 422,
+      "error": "{'detail': 'Field required'}"
+    },
+    {
+      "endpoint": "GET /api/v1/dashboard/overview",
+      "status": 500,
+      "error": "Traceback (most recent call last):\n  File \"/Users/developer/BOMACH/bomach_backend/env/lib/python3.12/site-packages/ninja/operation.py\", line 121, in run\n    return self._result_to_response(request, result, temporal_response)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  F"
+    },
+    {
+      "endpoint": "POST /api/v1/branch/branches",
+      "status": 400,
+      "error": "{'detail': 'This field cannot be null.'}"
+    },
+    {
+      "endpoint": "PUT /api/v1/branch/branches/1/business-hours",
+      "status": 422,
+      "error": "{'detail': 'Input should be a valid list'}"
+    },
+    {
+      "endpoint": "POST /api/v1/employees/department",
+      "status": 400,
+      "error": "{'detail': \"Value 'Test Engineering Dept' is not a valid choice.\"}"
+    },
+    {
+      "endpoint": "POST /api/v1/employees/unit",
+      "status": 500,
+      "error": "Traceback (most recent call last):\n  File \"/Users/developer/BOMACH/bomach_backend/env/lib/python3.12/site-packages/django/db/backends/utils.py\", line 105, in _execute\n    return self.cursor.execute(sql, params)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/developer/BOMACH/bomach_backen"
+    },
+    {
+      "endpoint": "PUT /api/v1/employees/department/1",
+      "status": 400,
+      "error": "{'detail': \"Value 'Updated Dept' is not a valid choice.\"}"
+    },
+    {
+      "endpoint": "PUT /api/v1/employees/unit/1",
+      "status": 404,
+      "error": "{'detail': 'Not Found: No Unit matches the given query.'}"
+    },
+    {
+      "endpoint": "POST /api/v1/employees/1/reviews",
+      "status": 422,
+      "error": "{'detail': 'Field required'}"
+    },
+    {
+      "endpoint": "GET /api/v1/leave-requests/",
+      "status": 500,
+      "error": "Traceback (most recent call last):\n  File \"/Users/developer/BOMACH/bomach_backend/env/lib/python3.12/site-packages/ninja/operation.py\", line 120, in run\n    result = self.view_func(request, **values)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/developer/BOMACH/bomach_backend/env/li"
+    },
+    {
+      "endpoint": "GET /api/v1/leave-requests/stats/summary",
+      "status": 500,
+      "error": "Traceback (most recent call last):\n  File \"/Users/developer/BOMACH/bomach_backend/env/lib/python3.12/site-packages/ninja/operation.py\", line 120, in run\n    result = self.view_func(request, **values)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/developer/BOMACH/bomach_backend/hr/api"
+    },
+    {
+      "endpoint": "POST /api/v1/leave-requests/",
+      "status": 500,
+      "error": "Traceback (most recent call last):\n  File \"/Users/developer/BOMACH/bomach_backend/env/lib/python3.12/site-packages/ninja/operation.py\", line 120, in run\n    result = self.view_func(request, **values)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/developer/BOMACH/bomach_backend/hr/api"
+    },
+    {
+      "endpoint": "GET /api/v1/payroll/",
+      "status": 500,
+      "error": "Traceback (most recent call last):\n  File \"/Users/developer/BOMACH/bomach_backend/env/lib/python3.12/site-packages/ninja/operation.py\", line 120, in run\n    result = self.view_func(request, **values)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/developer/BOMACH/bomach_backend/env/li"
+    },
+    {
+      "endpoint": "POST /api/v1/payroll/",
+      "status": 500,
+      "error": "Traceback (most recent call last):\n  File \"/Users/developer/BOMACH/bomach_backend/env/lib/python3.12/site-packages/ninja/operation.py\", line 120, in run\n    result = self.view_func(request, **values)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/developer/BOMACH/bomach_backend/hr/api"
+    },
+    {
+      "endpoint": "PUT /api/v1/announcements/1",
+      "status": 400,
+      "error": "{'detail': \"name 'announcement_id' is not defined\"}"
+    },
+    {
+      "endpoint": "POST /api/v1/events/",
+      "status": 400,
+      "error": "{'detail': \"can't compare offset-naive and offset-aware datetimes\"}"
+    },
+    {
+      "endpoint": "POST /api/v1/policies/",
+      "status": 400,
+      "error": "{'detail': \"Value 'general' is not a valid choice.\"}"
+    },
+    {
+      "endpoint": "POST /api/v1/categories",
+      "status": 400,
+      "error": "{'detail': \"Value 'real_estate' is not a valid choice.\"}"
+    },
+    {
+      "endpoint": "POST /api/v1/services",
+      "status": 400,
+      "error": "{'detail': 'FOREIGN KEY constraint failed'}"
+    },
+    {
+      "endpoint": "PUT /api/v1/clients/clients/2/",
+      "status": 400,
+      "error": "{'detail': '{\\'profile_picture\\': [\\'Enter a valid URL.\\'], \\'phone_number\\': [\"Phone number must be entered in the format: \\'+999999999\\'. Up to 15 digits allowed.\"]}'}"
+    },
+    {
+      "endpoint": "POST /api/v1/invoices",
+      "status": 400,
+      "error": "{'detail': 'FOREIGN KEY constraint failed'}"
+    },
+    {
+      "endpoint": "POST /api/v1/quotes",
+      "status": 400,
+      "error": "{'detail': 'FOREIGN KEY constraint failed'}"
+    },
+    {
+      "endpoint": "POST /api/v1/orders",
+      "status": 400,
+      "error": "{'detail': 'FOREIGN KEY constraint failed'}"
+    },
+    {
+      "endpoint": "POST /api/v1/payments",
+      "status": 400,
+      "error": "{'detail': 'Invoice matching query does not exist.'}"
+    },
+    {
+      "endpoint": "POST /api/v1/budgets",
+      "status": 400,
+      "error": "{'detail': 'FOREIGN KEY constraint failed'}"
+    },
+    {
+      "endpoint": "POST /api/v1/assets/",
+      "status": 500,
+      "error": "Traceback (most recent call last):\n  File \"/Users/developer/BOMACH/bomach_backend/env/lib/python3.12/site-packages/ninja/operation.py\", line 120, in run\n    result = self.view_func(request, **values)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/developer/BOMACH/bomach_backend/hr/api"
+    },
+    {
+      "endpoint": "POST /api/v1/inventory/",
+      "status": 400,
+      "error": "{'detail': 'Invalid status. Must be one of: available, low, percentage'}"
+    },
+    {
+      "endpoint": "POST /api/v1/job-postings/",
+      "status": 500,
+      "error": "Traceback (most recent call last):\n  File \"/Users/developer/BOMACH/bomach_backend/env/lib/python3.12/site-packages/ninja/operation.py\", line 120, in run\n    result = self.view_func(request, **values)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/developer/BOMACH/bomach_backend/hr/api"
+    },
+    {
+      "endpoint": "POST /api/v1/applicants/",
+      "status": 500,
+      "error": "Traceback (most recent call last):\n  File \"/Users/developer/BOMACH/bomach_backend/env/lib/python3.12/site-packages/ninja/operation.py\", line 120, in run\n    result = self.view_func(request, **values)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/developer/BOMACH/bomach_backend/hr/api"
+    },
+    {
+      "endpoint": "POST /api/v1/training-programs/",
+      "status": 422,
+      "error": "{'detail': 'Value error, Target audience must be one of: all_employees, management, new_hires, department_specific, leadership_team, technical_staff, sales_team, customer_service'}"
+    },
+    {
+      "endpoint": "POST /api/v1/performance-reviews/",
+      "status": 500,
+      "error": "Traceback (most recent call last):\n  File \"/Users/developer/BOMACH/bomach_backend/env/lib/python3.12/site-packages/django/db/backends/utils.py\", line 105, in _execute\n    return self.cursor.execute(sql, params)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/developer/BOMACH/bomach_backen"
+    },
+    {
+      "endpoint": "POST /api/v1/employee-evaluations/",
+      "status": 500,
+      "error": "Traceback (most recent call last):\n  File \"/Users/developer/BOMACH/bomach_backend/env/lib/python3.12/site-packages/ninja/operation.py\", line 120, in run\n    result = self.view_func(request, **values)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/developer/BOMACH/bomach_backend/hr/api"
+    },
+    {
+      "endpoint": "POST /api/v1/disciplinary-cases/",
+      "status": 500,
+      "error": "Traceback (most recent call last):\n  File \"/Users/developer/BOMACH/bomach_backend/env/lib/python3.12/site-packages/ninja/operation.py\", line 121, in run\n    return self._result_to_response(request, result, temporal_response)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  F"
+    },
+    {
+      "endpoint": "POST /api/v1/loans/1/reject",
+      "status": 400,
+      "error": "{'detail': 'Only pending loans can be denied.'}"
+    },
+    {
+      "endpoint": "POST /api/v1/approvals/flows",
+      "status": 422,
+      "error": "{'detail': 'Field required'}"
+    },
+    {
+      "endpoint": "POST /api/v1/board-resolutions/",
+      "status": 400,
+      "error": "{'detail': \"Value 'ordinary' is not a valid choice.\"}"
+    },
+    {
+      "endpoint": "POST /api/v1/compliance/compliance-records",
+      "status": 400,
+      "error": "{'detail': '{\\'compliance_type\\': [\"Value \\'regulatory\\' is not a valid choice.\", \\'Invalid compliance type. Must be one of: real_estate_license, broker_license, property_manager_license, fair_housing_certification, continuing_education\\']}'}"
+    },
+    {
+      "endpoint": "GET /api/v1/audits/auditors/",
+      "status": 422,
+      "error": "{'detail': 'Input should be a valid integer, unable to parse string as an integer'}"
+    },
+    {
+      "endpoint": "GET /api/v1/audits/failing-audits/",
+      "status": 422,
+      "error": "{'detail': 'Input should be a valid integer, unable to parse string as an integer'}"
+    },
+    {
+      "endpoint": "GET /api/v1/cases/upcoming-hearings/",
+      "status": 422,
+      "error": "{'detail': 'Input should be a valid integer, unable to parse string as an integer'}"
+    },
+    {
+      "endpoint": "PATCH /api/v1/cases/1/status/",
+      "status": 422,
+      "error": "{'detail': 'Field required'}"
+    },
+    {
+      "endpoint": "GET /api/v1/biometric/attendance/my-records",
+      "status": 500,
+      "error": "Traceback (most recent call last):\n  File \"/Users/developer/BOMACH/bomach_backend/env/lib/python3.12/site-packages/ninja/operation.py\", line 121, in run\n    return self._result_to_response(request, result, temporal_response)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  F"
+    },
+    {
+      "endpoint": "POST /api/v1/others/upload-file",
+      "status": 422,
+      "error": "{'detail': 'Field required'}"
+    }
+  ]
+}

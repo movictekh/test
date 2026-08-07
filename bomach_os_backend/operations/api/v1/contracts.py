@@ -1,0 +1,91 @@
+from ninja import Router
+from typing import List
+from django.shortcuts import get_object_or_404
+from django.db.models import Q
+from django.core.exceptions import ValidationError
+
+from operations.models import Contract, Project
+from ..schema.schemas import ContractCreateSchema, ContractUpdateSchema, ContractOutSchema, MessageSchema
+from ninja.pagination import paginate, LimitOffsetPagination
+from user.utils.perm import require_permission
+
+router = Router(tags=["Contracts"])
+
+
+@router.get("", response=List[ContractOutSchema])
+@paginate(LimitOffsetPagination, page_size=10)
+@require_permission("contracts", "list")
+def list_contracts(
+    request,
+    project_id: int = None,
+    status: str = None,
+    contract_type: str = None,
+    search: str = None,
+):
+    """List all contracts with optional filters"""
+    contracts = Contract.objects.all()
+
+    if project_id:
+        contracts = contracts.filter(project_id=project_id)
+    if status:
+        contracts = contracts.filter(status=status)
+    if contract_type:
+        contracts = contracts.filter(contract_type=contract_type)
+    if search:
+        contracts = contracts.filter(
+            Q(name__icontains=search) |
+            Q(contract_number__icontains=search)
+        )
+
+    return list(contracts)
+
+
+@router.get("/{contract_id}", response=ContractOutSchema)
+@require_permission("contracts", "view")
+def get_contract(request, contract_id: int):
+    """Get a specific contract by ID"""
+    contract = get_object_or_404(Contract, id=contract_id)
+    return contract
+
+
+@router.post("", response={200: ContractOutSchema, 400: MessageSchema})
+@require_permission("contracts", "create")
+def create_contract(request, payload: ContractCreateSchema):
+    """Create a new contract"""
+    try:
+        contract_data = payload.dict()
+        project = get_object_or_404(Project, id=contract_data.pop('project_id'))
+        contract = Contract.objects.create(project=project, **contract_data)
+        return contract
+    except ValidationError as e:
+        return 400, {'detail': e.messages[0]}
+
+
+@router.put("/{contract_id}", response={200: ContractOutSchema, 400: MessageSchema})
+@require_permission("contracts", "update")
+def update_contract(request, contract_id: int, payload: ContractUpdateSchema):
+    """Update an existing contract"""
+    try:
+        contract = get_object_or_404(Contract, id=contract_id)
+
+        update_data = payload.dict(exclude_unset=True)
+        if 'project_id' in update_data:
+            project = get_object_or_404(Project, id=update_data.pop('project_id'))
+            contract.project = project
+
+        for attr, value in update_data.items():
+            setattr(contract, attr, value)
+
+        contract.save()
+        return contract
+    except ValidationError as e:
+        return 400, {'detail': e.messages[0]}
+
+
+@router.delete("/{contract_id}")
+@require_permission("contracts", "delete")
+def delete_contract(request, contract_id: int):
+    """Delete a contract"""
+    contract = get_object_or_404(Contract, id=contract_id)
+    contract.delete()
+    return {"detail": "Contract deleted successfully"}

@@ -1,0 +1,46 @@
+--=-=-=-=-=-=-=-=-=-=-=-=--
+
+/Users/developer/BOMACH/bomach_backend/user/models/role.py 
+
+This is the model i plan to update to handle all permissions so get all the permissions on the backend and then fill it in the role model in a way that works best
+
+--=-=-=-=-=-=-=-=-=-=-=-=--
+
+ I just updated employee to have more than one department unit so add the necessary permission checks on the model and then update related endpoints and schemas
+
+     department_units = models.ManyToManyField(
+        Unit,
+        blank=True,
+        related_name='employees',
+        help_text='Department units where employee works'
+    )
+
+--=-=-=-=-=-=-=-=-=-=-=-=--
+
+# create a decorator that takes the permissions a certain endpoint requires and it checks with the employee if they have permission to access that endpoint based on their role.
+
+# also add a decorator that checks the employee if they have permission to perform a branch releted action eg they are user the branch, a manager that higher level that also controlls the branch or in the c suit
+
+--=-=-=-=-=-=-=-=-=-=-=-=--
+
+Think through the whole models and tell me what you think about my planned implementation of the permissions via roles and removing the old permission checks.
+
+--=-=-=-=-=-=-=-=-=-=-=-=--
+
+note that the the manager level means manager of a certain branch and the head level mean head of a certain department eg HR, Operations, Marketing, Legal, IT, Finance so I believe for that we can have head_hr, head_operation etc in the roles so it better discribes what the head is heading and they remove the head. Also by doing this we can create specific permission for example employee at level head_hr also note that all employees permission are limited to the branch they are asigned to so far their level is manager of less. c suite and board employees when assigned a permission it is not limited to a branch but it spans the whole company 
+
+Please update the models necesary and tell me after making the changes if they will be sufficent to implement employees permissions from ceo down to intern note ceo also has to be asigned perssions.
+
+--=-=-=-=-=-=-=-=-=-=-=-=--
+
+Now implement the Role stuff /Users/developer/BOMACH/bomach_backend/user/models/role.py in every endpoint giving permission to only specific employee as needed
+for list endpoint use permission to check if they need to be limited on what they see by a branch or employee branch or maybe they can see al or maybe they can only see what concerns them records that point to them. For the Post, Put and delete use permission to check to determine what an employee can do, wether it is just within a branch or only their own records.
+
+i want this to be reusable am thinking if we can use maybe decorators that will be added to endpoints as needed etc
+
+--=-=-=-=-=-=-=-=-=-=-=-=--
+
+Test all the endpoints also create different employees which different levels and assign different roles to the different units and level they are in and test 
+
+then write out the ones passing, the ones failing in a different file
+--=-=-=-=-=-=-=-=-=-=-=-=--

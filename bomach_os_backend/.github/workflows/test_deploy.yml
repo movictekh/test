@@ -1,0 +1,65 @@
+name: Django CI/CD Pipeline Test
+
+on:
+  push:
+    branches:
+      - test-main
+
+jobs:
+  test:
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: test
+    if: needs.test.result == 'success'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python (CI runner, for optional tests)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+
+            cd /var/www/bomach_os_backend_test
+
+            # Fail fast if .env is missing
+            if [ ! -f ".env" ]; then
+              echo "ERROR: .env file not found in /var/www/bomach_os_backend_test"
+              exit 1
+            fi
+
+            echo "Pulling latest code..."
+            git pull origin test-main
+
+            echo "Activating existing virtual environment..."
+            source venv/bin/activate
+
+            echo "Upgrading pip inside venv..."
+            python3 -m pip install --upgrade pip
+
+            echo "Installing / updating dependencies..."
+            pip install -r requirements.txt
+
+            echo "Running database migrations..."
+            python3 manage.py migrate
+
+            echo "Collecting static files..."
+            python3 manage.py collectstatic --noinput
+
+            echo "Restarting bomach_os_backend_test service and Nginx..."
+            sudo systemctl restart bomach_os_backend_test
+            sudo systemctl restart nginx
+
+            echo "Deployment complete!"

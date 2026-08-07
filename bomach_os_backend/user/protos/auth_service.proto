@@ -1,0 +1,229 @@
+syntax = "proto3";
+
+package auth;
+
+// Auth/User Service for validating and fetching user/employee data
+service AuthService {
+  // Verify JWT token and return user info
+  rpc VerifyToken(VerifyTokenRequest) returns (VerifyTokenResponse);
+
+  // Validate if a user/employee exists
+  rpc ValidateUser(ValidateUserRequest) returns (ValidateUserResponse);
+
+  // Get user/employee details
+  rpc GetUser(GetUserRequest) returns (User);
+
+  // Get multiple users
+  rpc GetUsers(GetUsersRequest) returns (GetUsersResponse);
+
+  // Validate employee ID
+  rpc ValidateEmployee(ValidateEmployeeRequest) returns (ValidateEmployeeResponse);
+
+  // Get employee details
+  rpc GetEmployee(GetEmployeeRequest) returns (Employee);
+
+  // Validate branch ID
+  rpc ValidateBranch(ValidateBranchRequest) returns (ValidateBranchResponse);
+
+  // Get branch details
+  rpc GetBranch(GetBranchRequest) returns (Branch);
+
+  // Validate client ID
+  rpc ValidateClient(ValidateClientRequest) returns (ValidateClientResponse);
+
+  // Get client details
+  rpc GetClient(GetClientRequest) returns (Client);
+
+  // Validate employee level
+  rpc ValidateLevel(ValidateLevelRequest) returns (ValidateLevelResponse);
+
+  // Get multiple employees by IDs
+  rpc GetEmployees(GetEmployeesRequest) returns (GetEmployeesResponse);
+
+  // Get employee statistics for HR dashboard
+  rpc GetEmployeeStats(GetEmployeeStatsRequest) returns (EmployeeStatsResponse);
+}
+
+// Messages for Token verification
+message VerifyTokenRequest {
+  string token = 1;
+}
+
+message VerifyTokenResponse {
+  bool valid = 1;
+  string message = 2;
+  string user_id = 3;
+  User user = 4;
+}
+
+// Messages for User validation
+message ValidateUserRequest {
+  string user_id = 1;
+}
+
+message ValidateUserResponse {
+  bool exists = 1;
+  string message = 2;
+  User user = 3;
+}
+
+// Messages for getting user
+message GetUserRequest {
+  string user_id = 1;
+}
+
+message GetUsersRequest {
+  repeated string user_ids = 1;
+}
+
+message GetUsersResponse {
+  repeated User users = 1;
+}
+
+// User model
+message User {
+  string id = 1;
+  string email = 2;
+  string full_name = 3;
+  string username = 4;
+  bool is_active = 5;
+  string created_at = 6;
+  string updated_at = 7;
+}
+
+// Messages for Employee validation
+message ValidateEmployeeRequest {
+  string employee_id = 1;
+}
+
+message ValidateEmployeeResponse {
+  bool exists = 1;
+  string message = 2;
+  Employee employee = 3;
+}
+
+// Messages for getting employee
+message GetEmployeeRequest {
+  string employee_id = 1;
+}
+
+// Messages for getting multiple employees
+message GetEmployeesRequest {
+  repeated string employee_ids = 1;
+}
+
+message GetEmployeesResponse {
+  repeated Employee employees = 1;
+}
+
+// Employee model
+message Employee {
+  string id = 1;
+  string employee_id = 2;
+  string email = 3;
+  string full_name = 4;
+  string phone = 5;
+  string department_id = 6;
+  string position = 7;
+  bool is_active = 8;
+  string created_at = 9;
+  string updated_at = 10;
+  string department_name = 11;
+  string branch_name = 12;
+  string gross_salary = 13;
+  string allowances = 14;  // JSON string representation of allowances
+  string employment_type = 15;
+}
+
+// Messages for Branch validation
+message ValidateBranchRequest {
+  string branch_id = 1;
+}
+
+message ValidateBranchResponse {
+  bool exists = 1;
+  string message = 2;
+  Branch branch = 3;
+}
+
+// Messages for getting branch
+message GetBranchRequest {
+  string branch_id = 1;
+}
+
+// Branch model
+message Branch {
+  string id = 1;
+  string branch_id = 2;
+  string branch_name = 3;
+  string country = 4;
+  string state = 5;
+  string office_address = 6;
+  string operational_status = 7;
+  bool is_active = 8;
+  string created_at = 9;
+  string updated_at = 10;
+}
+
+// Messages for Client validation
+message ValidateClientRequest {
+  string client_id = 1;
+}
+
+message ValidateClientResponse {
+  bool exists = 1;
+  string message = 2;
+  Client client = 3;
+}
+
+// Messages for getting client
+message GetClientRequest {
+  string client_id = 1;
+}
+
+// Client model
+message Client {
+  string id = 1;
+  string client_name = 2;
+  string email = 3;
+  string phone = 4;
+  bool is_active = 5;
+  string created_at = 6;
+  string updated_at = 7;
+}
+
+// Messages for Level validation
+message ValidateLevelRequest {
+  string level = 1;
+}
+
+message ValidateLevelResponse {
+  bool exists = 1;
+  string message = 2;
+  EmployeeLevelMessage level = 3;
+}
+
+// EmployeeLevel model
+message EmployeeLevelMessage {
+  string id = 1;
+  string level = 2;
+  string level_display = 3;
+  string created_at = 4;
+  string updated_at = 5;
+}
+
+// Messages for employee stats
+message GetEmployeeStatsRequest {}
+
+message DepartmentHeadcount {
+  string department_id = 1;
+  string department_name = 2;
+  int32 count = 3;
+}
+
+message EmployeeStatsResponse {
+  int32 total_employees = 1;
+  int32 new_hires_30_days = 2;
+  int32 new_hires_today = 3;
+  repeated DepartmentHeadcount headcount_by_department = 4;
+}

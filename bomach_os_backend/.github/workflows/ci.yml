@@ -1,0 +1,36 @@
+name: Django Tests
+
+on:
+  workflow_call:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    env:
+      TRY_LOCAL_DB: "True"
+      SECRET_KEY: ci-secret-key
+      DEBUG: "True"
+      GLITCHTIP_DSN: ""
+      AWS_STORAGE_BUCKET_NAME: ci-bucket
+      AWS_ACCESS_KEY_ID: ci-access-key
+      AWS_SECRET_ACCESS_KEY: ci-secret-key
+      AWS_S3_REGION_NAME: us-east-1
+      AWS_S3_CUSTOM_DOMAIN: ci.example.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run services tests
+        run: python3 manage.py test services

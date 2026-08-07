@@ -1,0 +1,82 @@
+syntax = "proto3";
+
+package department;
+
+// Department Service for validating and fetching department data
+service DepartmentService {
+  // Validate if a department exists
+  rpc ValidateDepartment(ValidateDepartmentRequest) returns (ValidateDepartmentResponse);
+
+  // Get department details
+  rpc GetDepartment(GetDepartmentRequest) returns (Department);
+
+  // Get multiple departments
+  rpc GetDepartments(GetDepartmentsRequest) returns (GetDepartmentsResponse);
+
+  // Validate if a sub-department exists
+  rpc ValidateSubDepartment(ValidateSubDepartmentRequest) returns (ValidateSubDepartmentResponse);
+
+  // Get sub-department details
+  rpc GetSubDepartment(GetSubDepartmentRequest) returns (SubDepartment);
+}
+
+// Messages for Department validation
+message ValidateDepartmentRequest {
+  string department_id = 1;
+}
+
+message ValidateDepartmentResponse {
+  bool exists = 1;
+  string message = 2;
+  Department department = 3;
+}
+
+// Messages for getting department
+message GetDepartmentRequest {
+  string department_id = 1;
+}
+
+message GetDepartmentsRequest {
+  repeated string department_ids = 1;
+}
+
+message GetDepartmentsResponse {
+  repeated Department departments = 1;
+}
+
+// Department model
+message Department {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  bool is_active = 4;
+  string created_at = 5;
+  string updated_at = 6;
+}
+
+// Messages for SubDepartment validation
+message ValidateSubDepartmentRequest {
+  string sub_department_id = 1;
+}
+
+message ValidateSubDepartmentResponse {
+  bool exists = 1;
+  string message = 2;
+  SubDepartment sub_department = 3;
+}
+
+// Messages for getting sub-department
+message GetSubDepartmentRequest {
+  string sub_department_id = 1;
+}
+
+// SubDepartment model
+message SubDepartment {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string department_id = 4;
+  bool is_active = 5;
+  string created_at = 6;
+  string updated_at = 7;
+}

@@ -1,0 +1,795 @@
+{
+  "total": 158,
+  "endpoints": [
+    {
+      "endpoint": "POST /api/v1/auth/login",
+      "status": 200,
+      "response_preview": "Login successful"
+    },
+    {
+      "endpoint": "GET /api/v1/auth/me",
+      "status": 200,
+      "response_preview": "{'id': 1, 'email': 'admin@gmail.com', 'username': 'admin', 'first_name': 'Emmanuel', 'last_name': 'Max', 'phone_number': None, 'is_verified': False, 'created_at': '2026-01-09T13:46:15.172Z'}"
+    },
+    {
+      "endpoint": "GET /api/v1/auth/verify-token",
+      "status": 200,
+      "response_preview": "{'success': True, 'valid': True, 'user_id': 1, 'detail': 'Token is valid'}"
+    },
+    {
+      "endpoint": "POST /api/v1/auth/refresh",
+      "status": 200,
+      "response_preview": "{'success': True, 'access_token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzczMTA0MjEzLCJpYXQiOjE3NzMwNDQyMTMsImp0aSI6IjA0ZmI5NjliLTYzNmUtNGM0OS04"
+    },
+    {
+      "endpoint": "POST /api/v1/auth/forgot-password",
+      "status": 200,
+      "response_preview": "{'success': True, 'detail': 'Password reset code sent to your email'}"
+    },
+    {
+      "endpoint": "GET /api/v1/health",
+      "status": 200,
+      "response_preview": "{'status': 'healthy', 'detail': 'API is running'}"
+    },
+    {
+      "endpoint": "GET /api/v1/dashboard/stats",
+      "status": 200,
+      "response_preview": "{'training_programs': 0, 'job_postings': 0, 'leaves': 0, 'disciplinary_process': 0}"
+    },
+    {
+      "endpoint": "GET /api/v1/stats",
+      "status": 200,
+      "response_preview": "{'total_services': 0, 'total_orders': 0, 'total_quotes': 0, 'total_invoices': 0}"
+    },
+    {
+      "endpoint": "GET /api/v1/stats/dashboard",
+      "status": 200,
+      "response_preview": "{'total_employees': 1, 'new_employees_count': 0, 'total_branches': 1, 'removed_branches_count': 0, 'pending_approvals': 0, 'overdue_tasks_count': 0, 'asset_inventory': 0, 'new_inventory_count': 0}"
+    },
+    {
+      "endpoint": "GET /api/v1/company/company-settings",
+      "status": 200,
+      "response_preview": "{'id': 1, 'company_name': 'BOMACH Test', 'company_email': 'info@company.com', 'company_phone': '+1234567890', 'company_addresses': 'Default Address', 'company_logo': None, 'rc_number': 'RC000000', 'pr"
+    },
+    {
+      "endpoint": "PUT /api/v1/company/company-settings",
+      "status": 200,
+      "response_preview": "{'id': 1, 'company_name': 'BOMACH Test', 'company_email': 'info@company.com', 'company_phone': '+1234567890', 'company_addresses': 'Default Address', 'company_logo': None, 'rc_number': 'RC000000', 'pr"
+    },
+    {
+      "endpoint": "GET /api/v1/branch/branches",
+      "status": 200,
+      "response_preview": "{'items': [{'id': 1, 'branch_name': 'Enugu', 'branch_id': 'fdgfds', 'default_currency': 'NGN', 'language_preference': 'en-GB', 'country_id': 1, 'country_name': 'Nigeria', 'state_id': 1, 'state_name': "
+    },
+    {
+      "endpoint": "GET /api/v1/branch/branches/choices/fields",
+      "status": 200,
+      "response_preview": "{'operational_status': [{'value': 'active', 'label': 'Active'}, {'value': 'inactive', 'label': 'Inactive'}, {'value': 'under_maintenance', 'label': 'Under Maintenance'}, {'value': 'temporarily_closed'"
+    },
+    {
+      "endpoint": "GET /api/v1/branch/countries",
+      "status": 200,
+      "response_preview": "{'items': [{'id': 1, 'name': 'Nigeria', 'code': 'NGN', 'is_active': True, 'created_at': '2026-01-09T19:38:55.123Z', 'updated_at': '2026-01-09T19:38:55.123Z'}], 'count': 1}"
+    },
+    {
+      "endpoint": "GET /api/v1/branch/states",
+      "status": 200,
+      "response_preview": "{'items': [{'id': 1, 'country_id': 1, 'country_name': 'Nigeria', 'name': 'Enugu', 'code': '', 'is_active': True, 'created_at': '2026-01-09T19:39:01.925Z', 'updated_at': '2026-01-09T19:39:01.925Z'}], '"
+    },
+    {
+      "endpoint": "GET /api/v1/branch/branches/1",
+      "status": 200,
+      "response_preview": "{'id': 1, 'branch_name': 'Enugu', 'branch_id': 'fdgfds', 'default_currency': 'NGN', 'language_preference': 'en-GB', 'country_id': 1, 'country_name': 'Nigeria', 'state_id': 1, 'state_name': 'Enugu', 'l"
+    },
+    {
+      "endpoint": "GET /api/v1/branch/branches/1/business-hours",
+      "status": 200,
+      "response_preview": "[{'id': 6, 'day_of_week': 0, 'day_name': 'Monday', 'open_time': '09:00', 'close_time': '11:00', 'is_open': True}, {'id': 7, 'day_of_week': 1, 'day_name': 'Tuesday', 'open_time': '09:00', 'close_time':"
+    },
+    {
+      "endpoint": "GET /api/v1/branch/branches/1/performance",
+      "status": 200,
+      "response_preview": "{'metrics': {'revenue_generated': '\u20a645.0M', 'operational_efficiency': '96%', 'customer_satisfaction': '94%', 'total_employees': 120}, 'key_insights': [{'title': 'Revenue Status', 'value': '113% of rev"
+    },
+    {
+      "endpoint": "PUT /api/v1/branch/branches/1",
+      "status": 200,
+      "response_preview": "{'id': 1, 'branch_name': 'Updated Branch', 'branch_id': 'fdgfds', 'default_currency': 'NGN', 'language_preference': 'en-GB', 'country_id': 1, 'country_name': 'Nigeria', 'state_id': 1, 'state_name': 'E"
+    },
+    {
+      "endpoint": "GET /api/v1/employees/employees",
+      "status": 200,
+      "response_preview": "{'items': [{'user_id': 1, 'username': 'admin', 'email': 'admin@gmail.com', 'first_name': 'Emmanuel', 'middle_name': '', 'last_name': 'Max', 'gender': 'male', 'marital_status': 'single', 'nationality':"
+    },
+    {
+      "endpoint": "GET /api/v1/employees/employee-levels",
+      "status": 200,
+      "response_preview": "{'items': [{'id': 2, 'level': 'mid_level'}, {'id': 1, 'level': 'ceo'}], 'count': 2}"
+    },
+    {
+      "endpoint": "GET /api/v1/employees/department",
+      "status": 200,
+      "response_preview": "{'items': [{'id': 1, 'name': 'operations', 'description': ''}, {'id': 2, 'name': 'string', 'description': 'string'}], 'count': 2}"
+    },
+    {
+      "endpoint": "GET /api/v1/employees/unit",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "GET /api/v1/employees/employees/1",
+      "status": 200,
+      "response_preview": "{'user_id': 1, 'username': 'admin', 'email': 'admin@gmail.com', 'first_name': 'Emmanuel', 'middle_name': '', 'last_name': 'Max', 'gender': 'male', 'marital_status': 'single', 'nationality': '', 'phone"
+    },
+    {
+      "endpoint": "GET /api/v1/employees/1/documents",
+      "status": 200,
+      "response_preview": "[]"
+    },
+    {
+      "endpoint": "GET /api/v1/employees/1/reviews",
+      "status": 200,
+      "response_preview": "{'items': [{'id': 1, 'employee_id': 1, 'reviewer_id': 1, 'reviewer_name': 'Emmanuel Max', 'quarter': 'Q1', 'year': 2026, 'review_period': 'Q1 2026', 'job_knowledge': 5, 'communication': 4, 'problem_so"
+    },
+    {
+      "endpoint": "GET /api/v1/leave-requests/stats/by-employee/1",
+      "status": 200,
+      "response_preview": "{'employee_id': 1, 'total': 0, 'pending': 0, 'approved': 0, 'rejected': 0}"
+    },
+    {
+      "endpoint": "GET /api/v1/announcements/",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "GET /api/v1/announcements/choices",
+      "status": 200,
+      "response_preview": "{'announcement_types': [{'value': 'general', 'label': 'General'}, {'value': 'urgent', 'label': 'Urgent'}, {'value': 'event', 'label': 'Event'}, {'value': 'policy', 'label': 'Policy Update'}, {'value':"
+    },
+    {
+      "endpoint": "POST /api/v1/announcements/",
+      "status": 201,
+      "response_preview": "{'id': 1, 'announcement_id': 'ANN-F3D22456E951', 'title': 'Test Announcement', 'content': 'Test content', 'announcement_type': 'general', 'announcement_type_display': 'General', 'priority': 'normal', "
+    },
+    {
+      "endpoint": "GET /api/v1/announcements/1",
+      "status": 200,
+      "response_preview": "{'id': 1, 'announcement_id': 'ANN-F3D22456E951', 'title': 'Test Announcement', 'content': 'Test content', 'announcement_type': 'general', 'announcement_type_display': 'General', 'priority': 'normal', "
+    },
+    {
+      "endpoint": "GET /api/v1/events/",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "GET /api/v1/meetings/",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "GET /api/v1/meetings/choices",
+      "status": 200,
+      "response_preview": "{'statuses': [{'value': 'scheduled', 'label': 'Scheduled'}, {'value': 'ongoing', 'label': 'Ongoing'}, {'value': 'completed', 'label': 'Completed'}, {'value': 'cancelled', 'label': 'Cancelled'}, {'valu"
+    },
+    {
+      "endpoint": "POST /api/v1/meetings/",
+      "status": 201,
+      "response_preview": "{'id': 1, 'meeting_id': 'MTG-02B8E6BB5ED2', 'title': 'Test Meeting', 'agenda': 'Discuss Q1', 'meeting_date': '2026-04-01', 'meeting_time': '09:00', 'duration_minutes': 60, 'duration_display': '1h', 's"
+    },
+    {
+      "endpoint": "GET /api/v1/meetings/1",
+      "status": 200,
+      "response_preview": "{'id': 1, 'meeting_id': 'MTG-02B8E6BB5ED2', 'title': 'Test Meeting', 'agenda': 'Discuss Q1', 'meeting_date': '2026-04-01', 'meeting_time': '09:00', 'duration_minutes': 60, 'duration_display': '1h', 's"
+    },
+    {
+      "endpoint": "GET /api/v1/policies/",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "GET /api/v1/policies/choices",
+      "status": 200,
+      "response_preview": "{'categories': [{'value': 'work_ethics', 'label': 'Work Ethics'}, {'value': 'hiring', 'label': 'Hiring & Recruitment'}, {'value': 'leave', 'label': 'Leave & Time Off'}, {'value': 'code_of_conduct', 'l"
+    },
+    {
+      "endpoint": "GET /api/v1/categories",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "GET /api/v1/services",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "GET /api/v1/clients/clients/",
+      "status": 200,
+      "response_preview": "{'items': [{'id': 1, 'user_id': 2, 'first_name': 'string', 'last_name': 'string', 'email': 'user@example.com', 'profile_picture': 'string', 'address': '', 'phone_number': 'string', 'gender': 'male', '"
+    },
+    {
+      "endpoint": "POST /api/v1/clients/clients/",
+      "status": 201,
+      "response_preview": "{'id': 2, 'user_id': 6, 'first_name': 'John', 'last_name': 'Doe', 'email': 'testclient_api@example.com', 'profile_picture': None, 'address': '', 'phone_number': '+2341234567890', 'gender': 'male', 'ba"
+    },
+    {
+      "endpoint": "GET /api/v1/clients/clients/2/",
+      "status": 200,
+      "response_preview": "{'id': 1, 'user_id': 2, 'first_name': 'string', 'last_name': 'string', 'email': 'user@example.com', 'profile_picture': 'string', 'address': '', 'phone_number': 'string', 'gender': 'male', 'balance': 0"
+    },
+    {
+      "endpoint": "GET /api/v1/clients/leads/",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "POST /api/v1/clients/leads/",
+      "status": 201,
+      "response_preview": "{'id': 1, 'email': 'testlead_api@example.com', 'first_name': 'Jane', 'last_name': 'Smith', 'gender': 'male', 'marital_status': 'single', 'address': '', 'phone_number': None, 'profile_picture': None, '"
+    },
+    {
+      "endpoint": "GET /api/v1/clients/leads/1/",
+      "status": 200,
+      "response_preview": "{'id': 1, 'email': 'testlead_api@example.com', 'first_name': 'Jane', 'last_name': 'Smith', 'gender': 'male', 'marital_status': 'single', 'address': '', 'phone_number': None, 'profile_picture': None, '"
+    },
+    {
+      "endpoint": "GET /api/v1/leads",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "POST /api/v1/leads",
+      "status": 201,
+      "response_preview": "{'id': 1, 'client_id': 2, 'service': None, 'estimated_value': '500000', 'status': 'new', 'notes': '', 'created_at': '2026-03-09T08:16:56.271Z', 'updated_at': '2026-03-09T08:16:56.271Z', 'created_by_id"
+    },
+    {
+      "endpoint": "GET /api/v1/leads/1",
+      "status": 200,
+      "response_preview": "{'id': 1, 'client_id': 2, 'service': None, 'estimated_value': '500000.00', 'status': 'new', 'notes': '', 'created_at': '2026-03-09T08:16:56.271Z', 'updated_at': '2026-03-09T08:16:56.271Z', 'created_by"
+    },
+    {
+      "endpoint": "GET /api/v1/invoices",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "GET /api/v1/quotes",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "GET /api/v1/orders",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "GET /api/v1/payments",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "GET /api/v1/expenses",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "POST /api/v1/expenses",
+      "status": 201,
+      "response_preview": "{'id': 1, 'user_id': 1, 'date': '2026-03-01', 'description': 'Office supplies', 'amount': '15000', 'category': 'other', 'status': 'pending', 'created_at': '2026-03-09T08:16:56.502Z', 'updated_at': '20"
+    },
+    {
+      "endpoint": "GET /api/v1/expenses/user/1/expenses",
+      "status": 200,
+      "response_preview": "{'items': [{'id': 1, 'user_id': 1, 'date': '2026-03-01', 'description': 'Office supplies', 'amount': '15000.00', 'category': 'other', 'status': 'pending', 'created_at': '2026-03-09T08:16:56.502Z', 'up"
+    },
+    {
+      "endpoint": "GET /api/v1/expenses/1",
+      "status": 200,
+      "response_preview": "{'id': 1, 'user_id': 1, 'date': '2026-03-01', 'description': 'Office supplies', 'amount': '15000.00', 'category': 'other', 'status': 'pending', 'created_at': '2026-03-09T08:16:56.502Z', 'updated_at': "
+    },
+    {
+      "endpoint": "GET /api/v1/projects",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "GET /api/v1/projects/stats/",
+      "status": 200,
+      "response_preview": "{'detail': 'Project deleted successfully'}"
+    },
+    {
+      "endpoint": "POST /api/v1/projects",
+      "status": 200,
+      "response_preview": "{'id': 1, 'name': 'Test Project Alpha', 'short_code': 'TPA', 'category': 'construction', 'department_id': None, 'client_id': 2, 'employee_ids': [], 'location': None, 'priority': 'medium', 'summary': N"
+    },
+    {
+      "endpoint": "GET /api/v1/projects/1",
+      "status": 200,
+      "response_preview": "{'id': 1, 'name': 'Test Project Alpha', 'short_code': 'TPA', 'category': 'construction', 'department_id': None, 'client_id': 2, 'employee_ids': [], 'location': None, 'priority': 'medium', 'summary': N"
+    },
+    {
+      "endpoint": "GET /api/v1/projects/1/employees",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "GET /api/v1/budgets",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "GET /api/v1/budgets/project/1/summary",
+      "status": 200,
+      "response_preview": "{'project_id': 1, 'total_budget': 0, 'paid_budget': 0, 'approved_budget': 0, 'draft_budget': 0, 'budget_count': 0, 'status_breakdown': {'draft': 0, 'approved': 0, 'paid': 0, 'cancelled': 0}}"
+    },
+    {
+      "endpoint": "GET /api/v1/tasks",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "POST /api/v1/tasks",
+      "status": 200,
+      "response_preview": "{'id': 1, 'milestone_id': None, 'name': 'Test Task Alpha', 'description': None, 'status': 'pending', 'priority': 'medium', 'assigned_to': [], 'due_date': None, 'estimated_hours': None, 'created_at': '"
+    },
+    {
+      "endpoint": "GET /api/v1/tasks/1",
+      "status": 200,
+      "response_preview": "{'id': 1, 'milestone_id': None, 'name': 'Test Task Alpha', 'description': None, 'status': 'pending', 'priority': 'medium', 'assigned_to': [], 'due_date': None, 'estimated_hours': None, 'created_at': '"
+    },
+    {
+      "endpoint": "GET /api/v1/milestones",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "POST /api/v1/milestones",
+      "status": 200,
+      "response_preview": "{'id': 1, 'project_id': 1, 'name': 'Phase 1', 'description': None, 'priority': 'medium', 'status': 'pending', 'budget': None, 'progress': 0, 'start_date': None, 'end_date': None, 'created_at': '2026-0"
+    },
+    {
+      "endpoint": "GET /api/v1/milestones/1",
+      "status": 200,
+      "response_preview": "{'id': 1, 'project_id': 1, 'name': 'Phase 1', 'description': None, 'priority': 'medium', 'status': 'pending', 'budget': None, 'progress': 0, 'start_date': None, 'end_date': None, 'created_at': '2026-0"
+    },
+    {
+      "endpoint": "GET /api/v1/timelines",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "POST /api/v1/timelines",
+      "status": 200,
+      "response_preview": "{'id': 1, 'project_id': 1, 'name': 'Timeline 1', 'description': None, 'status': 'pending', 'start_date': '2026-04-01', 'end_date': '2026-06-30', 'created_at': '2026-03-09T08:16:57.009Z', 'updated_at':"
+    },
+    {
+      "endpoint": "GET /api/v1/timelines/1",
+      "status": 200,
+      "response_preview": "{'id': 1, 'project_id': 1, 'name': 'Timeline 1', 'description': None, 'status': 'pending', 'start_date': '2026-04-01', 'end_date': '2026-06-30', 'created_at': '2026-03-09T08:16:57.009Z', 'updated_at':"
+    },
+    {
+      "endpoint": "GET /api/v1/contracts",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "POST /api/v1/contracts",
+      "status": 200,
+      "response_preview": "{'id': 1, 'project_id': 1, 'name': 'Test Contract', 'contract_number': 'CTR-2026-001', 'contract_type': 'fixed_price', 'status': 'pending', 'value': '500000', 'start_date': '2026-04-01', 'end_date': '"
+    },
+    {
+      "endpoint": "GET /api/v1/contracts/1",
+      "status": 200,
+      "response_preview": "{'id': 1, 'project_id': 1, 'name': 'Test Contract', 'contract_number': 'CTR-2026-001', 'contract_type': 'fixed_price', 'status': 'pending', 'value': '500000.00', 'start_date': '2026-04-01', 'end_date'"
+    },
+    {
+      "endpoint": "GET /api/v1/properties",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "GET /api/v1/properties/stats",
+      "status": 200,
+      "response_preview": "{'total_properties': 0, 'available': 0, 'reserved': 0, 'sold_rented': 0, 'for_sale': 0, 'for_rent': 0, 'for_lease': 0}"
+    },
+    {
+      "endpoint": "POST /api/v1/properties",
+      "status": 201,
+      "response_preview": "{'id': 1, 'name': 'Test Property', 'property_type': 'residential', 'category': 'apartment', 'location': 'Victoria Island', 'price': '50000000', 'size': '250.5', 'bedrooms': 0, 'bathrooms': 0, 'parking"
+    },
+    {
+      "endpoint": "GET /api/v1/properties/1",
+      "status": 200,
+      "response_preview": "{'id': 1, 'name': 'Test Property', 'property_type': 'residential', 'category': 'apartment', 'location': 'Victoria Island', 'price': '50000000.00', 'size': '250.50', 'bedrooms': 0, 'bathrooms': 0, 'par"
+    },
+    {
+      "endpoint": "GET /api/v1/properties/client/2/properties",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "GET /api/v1/documents",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "POST /api/v1/documents",
+      "status": 201,
+      "response_preview": "{'id': 1, 'user_id': 1, 'order_id': None, 'property_id': None, 'title': 'Test Doc', 'file_url': 'https://example.com/test.pdf', 'description': None, 'created_at': '2026-03-09T08:16:57.214Z', 'updated_"
+    },
+    {
+      "endpoint": "GET /api/v1/documents/1",
+      "status": 200,
+      "response_preview": "{'id': 1, 'user_id': 1, 'order_id': None, 'property_id': None, 'title': 'Test Doc', 'file_url': 'https://example.com/test.pdf', 'description': None, 'created_at': '2026-03-09T08:16:57.214Z', 'updated_"
+    },
+    {
+      "endpoint": "GET /api/v1/documents/user/1/documents",
+      "status": 200,
+      "response_preview": "{'items': [{'id': 1, 'user_id': 1, 'order_id': None, 'property_id': None, 'title': 'Test Doc', 'file_url': 'https://example.com/test.pdf', 'description': None, 'created_at': '2026-03-09T08:16:57.214Z'"
+    },
+    {
+      "endpoint": "GET /api/v1/assets/",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "GET /api/v1/inventory/",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "GET /api/v1/job-postings/",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "GET /api/v1/job-postings/stats/summary",
+      "status": 200,
+      "response_preview": "{'total': 0, 'active': 0, 'pending': 0, 'closed': 0, 'draft': 0}"
+    },
+    {
+      "endpoint": "GET /api/v1/applicants/",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "GET /api/v1/training-programs/",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "GET /api/v1/performance-reviews/",
+      "status": 200,
+      "response_preview": "{'items': [{'employee_id': 1, 'reviewer_id': 1, 'review_date': '2026-03-01', 'review_period': 'Q1 2026', 'overall_rating': 4, 'rating_display': '4 Stars', 'strengths': 'Strong technical skills', 'area"
+    },
+    {
+      "endpoint": "GET /api/v1/employee-evaluations/employee/1",
+      "status": 200,
+      "response_preview": "[]"
+    },
+    {
+      "endpoint": "GET /api/v1/awards/",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "POST /api/v1/awards/",
+      "status": 201,
+      "response_preview": "{'id': 1, 'title': 'Employee of the Month', 'category': 'performance', 'date_awarded': '2026-03-01T00:00:00', 'rank_level': 'gold', 'description': None, 'created_at': '2026-03-09T08:16:57.584Z', 'upda"
+    },
+    {
+      "endpoint": "GET /api/v1/awards/1",
+      "status": 200,
+      "response_preview": "{'id': 1, 'title': 'Employee of the Month', 'category': 'performance', 'date_awarded': '2026-03-01T00:00:00', 'rank_level': 'gold', 'description': None, 'created_at': '2026-03-09T08:16:57.584Z', 'upda"
+    },
+    {
+      "endpoint": "GET /api/v1/kpis/metrics/",
+      "status": 200,
+      "response_preview": "{'items': [{'id': 1, 'name': 'Test Metric', 'description': 'Test', 'unit': 'percentage', 'created_at': '2026-03-09T08:10:08.227Z', 'updated_at': '2026-03-09T08:10:08.227Z'}], 'count': 1}"
+    },
+    {
+      "endpoint": "POST /api/v1/kpis/metrics/",
+      "status": 201,
+      "response_preview": "{'id': 2, 'name': 'Revenue Target', 'description': 'Monthly target', 'unit': 'percentage', 'created_at': '2026-03-09T08:16:57.629Z', 'updated_at': '2026-03-09T08:16:57.629Z'}"
+    },
+    {
+      "endpoint": "GET /api/v1/kpis/metrics/2",
+      "status": 200,
+      "response_preview": "{'id': 2, 'name': 'Revenue Target', 'description': 'Monthly target', 'unit': 'percentage', 'created_at': '2026-03-09T08:16:57.629Z', 'updated_at': '2026-03-09T08:16:57.629Z'}"
+    },
+    {
+      "endpoint": "GET /api/v1/kpis/templates/",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "POST /api/v1/kpis/templates/",
+      "status": 201,
+      "response_preview": "{'id': 1, 'department_id': 1, 'level_id': 1, 'template_metrics': [], 'created_at': '2026-03-09T08:16:57.675Z', 'updated_at': '2026-03-09T08:16:57.675Z'}"
+    },
+    {
+      "endpoint": "GET /api/v1/kpis/templates/1",
+      "status": 200,
+      "response_preview": "{'id': 1, 'department_id': 1, 'level_id': 1, 'template_metrics': [], 'created_at': '2026-03-09T08:16:57.675Z', 'updated_at': '2026-03-09T08:16:57.675Z'}"
+    },
+    {
+      "endpoint": "GET /api/v1/monthly-scorecards/employee/1",
+      "status": 200,
+      "response_preview": "{'id': 1, 'employee_id': 1, 'employee_name': '', 'employee_level': '', 'month': 3, 'year': 2026, 'attendance_score': '0.00', 'task_delivery_score': '0.00', 'report_accuracy_score': '0.00', 'brand_cont"
+    },
+    {
+      "endpoint": "GET /api/v1/monthly-scorecards/leaderboard",
+      "status": 200,
+      "response_preview": "{'month': 3, 'year': 2026, 'entries': [{'rank': 0, 'employee_id': 1, 'employee_name': '', 'branch': 'Updated Branch (fdgfds)', 'score': '0.00', 'award': None}], 'avg_score': '0.00', 'total_participant"
+    },
+    {
+      "endpoint": "GET /api/v1/disciplinary-cases/",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "GET /api/v1/loans",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "POST /api/v1/loans",
+      "status": 201,
+      "response_preview": "{'loan_amount': '100,000.00', 'repayment_date': '2026-06-01', 'reason': 'Emergency', 'employee_name': 'Emmanuel Max', 'job_title': '', 'status': 'Pending', 'id': 1, 'emergency_contact_name': 'Jane', '"
+    },
+    {
+      "endpoint": "GET /api/v1/loans/1",
+      "status": 200,
+      "response_preview": "{'loan_amount': '100,000.00', 'repayment_date': '2026-06-01', 'reason': 'Emergency', 'employee_name': 'Emmanuel Max', 'job_title': '', 'status': 'Pending', 'id': 1, 'emergency_contact_name': 'Jane', '"
+    },
+    {
+      "endpoint": "POST /api/v1/loans/1/approve",
+      "status": 200,
+      "response_preview": "{'loan_amount': '100,000.00', 'repayment_date': '2026-06-01', 'reason': 'Emergency', 'employee_name': 'Emmanuel Max', 'job_title': '', 'status': 'Approved', 'id': 1, 'emergency_contact_name': 'Jane', "
+    },
+    {
+      "endpoint": "GET /api/v1/work-reports/",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "POST /api/v1/work-reports/",
+      "status": 201,
+      "response_preview": "{'id': 1, 'employee_id': 1, 'day': '2026-03-09', 'hours_worked': '8', 'mood': 'neutral', 'challenges': None, 'achievements': 'API testing', 'plan_next_day': None, 'status': 'draft', 'created_at': '202"
+    },
+    {
+      "endpoint": "GET /api/v1/work-reports/1",
+      "status": 200,
+      "response_preview": "{'id': 1, 'employee_id': 1, 'day': '2026-03-09', 'hours_worked': '8.0', 'mood': 'neutral', 'challenges': None, 'achievements': 'API testing', 'plan_next_day': None, 'status': 'draft', 'created_at': '2"
+    },
+    {
+      "endpoint": "GET /api/v1/approvals/flows",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "GET /api/v1/approvals/flows/choices",
+      "status": 200,
+      "response_preview": "{'action_types': [{'value': 'leave_request', 'label': 'Leave Request'}, {'value': 'expense_claim', 'label': 'Expense Claim'}, {'value': 'salary_adjustment', 'label': 'Salary Adjustment'}, {'value': 'n"
+    },
+    {
+      "endpoint": "GET /api/v1/approvals/requests",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "GET /api/v1/board-resolutions/",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "GET /api/v1/board-resolutions/choices",
+      "status": 200,
+      "response_preview": "{'types': [{'value': 'financial', 'label': 'Financial'}, {'value': 'operational', 'label': 'Operational'}, {'value': 'strategic', 'label': 'Strategic'}, {'value': 'legal', 'label': 'Legal & Compliance"
+    },
+    {
+      "endpoint": "GET /api/v1/shareholders/",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "GET /api/v1/shareholders/summary",
+      "status": 200,
+      "response_preview": "{'total_shareholders': 0, 'active_shareholders': 0, 'total_share_percentage': '0.00', 'unallocated_percentage': '100.00', 'board_composition': []}"
+    },
+    {
+      "endpoint": "POST /api/v1/shareholders/",
+      "status": 201,
+      "response_preview": "{'id': 1, 'shareholder_id': 'SH-14533B06BE99', 'user_id': 7, 'first_name': 'Test', 'last_name': 'Shareholder', 'email': 'shareholder_api@example.com', 'phone_number': None, 'profile_picture': None, 't"
+    },
+    {
+      "endpoint": "GET /api/v1/shareholders/1",
+      "status": 200,
+      "response_preview": "{'id': 1, 'shareholder_id': 'SH-14533B06BE99', 'user_id': 7, 'first_name': 'Test', 'last_name': 'Shareholder', 'email': 'shareholder_api@example.com', 'phone_number': None, 'profile_picture': None, 't"
+    },
+    {
+      "endpoint": "GET /api/v1/compliance/compliance-records",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "GET /api/v1/audit-logs/",
+      "status": 200,
+      "response_preview": "{'items': [{'id': 20, 'activity': 'New lead added: Jane Smith (testlead_api@example.com)', 'audit_type': 'add_lead', 'audit_type_display': 'Add Lead', 'audit_status': 'success', 'audit_status_display'"
+    },
+    {
+      "endpoint": "GET /api/v1/audits/",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "GET /api/v1/audits/statistics/overview/",
+      "status": 200,
+      "response_preview": "{'total_audits': 0, 'completed_audits': 0, 'in_progress_audits': 0, 'scheduled_audits': 0, 'cancelled_audits': 0, 'failed_audits': 0, 'average_score': None, 'pass_rate': None, 'audits_by_type': {}, 'a"
+    },
+    {
+      "endpoint": "GET /api/v1/audits/statistics/performance-trends/",
+      "status": 200,
+      "response_preview": "{'period': 'month', 'trends': [], 'overall_improvement': None}"
+    },
+    {
+      "endpoint": "POST /api/v1/audits/",
+      "status": 201,
+      "response_preview": "{'id': 1, 'audit_name': 'Q1 Financial Audit', 'audit_type': 'financial', 'audit_type_display': 'Financial', 'auditor_name': 'External Auditor', 'auditor_title': '', 'status': 'scheduled', 'status_disp"
+    },
+    {
+      "endpoint": "GET /api/v1/audits/1/",
+      "status": 200,
+      "response_preview": "{'id': 1, 'audit_name': 'Q1 Financial Audit', 'audit_type': 'financial', 'audit_type_display': 'Financial', 'auditor_name': 'External Auditor', 'auditor_title': '', 'status': 'scheduled', 'status_disp"
+    },
+    {
+      "endpoint": "PATCH /api/v1/audits/1/score/",
+      "status": 200,
+      "response_preview": "{'id': 1, 'audit_name': 'Q1 Financial Audit', 'audit_type': 'financial', 'audit_type_display': 'Financial', 'auditor_name': 'External Auditor', 'auditor_title': '', 'status': 'scheduled', 'status_disp"
+    },
+    {
+      "endpoint": "PATCH /api/v1/audits/1/status/",
+      "status": 200,
+      "response_preview": "{'id': 1, 'audit_name': 'Q1 Financial Audit', 'audit_type': 'financial', 'audit_type_display': 'Financial', 'auditor_name': 'External Auditor', 'auditor_title': '', 'status': 'completed', 'status_disp"
+    },
+    {
+      "endpoint": "GET /api/v1/cases/",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "GET /api/v1/cases/statistics/overview/",
+      "status": 200,
+      "response_preview": "{'total_cases': 0, 'open_cases': 0, 'in_progress_cases': 0, 'settled_cases': 0, 'closed_cases': 0, 'won_cases': 0, 'lost_cases': 0, 'dismissed_cases': 0, 'pending_cases': 0, 'total_exposure': '0.00', "
+    },
+    {
+      "endpoint": "POST /api/v1/cases/",
+      "status": 201,
+      "response_preview": "{'id': 1, 'case_name': 'Test Case', 'case_type': 'civil', 'case_type_display': 'Civil', 'status': 'open', 'status_display': 'Open', 'exposure': None, 'next_hearing': None, 'case_number': None, 'descri"
+    },
+    {
+      "endpoint": "GET /api/v1/cases/1/",
+      "status": 200,
+      "response_preview": "{'id': 1, 'case_name': 'Test Case', 'case_type': 'civil', 'case_type_display': 'Civil', 'status': 'open', 'status_display': 'Open', 'exposure': None, 'next_hearing': None, 'case_number': None, 'descri"
+    },
+    {
+      "endpoint": "GET /api/v1/marketing-campaigns",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "POST /api/v1/marketing-campaigns",
+      "status": 201,
+      "response_preview": "{'id': 1, 'name': 'Test Campaign', 'description': None, 'status': 'draft', 'channel': 'email', 'impressions': 0, 'ctr': '0.00', 'roi': '0.00', 'progress_percentage': '0.00', 'budget_allocated': '10000"
+    },
+    {
+      "endpoint": "GET /api/v1/marketing-campaigns/1",
+      "status": 200,
+      "response_preview": "{'id': 1, 'name': 'Test Campaign', 'description': None, 'status': 'draft', 'channel': 'email', 'impressions': 0, 'ctr': '0.00', 'roi': '0.00', 'progress_percentage': '0.00', 'budget_allocated': '10000"
+    },
+    {
+      "endpoint": "GET /api/v1/marketing-campaigns/channel/email/campaigns",
+      "status": 200,
+      "response_preview": "{'items': [{'id': 1, 'name': 'Test Campaign', 'description': None, 'status': 'draft', 'channel': 'email', 'impressions': 0, 'ctr': '0.00', 'roi': '0.00', 'progress_percentage': '0.00', 'budget_allocat"
+    },
+    {
+      "endpoint": "GET /api/v1/marketing-campaigns/status/draft/campaigns",
+      "status": 200,
+      "response_preview": "{'items': [{'id': 1, 'name': 'Test Campaign', 'description': None, 'status': 'draft', 'channel': 'email', 'impressions': 0, 'ctr': '0.00', 'roi': '0.00', 'progress_percentage': '0.00', 'budget_allocat"
+    },
+    {
+      "endpoint": "GET /api/v1/content",
+      "status": 200,
+      "response_preview": "{'items': [{'id': 1, 'title': 'Test Content', 'content_type': 'blog_post', 'status': 'draft', 'platform': 'blog', 'body': 'Test body', 'excerpt': '', 'featured_image': None, 'views': 0, 'likes': 0, 's"
+    },
+    {
+      "endpoint": "GET /api/v1/content/scheduled/upcoming",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "POST /api/v1/content",
+      "status": 201,
+      "response_preview": "{'id': 2, 'title': 'Test Blog', 'content_type': 'blog_post', 'status': 'draft', 'platform': 'blog', 'body': 'Test body', 'excerpt': '', 'featured_image': None, 'views': 0, 'likes': 0, 'shares': 0, 'co"
+    },
+    {
+      "endpoint": "GET /api/v1/content/2",
+      "status": 200,
+      "response_preview": "{'id': 2, 'title': 'Test Blog', 'content_type': 'blog_post', 'status': 'draft', 'platform': 'blog', 'body': 'Test body', 'excerpt': '', 'featured_image': None, 'views': 0, 'likes': 0, 'shares': 0, 'co"
+    },
+    {
+      "endpoint": "POST /api/v1/content/2/increment-views",
+      "status": 200,
+      "response_preview": "{'id': 2, 'title': 'Test Blog', 'content_type': 'blog_post', 'status': 'draft', 'platform': 'blog', 'body': 'Test body', 'excerpt': '', 'featured_image': None, 'views': 1, 'likes': 0, 'shares': 0, 'co"
+    },
+    {
+      "endpoint": "POST /api/v1/content/2/increment-likes",
+      "status": 200,
+      "response_preview": "{'id': 2, 'title': 'Test Blog', 'content_type': 'blog_post', 'status': 'draft', 'platform': 'blog', 'body': 'Test body', 'excerpt': '', 'featured_image': None, 'views': 1, 'likes': 1, 'shares': 0, 'co"
+    },
+    {
+      "endpoint": "POST /api/v1/content/2/increment-shares",
+      "status": 200,
+      "response_preview": "{'id': 2, 'title': 'Test Blog', 'content_type': 'blog_post', 'status': 'draft', 'platform': 'blog', 'body': 'Test body', 'excerpt': '', 'featured_image': None, 'views': 1, 'likes': 1, 'shares': 1, 'co"
+    },
+    {
+      "endpoint": "POST /api/v1/content/2/increment-comments",
+      "status": 200,
+      "response_preview": "{'id': 2, 'title': 'Test Blog', 'content_type': 'blog_post', 'status': 'draft', 'platform': 'blog', 'body': 'Test body', 'excerpt': '', 'featured_image': None, 'views': 1, 'likes': 1, 'shares': 1, 'co"
+    },
+    {
+      "endpoint": "GET /api/v1/content/author/1/content",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "GET /api/v1/worksites",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "POST /api/v1/worksites",
+      "status": 200,
+      "response_preview": "{'id': 1, 'project_id': 1, 'name': 'Test Worksite', 'location': 'Lekki', 'status': 'setup', 'description': None, 'created_at': '2026-03-09T08:16:59.910Z', 'updated_at': '2026-03-09T08:16:59.910Z'}"
+    },
+    {
+      "endpoint": "GET /api/v1/worksites/1",
+      "status": 200,
+      "response_preview": "{'id': 1, 'project_id': 1, 'name': 'Test Worksite', 'location': 'Lekki', 'status': 'setup', 'description': None, 'created_at': '2026-03-09T08:16:59.910Z', 'updated_at': '2026-03-09T08:16:59.910Z'}"
+    },
+    {
+      "endpoint": "GET /api/v1/site-equipment",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "POST /api/v1/site-equipment",
+      "status": 200,
+      "response_preview": "{'id': 1, 'worksite_id': 1, 'name': 'Excavator', 'unit_value': '500000', 'created_at': '2026-03-09T08:16:59.954Z', 'updated_at': '2026-03-09T08:16:59.954Z'}"
+    },
+    {
+      "endpoint": "GET /api/v1/site-equipment/1",
+      "status": 200,
+      "response_preview": "{'id': 1, 'worksite_id': 1, 'name': 'Excavator', 'unit_value': '500000', 'created_at': '2026-03-09T08:16:59.954Z', 'updated_at': '2026-03-09T08:16:59.954Z'}"
+    },
+    {
+      "endpoint": "GET /api/v1/biometric/status",
+      "status": 200,
+      "response_preview": "{'biometric_enabled': False, 'has_fingerprint': False, 'has_face': False}"
+    },
+    {
+      "endpoint": "GET /api/v1/wallet/balance/1/",
+      "status": 200,
+      "response_preview": "{'user_id': 1, 'user_full_name': 'Emmanuel Max', 'total_credits': '0.00', 'total_debits': '0.00', 'current_balance': '0.00', 'pending_transactions': 0, 'completed_transactions': 0, 'last_transaction_d"
+    },
+    {
+      "endpoint": "GET /api/v1/wallet/transactions/",
+      "status": 200,
+      "response_preview": "{'items': [], 'count': 0}"
+    },
+    {
+      "endpoint": "POST /api/v1/auth/logout",
+      "status": 200,
+      "response_preview": "{'success': True, 'detail': 'Logged out successfully'}"
+    }
+  ]
+}

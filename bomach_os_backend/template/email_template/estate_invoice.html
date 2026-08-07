@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice {{ invoice_number }}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f1f5f9; padding: 30px 0;">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="680" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 10px; border: 1px solid #e2e8f0; max-width: 680px; width: 100%;">
+
+                    <!-- Logo Header -->
+                    <tr>
+                        <td style="background: #ffffff; padding: 16px 20px; text-align: center; border-radius: 10px 10px 0 0;">
+                            <img src="https://i.imgur.com/VV9TVj1.jpeg" alt="Bomach Group" style="width: 140px; height: auto; display: inline-block;">
+                        </td>
+                    </tr>
+
+                    <!-- Header: Company Info + Invoice Meta -->
+                    <tr>
+                        <td style="padding: 36px 40px 24px 40px;">
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td valign="top" style="width: 55%;">
+                                        <p style="margin: 0 0 4px 0; font-size: 20px; font-weight: 700; color: #1e293b;">Bomach Engineering Services Ltd</p>
+                                        <p style="margin: 0; font-size: 13px; color: #64748b; line-height: 1.6;">
+                                            Plot 45, Adeola Odeku Street<br>
+                                            Victoria Island, Lagos<br>
+                                            Nigeria<br>
+                                            RC: 123456<br>
+                                            TIN: 12345678-0001
+                                        </p>
+                                    </td>
+                                    <td valign="top" style="text-align: right; width: 45%;">
+                                        <table role="presentation" cellpadding="0" cellspacing="0" style="margin-left: auto;">
+                                            <tr>
+                                                <td style="padding: 3px 0; font-size: 13px; color: #1e293b; font-weight: 600; text-align: right; padding-right: 10px;">Invoice Number:</td>
+                                                <td style="padding: 3px 0; font-size: 13px; color: #334155; text-align: right;">{{ invoice_number }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 3px 0; font-size: 13px; color: #1e293b; font-weight: 600; text-align: right; padding-right: 10px;">Invoice Date:</td>
+                                                <td style="padding: 3px 0; font-size: 13px; color: #334155; text-align: right;">{{ issue_date }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 3px 0; font-size: 13px; color: #1e293b; font-weight: 600; text-align: right; padding-right: 10px;">Due Date:</td>
+                                                <td style="padding: 3px 0; font-size: 13px; color: #334155; text-align: right;">{{ due_date }}</td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Divider -->
+                    <tr>
+                        <td style="padding: 0 40px;">
+                            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 0;">
+                        </td>
+                    </tr>
+
+                    <!-- Bill To -->
+                    <tr>
+                        <td style="padding: 24px 40px;">
+                            <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 700; color: #1e293b;">Bill To:</p>
+                            <p style="margin: 0 0 2px 0; font-size: 14px; font-weight: 600; color: #1e293b;">{{ client_name }}</p>
+                            {% if client_address %}
+                            <p style="margin: 0 0 2px 0; font-size: 13px; color: #64748b;">{{ client_address }}</p>
+                            {% endif %}
+                            <p style="margin: 4px 0 0 0; font-size: 13px; color: #1e293b;"><span style="font-weight: 600; color: #2563eb;">Project:</span> Real Estate Purchase</p>
+                        </td>
+                    </tr>
+
+                    <!-- Divider -->
+                    <tr>
+                        <td style="padding: 0 40px;">
+                            <hr style="border: none; border-top: 1px dashed #e2e8f0; margin: 0;">
+                        </td>
+                    </tr>
+
+                    <!-- Items Table -->
+                    <tr>
+                        <td style="padding: 24px 40px 8px 40px;">
+                            <!-- Table Header -->
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse;">
+                                <tr style="border-bottom: 2px solid #e2e8f0;">
+                                    <td style="padding: 10px 0; font-size: 13px; font-weight: 700; color: #1e293b; width: 50%;">Description</td>
+                                    <td style="padding: 10px 0; font-size: 13px; font-weight: 700; color: #1e293b; text-align: center; width: 15%;">Quantity</td>
+                                    <td style="padding: 10px 0; font-size: 13px; font-weight: 700; color: #1e293b; text-align: right; width: 17%;">Unit Price</td>
+                                    <td style="padding: 10px 0; font-size: 13px; font-weight: 700; color: #1e293b; text-align: right; width: 18%;">Amount</td>
+                                </tr>
+
+                                {% for item in items %}
+                                <tr style="border-bottom: 1px solid #f1f5f9;">
+                                    <td style="padding: 16px 0;">
+                                        <p style="margin: 0; font-size: 14px; color: #1e293b; font-weight: 500;">{{ item.property_name }}</p>
+                                        <p style="margin: 2px 0 0 0; font-size: 12px; color: #94a3b8;">{{ item.estate_name }}</p>
+                                    </td>
+                                    <td style="padding: 16px 0; font-size: 14px; color: #334155; text-align: center;">{{ item.quantity }}</td>
+                                    <td style="padding: 16px 0; font-size: 14px; color: #334155; text-align: right;">&#8358;{{ item.unit_price }}</td>
+                                    <td style="padding: 16px 0; font-size: 14px; color: #1e293b; text-align: right; font-weight: 600;">&#8358;{{ item.total }}</td>
+                                </tr>
+                                {% endfor %}
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Divider -->
+                    <tr>
+                        <td style="padding: 0 40px;">
+                            <hr style="border: none; border-top: 1px dashed #e2e8f0; margin: 0;">
+                        </td>
+                    </tr>
+
+                    <!-- Totals -->
+                    <tr>
+                        <td style="padding: 20px 40px;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" style="margin-left: auto;">
+                                <tr>
+                                    <td style="padding: 4px 24px 4px 0; font-size: 14px; color: #64748b; text-align: right;">Subtotal:</td>
+                                    <td style="padding: 4px 0; font-size: 14px; color: #1e293b; text-align: right;">&#8358;{{ subtotal }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 4px 24px 4px 0; font-size: 14px; color: #64748b; text-align: right;">VAT ({{ tax_rate }}%):</td>
+                                    <td style="padding: 4px 0; font-size: 14px; color: #1e293b; text-align: right;">&#8358;{{ tax_amount }}</td>
+                                </tr>
+                                {% if amount_paid > 0 %}
+                                <tr>
+                                    <td style="padding: 4px 24px 4px 0; font-size: 14px; color: #64748b; text-align: right;">Amount Paid:</td>
+                                    <td style="padding: 4px 0; font-size: 14px; color: #16a34a; text-align: right; font-weight: 600;">-&#8358;{{ amount_paid }}</td>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <td style="padding: 12px 24px 4px 0; font-size: 16px; color: #1e293b; font-weight: 700; text-align: right; border-top: 2px solid #e2e8f0;">Total Amount:</td>
+                                    <td style="padding: 12px 0 4px 0; font-size: 18px; color: #1e40af; font-weight: 800; text-align: right; border-top: 2px solid #e2e8f0;">&#8358;{{ total_amount }}</td>
+                                </tr>
+                                {% if balance and balance != total_amount %}
+                                <tr>
+                                    <td style="padding: 4px 24px 4px 0; font-size: 14px; color: #1e293b; font-weight: 600; text-align: right;">Balance Due:</td>
+                                    <td style="padding: 4px 0; font-size: 16px; color: #dc2626; font-weight: 700; text-align: right;">&#8358;{{ balance }}</td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </td>
+                    </tr>
+
+                    {% if notes %}
+                    <!-- Notes -->
+                    <tr>
+                        <td style="padding: 8px 40px 20px 40px;">
+                            <p style="margin: 0 0 6px 0; font-size: 14px; font-weight: 700; color: #1e293b;">Notes:</p>
+                            <p style="margin: 0; font-size: 13px; color: #64748b; line-height: 1.5;">{{ notes }}</p>
+                        </td>
+                    </tr>
+                    {% endif %}
+
+                    {% if bank_name or account_number %}
+                    <!-- Payment Details -->
+                    <tr>
+                        <td style="padding: 0 40px 32px 40px;">
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+                                <tr>
+                                    <td style="padding: 20px 24px;">
+                                        <p style="margin: 0 0 12px 0; font-size: 15px; font-weight: 700; color: #1e293b;">Payment Details:</p>
+                                        {% if bank_name %}
+                                        <p style="margin: 0 0 6px 0; font-size: 13px; color: #334155;"><span style="font-weight: 600;">Bank:</span> {{ bank_name }}</p>
+                                        {% endif %}
+                                        {% if account_name %}
+                                        <p style="margin: 0 0 6px 0; font-size: 13px; color: #334155;"><span style="font-weight: 600;">Account Name:</span> {{ account_name }}</p>
+                                        {% endif %}
+                                        {% if account_number %}
+                                        <p style="margin: 0 0 6px 0; font-size: 13px; color: #334155;"><span style="font-weight: 600;">Account Number:</span> {{ account_number }}</p>
+                                        {% endif %}
+                                        {% if sort_code %}
+                                        <p style="margin: 0; font-size: 13px; color: #334155;"><span style="font-weight: 600;">Sort Code:</span> {{ sort_code }}</p>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    {% endif %}
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="padding: 20px 40px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; border-radius: 0 0 10px 10px;">
+                            <p style="margin: 0; font-size: 11px; color: #94a3b8; text-align: center;">
+                                This invoice was generated by Bomach OS. If you have any questions, please contact us.
+                            </p>
+                        </td>
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
