@@ -67,7 +67,7 @@ async function verifyTwoFactor(payload: TwoFactorVerifyRequestDto): Promise<void
 }
 
 async function currentUser(): Promise<AuthenticatedUser | null> {
-  if (!tokenStore.get()) return null
+  if (!tokenStore.getAccessToken() && !tokenStore.hasRefreshToken()) return null
 
   try {
     const user = await apiClient.get<UserResponseDto>('/auth/me')

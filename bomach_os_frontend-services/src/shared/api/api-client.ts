@@ -53,8 +53,8 @@ async function refreshAccessToken(): Promise<string | null> {
   if (refreshPromise) return refreshPromise
 
   refreshPromise = (async () => {
-    const tokens = tokenStore.get()
-    if (!tokens?.refreshToken) return null
+    const refreshToken = tokenStore.getRefreshToken()
+    if (!refreshToken) return null
 
     try {
       const response = await fetch(buildUrl('/auth/refresh'), {
@@ -63,7 +63,7 @@ async function refreshAccessToken(): Promise<string | null> {
           Accept: 'application/json',
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ refresh_token: tokens.refreshToken }),
+        body: JSON.stringify({ refresh_token: refreshToken }),
       })
 
       if (!response.ok) {
@@ -125,11 +125,16 @@ async function request<TResponse>(
   path: string,
   options: ApiRequestOptions = {},
 ): Promise<TResponse> {
-  const tokens = options.skipAuth ? null : tokenStore.get()
+  let accessToken = options.skipAuth ? null : tokenStore.getAccessToken()
+
+  if (!options.skipAuth && !options.skipRefresh && !accessToken && tokenStore.hasRefreshToken()) {
+    accessToken = await refreshAccessToken()
+  }
+
   let response: Response
 
   try {
-    response = await executeRequest(path, options, tokens?.accessToken)
+    response = await executeRequest(path, options, accessToken ?? undefined)
   } catch (error) {
     throw new ApiError('The server could not be reached.', {
       status: 0,

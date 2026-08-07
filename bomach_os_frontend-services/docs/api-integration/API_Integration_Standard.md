@@ -260,7 +260,7 @@ The `/forbidden` route must only represent a real authorization denial, never an
 
 ### API-0.02 — Refresh-token-only bootstrap
 
-Still required.
+Status: complete after this change.
 
 Current storage strategy:
 
@@ -283,7 +283,7 @@ neither exists
 → unauthenticated
 ```
 
-Do not mark authentication fully complete until this is implemented and tested.
+The refresh mechanism belongs in the shared API client so individual feature modules do not implement their own token-refresh logic.
 
 ### API-0.03 — Auth hydration
 
