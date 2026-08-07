@@ -1,0 +1,84 @@
+import type { ExecutionTask } from '../types/fulfillment.types'
+import { taskBoardColumns } from '../workspaces/fulfillment-workflow.rules'
+
+function priorityClass(priority: ExecutionTask['priority']) {
+  if (priority === 'Critical') return 'fulfillment-pill-red'
+  if (priority === 'High') return 'fulfillment-pill-yellow'
+  return 'fulfillment-pill-gray'
+}
+
+export function ExecutionTasksScreen({
+  tasks,
+  onCreateTask,
+  onAdvanceTask,
+}: {
+  tasks: ExecutionTask[]
+  onCreateTask: () => void
+  onAdvanceTask: (task: ExecutionTask) => void
+}) {
+  return (
+    <main className="fulfillment-content">
+      <section className="fulfillment-card">
+        <header className="fulfillment-card-header">
+          <div>
+            <div className="fulfillment-card-title">Execution Task Board</div>
+            <div className="fulfillment-card-subtitle">
+              Tasks from workflows, inspections and handoffs
+            </div>
+          </div>
+          <button
+            type="button"
+            className="fulfillment-btn fulfillment-btn-primary"
+            onClick={onCreateTask}
+          >
+            New Task
+          </button>
+        </header>
+
+        <div className="fulfillment-kanban">
+          {taskBoardColumns.map((column) => {
+            const columnTasks = tasks.filter((task) =>
+              column === 'To Do'
+                ? task.status === column || task.status === 'Blocked'
+                : task.status === column,
+            )
+
+            return (
+              <section className="fulfillment-column" key={column}>
+                <div className="fulfillment-column-header">
+                  <span>{column}</span>
+                  <span>{columnTasks.length}</span>
+                </div>
+
+                {columnTasks.length > 0 ? (
+                  columnTasks.map((task) => (
+                    <button
+                      type="button"
+                      className="fulfillment-task-card"
+                      key={task.id}
+                      onClick={() => onAdvanceTask(task)}
+                      title="Move task to the next workflow column"
+                    >
+                      <b>{task.title}</b>
+                      <small>
+                        {task.orderId} · {task.owner}
+                      </small>
+                      <div className="fulfillment-task-footer">
+                        <span className={`fulfillment-pill ${priorityClass(task.priority)}`}>
+                          {task.status === 'Blocked' ? 'Blocked' : task.priority}
+                        </span>
+                        <span className="fulfillment-row-sub">{task.dueAt}</span>
+                      </div>
+                    </button>
+                  ))
+                ) : (
+                  <div className="fulfillment-empty fulfillment-empty-column">No tasks</div>
+                )}
+              </section>
+            )
+          })}
+        </div>
+      </section>
+    </main>
+  )
+}

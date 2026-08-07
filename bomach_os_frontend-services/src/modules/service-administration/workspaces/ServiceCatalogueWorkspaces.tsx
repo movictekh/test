@@ -1,6 +1,11 @@
 import { IconX } from '@tabler/icons-react'
 import { useState } from 'react'
 
+import {
+  formatNumberFieldValue,
+  parseNumberFieldValue,
+} from '@/shared/lib/number-input'
+
 import type {
   ConfigureServiceInput,
   CreateServiceWizardInput,
@@ -372,8 +377,8 @@ export function CreateServiceWizard({
               type="number"
               min={1}
               required
-              value={slaDays}
-              onChange={(event) => setSlaDays(Number(event.target.value))}
+              value={formatNumberFieldValue(slaDays)}
+              onChange={(event) => setSlaDays(parseNumberFieldValue(event.target.value))}
             />
           </Field>
           <Field label="Fulfillment mode" required>
@@ -422,8 +427,8 @@ export function CreateServiceWizard({
               type="number"
               min={0}
               required
-              value={rate}
-              onChange={(event) => setRate(Number(event.target.value))}
+              value={formatNumberFieldValue(rate)}
+              onChange={(event) => setRate(parseNumberFieldValue(event.target.value))}
             />
           </Field>
           <Field label="Deposit (%)" required>
@@ -432,8 +437,8 @@ export function CreateServiceWizard({
               min={0}
               max={100}
               required
-              value={depositPercent}
-              onChange={(event) => setDepositPercent(Number(event.target.value))}
+              value={formatNumberFieldValue(depositPercent)}
+              onChange={(event) => setDepositPercent(parseNumberFieldValue(event.target.value))}
             />
           </Field>
           <Field label="Tax (%)" required>
@@ -442,8 +447,8 @@ export function CreateServiceWizard({
               min={0}
               max={100}
               required
-              value={taxPercent}
-              onChange={(event) => setTaxPercent(Number(event.target.value))}
+              value={formatNumberFieldValue(taxPercent)}
+              onChange={(event) => setTaxPercent(parseNumberFieldValue(event.target.value))}
             />
           </Field>
           <Field label="Discount approval above (%)" required>
@@ -452,8 +457,10 @@ export function CreateServiceWizard({
               min={0}
               max={100}
               required
-              value={discountApprovalPercent}
-              onChange={(event) => setDiscountApprovalPercent(Number(event.target.value))}
+              value={formatNumberFieldValue(discountApprovalPercent)}
+              onChange={(event) =>
+                setDiscountApprovalPercent(parseNumberFieldValue(event.target.value))
+              }
             />
           </Field>
         </div>
@@ -847,8 +854,8 @@ export function ConfigureServiceWorkspace({
               type="number"
               min={1}
               required
-              value={slaDays}
-              onChange={(event) => setSlaDays(Number(event.target.value))}
+              value={formatNumberFieldValue(slaDays)}
+              onChange={(event) => setSlaDays(parseNumberFieldValue(event.target.value))}
             />
           </Field>
           <Field label="Fulfillment mode" required>
@@ -898,8 +905,8 @@ export function ConfigureServiceWorkspace({
               type="number"
               min={0}
               required
-              value={rate}
-              onChange={(event) => setRate(Number(event.target.value))}
+              value={formatNumberFieldValue(rate)}
+              onChange={(event) => setRate(parseNumberFieldValue(event.target.value))}
             />
           </Field>
           <Field label="Deposit (%)" required>
@@ -908,8 +915,8 @@ export function ConfigureServiceWorkspace({
               min={0}
               max={100}
               required
-              value={depositPercent}
-              onChange={(event) => setDepositPercent(Number(event.target.value))}
+              value={formatNumberFieldValue(depositPercent)}
+              onChange={(event) => setDepositPercent(parseNumberFieldValue(event.target.value))}
             />
           </Field>
           <Field label="Tax (%)" required>
@@ -918,8 +925,8 @@ export function ConfigureServiceWorkspace({
               min={0}
               max={100}
               required
-              value={taxPercent}
-              onChange={(event) => setTaxPercent(Number(event.target.value))}
+              value={formatNumberFieldValue(taxPercent)}
+              onChange={(event) => setTaxPercent(parseNumberFieldValue(event.target.value))}
             />
           </Field>
           <Field label="Discount approval above (%)" required>
@@ -928,8 +935,10 @@ export function ConfigureServiceWorkspace({
               min={0}
               max={100}
               required
-              value={discountApprovalPercent}
-              onChange={(event) => setDiscountApprovalPercent(Number(event.target.value))}
+              value={formatNumberFieldValue(discountApprovalPercent)}
+              onChange={(event) =>
+                setDiscountApprovalPercent(parseNumberFieldValue(event.target.value))
+              }
             />
           </Field>
         </div>

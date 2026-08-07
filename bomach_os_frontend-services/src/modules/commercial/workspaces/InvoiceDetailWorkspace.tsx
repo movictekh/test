@@ -2,6 +2,8 @@ import { IconX } from '@tabler/icons-react'
 import { useForm } from '@tanstack/react-form'
 import { useState } from 'react'
 
+import { formatNumberFieldValue, parseNumberFieldValue } from '@/shared/lib/number-input'
+
 import { commercialMoney, invoiceStatusClass } from '../commercial.ui'
 import type { CommercialInvoice, RecordPaymentInput } from '../types/commercial.types'
 import { validatePaymentInput } from './commercial-finance.rules'
@@ -124,8 +126,10 @@ export function InvoiceDetailWorkspace({
                         type="number"
                         min="0.01"
                         max={invoice.balance}
-                        value={field.state.value}
-                        onChange={(event) => field.handleChange(Number(event.target.value || 0))}
+                        value={formatNumberFieldValue(field.state.value)}
+                        onChange={(event) =>
+                          field.handleChange(parseNumberFieldValue(event.target.value))
+                        }
                       />
                       {errors.amount ? <em>{errors.amount}</em> : null}
                     </label>

@@ -2,6 +2,10 @@ import { IconBolt, IconSubtask } from '@tabler/icons-react'
 import { useMemo, useState } from 'react'
 
 import { useToast } from '@/shared/ui'
+import {
+  formatNumberFieldValue,
+  parseNumberFieldValue,
+} from '@/shared/lib/number-input'
 
 import type {
   SaveWorkflowInput,
@@ -461,11 +465,11 @@ export function WorkflowDesignerScreen({
                 <input
                   type="number"
                   min={1}
-                  value={stageDraft.slaDays}
+                  value={formatNumberFieldValue(stageDraft.slaDays)}
                   onChange={(event) =>
                     setStageDraft((current) =>
                       current
-                        ? { ...current, slaDays: Math.max(1, Number(event.target.value) || 1) }
+                        ? { ...current, slaDays: parseNumberFieldValue(event.target.value) }
                         : current,
                     )
                   }

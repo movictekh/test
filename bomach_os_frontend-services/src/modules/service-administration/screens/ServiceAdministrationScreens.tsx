@@ -8,7 +8,10 @@ import type {
   SaveRequestFormInput,
   ServiceRequestForm,
 } from '../types/service-administration.types'
-import '../styles/service-administration.css'
+import {
+  formatNumberFieldValue,
+  parseNumberFieldValue,
+} from '@/shared/lib/number-input'
 
 const divisionClassNames: Record<string, string> = {
   'Real Estate': 'service-admin-service-icon--real-estate',
@@ -275,11 +278,11 @@ export function CalculatorLibraryScreen({
               <label>{field.label}</label>
               <input
                 type="number"
-                value={inputs[field.key] ?? field.value}
+                value={formatNumberFieldValue(inputs[field.key] ?? field.value)}
                 onChange={(event) =>
                   setInputs((current) => ({
                     ...current,
-                    [field.key]: Number(event.target.value),
+                    [field.key]: parseNumberFieldValue(event.target.value),
                   }))
                 }
               />

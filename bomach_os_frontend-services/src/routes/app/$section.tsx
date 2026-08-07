@@ -8,6 +8,7 @@ import {
 } from '@/modules/service-administration'
 import { ModuleShellPage } from '@/modules/foundation/pages/ModuleShellPage'
 import { CommercialSectionPage, type CommercialSection } from '@/modules/commercial'
+import { FulfillmentSectionPage, type FulfillmentSection } from '@/modules/fulfillment'
 
 const commercialSections = new Set<CommercialSection>([
   'service-requests',
@@ -23,6 +24,8 @@ const serviceAdministrationSections = new Set<ServiceAdministrationSection>([
   'workflow-designer',
   'branch-activation',
 ])
+
+const fulfillmentSections = new Set<FulfillmentSection>(['service-orders', 'execution-tasks'])
 
 function formatSectionTitle(section: string): string {
   return section
@@ -53,6 +56,10 @@ function AppShellRoute() {
 
   if (serviceAdministrationSections.has(section as ServiceAdministrationSection)) {
     return <ServiceAdministrationSectionPage section={section as ServiceAdministrationSection} />
+  }
+
+  if (fulfillmentSections.has(section as FulfillmentSection)) {
+    return <FulfillmentSectionPage section={section as FulfillmentSection} />
   }
 
   const title = formatSectionTitle(section)

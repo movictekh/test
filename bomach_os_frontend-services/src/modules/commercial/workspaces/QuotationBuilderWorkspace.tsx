@@ -1,6 +1,7 @@
 import { IconX } from '@tabler/icons-react'
 import { useForm } from '@tanstack/react-form'
 
+import { formatNumberFieldValue, parseNumberFieldValue } from '@/shared/lib/number-input'
 import { commercialMoney, quotationApprovers } from '../commercial.ui'
 import type { CommercialServiceRequest, CreateQuotationInput } from '../types/commercial.types'
 import { getQuotationEligibleRequests, validateQuotationDraft } from './quotation-workflow.rules'
@@ -174,8 +175,10 @@ export function QuotationBuilderWorkspace({
                     <input
                       type="number"
                       min="0"
-                      value={field.state.value}
-                      onChange={(event) => field.handleChange(Number(event.target.value))}
+                      value={formatNumberFieldValue(field.state.value)}
+                      onChange={(event) =>
+                        field.handleChange(parseNumberFieldValue(event.target.value))
+                      }
                     />
                   </label>
                 )}
@@ -188,8 +191,10 @@ export function QuotationBuilderWorkspace({
                     <input
                       type="number"
                       min="0"
-                      value={field.state.value}
-                      onChange={(event) => field.handleChange(Number(event.target.value))}
+                      value={formatNumberFieldValue(field.state.value)}
+                      onChange={(event) =>
+                        field.handleChange(parseNumberFieldValue(event.target.value))
+                      }
                     />
                   </label>
                 )}
@@ -202,8 +207,10 @@ export function QuotationBuilderWorkspace({
                     <input
                       type="number"
                       min="0"
-                      value={field.state.value}
-                      onChange={(event) => field.handleChange(Number(event.target.value))}
+                      value={formatNumberFieldValue(field.state.value)}
+                      onChange={(event) =>
+                        field.handleChange(parseNumberFieldValue(event.target.value))
+                      }
                     />
                   </label>
                 )}
@@ -216,8 +223,10 @@ export function QuotationBuilderWorkspace({
                     <input
                       type="number"
                       min="0"
-                      value={field.state.value}
-                      onChange={(event) => field.handleChange(Number(event.target.value))}
+                      value={formatNumberFieldValue(field.state.value)}
+                      onChange={(event) =>
+                        field.handleChange(parseNumberFieldValue(event.target.value))
+                      }
                     />
                   </label>
                 )}
@@ -231,8 +240,10 @@ export function QuotationBuilderWorkspace({
                       type="number"
                       min="0"
                       max="100"
-                      value={field.state.value}
-                      onChange={(event) => field.handleChange(Number(event.target.value))}
+                      value={formatNumberFieldValue(field.state.value)}
+                      onChange={(event) =>
+                        field.handleChange(parseNumberFieldValue(event.target.value))
+                      }
                     />
                   </label>
                 )}

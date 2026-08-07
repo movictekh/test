@@ -2,6 +2,8 @@ import { IconX } from '@tabler/icons-react'
 import { useForm } from '@tanstack/react-form'
 import { useMemo, useState } from 'react'
 
+import { formatNumberFieldValue, parseNumberFieldValue } from '@/shared/lib/number-input'
+
 import {
   commercialMoney,
   defaultPaymentInstructions,
@@ -146,8 +148,10 @@ export function InvoiceBuilderWorkspace({
                         <input
                           type="number"
                           min="0"
-                          value={field.state.value}
-                          onChange={(event) => field.handleChange(Number(event.target.value))}
+                          value={formatNumberFieldValue(field.state.value)}
+                          onChange={(event) =>
+                            field.handleChange(parseNumberFieldValue(event.target.value))
+                          }
                         />
                         {errors.amount ? <em>{errors.amount}</em> : null}
                       </label>

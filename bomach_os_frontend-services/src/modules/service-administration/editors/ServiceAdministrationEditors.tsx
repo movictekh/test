@@ -1,6 +1,11 @@
 import { IconX } from '@tabler/icons-react'
 import { useMemo, useState, type ReactNode } from 'react'
 
+import {
+  formatNumberFieldValue,
+  parseNumberFieldValue,
+} from '@/shared/lib/number-input'
+
 import type {
   CalculatorCharge,
   CalculatorVariable,
@@ -226,15 +231,15 @@ export function CalculatorEditor({
         <EditorField label="Deposit (%)">
           <input
             type="number"
-            value={deposit}
-            onChange={(event) => setDeposit(Number(event.target.value))}
+            value={formatNumberFieldValue(deposit)}
+            onChange={(event) => setDeposit(parseNumberFieldValue(event.target.value))}
           />
         </EditorField>
         <EditorField label="Tax (%)">
           <input
             type="number"
-            value={tax}
-            onChange={(event) => setTax(Number(event.target.value))}
+            value={formatNumberFieldValue(tax)}
+            onChange={(event) => setTax(parseNumberFieldValue(event.target.value))}
           />
         </EditorField>
         <EditorField label="Fields — variable|Label|default, one per line" full>

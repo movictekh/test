@@ -3,6 +3,12 @@ import { useForm, type ReactFormExtendedApi } from '@tanstack/react-form'
 import { useMemo, useState } from 'react'
 
 import { useToast } from '@/shared/ui'
+import {
+  formatNumberFieldValue,
+  formatNumericStringFieldValue,
+  parseNumberFieldValue,
+  parseNumericStringFieldValue,
+} from '@/shared/lib/number-input'
 import type {
   RequestFormField,
   ServiceAdministrationWorkspace,
@@ -616,8 +622,12 @@ export function CreateRequestWorkspace({
                           ) : (
                             <input
                               type="number"
-                              value={String(field.state.value ?? '')}
-                              onChange={(event) => field.handleChange(event.target.value as never)}
+                              value={formatNumericStringFieldValue(field.state.value)}
+                              onChange={(event) =>
+                                field.handleChange(
+                                  parseNumericStringFieldValue(event.target.value) as never,
+                                )
+                              }
                             />
                           )}
                         </label>
@@ -633,8 +643,10 @@ export function CreateRequestWorkspace({
                       <input
                         type="number"
                         min={0}
-                        value={field.state.value}
-                        onChange={(event) => field.handleChange(Number(event.target.value || 0))}
+                        value={formatNumberFieldValue(field.state.value)}
+                        onChange={(event) =>
+                          field.handleChange(parseNumberFieldValue(event.target.value))
+                        }
                       />
                       {estimate != null ? <small>{money.format(estimate)}</small> : null}
                     </label>
