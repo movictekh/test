@@ -6,6 +6,7 @@ import {
   clampProgress,
   nextTaskStatus,
   taskProgressForStatus,
+  commercialSourceAlreadyOrdered,
 } from './fulfillment-workflow.rules'
 
 describe('fulfillment workflow rules', () => {
@@ -55,5 +56,40 @@ describe('fulfillment workflow rules', () => {
     expect(taskProgressForStatus('In Progress', 5)).toBe(25)
     expect(taskProgressForStatus('Review', 45)).toBe(80)
     expect(taskProgressForStatus('Done', 80)).toBe(100)
+  })
+  it('detects an existing commercial source order by exact linked IDs', () => {
+    const orders = [{ requestId: 'REQ-1', quotationId: 'Q-1', invoiceId: 'INV-1' }]
+    expect(
+      commercialSourceAlreadyOrdered(orders, {
+        requestId: 'REQ-1',
+        quotationId: 'Q-1',
+        invoiceId: 'INV-1',
+      }),
+    ).toBe(true)
+    expect(
+      commercialSourceAlreadyOrdered(orders, {
+        requestId: 'REQ-2',
+        quotationId: 'Q-2',
+        invoiceId: 'INV-2',
+      }),
+    ).toBe(false)
+  })
+
+  it('prevents duplicate fulfillment when a canonical source ID is reused', () => {
+    const orders = [{ requestId: 'REQ-10', quotationId: 'Q-10', invoiceId: 'INV-10' }]
+    expect(
+      commercialSourceAlreadyOrdered(orders, {
+        requestId: 'REQ-99',
+        quotationId: 'Q-99',
+        invoiceId: 'INV-10',
+      }),
+    ).toBe(true)
+    expect(
+      commercialSourceAlreadyOrdered(orders, {
+        requestId: 'REQ-99',
+        quotationId: 'Q-10',
+        invoiceId: 'INV-99',
+      }),
+    ).toBe(true)
   })
 })

@@ -8,7 +8,6 @@ import {
   PrototypeButton,
 } from '@/modules/service-administration/components/ServiceAdministrationUi'
 import { serviceAdministrationQueries } from '@/modules/service-administration/api/service-administration.queries'
-import { commercialQueries } from '@/modules/commercial/api/commercial.queries'
 import { presentError } from '@/shared/errors'
 import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
 
@@ -49,7 +48,6 @@ export function FulfillmentSectionPage({ section }: { section: FulfillmentSectio
   const toast = useToast()
 
   const query = useQuery(fulfillmentQueries.workspace())
-  const commercialQuery = useQuery(commercialQueries.workspace())
   const serviceQuery = useQuery(serviceAdministrationQueries.workspace())
 
   const [createOrderOpen, setCreateOrderOpen] = useState(false)
@@ -150,12 +148,12 @@ export function FulfillmentSectionPage({ section }: { section: FulfillmentSectio
     return query.data.orders.find((order) => order.id === selectedTask.orderId) ?? null
   }, [query.data, selectedTask])
 
-  if (query.isPending || commercialQuery.isPending || serviceQuery.isPending) {
+  if (query.isPending || serviceQuery.isPending) {
     return <DashboardSkeleton />
   }
 
-  if (query.isError || commercialQuery.isError || serviceQuery.isError) {
-    const sourceError = query.error ?? commercialQuery.error ?? serviceQuery.error
+  if (query.isError || serviceQuery.isError) {
+    const sourceError = query.error ?? serviceQuery.error
     const e = presentError(sourceError, 'page-load')
 
     return (
@@ -164,7 +162,6 @@ export function FulfillmentSectionPage({ section }: { section: FulfillmentSectio
         description={e.message}
         onRetry={() => {
           void query.refetch()
-          void commercialQuery.refetch()
           void serviceQuery.refetch()
         }}
       />
@@ -223,35 +220,14 @@ export function FulfillmentSectionPage({ section }: { section: FulfillmentSectio
           onClose={() => setCreateOrderOpen(false)}
           onSubmit={(draft) => {
             const selectedService = services.find((service) => service.name === draft.service)
-            const invoice = commercialQuery.data.invoices.find(
-              (item) =>
-                item.client === draft.client &&
-                item.service === draft.service &&
-                item.amountPaid > 0,
-            )
-            const quotation = invoice
-              ? commercialQuery.data.quotations.find((item) => item.id === invoice.quotationId)
-              : commercialQuery.data.quotations.find(
-                  (item) =>
-                    item.client === draft.client &&
-                    item.service === draft.service &&
-                    item.status === 'Accepted',
-                )
 
             createOrder.mutate({
               ...draft,
               division: selectedService?.division ?? 'Service Operations',
-              paymentReady: Boolean(invoice?.amountPaid && invoice.amountPaid > 0),
+              paymentReady: false,
               workflowStages: selectedService?.workflowStages.length
                 ? selectedService.workflowStages
                 : ['Order Setup', 'Execution', 'Review', 'Handover'],
-              ...(invoice ? { invoiceId: invoice.id } : {}),
-              ...(quotation
-                ? {
-                    quotationId: quotation.id,
-                    requestId: quotation.requestId,
-                  }
-                : {}),
             })
           }}
         />

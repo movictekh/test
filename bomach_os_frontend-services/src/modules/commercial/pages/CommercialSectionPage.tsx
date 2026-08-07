@@ -9,6 +9,7 @@ import {
 } from '@/modules/service-administration/components/ServiceAdministrationUi'
 import { presentError } from '@/shared/errors'
 import { serviceAdministrationQueries } from '@/modules/service-administration/api/service-administration.queries'
+import { fulfillmentKeys } from '@/modules/fulfillment/api/fulfillment.keys'
 import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
 
 import { commercialApi, type UpdateServiceRequestInput } from '../api/commercial.api'
@@ -127,6 +128,7 @@ export function CommercialSectionPage({ section }: { section: CommercialSection 
     mutationFn: (input: RecordPaymentInput) => commercialApi.recordPayment(input),
     onSuccess: (workspace) => {
       queryClient.setQueryData(commercialKeys.workspace(), workspace)
+      void queryClient.invalidateQueries({ queryKey: fulfillmentKeys.workspace() })
       toast.success('Payment recorded')
     },
     onError: (error) => {

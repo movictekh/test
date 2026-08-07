@@ -153,3 +153,7 @@ commercial record exists, the fulfillment domain stores request, quotation,
 invoice and payment-readiness identifiers without inventing extra prototype
 fields. The production backend handoff should use the commercial record ID
 directly when the real API replaces MSW.
+
+## Final commercial handoff correction
+
+The Stage 2 → Stage 3 handoff no longer depends on typed client/service matching. Payment confirmation carries the exact invoice ID into fulfillment, resolves the linked quotation and request, creates one Service Order, and invalidates the fulfillment Query. The order stores requestId, quotationId, and invoiceId, and duplicate creation is prevented by those canonical IDs. Manual Create Order remains the literal HTML manual workflow and does not pretend to be a Commercial conversion.

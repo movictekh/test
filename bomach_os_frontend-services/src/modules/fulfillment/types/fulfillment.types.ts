@@ -160,3 +160,18 @@ export interface UpdateExecutionTaskInput {
     fileName: string
   }
 }
+
+export interface CommercialOrderHandoffInput {
+  requestId: string
+  quotationId: string
+  invoiceId: string
+  client: string
+  service: string
+  division: string
+  value: number
+  dueAt: string
+  owner: string
+  mode: string
+  paymentReady: boolean
+  workflowStages: string[]
+}

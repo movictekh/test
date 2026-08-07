@@ -1,6 +1,8 @@
 import { delay, http, HttpResponse } from 'msw'
 
 import { env } from '@/shared/config/env'
+import { ensureMockOrderFromCommercialSource } from '@/modules/fulfillment/mocks/fulfillment.mock-db'
+import { getServiceAdministrationWorkspace } from '@/modules/service-administration/mocks/service-administration.mock-db'
 
 import {
   createMockInvoice,
@@ -96,12 +98,49 @@ export const commercialHandlers = [
       await delay(220)
       const body = (await request.json()) as RecordPaymentInput
 
-      return HttpResponse.json(
-        recordMockPayment({
-          ...body,
-          invoiceId: String(params.invoiceId),
-        }),
+      const commercialWorkspace = recordMockPayment({
+        ...body,
+        invoiceId: String(params.invoiceId),
+      })
+
+      const invoice = commercialWorkspace.invoices.find(
+        (item) => item.id === String(params.invoiceId),
       )
+
+      if (invoice && invoice.amountPaid > 0) {
+        const quotation = commercialWorkspace.quotations.find(
+          (item) => item.id === invoice.quotationId,
+        )
+        const request = commercialWorkspace.requests.find((item) => item.id === invoice.requestId)
+
+        if (quotation && request && quotation.status === 'Accepted') {
+          const serviceAdministration = getServiceAdministrationWorkspace()
+          const service = serviceAdministration.services.find(
+            (item) => item.name === invoice.service,
+          )
+          const workflow = serviceAdministration.workflows.find(
+            (item) => item.serviceName === invoice.service && item.status === 'active',
+          )
+
+          ensureMockOrderFromCommercialSource({
+            requestId: request.id,
+            quotationId: quotation.id,
+            invoiceId: invoice.id,
+            client: invoice.client,
+            service: invoice.service,
+            division: request.division || service?.division || 'Service Operations',
+            value: invoice.total,
+            dueAt: request.dueAt || invoice.dueAt,
+            owner: service?.owner || 'Service Manager',
+            mode: service?.fulfilmentMode || 'Managed service case',
+            paymentReady: true,
+            workflowStages: workflow?.stages.map((stage) => stage.name) ??
+              service?.workflowStages ?? ['Order Setup', 'Execution', 'Review', 'Handover'],
+          })
+        }
+      }
+
+      return HttpResponse.json(commercialWorkspace)
     },
   ),
 

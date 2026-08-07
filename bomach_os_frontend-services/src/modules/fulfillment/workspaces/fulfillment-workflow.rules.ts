@@ -96,3 +96,15 @@ export function taskProgressForStatus(
   if (status === 'In Progress') return Math.max(currentProgress, 25)
   return clampProgress(currentProgress)
 }
+
+export function commercialSourceAlreadyOrdered(
+  orders: Array<{ requestId: string; quotationId?: string; invoiceId?: string }>,
+  source: { requestId: string; quotationId: string; invoiceId: string },
+): boolean {
+  return orders.some(
+    (order) =>
+      order.invoiceId === source.invoiceId ||
+      order.quotationId === source.quotationId ||
+      order.requestId === source.requestId,
+  )
+}

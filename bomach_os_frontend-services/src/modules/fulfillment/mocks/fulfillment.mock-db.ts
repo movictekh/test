@@ -2,6 +2,7 @@ import type {
   AddMilestoneInput,
   AddOrderUpdateInput,
   CreateExecutionTaskInput,
+  CommercialOrderHandoffInput,
   CreateServiceOrderInput,
   ExecutionTask,
   FulfillmentWorkspace,
@@ -15,6 +16,7 @@ import {
   clampProgress,
   nextTaskStatus,
   taskProgressForStatus,
+  commercialSourceAlreadyOrdered,
 } from '../workspaces/fulfillment-workflow.rules'
 
 const nowIso = () => new Date().toISOString()
@@ -398,6 +400,63 @@ export function getFulfillmentWorkspace(): FulfillmentWorkspace {
     orders,
     tasks,
   }
+}
+
+export function ensureMockOrderFromCommercialSource(
+  input: CommercialOrderHandoffInput,
+): FulfillmentWorkspace {
+  if (
+    commercialSourceAlreadyOrdered(orders, {
+      requestId: input.requestId,
+      quotationId: input.quotationId,
+      invoiceId: input.invoiceId,
+    })
+  ) {
+    return getFulfillmentWorkspace()
+  }
+
+  const stamp = Date.now().toString().slice(-8)
+  const id = `ORD-${stamp}`
+  const workflowStages =
+    input.workflowStages.length > 0
+      ? input.workflowStages.slice(0, 6)
+      : ['Order Setup', 'Execution', 'Review', 'Handover']
+
+  orders.unshift({
+    id,
+    requestId: input.requestId,
+    quotationId: input.quotationId,
+    invoiceId: input.invoiceId,
+    client: input.client,
+    service: input.service,
+    division: input.division,
+    mode: input.mode,
+    status: input.paymentReady ? 'Active' : 'Pending Mobilisation',
+    progress: 0,
+    owner: input.owner,
+    startAt: today(),
+    dueAt: input.dueAt,
+    value: input.value,
+    stage: workflowStages[0] ?? 'Order Setup',
+    nextAction: input.paymentReady ? 'Begin fulfillment' : 'Confirm mobilisation',
+    paymentReady: input.paymentReady,
+    milestones: workflowStages.map((name, index) => ({
+      id: `${id}-M${index + 1}`,
+      name,
+      status: index === 0 ? 'Active' : 'Pending',
+    })),
+    activities: [
+      activity(
+        `${id}-A1`,
+        nowIso(),
+        'Order created',
+        'System',
+        `Created from ${input.invoiceId} after commercial payment eligibility was confirmed.`,
+      ),
+    ],
+  })
+
+  return getFulfillmentWorkspace()
 }
 
 export function createMockOrder(input: CreateServiceOrderInput): FulfillmentWorkspace {
