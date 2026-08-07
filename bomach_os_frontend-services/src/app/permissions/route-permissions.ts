@@ -16,6 +16,14 @@ export function requireRoutePermission({
   permissions,
   mode = 'all',
 }: RequireRoutePermissionOptions): void | ReturnType<typeof redirect> {
+  if (auth.isLoading) {
+    return
+  }
+
+  if (!auth.isAuthenticated || !auth.user) {
+    return
+  }
+
   if (!hasPermissions(auth.user, permissions, mode)) {
     return redirect({
       to: '/forbidden',
