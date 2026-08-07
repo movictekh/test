@@ -15,7 +15,7 @@ import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
 import { serviceAdministrationApi } from '../api/service-administration.api'
 import { serviceAdministrationKeys } from '../api/service-administration.keys'
 import { serviceAdministrationQueries } from '../api/service-administration.queries'
-import { CompactPageToolbar, PrototypeButton } from '../components/ServiceAdministrationUi'
+import { CompactPageToolbar, CompactActionButton } from '../components/ServiceAdministrationUi'
 import { BranchActivationScreen } from '../screens/BranchActivationScreen'
 import {
   CalculatorLibraryScreen,
@@ -223,7 +223,7 @@ export function ServiceAdministrationSectionPage({
         breadcrumb={page.breadcrumb}
         secondaryAction={
           <>
-            <PrototypeButton
+            <CompactActionButton
               onClick={() =>
                 void navigate({
                   to: '/app/$section',
@@ -233,14 +233,14 @@ export function ServiceAdministrationSectionPage({
             >
               <IconFilePlus size={14} />
               New Request
-            </PrototypeButton>
+            </CompactActionButton>
           </>
         }
         primaryAction={
-          <PrototypeButton tone="primary" onClick={() => setNewServiceOpen(true)}>
+          <CompactActionButton tone="primary" onClick={() => setNewServiceOpen(true)}>
             <IconPlus size={14} />
             Create Service
-          </PrototypeButton>
+          </CompactActionButton>
         }
       />
 

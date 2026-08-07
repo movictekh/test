@@ -6,7 +6,7 @@ import { commercialQueries } from '@/modules/commercial/api/commercial.queries'
 import { fulfillmentQueries } from '@/modules/fulfillment/api/fulfillment.queries'
 import {
   CompactPageToolbar,
-  PrototypeButton,
+  CompactActionButton,
 } from '@/modules/service-administration/components/ServiceAdministrationUi'
 import { presentError } from '@/shared/errors'
 import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
@@ -138,9 +138,9 @@ export function ExperienceIntelligenceSectionPage({
         breadcrumb={page.breadcrumb}
         primaryAction={
           section === 'feedback-quality' ? (
-            <PrototypeButton tone="primary" onClick={() => setRecordFeedbackOpen(true)}>
+            <CompactActionButton tone="primary" onClick={() => setRecordFeedbackOpen(true)}>
               <IconMessageStar size={14} /> Record Feedback
-            </PrototypeButton>
+            </CompactActionButton>
           ) : undefined
         }
       />

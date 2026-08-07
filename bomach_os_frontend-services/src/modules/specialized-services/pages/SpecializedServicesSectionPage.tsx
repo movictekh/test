@@ -7,7 +7,7 @@ import { commercialQueries } from '@/modules/commercial/api/commercial.queries'
 import { fulfillmentQueries } from '@/modules/fulfillment/api/fulfillment.queries'
 import {
   CompactPageToolbar,
-  PrototypeButton,
+  CompactActionButton,
 } from '@/modules/service-administration/components/ServiceAdministrationUi'
 import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
 import { presentError } from '@/shared/errors'
@@ -101,21 +101,21 @@ export function SpecializedServicesSectionPage({
         {...(section === 'real-estate-inventory'
           ? {
               secondaryAction: (
-                <PrototypeButton onClick={() => setPropertyOpen(true)}>
+                <CompactActionButton onClick={() => setPropertyOpen(true)}>
                   <IconPlus size={14} />
                   Add Brokerage Property
-                </PrototypeButton>
+                </CompactActionButton>
               ),
               primaryAction: (
-                <PrototypeButton tone="primary" onClick={() => setEstateOpen(true)}>
+                <CompactActionButton tone="primary" onClick={() => setEstateOpen(true)}>
                   <IconPlus size={14} />
                   Add Estate
-                </PrototypeButton>
+                </CompactActionButton>
               ),
             }
           : {
               primaryAction: (
-                <PrototypeButton
+                <CompactActionButton
                   tone="primary"
                   onClick={() =>
                     void navigate({
@@ -126,7 +126,7 @@ export function SpecializedServicesSectionPage({
                 >
                   <IconFilePlus size={14} />
                   New Request
-                </PrototypeButton>
+                </CompactActionButton>
               ),
             })}
       />

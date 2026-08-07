@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react'
 
 import {
   CompactPageToolbar,
-  PrototypeButton,
+  CompactActionButton,
 } from '@/modules/service-administration/components/ServiceAdministrationUi'
 import { presentError } from '@/shared/errors'
 import { serviceAdministrationQueries } from '@/modules/service-administration/api/service-administration.queries'
@@ -236,7 +236,7 @@ export function CommercialSectionPage({
         breadcrumb={page.breadcrumb}
         primaryAction={
           canCreatePrimary ? (
-            <PrototypeButton
+            <CompactActionButton
               tone="primary"
               onClick={() => {
                 if (section === 'service-requests' || section === 'approvals') {
@@ -265,7 +265,7 @@ export function CommercialSectionPage({
                   : section === 'invoices-payments'
                     ? 'New Invoice'
                     : 'Create'}
-            </PrototypeButton>
+            </CompactActionButton>
           ) : undefined
         }
       />

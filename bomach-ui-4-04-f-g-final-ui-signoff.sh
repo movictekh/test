@@ -8,13 +8,11 @@ fi
 
 mkdir -p src/app/signoff docs/ui-rebuild/updates
 
-cat > src/styles/final-ui-signoff.css <<'EOF'
+cat > src/styles/responsive.css <<'EOF'
 /*
- * UI-4.04F final responsive hardening.
- *
- * This layer deliberately does not redesign desktop prototype composition.
- * It only prevents overflow/truncation and makes the established prototype
- * screens operable at tablet/mobile widths.
+ * Responsive hardening for Service Operations screens.
+ * Does not redesign desktop composition — only prevents overflow/truncation
+ * and keeps established prototype screens operable at tablet/mobile widths.
  */
 
 :is(
@@ -160,7 +158,7 @@ from pathlib import Path
 
 index_css = Path("src/styles/index.css")
 text = index_css.read_text()
-import_line = "@import './final-ui-signoff.css';\n"
+import_line = "@import './responsive.css';\n"
 if import_line not in text:
     text = text.replace("@import 'tailwindcss';\n", "@import 'tailwindcss';\n" + import_line, 1)
 index_css.write_text(text)

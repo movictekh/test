@@ -1,5 +1,5 @@
 @import 'tailwindcss';
-@import './final-ui-signoff.css';
+@import './responsive.css';
 
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 

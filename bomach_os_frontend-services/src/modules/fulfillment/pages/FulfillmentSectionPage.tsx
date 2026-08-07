@@ -4,7 +4,7 @@ import { IconFilePlus, IconPlus } from '@tabler/icons-react'
 
 import {
   CompactPageToolbar,
-  PrototypeButton,
+  CompactActionButton,
 } from '@/modules/service-administration/components/ServiceAdministrationUi'
 import { serviceAdministrationQueries } from '@/modules/service-administration/api/service-administration.queries'
 import { presentError } from '@/shared/errors'
@@ -257,7 +257,7 @@ export function FulfillmentSectionPage({
         breadcrumb={page.breadcrumb}
         primaryAction={
           canCreatePrimary ? (
-            <PrototypeButton
+            <CompactActionButton
               tone="primary"
               onClick={() => {
                 if (section === 'service-orders') setCreateOrderOpen(true)
@@ -267,7 +267,7 @@ export function FulfillmentSectionPage({
             >
               {section === 'deliverables' ? <IconFilePlus size={14} /> : <IconPlus size={14} />}{' '}
               {primaryLabel}
-            </PrototypeButton>
+            </CompactActionButton>
           ) : undefined
         }
       />
@@ -376,15 +376,17 @@ export function FulfillmentSectionPage({
           onAddUpdate={(input) => addOrderUpdate.mutate(input)}
           onAddMilestone={(input) => addMilestone.mutate(input)}
           onCreateTask={(input) => createTask.mutate(input)}
-          onFutureAction={(action) => {
-            if (action === 'Add Deliverable') {
-              setCreateDeliverableOrderId(selectedOrder.id)
-              return
-            }
-            toast.success(action, {
+          onAddDeliverable={() => setCreateDeliverableOrderId(selectedOrder.id)}
+          onRequestClientApproval={() =>
+            toast.success('Request Client Approval', {
               description: 'The prototype action is retained and connects in its owning phase.',
             })
-          }}
+          }
+          onRecordFeedback={() =>
+            toast.success('Record Feedback', {
+              description: 'The prototype action is retained and connects in its owning phase.',
+            })
+          }
         />
       ) : null}
     </>

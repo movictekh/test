@@ -1,10 +1,4 @@
-/*
- * UI-4.04F final responsive hardening.
- *
- * This layer deliberately does not redesign desktop prototype composition.
- * It only prevents overflow/truncation and makes the established prototype
- * screens operable at tablet/mobile widths.
- */
+
 
 :is(
   .service-admin-content,

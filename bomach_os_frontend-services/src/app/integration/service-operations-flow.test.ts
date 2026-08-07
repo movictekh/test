@@ -16,8 +16,8 @@ function navigationLabels(): string[] {
   return operationsNavigation.flatMap((group) => group.items.map((item) => item.label))
 }
 
-describe('UI-4.04G product sign-off', () => {
-  it('keeps the final staff navigation vocabulary aligned with the Service Operations prototype', () => {
+describe('Service Operations integration', () => {
+  it('keeps staff navigation aligned with the Service Operations product vocabulary', () => {
     const labels = navigationLabels()
 
     expect(labels).toEqual(
@@ -163,7 +163,7 @@ describe('UI-4.04G product sign-off', () => {
     expect(serviceAdmin.branchActivations.length).toBeGreaterThan(0)
   })
 
-  it('resolves the final cross-record deep-link destinations', () => {
+  it('resolves cross-record deep-link destinations', () => {
     expect(getRecordDestination('request', 'REQ-1')).toEqual({
       section: 'service-requests',
       search: { request: 'REQ-1' },

@@ -51,7 +51,7 @@ export function CompactPageToolbar({
   )
 }
 
-export function PrototypeButton({
+export function CompactActionButton({
   children,
   onClick,
   tone = 'secondary',
@@ -107,7 +107,7 @@ export function SummaryStrip({
   )
 }
 
-export function PrototypeFilterBar({
+export function FilterBar({
   search,
   onSearch,
   children,
@@ -132,7 +132,7 @@ export function PrototypeFilterBar({
   )
 }
 
-export function PrototypeSelect({
+export function FilterSelect({
   value,
   onChange,
   children,
@@ -298,9 +298,9 @@ export function ServiceDetailPanel({
               {service.code} · {service.division}
             </p>
           </div>
-          <PrototypeButton onClick={onClose} tone="ghost">
+          <CompactActionButton onClick={onClose} tone="ghost">
             Close
-          </PrototypeButton>
+          </CompactActionButton>
         </header>
         <div className="space-y-4 p-4">
           <p className="text-foreground-subtle text-xs leading-5">{service.description}</p>
@@ -383,10 +383,12 @@ export function CalculatorList({
               Updated {new Date(calculator.updatedAt).toLocaleDateString('en-NG')}
             </span>
             <div className="flex gap-1.5">
-              <PrototypeButton onClick={() => onEdit(calculator)}>Configure</PrototypeButton>
-              <PrototypeButton onClick={() => onToggle(calculator)}>
+              <CompactActionButton onClick={() => onEdit(calculator)}>
+                Configure
+              </CompactActionButton>
+              <CompactActionButton onClick={() => onToggle(calculator)}>
                 {calculator.status === 'active' ? 'Deactivate' : 'Activate'}
-              </PrototypeButton>
+              </CompactActionButton>
             </div>
           </div>
         </article>
@@ -455,10 +457,10 @@ export function RequestFormCards({
               {form.fields.length} fields
             </span>
             <div className="flex gap-1.5">
-              <PrototypeButton onClick={() => onEdit(form)}>Open Builder</PrototypeButton>
-              <PrototypeButton onClick={() => onToggle(form)}>
+              <CompactActionButton onClick={() => onEdit(form)}>Open Builder</CompactActionButton>
+              <CompactActionButton onClick={() => onToggle(form)}>
                 {form.status === 'active' ? 'Create new version' : 'Activate'}
-              </PrototypeButton>
+              </CompactActionButton>
             </div>
           </div>
         </article>
@@ -492,10 +494,12 @@ export function WorkflowCards({
               </p>
             </div>
             <div className="flex gap-1.5">
-              <PrototypeButton onClick={() => onEdit(workflow)}>Open Designer</PrototypeButton>
-              <PrototypeButton onClick={() => onToggle(workflow)}>
+              <CompactActionButton onClick={() => onEdit(workflow)}>
+                Open Designer
+              </CompactActionButton>
+              <CompactActionButton onClick={() => onToggle(workflow)}>
                 {workflow.status === 'active' ? 'Create new version' : 'Activate workflow'}
-              </PrototypeButton>
+              </CompactActionButton>
             </div>
           </div>
           <div className="mt-3 flex min-w-max items-stretch gap-1 overflow-x-auto pb-1">
@@ -658,9 +662,9 @@ export function NewServiceDialog({
               Start a draft service, then connect pricing, form, workflow and branches.
             </p>
           </div>
-          <PrototypeButton onClick={onClose} tone="ghost">
+          <CompactActionButton onClick={onClose} tone="ghost">
             Close
-          </PrototypeButton>
+          </CompactActionButton>
         </header>
         <div className="grid gap-3 p-4 sm:grid-cols-2">
           <Field
@@ -707,11 +711,11 @@ export function NewServiceDialog({
           </label>
         </div>
         <footer className="border-border flex justify-end gap-2 border-t p-3">
-          <PrototypeButton onClick={onClose}>Cancel</PrototypeButton>
-          <PrototypeButton type="submit" tone="primary" disabled={pending}>
+          <CompactActionButton onClick={onClose}>Cancel</CompactActionButton>
+          <CompactActionButton type="submit" tone="primary" disabled={pending}>
             <IconPlus size={14} />
             {pending ? 'Creating…' : 'Create draft service'}
-          </PrototypeButton>
+          </CompactActionButton>
         </footer>
       </form>
     </div>

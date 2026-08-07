@@ -37,7 +37,9 @@ export function OrderControlRoomWorkspace({
   onAddUpdate,
   onAddMilestone,
   onCreateTask,
-  onFutureAction,
+  onAddDeliverable,
+  onRequestClientApproval,
+  onRecordFeedback,
 }: {
   order: ServiceOrder
   relatedTasks: ExecutionTask[]
@@ -51,7 +53,9 @@ export function OrderControlRoomWorkspace({
   onAddUpdate: (input: AddOrderUpdateInput) => void
   onAddMilestone: (input: AddMilestoneInput) => void
   onCreateTask: (input: CreateExecutionTaskInput) => void
-  onFutureAction: (action: string) => void
+  onAddDeliverable: () => void
+  onRequestClientApproval: () => void
+  onRecordFeedback: () => void
 }) {
   const [showUpdate, setShowUpdate] = useState(false)
   const [showTask, setShowTask] = useState(false)
@@ -382,7 +386,7 @@ export function OrderControlRoomWorkspace({
                     <button
                       type="button"
                       className="fulfillment-btn fulfillment-btn-block"
-                      onClick={() => onFutureAction('Add Deliverable')}
+                      onClick={onAddDeliverable}
                     >
                       Add Deliverable
                     </button>
@@ -392,14 +396,14 @@ export function OrderControlRoomWorkspace({
                       <button
                         type="button"
                         className="fulfillment-btn fulfillment-btn-block fulfillment-top-gap"
-                        onClick={() => onFutureAction('Request Client Approval')}
+                        onClick={onRequestClientApproval}
                       >
                         Request Client Approval
                       </button>
                       <button
                         type="button"
                         className="fulfillment-btn fulfillment-btn-block fulfillment-top-gap"
-                        onClick={() => onFutureAction('Record Feedback')}
+                        onClick={onRecordFeedback}
                       >
                         Record Feedback
                       </button>
