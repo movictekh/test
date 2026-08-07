@@ -1041,3 +1041,22 @@
   gap: 8px;
   width: min(360px, 100%);
 }
+
+.commercial-modal-header-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.commercial-modal-footer-actions,
+.commercial-modal-footer-start {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.commercial-btn-green {
+  background: #147d4f;
+  border-color: #147d4f;
+  color: #fff;
+}

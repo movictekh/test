@@ -76,6 +76,10 @@ export interface CommercialWorkspace {
   requests: CommercialServiceRequest[]
   quotations: CommercialQuotation[]
   quotationSummary: QuotationSummary
+  invoices: CommercialInvoice[]
+  invoiceSummary: InvoiceSummary
+  approvals: CommercialApproval[]
+  approvalSummary: ApprovalSummary
   pendingApprovals: number
 }
 
@@ -156,4 +160,90 @@ export interface QuotationSummary {
   awaitingApproval: number
   sent: number
   acceptanceRate: number
+}
+
+export type InvoiceStatus = 'Draft' | 'Issued' | 'Part Paid' | 'Paid' | 'Overdue' | 'Cancelled'
+
+export type PaymentMethod = 'Bank Transfer' | 'Card' | 'Cash' | 'POS' | 'Cheque'
+
+export interface CommercialPayment {
+  id: string
+  invoiceId: string
+  amount: number
+  method: PaymentMethod
+  reference: string
+  paidAt: string
+  recordedBy: string
+  note: string
+}
+
+export interface CommercialInvoice {
+  id: string
+  quotationId: string
+  requestId: string
+  client: string
+  service: string
+  branch: string
+  status: InvoiceStatus
+  total: number
+  amountPaid: number
+  balance: number
+  dueAt: string
+  issuedAt?: string
+  createdAt: string
+  owner: string
+  payments: CommercialPayment[]
+}
+
+export interface CreateInvoiceInput {
+  quotationId: string
+  dueAt: string
+  issueNow: boolean
+}
+
+export interface RecordPaymentInput {
+  invoiceId: string
+  amount: number
+  method: PaymentMethod
+  reference: string
+  paidAt: string
+  note: string
+}
+
+export type ApprovalStatus = 'Pending' | 'Approved' | 'Rejected'
+
+export interface CommercialApproval {
+  id: string
+  entityType: 'Quotation' | 'Invoice'
+  entityId: string
+  client: string
+  reason: string
+  amount: number
+  requestedBy: string
+  assignedTo: string
+  requestedAt: string
+  status: ApprovalStatus
+  decidedAt?: string
+  decisionNote?: string
+}
+
+export interface DecideApprovalInput {
+  approvalId: string
+  decision: 'approve' | 'reject'
+  note: string
+}
+
+export interface InvoiceSummary {
+  total: number
+  outstanding: number
+  overdue: number
+  collected: number
+  collectionRate: number
+}
+
+export interface ApprovalSummary {
+  pending: number
+  highValue: number
+  approvedToday: number
+  rejected: number
 }

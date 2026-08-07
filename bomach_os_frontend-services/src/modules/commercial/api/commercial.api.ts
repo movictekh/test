@@ -2,6 +2,9 @@ import { apiClient } from '@/shared/api/api-client'
 
 import type {
   CommercialWorkspace,
+  DecideApprovalInput,
+  RecordPaymentInput,
+  CreateInvoiceInput,
   CreateQuotationInput,
   UpdateQuotationInput,
   CreateServiceRequestInput,
@@ -38,6 +41,24 @@ export const commercialApi = {
   updateQuotation(quotationId: string, input: UpdateQuotationInput) {
     return apiClient.patch<CommercialWorkspace>(
       `/ui-prototype/commercial/quotations/${quotationId}`,
+      input,
+    )
+  },
+
+  createInvoice(input: CreateInvoiceInput) {
+    return apiClient.post<CommercialWorkspace>('/ui-prototype/commercial/invoices', input)
+  },
+
+  recordPayment(input: RecordPaymentInput) {
+    return apiClient.post<CommercialWorkspace>(
+      `/ui-prototype/commercial/invoices/${input.invoiceId}/payments`,
+      input,
+    )
+  },
+
+  decideApproval(input: DecideApprovalInput) {
+    return apiClient.patch<CommercialWorkspace>(
+      `/ui-prototype/commercial/approvals/${input.approvalId}`,
       input,
     )
   },

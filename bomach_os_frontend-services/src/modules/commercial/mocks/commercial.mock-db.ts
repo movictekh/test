@@ -1,6 +1,11 @@
 import type {
   CommercialServiceRequest,
   CommercialWorkspace,
+  DecideApprovalInput,
+  RecordPaymentInput,
+  CreateInvoiceInput,
+  CommercialApproval,
+  CommercialInvoice,
   CommercialQuotation,
   CreateQuotationInput,
   CreateServiceRequestInput,
@@ -438,6 +443,178 @@ const quotations: CommercialQuotation[] = [
   }),
 ]
 
+const invoices: CommercialInvoice[] = [
+  {
+    id: 'INV-260712-001',
+    quotationId: 'Q-260712-008',
+    requestId: 'REQ-260712-014',
+    client: 'Mrs Chioma Ugwu',
+    service: 'Estate Plot Sales',
+    branch: 'Enugu',
+    status: 'Part Paid',
+    total: 4500000,
+    amountPaid: 2500000,
+    balance: 2000000,
+    dueAt: '2026-07-20',
+    issuedAt: '2026-07-12T16:00:00.000Z',
+    createdAt: '2026-07-12',
+    owner: 'Property Manager',
+    payments: [
+      {
+        id: 'PAY-260712-001',
+        invoiceId: 'INV-260712-001',
+        amount: 2500000,
+        method: 'Bank Transfer',
+        reference: 'TRF-884211',
+        paidAt: '2026-07-12',
+        recordedBy: 'Finance Operations',
+        note: 'Initial allocation payment.',
+      },
+    ],
+  },
+]
+
+const approvals: CommercialApproval[] = quotations
+  .filter((quotation) => quotation.status === 'Awaiting Approval')
+  .map((quotation, index) => ({
+    id: `APR-Q-${String(index + 1).padStart(3, '0')}`,
+    entityType: 'Quotation',
+    entityId: quotation.id,
+    client: quotation.client,
+    reason: `Quotation approval via ${quotation.approvalRoute}`,
+    amount: quotation.total,
+    requestedBy: quotation.owner,
+    assignedTo: quotation.approvalRoute,
+    requestedAt: quotation.updatedAt,
+    status: 'Pending',
+  }))
+
+function invoiceSummary() {
+  const billed = invoices.reduce((sum, invoice) => sum + invoice.total, 0)
+  const collected = invoices.reduce((sum, invoice) => sum + invoice.amountPaid, 0)
+
+  return {
+    total: invoices.length,
+    outstanding: invoices.reduce((sum, invoice) => sum + invoice.balance, 0),
+    overdue: invoices.filter((invoice) => invoice.status === 'Overdue').length,
+    collected,
+    collectionRate: billed === 0 ? 0 : Math.round((collected / billed) * 100),
+  }
+}
+
+function approvalSummary() {
+  const today = new Date().toISOString().slice(0, 10)
+
+  return {
+    pending: approvals.filter((approval) => approval.status === 'Pending').length,
+    highValue: approvals.filter(
+      (approval) => approval.status === 'Pending' && approval.amount >= 5000000,
+    ).length,
+    approvedToday: approvals.filter(
+      (approval) => approval.status === 'Approved' && approval.decidedAt?.slice(0, 10) === today,
+    ).length,
+    rejected: approvals.filter((approval) => approval.status === 'Rejected').length,
+  }
+}
+
+export function createMockInvoice(input: CreateInvoiceInput): CommercialWorkspace {
+  const quotation = quotations.find(
+    (item) => item.id === input.quotationId && item.status === 'Accepted',
+  )
+
+  if (!quotation || invoices.some((item) => item.quotationId === quotation.id)) {
+    return getCommercialWorkspace()
+  }
+
+  const now = new Date()
+  const id = `INV-${now
+    .toISOString()
+    .slice(2, 10)
+    .replaceAll('-', '')}-${String(invoices.length + 1).padStart(3, '0')}`
+
+  invoices.unshift({
+    id,
+    quotationId: quotation.id,
+    requestId: quotation.requestId,
+    client: quotation.client,
+    service: quotation.service,
+    branch: quotation.branch,
+    status: input.issueNow ? 'Issued' : 'Draft',
+    total: quotation.total,
+    amountPaid: 0,
+    balance: quotation.total,
+    dueAt: input.dueAt,
+    ...(input.issueNow ? { issuedAt: now.toISOString() } : {}),
+    createdAt: now.toISOString().slice(0, 10),
+    owner: quotation.owner,
+    payments: [],
+  })
+
+  const sourceRequest = requests.find((request) => request.id === quotation.requestId)
+  if (sourceRequest) {
+    sourceRequest.nextAction = `Collect payment for ${id}`
+  }
+
+  return getCommercialWorkspace()
+}
+
+export function recordMockPayment(input: RecordPaymentInput): CommercialWorkspace {
+  const invoice = invoices.find((item) => item.id === input.invoiceId)
+
+  if (!invoice || input.amount <= 0 || input.amount > invoice.balance) {
+    return getCommercialWorkspace()
+  }
+
+  invoice.payments.push({
+    id: `PAY-${new Date().toISOString().slice(2, 10).replaceAll('-', '')}-${String(
+      invoice.payments.length + 1,
+    ).padStart(3, '0')}`,
+    invoiceId: invoice.id,
+    amount: input.amount,
+    method: input.method,
+    reference: input.reference,
+    paidAt: input.paidAt,
+    recordedBy: 'Finance Operations',
+    note: input.note,
+  })
+
+  invoice.amountPaid += input.amount
+  invoice.balance = Math.max(0, invoice.total - invoice.amountPaid)
+  invoice.status =
+    invoice.balance === 0 ? 'Paid' : invoice.amountPaid > 0 ? 'Part Paid' : invoice.status
+
+  return getCommercialWorkspace()
+}
+
+export function decideMockApproval(input: DecideApprovalInput): CommercialWorkspace {
+  const approval = approvals.find((item) => item.id === input.approvalId)
+
+  if (!approval || approval.status !== 'Pending') {
+    return getCommercialWorkspace()
+  }
+
+  approval.status = input.decision === 'approve' ? 'Approved' : 'Rejected'
+  approval.decidedAt = new Date().toISOString()
+  approval.decisionNote = input.note
+
+  if (approval.entityType === 'Quotation') {
+    const quotation = quotations.find((item) => item.id === approval.entityId)
+    if (quotation) {
+      quotation.status = input.decision === 'approve' ? 'Approved' : 'Rejected'
+      quotation.activities.push({
+        id: `${quotation.id}-A${quotation.activities.length + 1}`,
+        at: approval.decidedAt,
+        title:
+          input.decision === 'approve' ? 'Quotation approved' : 'Quotation rejected by approver',
+        actor: approval.assignedTo,
+        description: input.note,
+      })
+    }
+  }
+
+  return getCommercialWorkspace()
+}
+
 function quotationSummary() {
   const decided = quotations.filter(
     (item) => item.status === 'Accepted' || item.status === 'Rejected',
@@ -667,7 +844,11 @@ export function getCommercialWorkspace(): CommercialWorkspace {
     requests,
     quotations,
     quotationSummary: quotationSummary(),
-    pendingApprovals: quotations.filter((item) => item.status === 'Awaiting Approval').length,
+    invoices,
+    invoiceSummary: invoiceSummary(),
+    approvals,
+    approvalSummary: approvalSummary(),
+    pendingApprovals: approvals.filter((item) => item.status === 'Pending').length,
   })
 }
 

@@ -16,9 +16,14 @@ import { commercialKeys } from '../api/commercial.keys'
 import { commercialQueries } from '../api/commercial.queries'
 import { ServiceRequestsScreen } from '../screens/ServiceRequestsScreen'
 import { QuotationsScreen } from '../screens/QuotationsScreen'
+import { InvoicesPaymentsScreen } from '../screens/InvoicesPaymentsScreen'
+import { ApprovalsScreen } from '../screens/ApprovalsScreen'
 import type {
   CommercialSection,
   CommercialServiceRequest,
+  CreateInvoiceInput,
+  RecordPaymentInput,
+  DecideApprovalInput,
   CreateQuotationInput,
   CreateServiceRequestInput,
   UpdateQuotationInput,
@@ -27,6 +32,9 @@ import { CreateRequestWorkspace } from '../workspaces/CreateRequestWorkspace'
 import { Request360Workspace } from '../workspaces/Request360Workspace'
 import { QuotationBuilderWorkspace } from '../workspaces/QuotationBuilderWorkspace'
 import { QuotationDetailWorkspace } from '../workspaces/QuotationDetailWorkspace'
+import { InvoiceBuilderWorkspace } from '../workspaces/InvoiceBuilderWorkspace'
+import { InvoiceDetailWorkspace } from '../workspaces/InvoiceDetailWorkspace'
+import { ApprovalDecisionWorkspace } from '../workspaces/ApprovalDecisionWorkspace'
 import '../styles/commercial.css'
 
 const metadata: Record<CommercialSection, { title: string; breadcrumb: string }> = {
@@ -47,6 +55,10 @@ export function CommercialSectionPage({ section }: { section: CommercialSection 
   const [quotationBuilderOpen, setQuotationBuilderOpen] = useState(false)
   const [quotationSourceRequestId, setQuotationSourceRequestId] = useState<string | undefined>()
   const [selectedQuotationId, setSelectedQuotationId] = useState<string | null>(null)
+  const [invoiceBuilderOpen, setInvoiceBuilderOpen] = useState(false)
+  const [invoiceSourceQuotationId, setInvoiceSourceQuotationId] = useState<string | undefined>()
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null)
+  const [selectedApprovalId, setSelectedApprovalId] = useState<string | null>(null)
 
   const createRequest = useMutation({
     mutationFn: (input: CreateServiceRequestInput) => commercialApi.createRequest(input),
@@ -92,6 +104,51 @@ export function CommercialSectionPage({ section }: { section: CommercialSection 
     },
   })
 
+  const createInvoice = useMutation({
+    mutationFn: (input: CreateInvoiceInput) => commercialApi.createInvoice(input),
+    onSuccess: (workspace) => {
+      queryClient.setQueryData(commercialKeys.workspace(), workspace)
+      setInvoiceBuilderOpen(false)
+      setInvoiceSourceQuotationId(undefined)
+      toast.success('Invoice created')
+    },
+    onError: (error) => {
+      const e = presentError(error, 'form-submit')
+      toast.error('Invoice could not be created', {
+        description: e.message,
+      })
+    },
+  })
+
+  const recordPayment = useMutation({
+    mutationFn: (input: RecordPaymentInput) => commercialApi.recordPayment(input),
+    onSuccess: (workspace) => {
+      queryClient.setQueryData(commercialKeys.workspace(), workspace)
+      toast.success('Payment recorded')
+    },
+    onError: (error) => {
+      const e = presentError(error, 'form-submit')
+      toast.error('Payment could not be recorded', {
+        description: e.message,
+      })
+    },
+  })
+
+  const decideApproval = useMutation({
+    mutationFn: (input: DecideApprovalInput) => commercialApi.decideApproval(input),
+    onSuccess: (workspace) => {
+      queryClient.setQueryData(commercialKeys.workspace(), workspace)
+      setSelectedApprovalId(null)
+      toast.success('Approval decision recorded')
+    },
+    onError: (error) => {
+      const e = presentError(error, 'background-action')
+      toast.error('Approval could not be updated', {
+        description: e.message,
+      })
+    },
+  })
+
   const updateRequest = useMutation({
     mutationFn: ({ requestId, input }: { requestId: string; input: UpdateServiceRequestInput }) =>
       commercialApi.updateRequest(requestId, input),
@@ -115,6 +172,16 @@ export function CommercialSectionPage({ section }: { section: CommercialSection 
     if (!selectedQuotationId || !query.data) return null
     return query.data.quotations.find((item) => item.id === selectedQuotationId) ?? null
   }, [query.data, selectedQuotationId])
+
+  const selectedInvoice = useMemo(() => {
+    if (!selectedInvoiceId || !query.data) return null
+    return query.data.invoices.find((item) => item.id === selectedInvoiceId) ?? null
+  }, [query.data, selectedInvoiceId])
+
+  const selectedApproval = useMemo(() => {
+    if (!selectedApprovalId || !query.data) return null
+    return query.data.approvals.find((item) => item.id === selectedApprovalId) ?? null
+  }, [query.data, selectedApprovalId])
 
   if (query.isPending || serviceAdministrationQuery.isPending) {
     return <DashboardSkeleton />
@@ -153,6 +220,7 @@ export function CommercialSectionPage({ section }: { section: CommercialSection 
             onClick={() => {
               if (section === 'service-requests') setCreateOpen(true)
               if (section === 'quotations') setQuotationBuilderOpen(true)
+              if (section === 'invoices-payments') setInvoiceBuilderOpen(true)
             }}
           >
             {section === 'service-requests' ? <IconFilePlus size={14} /> : <IconPlus size={14} />}{' '}
@@ -160,7 +228,9 @@ export function CommercialSectionPage({ section }: { section: CommercialSection 
               ? 'New Request'
               : section === 'quotations'
                 ? 'Build Quote'
-                : 'Create'}
+                : section === 'invoices-payments'
+                  ? 'Create Invoice'
+                  : 'Create'}
           </PrototypeButton>
         }
       />
@@ -177,13 +247,19 @@ export function CommercialSectionPage({ section }: { section: CommercialSection 
           quotations={query.data.quotations}
           onOpen={(quotation) => setSelectedQuotationId(quotation.id)}
         />
-      ) : (
-        <main className="commercial-content">
-          <section className="commercial-card commercial-empty">
-            This exact prototype screen is implemented in the next Phase UI-2 slice.
-          </section>
-        </main>
-      )}
+      ) : section === 'invoices-payments' ? (
+        <InvoicesPaymentsScreen
+          summary={query.data.invoiceSummary}
+          invoices={query.data.invoices}
+          onOpen={(invoice) => setSelectedInvoiceId(invoice.id)}
+        />
+      ) : section === 'approvals' ? (
+        <ApprovalsScreen
+          summary={query.data.approvalSummary}
+          approvals={query.data.approvals}
+          onOpen={(approval) => setSelectedApprovalId(approval.id)}
+        />
+      ) : null}
 
       {createOpen ? (
         <CreateRequestWorkspace
@@ -235,14 +311,47 @@ export function CommercialSectionPage({ section }: { section: CommercialSection 
           onUpdate={(quotationId, input) => updateQuotation.mutate({ quotationId, input })}
           onCreateInvoice={(quotationId) => {
             setSelectedQuotationId(null)
-            toast.success('Opening invoice builder', {
-              description: `Invoice draft will use ${quotationId}.`,
-            })
+            setInvoiceSourceQuotationId(quotationId)
+            setInvoiceBuilderOpen(true)
             void navigate({
               to: '/app/$section',
               params: { section: 'invoices-payments' },
             })
           }}
+        />
+      ) : null}
+
+      {invoiceBuilderOpen ? (
+        <InvoiceBuilderWorkspace
+          quotations={query.data.quotations}
+          invoices={query.data.invoices}
+          {...(invoiceSourceQuotationId ? { initialQuotationId: invoiceSourceQuotationId } : {})}
+          saving={createInvoice.isPending}
+          onClose={() => {
+            setInvoiceBuilderOpen(false)
+            setInvoiceSourceQuotationId(undefined)
+          }}
+          onSubmit={(input) => createInvoice.mutate(input)}
+        />
+      ) : null}
+
+      {selectedInvoice ? (
+        <InvoiceDetailWorkspace
+          key={selectedInvoice.id}
+          invoice={selectedInvoice}
+          saving={recordPayment.isPending}
+          onClose={() => setSelectedInvoiceId(null)}
+          onRecordPayment={(input) => recordPayment.mutate(input)}
+        />
+      ) : null}
+
+      {selectedApproval ? (
+        <ApprovalDecisionWorkspace
+          key={selectedApproval.id}
+          approval={selectedApproval}
+          saving={decideApproval.isPending}
+          onClose={() => setSelectedApprovalId(null)}
+          onDecide={(input) => decideApproval.mutate(input)}
         />
       ) : null}
     </>

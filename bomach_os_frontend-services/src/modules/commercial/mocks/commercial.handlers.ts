@@ -3,6 +3,9 @@ import { delay, http, HttpResponse } from 'msw'
 import { env } from '@/shared/config/env'
 
 import {
+  createMockInvoice,
+  recordMockPayment,
+  decideMockApproval,
   createMockQuotation,
   createMockServiceRequest,
   getCommercialWorkspace,
@@ -10,6 +13,9 @@ import {
   updateMockServiceRequest,
 } from './commercial.mock-db'
 import type {
+  CreateInvoiceInput,
+  RecordPaymentInput,
+  DecideApprovalInput,
   CreateQuotationInput,
   CreateServiceRequestInput,
   ServiceRequestStatus,
@@ -65,6 +71,52 @@ export const commercialHandlers = [
       await delay(220)
       const body = (await request.json()) as UpdateQuotationInput
       return HttpResponse.json(updateMockQuotation(String(params.quotationId), body))
+    },
+  ),
+
+  http.post(endpoint('/ui-prototype/commercial/invoices'), async ({ request }) => {
+    await delay(220)
+    const body = (await request.json()) as CreateInvoiceInput
+
+    if (!body.quotationId || !body.dueAt) {
+      return HttpResponse.json(
+        { detail: 'Select an accepted quotation and due date.' },
+        { status: 422 },
+      )
+    }
+
+    return HttpResponse.json(createMockInvoice(body), {
+      status: 201,
+    })
+  }),
+
+  http.post(
+    endpoint('/ui-prototype/commercial/invoices/:invoiceId/payments'),
+    async ({ params, request }) => {
+      await delay(220)
+      const body = (await request.json()) as RecordPaymentInput
+
+      return HttpResponse.json(
+        recordMockPayment({
+          ...body,
+          invoiceId: String(params.invoiceId),
+        }),
+      )
+    },
+  ),
+
+  http.patch(
+    endpoint('/ui-prototype/commercial/approvals/:approvalId'),
+    async ({ params, request }) => {
+      await delay(180)
+      const body = (await request.json()) as DecideApprovalInput
+
+      return HttpResponse.json(
+        decideMockApproval({
+          ...body,
+          approvalId: String(params.approvalId),
+        }),
+      )
     },
   ),
 
