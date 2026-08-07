@@ -285,7 +285,13 @@ neither exists
 
 The refresh mechanism belongs in the shared API client so individual feature modules do not implement their own token-refresh logic.
 
-### API-0.03 — Auth hydration
+### API-0.03 — Auth contract and hydration
+
+Status: complete against the live-tested backend auth catalog.
+
+Canonical auth paths live in `src/shared/auth/auth-endpoints.ts`.
+
+#### Auth hydration
 
 Canonical authenticated staff hydration:
 
@@ -306,6 +312,10 @@ AuthProvider
 Do not duplicate authenticated user state in Redux or a second global store.
 
 ### API-0.04 — Permission contract verification
+
+Status: complete as an extensible, fail-closed backend-to-frontend permission bridge.
+
+Mappings are added only from verified backend module contracts or live role payloads. The initial verified mappings cover `orders` and `service_requests`; other Service Operations mappings are added during their owning API integration.
 
 Frontend permissions are only valid after the backend resource/action vocabulary is verified.
 

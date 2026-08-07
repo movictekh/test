@@ -1,10 +1,8 @@
-import { APP_PERMISSION_VALUES, type AppPermission } from '@/app/permissions/permission.types'
 import type { AppRole } from '@/app/auth/auth.types'
 
 import type { RoleResponseDto, UserResponseDto } from '../types/auth.contracts'
 import type { AuthenticatedUser } from '../types/auth.types'
-
-const knownPermissions = new Set<string>(APP_PERMISSION_VALUES)
+import { mapBackendPermissions } from './auth-permissions.mapper'
 
 function normaliseRoleName(value: string): AppRole {
   const normalized = value
@@ -31,12 +29,6 @@ function normaliseRoleName(value: string): AppRole {
   return aliases[normalized] ?? 'UNKNOWN'
 }
 
-function flattenPermissions(permissions: Record<string, string[]>): string[] {
-  return Object.entries(permissions).flatMap(([resource, actions]) =>
-    actions.map((action) => `${resource}.${action}`),
-  )
-}
-
 function getInitials(firstName: string | null, lastName: string | null, username: string): string {
   const initials = [firstName, lastName]
     .filter((value): value is string => Boolean(value?.trim()))
@@ -50,10 +42,7 @@ export function mapAuthenticatedUser(
   user: UserResponseDto,
   role: RoleResponseDto,
 ): AuthenticatedUser {
-  const backendPermissions = flattenPermissions(role.permissions)
-  const permissions = backendPermissions.filter((permission): permission is AppPermission =>
-    knownPermissions.has(permission),
-  )
+  const { permissions, backendPermissions } = mapBackendPermissions(role.permissions)
 
   const firstName = user.first_name?.trim() || ''
   const lastName = user.last_name?.trim() || ''

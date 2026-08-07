@@ -17,6 +17,13 @@ export function requireAuthenticatedUser({
     return
   }
 
+  if (auth.accessIssue) {
+    return redirect({
+      to: '/forbidden',
+      replace: true,
+    })
+  }
+
   if (!auth.isAuthenticated || !auth.user) {
     return redirect({
       to: '/login',

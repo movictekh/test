@@ -1,3 +1,4 @@
+import { AUTH_ENDPOINTS } from '@/shared/auth/auth-endpoints'
 import { tokenStore } from '@/shared/auth/token-store'
 import { env } from '@/shared/config/env'
 
@@ -57,7 +58,7 @@ async function refreshAccessToken(): Promise<string | null> {
     if (!refreshToken) return null
 
     try {
-      const response = await fetch(buildUrl('/auth/refresh'), {
+      const response = await fetch(buildUrl(AUTH_ENDPOINTS.refresh), {
         method: 'POST',
         headers: {
           Accept: 'application/json',

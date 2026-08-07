@@ -1,4 +1,5 @@
 import type { AppPermission } from '@/app/permissions'
+import type { AuthAccessIssue } from '@/modules/auth/errors/auth-access-error'
 import type { LoginCredentials, LoginResult } from '@/modules/auth/types/auth.types'
 
 export const APP_ROLES = [
@@ -37,6 +38,7 @@ export interface AuthContextValue {
   user: AuthUser | null
   isAuthenticated: boolean
   isLoading: boolean
+  accessIssue: AuthAccessIssue | null
   login: (credentials: LoginCredentials) => Promise<LoginResult>
   verifyTwoFactor: (sessionToken: string, code: string) => Promise<AuthUser>
   signOut: () => Promise<void>

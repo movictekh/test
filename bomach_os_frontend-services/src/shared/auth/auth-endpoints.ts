@@ -1,0 +1,16 @@
+export const AUTH_ENDPOINTS = {
+  login: '/auth/login',
+  verifyTwoFactor: '/auth/verify-2fa',
+  twoFactorStatus: '/auth/2fa/status',
+  enableTwoFactor: '/auth/2fa/enable',
+  disableTwoFactor: '/auth/2fa/disable',
+  logout: '/auth/logout',
+  refresh: '/auth/refresh',
+  forgotPassword: '/auth/forgot-password',
+  resetPassword: '/auth/reset-password',
+  me: '/auth/me',
+  verifyToken: '/auth/verify-token',
+  employeeRole: (userId: string | number) => `/roles/employees/${userId}`,
+  permissionsMap: '/roles/permissions-map',
+  authorityLimits: '/roles/me/authority-limits',
+} as const

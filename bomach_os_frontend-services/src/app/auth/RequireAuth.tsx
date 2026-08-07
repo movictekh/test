@@ -24,6 +24,10 @@ export function RequireAuth({
     return loadingFallback
   }
 
+  if (auth.accessIssue) {
+    return <Navigate to="/forbidden" replace />
+  }
+
   if (!auth.isAuthenticated || !auth.user) {
     return <Navigate to="/login" replace />
   }

@@ -27,6 +27,7 @@ function makeAuth(overrides: Partial<AuthContextValue> = {}): AuthContextValue {
     user: null,
     isAuthenticated: false,
     isLoading: false,
+    accessIssue: null,
     login: vi.fn(),
     verifyTwoFactor: vi.fn(),
     signOut: noOpAsync,

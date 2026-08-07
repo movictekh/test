@@ -38,16 +38,16 @@ describe('mapAuthenticatedUser', () => {
     const mapped = mapAuthenticatedUser(
       user,
       role('Service Manager', {
-        order: ['read', 'update'],
-        task: ['read'],
+        orders: ['view', 'list'],
+        service_requests: ['view', 'list', 'create'],
         unsupported_resource: ['read'],
       }),
     )
 
     expect(mapped.permissions).toEqual([
       PERMISSIONS.orderRead,
-      PERMISSIONS.orderUpdate,
-      PERMISSIONS.taskRead,
+      PERMISSIONS.requestRead,
+      PERMISSIONS.requestCreate,
     ])
 
     expect(mapped.backendPermissions).toContain('unsupported_resource.read')

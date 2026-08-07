@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, type PropsWithChildren } from 'react'
 
 import { authMutations } from '@/modules/auth/api/auth.mutations'
 import { authQueries } from '@/modules/auth/api/auth.queries'
+import { isAuthAccessError } from '@/modules/auth/errors/auth-access-error'
 import type { LoginCredentials, LoginResult } from '@/modules/auth/types/auth.types'
 import { redirectToSessionExpiredLogin } from '@/shared/auth/session-navigation'
 import { tokenStore } from '@/shared/auth/token-store'
@@ -94,12 +95,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
       user: currentUserQuery.data ?? null,
       isAuthenticated: Boolean(currentUserQuery.data),
       isLoading: currentUserQuery.isPending || currentUserQuery.isFetching,
+      accessIssue: isAuthAccessError(currentUserQuery.error) ? currentUserQuery.error.issue : null,
       login,
       verifyTwoFactor,
       signOut,
     }),
     [
       currentUserQuery.data,
+      currentUserQuery.error,
       currentUserQuery.isFetching,
       currentUserQuery.isPending,
       login,

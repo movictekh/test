@@ -43,7 +43,7 @@ export interface UserResponseDto {
 
 export interface BranchMinimalDto {
   id: number
-  name: string
+  branch_name: string
 }
 
 export interface RoleResponseDto {
@@ -57,4 +57,62 @@ export interface RoleResponseDto {
 
 export interface ErrorResponseDto {
   detail: string
+}
+
+export interface RefreshTokenRequestDto {
+  refresh_token: string
+}
+
+export interface RefreshTokenResponseDto {
+  success: boolean
+  access_token: string
+  detail: string
+}
+
+export interface TwoFactorStatusResponseDto {
+  success: boolean
+  two_factor_enabled: boolean
+}
+
+export interface TwoFactorToggleRequestDto {
+  password: string
+}
+
+export type TwoFactorToggleResponseDto = TwoFactorStatusResponseDto
+
+export interface ForgotPasswordRequestDto {
+  email: string
+}
+
+export interface ResetPasswordRequestDto {
+  email: string
+  code: string
+  new_password: string
+}
+
+export interface SuccessDetailResponseDto {
+  success: boolean
+  detail: string
+}
+
+export interface VerifyTokenResponseDto {
+  success: boolean
+  valid: boolean
+  user_id: number | null
+  detail: string
+}
+
+export interface PermissionsMapResponseDto {
+  permissions_map: Record<string, string[]>
+}
+
+export interface AuthorityLimitItemDto {
+  resource: string
+  action: string
+  label: string
+  helper_text: string
+}
+
+export interface AuthorityLimitsResponseDto {
+  items: AuthorityLimitItemDto[]
 }
