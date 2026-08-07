@@ -81,3 +81,28 @@ Manual paths:
 /app/invoices-payments
 /app/approvals
 ```
+
+## Final governance correction
+
+The Commercial Approval Queue is now the single UI authority for approval decisions.
+
+- creating a quotation directly as `Awaiting Approval` creates a pending approval record;
+- submitting a saved Draft for approval creates a pending approval record;
+- a pending record is reused instead of duplicated;
+- `QuotationDetailWorkspace` no longer exposes a direct Approve action;
+- the quotation remains `Awaiting Approval` until `/app/approvals` records the decision;
+- approval decisions synchronize the quotation status and audit trail.
+
+## Final Stage 2 acceptance journey
+
+```text
+Create Request
+→ Prepare Quotation
+→ Submit for Approval
+→ Approval appears in /app/approvals
+→ Approve from Approval Queue
+→ Send quotation to client
+→ Record client acceptance
+→ Create invoice
+→ Record partial or full payment
+```

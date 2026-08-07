@@ -78,9 +78,9 @@ export const commercialHandlers = [
     await delay(220)
     const body = (await request.json()) as CreateInvoiceInput
 
-    if (!body.quotationId || !body.dueAt) {
+    if (!body.quotationId || !body.dueAt || !body.schedule || Number(body.amount) <= 0) {
       return HttpResponse.json(
-        { detail: 'Select an accepted quotation and due date.' },
+        { detail: 'Complete the invoice amount, schedule and due date.' },
         { status: 422 },
       )
     }

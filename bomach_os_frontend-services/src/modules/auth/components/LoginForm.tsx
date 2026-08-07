@@ -12,6 +12,11 @@ interface LoginFormProps {
   redirectTo?: string
 }
 
+/** Prefill Service Administrator credentials in local/dev (see mocks/data/auth.mock.ts). */
+const loginDefaults = import.meta.env.DEV
+  ? { email: 'service.admin@bomach.local', password: 'demo-password' }
+  : { email: '', password: '' }
+
 export function LoginForm({ redirectTo }: LoginFormProps) {
   const auth = useAuth()
   const router = useRouter()
@@ -22,8 +27,8 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
 
   const loginForm = useForm({
     defaultValues: {
-      email: '',
-      password: '',
+      email: loginDefaults.email,
+      password: loginDefaults.password,
     },
     validators: { onSubmit: loginSchema },
     onSubmit: async ({ value }) => {

@@ -70,3 +70,13 @@ describe('quotation completion rules', () => {
     expect(quotationActionAllowed('Draft', 'send')).toBe(false)
   })
 })
+
+describe('approval authority', () => {
+  it('keeps approval out of the quotation action surface after submission', () => {
+    expect(quotationActionAllowed('Awaiting Approval', 'approve')).toBe(true)
+    // The transition remains valid at the domain layer for the approval queue,
+    // while QuotationDetailWorkspace intentionally exposes no Approve button.
+    expect(quotationActionAllowed('Awaiting Approval', 'send')).toBe(false)
+    expect(quotationActionAllowed('Approved', 'send')).toBe(true)
+  })
+})

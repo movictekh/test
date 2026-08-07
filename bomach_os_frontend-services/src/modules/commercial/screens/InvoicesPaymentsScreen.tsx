@@ -1,18 +1,5 @@
-import { IconChevronRight, IconSearch } from '@tabler/icons-react'
-import { useMemo, useState } from 'react'
-
-import { commercialMoney } from '../commercial.ui'
+import { commercialMoney, invoiceStatusClass } from '../commercial.ui'
 import type { CommercialInvoice, InvoiceSummary } from '../types/commercial.types'
-
-function invoiceStatusClass(status: string) {
-  if (status === 'Paid') return 'commercial-pill-green'
-  if (status === 'Overdue' || status === 'Cancelled') {
-    return 'commercial-pill-red'
-  }
-  if (status === 'Part Paid') return 'commercial-pill-yellow'
-  if (status === 'Draft') return 'commercial-pill-gray'
-  return 'commercial-pill-blue'
-}
 
 export function InvoicesPaymentsScreen({
   summary,
@@ -23,37 +10,18 @@ export function InvoicesPaymentsScreen({
   invoices: CommercialInvoice[]
   onOpen: (invoice: CommercialInvoice) => void
 }) {
-  const [search, setSearch] = useState('')
-  const [status, setStatus] = useState('All statuses')
-
-  const filtered = useMemo(() => {
-    const needle = search.trim().toLowerCase()
-
-    return invoices.filter((invoice) => {
-      const matchesSearch =
-        !needle ||
-        [invoice.id, invoice.quotationId, invoice.client, invoice.service].some((value) =>
-          value.toLowerCase().includes(needle),
-        )
-
-      return matchesSearch && (status === 'All statuses' || invoice.status === status)
-    })
-  }, [invoices, search, status])
-
   return (
     <main className="commercial-content">
-      <section className="commercial-kgrid commercial-kgrid-5">
+      <section className="commercial-kgrid commercial-kgrid-4" aria-label="Invoice summary">
         {[
-          ['Invoices', summary.total, 'All billing records'],
-          ['Outstanding', commercialMoney.format(summary.outstanding), 'Open balance'],
-          ['Overdue', summary.overdue, 'Past due date'],
-          ['Collected', commercialMoney.format(summary.collected), 'Payments received'],
-          ['Collection Rate', `${summary.collectionRate}%`, 'Paid value ratio'],
-        ].map(([label, value, note]) => (
+          ['Total invoiced', commercialMoney.format(summary.totalInvoiced)],
+          ['Paid', commercialMoney.format(summary.paid)],
+          ['Outstanding', commercialMoney.format(summary.outstanding)],
+          ['Overdue', summary.overdue],
+        ].map(([label, value]) => (
           <article className="commercial-kpi" key={label}>
             <div className="commercial-kpi-label">{label}</div>
             <div className="commercial-kpi-value">{value}</div>
-            <div className="commercial-kpi-note">{note}</div>
           </article>
         ))}
       </section>
@@ -61,63 +29,36 @@ export function InvoicesPaymentsScreen({
       <section className="commercial-card">
         <header className="commercial-card-header">
           <div>
-            <h2>Invoices & Payments Register</h2>
-            <p>Billing, balances, due dates and payment allocation</p>
+            <h2>Invoices, Payment Schedules & Receipts</h2>
+            <p>Orders activate after the required payment threshold is met</p>
           </div>
-          <span className="commercial-record-count">{filtered.length} records</span>
+          <span className="commercial-count">{invoices.length} records</span>
         </header>
-
-        <div className="commercial-filter-row">
-          <label className="commercial-search">
-            <IconSearch size={14} />
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search invoice, quotation, client or service"
-            />
-          </label>
-          <select value={status} onChange={(event) => setStatus(event.target.value)}>
-            <option>All statuses</option>
-            {Array.from(new Set(invoices.map((invoice) => invoice.status))).map((item) => (
-              <option key={item}>{item}</option>
-            ))}
-          </select>
-        </div>
 
         <div className="commercial-table-wrap">
           <table className="commercial-table">
             <thead>
               <tr>
                 <th>Invoice</th>
-                <th>Quotation</th>
                 <th>Client</th>
                 <th>Service</th>
-                <th>Status</th>
                 <th>Total</th>
                 <th>Paid</th>
                 <th>Balance</th>
                 <th>Due</th>
-                <th />
+                <th>Status</th>
+                <th aria-label="Actions" />
               </tr>
             </thead>
             <tbody>
-              {filtered.map((invoice) => (
+              {invoices.map((invoice) => (
                 <tr key={invoice.id}>
                   <td>
                     <b>{invoice.id}</b>
-                    <small>{invoice.createdAt}</small>
+                    <small>{invoice.schedule}</small>
                   </td>
-                  <td>{invoice.quotationId}</td>
                   <td>{invoice.client}</td>
-                  <td>
-                    <b>{invoice.service}</b>
-                    <small>{invoice.branch}</small>
-                  </td>
-                  <td>
-                    <span className={`commercial-pill ${invoiceStatusClass(invoice.status)}`}>
-                      {invoice.status}
-                    </span>
-                  </td>
+                  <td>{invoice.service}</td>
                   <td>{commercialMoney.format(invoice.total)}</td>
                   <td>{commercialMoney.format(invoice.amountPaid)}</td>
                   <td>
@@ -125,21 +66,27 @@ export function InvoicesPaymentsScreen({
                   </td>
                   <td>{invoice.dueAt}</td>
                   <td>
+                    <span className={`commercial-pill ${invoiceStatusClass(invoice.status)}`}>
+                      {invoice.status}
+                    </span>
+                  </td>
+                  <td>
                     <button
                       type="button"
-                      className="commercial-row-open"
+                      className="commercial-btn commercial-btn-small"
                       onClick={() => onOpen(invoice)}
-                      aria-label={`Open ${invoice.id}`}
                     >
-                      <IconChevronRight size={15} />
+                      Open
                     </button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {filtered.length === 0 ? (
-            <div className="commercial-empty">No invoices match the selected filters.</div>
+          {invoices.length === 0 ? (
+            <div className="commercial-empty" role="status">
+              No invoices yet. Create an invoice from an accepted quotation.
+            </div>
           ) : null}
         </div>
       </section>

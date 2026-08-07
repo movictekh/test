@@ -40,7 +40,10 @@ import '../styles/commercial.css'
 const metadata: Record<CommercialSection, { title: string; breadcrumb: string }> = {
   'service-requests': { title: 'Service Requests', breadcrumb: 'Commercial flow / Requests' },
   quotations: { title: 'Quotations & Proposals', breadcrumb: 'Commercial flow / Offers' },
-  'invoices-payments': { title: 'Invoices & Payments', breadcrumb: 'Commercial flow / Billing' },
+  'invoices-payments': {
+    title: 'Invoices & Payments',
+    breadcrumb: 'Commercial flow / Billing',
+  },
   approvals: { title: 'Approvals', breadcrumb: 'Commercial flow / Approvals' },
 }
 
@@ -229,7 +232,7 @@ export function CommercialSectionPage({ section }: { section: CommercialSection 
               : section === 'quotations'
                 ? 'Build Quote'
                 : section === 'invoices-payments'
-                  ? 'Create Invoice'
+                  ? 'New Invoice'
                   : 'Create'}
           </PrototypeButton>
         }

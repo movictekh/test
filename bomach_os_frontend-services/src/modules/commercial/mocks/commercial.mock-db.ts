@@ -383,11 +383,9 @@ const quotations: CommercialQuotation[] = [
     client: 'Apex Retail Ltd',
     service: 'Business Software Development',
     branch: 'Lagos',
-    status: 'Draft',
+    status: 'Accepted',
     version: 1,
-    serviceFee: 12750000,
-    discount: 500000,
-    taxPercent: 7.5,
+    serviceFee: 12000000,
     depositPercent: 40,
     validUntil: '2026-07-25',
     paymentTerms: '40% mobilisation, balance on agreed milestones.',
@@ -395,14 +393,86 @@ const quotations: CommercialQuotation[] = [
     approvalRoute: 'Tech Director',
     owner: 'Tech Director',
     createdAt: '2026-07-10',
-    updatedAt: '2026-07-10',
+    updatedAt: '2026-07-11',
+    issuedAt: '2026-07-10T15:00:00.000Z',
     activities: [
       {
         id: 'Q-260710-003-A1',
         at: '2026-07-10T09:30:00.000Z',
         title: 'Quotation created',
         actor: 'Tech Director',
-        description: 'Draft pricing prepared for discovery scope.',
+        description: 'Pricing prepared for discovery scope.',
+      },
+      {
+        id: 'Q-260710-003-A2',
+        at: '2026-07-11T10:00:00.000Z',
+        title: 'Client accepted quotation',
+        actor: 'Commercial Operations',
+        description: 'Mobilisation schedule agreed.',
+      },
+    ],
+  }),
+  quoteFromParts({
+    id: 'Q-260701-019',
+    requestId: 'REQ-260710-021',
+    client: 'Green Acres Cooperative',
+    service: 'Cadastral Land Survey',
+    branch: 'Port Harcourt',
+    status: 'Accepted',
+    version: 1,
+    serviceFee: 3200000,
+    depositPercent: 70,
+    validUntil: '2026-07-20',
+    paymentTerms: '70% advance, 30% on delivery.',
+    notes: 'Perimeter survey and beacon placement.',
+    approvalRoute: 'Service Manager',
+    owner: 'Chief Surveyor',
+    createdAt: '2026-07-01',
+    updatedAt: '2026-07-02',
+    issuedAt: '2026-07-01T14:00:00.000Z',
+    activities: [
+      {
+        id: 'Q-260701-019-A1',
+        at: '2026-07-01T11:00:00.000Z',
+        title: 'Quotation created',
+        actor: 'Chief Surveyor',
+        description: 'Survey quotation issued.',
+      },
+      {
+        id: 'Q-260701-019-A2',
+        at: '2026-07-02T09:00:00.000Z',
+        title: 'Client accepted quotation',
+        actor: 'Commercial Operations',
+        description: 'Advance payment schedule confirmed.',
+      },
+    ],
+  }),
+  quoteFromParts({
+    id: 'Q-260714-020',
+    requestId: 'REQ-260711-009',
+    client: 'Uche Atuanya Family',
+    service: 'Structural Inspection',
+    branch: 'Enugu',
+    status: 'Accepted',
+    version: 1,
+    serviceFee: 550000,
+    taxPercent: 7.5,
+    depositPercent: 30,
+    validUntil: '2026-07-28',
+    paymentTerms: 'Work begins after mobilisation payment.',
+    notes: 'Site inspection and written engineering report.',
+    approvalRoute: 'Service Manager',
+    owner: 'Civil Engineer',
+    createdAt: '2026-07-14',
+    updatedAt: '2026-07-14',
+    issuedAt: '2026-07-14T12:00:00.000Z',
+    activities: [
+      {
+        id: 'Q-260714-020-A1',
+        at: '2026-07-14T11:00:00.000Z',
+        title: 'Quotation accepted',
+        actor: 'Commercial Operations',
+        description: 'Ready for invoicing.',
       },
     ],
   }),
@@ -445,30 +515,95 @@ const quotations: CommercialQuotation[] = [
 
 const invoices: CommercialInvoice[] = [
   {
-    id: 'INV-260712-001',
+    id: 'INV-260713-004',
     quotationId: 'Q-260712-008',
     requestId: 'REQ-260712-014',
     client: 'Mrs Chioma Ugwu',
     service: 'Estate Plot Sales',
     branch: 'Enugu',
-    status: 'Part Paid',
+    status: 'Paid',
     total: 4500000,
-    amountPaid: 2500000,
-    balance: 2000000,
-    dueAt: '2026-07-20',
+    amountPaid: 4500000,
+    balance: 0,
+    dueAt: '2026-07-13',
+    schedule: 'Full payment',
+    paymentInstructions:
+      'Pay through client wallet, payment gateway, bank transfer or approved POS.',
     issuedAt: '2026-07-12T16:00:00.000Z',
     createdAt: '2026-07-12',
     owner: 'Property Manager',
     payments: [
       {
         id: 'PAY-260712-001',
-        invoiceId: 'INV-260712-001',
-        amount: 2500000,
+        invoiceId: 'INV-260713-004',
+        amount: 4500000,
         method: 'Bank Transfer',
         reference: 'TRF-884211',
         paidAt: '2026-07-12',
         recordedBy: 'Finance Operations',
-        note: 'Initial allocation payment.',
+        note: 'Full allocation payment.',
+      },
+    ],
+  },
+  {
+    id: 'INV-260710-002',
+    quotationId: 'Q-260710-003',
+    requestId: 'REQ-260710-022',
+    client: 'Apex Retail Ltd',
+    service: 'Business Software Development',
+    branch: 'Lagos',
+    status: 'Part Paid',
+    total: 12000000,
+    amountPaid: 4800000,
+    balance: 7200000,
+    dueAt: '2026-07-18',
+    schedule: '40% mobilisation',
+    paymentInstructions:
+      'Pay through client wallet, payment gateway, bank transfer or approved POS.',
+    issuedAt: '2026-07-10T12:00:00.000Z',
+    createdAt: '2026-07-10',
+    owner: 'Tech Director',
+    payments: [
+      {
+        id: 'PAY-260710-001',
+        invoiceId: 'INV-260710-002',
+        amount: 4800000,
+        method: 'Bank Transfer',
+        reference: 'TRF-441902',
+        paidAt: '2026-07-11',
+        recordedBy: 'Finance Operations',
+        note: 'Mobilisation tranche.',
+      },
+    ],
+  },
+  {
+    id: 'INV-260701-019',
+    quotationId: 'Q-260701-019',
+    requestId: 'REQ-260710-021',
+    client: 'Green Acres Cooperative',
+    service: 'Cadastral Land Survey',
+    branch: 'Port Harcourt',
+    status: 'Overdue',
+    total: 3200000,
+    amountPaid: 2000000,
+    balance: 1200000,
+    dueAt: '2026-07-08',
+    schedule: '70% advance',
+    paymentInstructions:
+      'Pay through client wallet, payment gateway, bank transfer or approved POS.',
+    issuedAt: '2026-07-01T10:00:00.000Z',
+    createdAt: '2026-07-01',
+    owner: 'Chief Surveyor',
+    payments: [
+      {
+        id: 'PAY-260701-001',
+        invoiceId: 'INV-260701-019',
+        amount: 2000000,
+        method: 'Bank Transfer',
+        reference: 'TRF-119044',
+        paidAt: '2026-07-02',
+        recordedBy: 'Finance Operations',
+        note: 'Advance payment received.',
       },
     ],
   },
@@ -489,16 +624,63 @@ const approvals: CommercialApproval[] = quotations
     status: 'Pending',
   }))
 
+function ensureQuotationApproval(
+  quotation: CommercialQuotation,
+  requestedAt: string,
+): CommercialApproval {
+  const pending = approvals.find(
+    (approval) =>
+      approval.entityType === 'Quotation' &&
+      approval.entityId === quotation.id &&
+      approval.status === 'Pending',
+  )
+  if (pending) return pending
+
+  const approval: CommercialApproval = {
+    id: `APR-Q-${String(approvals.length + 1).padStart(3, '0')}`,
+    entityType: 'Quotation',
+    entityId: quotation.id,
+    client: quotation.client,
+    reason: `Quotation approval via ${quotation.approvalRoute}`,
+    amount: quotation.total,
+    requestedBy: quotation.owner,
+    assignedTo: quotation.approvalRoute,
+    requestedAt,
+    status: 'Pending',
+  }
+
+  approvals.unshift(approval)
+  return approval
+}
+
+function closePendingQuotationApprovals(
+  quotationId: string,
+  status: 'Approved' | 'Rejected',
+  decidedAt: string,
+  note: string,
+) {
+  for (const approval of approvals) {
+    if (
+      approval.entityType === 'Quotation' &&
+      approval.entityId === quotationId &&
+      approval.status === 'Pending'
+    ) {
+      approval.status = status
+      approval.decidedAt = decidedAt
+      approval.decisionNote = note
+    }
+  }
+}
+
 function invoiceSummary() {
-  const billed = invoices.reduce((sum, invoice) => sum + invoice.total, 0)
-  const collected = invoices.reduce((sum, invoice) => sum + invoice.amountPaid, 0)
+  const totalInvoiced = invoices.reduce((sum, invoice) => sum + invoice.total, 0)
+  const paid = invoices.reduce((sum, invoice) => sum + invoice.amountPaid, 0)
 
   return {
-    total: invoices.length,
-    outstanding: invoices.reduce((sum, invoice) => sum + invoice.balance, 0),
+    totalInvoiced,
+    paid,
+    outstanding: totalInvoiced - paid,
     overdue: invoices.filter((invoice) => invoice.status === 'Overdue').length,
-    collected,
-    collectionRate: billed === 0 ? 0 : Math.round((collected / billed) * 100),
   }
 }
 
@@ -540,10 +722,12 @@ export function createMockInvoice(input: CreateInvoiceInput): CommercialWorkspac
     service: quotation.service,
     branch: quotation.branch,
     status: input.issueNow ? 'Issued' : 'Draft',
-    total: quotation.total,
+    total: Number(input.amount) || quotation.total,
     amountPaid: 0,
-    balance: quotation.total,
+    balance: Number(input.amount) || quotation.total,
     dueAt: input.dueAt,
+    schedule: input.schedule,
+    paymentInstructions: input.paymentInstructions,
     ...(input.issueNow ? { issuedAt: now.toISOString() } : {}),
     createdAt: now.toISOString().slice(0, 10),
     owner: quotation.owner,
@@ -741,6 +925,13 @@ export function createMockQuotation(input: CreateQuotationInput): CommercialWork
     description: `${id} created for ₦${totals.total.toLocaleString('en-NG')}.`,
   })
 
+  if (status === 'Awaiting Approval') {
+    const createdQuotation = quotations.find((item) => item.id === id)
+    if (createdQuotation) {
+      ensureQuotationApproval(createdQuotation, now.toISOString())
+    }
+  }
+
   return getCommercialWorkspace()
 }
 
@@ -788,6 +979,9 @@ export function updateMockQuotation(id: string, input: UpdateQuotationInput): Co
     const [status, title] = map[action]
     quotation.status = status
     quotation.updatedAt = now.toISOString().slice(0, 10)
+    if (action === 'submit-approval') {
+      ensureQuotationApproval(quotation, now.toISOString())
+    }
     if (action === 'send') quotation.issuedAt = now.toISOString()
     if (action === 'accept' || action === 'reject') {
       quotation.clientDecisionAt = now.toISOString()
@@ -804,6 +998,15 @@ export function updateMockQuotation(id: string, input: UpdateQuotationInput): Co
       actor: 'Commercial Operations',
       description: input.decisionNote || title,
     })
+
+    if (action === 'approve') {
+      closePendingQuotationApprovals(
+        quotation.id,
+        'Approved',
+        now.toISOString(),
+        input.decisionNote || 'Approved from quotation lifecycle.',
+      )
+    }
   }
 
   const source = requests.find((item) => item.id === quotation.requestId)

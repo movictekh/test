@@ -189,6 +189,8 @@ export interface CommercialInvoice {
   amountPaid: number
   balance: number
   dueAt: string
+  schedule: string
+  paymentInstructions: string
   issuedAt?: string
   createdAt: string
   owner: string
@@ -198,6 +200,9 @@ export interface CommercialInvoice {
 export interface CreateInvoiceInput {
   quotationId: string
   dueAt: string
+  amount: number
+  schedule: string
+  paymentInstructions: string
   issueNow: boolean
 }
 
@@ -234,11 +239,10 @@ export interface DecideApprovalInput {
 }
 
 export interface InvoiceSummary {
-  total: number
+  totalInvoiced: number
+  paid: number
   outstanding: number
   overdue: number
-  collected: number
-  collectionRate: number
 }
 
 export interface ApprovalSummary {

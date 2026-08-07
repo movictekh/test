@@ -27,6 +27,15 @@ export function validateInvoiceInput(
   if (!input.dueAt) {
     errors.dueAt = 'Due date is required'
   }
+  if (!Number.isFinite(input.amount) || input.amount <= 0) {
+    errors.amount = 'Invoice amount must be greater than zero'
+  }
+  if (!input.schedule.trim()) {
+    errors.schedule = 'Payment schedule is required'
+  }
+  if (!input.paymentInstructions.trim()) {
+    errors.paymentInstructions = 'Payment instructions are required'
+  }
 
   return errors
 }

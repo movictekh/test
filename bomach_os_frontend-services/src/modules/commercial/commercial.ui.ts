@@ -33,9 +33,29 @@ export function quotationStatusClass(status: string) {
   return 'commercial-pill-blue'
 }
 
+export function invoiceStatusClass(status: string) {
+  if (status === 'Paid') return 'commercial-pill-green'
+  if (status === 'Overdue' || status === 'Cancelled') return 'commercial-pill-red'
+  if (status === 'Part Paid') return 'commercial-pill-yellow'
+  if (status === 'Draft') return 'commercial-pill-gray'
+  return 'commercial-pill-blue'
+}
+
 export const quotationApprovers = [
   'Service Manager',
   'Head of Operations',
   'Finance Manager',
   'CEO / Founder',
 ] as const
+
+export const invoicePaymentSchedules = [
+  'Full payment',
+  '30% mobilisation',
+  '40% mobilisation',
+  '50% mobilisation',
+  '70% advance',
+  'Milestone schedule',
+] as const
+
+export const defaultPaymentInstructions =
+  'Pay through client wallet, payment gateway, bank transfer or approved POS.'

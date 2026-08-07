@@ -22,7 +22,6 @@ export function QuotationDetailWorkspace({
   const toast = useToast()
   const [decisionNote, setDecisionNote] = useState('')
   const canSubmitApproval = quotationActionAllowed(quotation.status, 'submit-approval')
-  const canApprove = quotationActionAllowed(quotation.status, 'approve')
   const canSend = quotationActionAllowed(quotation.status, 'send')
   const canAccept = quotationActionAllowed(quotation.status, 'accept')
   const canReject = quotationActionAllowed(quotation.status, 'reject')
@@ -184,15 +183,10 @@ export function QuotationDetailWorkspace({
                 {saving ? 'Submitting...' : 'Submit Approval'}
               </button>
             ) : null}
-            {canApprove ? (
-              <button
-                type="button"
-                className="commercial-btn commercial-btn-green"
-                disabled={saving}
-                onClick={() => onUpdate(quotation.id, { action: 'approve' })}
-              >
-                {saving ? 'Approving...' : 'Approve'}
-              </button>
+            {quotation.status === 'Awaiting Approval' ? (
+              <span className="commercial-form-note">
+                Approval is controlled from the Commercial Approval Queue.
+              </span>
             ) : null}
             {canSend ? (
               <button
