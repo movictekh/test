@@ -5,7 +5,7 @@ import { Button } from '@/shared/ui/button'
 import { ToastProvider } from './ToastProvider'
 import { useToast } from './useToast'
 
-function ToastDemo() {
+function Toast() {
   const toast = useToast()
 
   return (
@@ -55,7 +55,7 @@ function ToastDemo() {
 
 const meta = {
   title: 'Shared/Toast',
-  component: ToastDemo,
+  component: Toast,
   decorators: [
     (Story) => (
       <ToastProvider>
@@ -63,7 +63,7 @@ const meta = {
       </ToastProvider>
     ),
   ],
-} satisfies Meta<typeof ToastDemo>
+} satisfies Meta<typeof Toast>
 
 export default meta
 

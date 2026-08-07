@@ -1407,7 +1407,7 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
   }
 }
 
-/* UI-1.06 exact editors */
+/* Service editor layouts */
 .service-admin-editor-backdrop {
   --service-admin-brand: #1f3d7a;
   --service-admin-brand-strong: #132b59;
@@ -1786,7 +1786,7 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
   }
 }
 
-/* UI-1.07 — Branch Activation */
+/* Branch Activation */
 .service-admin-branch-card {
   padding: 15px;
 }
