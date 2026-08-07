@@ -8,49 +8,48 @@ import { AppProviders } from '@/app/providers/AppProviders'
 import { ApplicationRouter } from '@/app/router/ApplicationRouter'
 import { env } from '@/shared/config/env'
 
-const MOCK_WORKER_URL = '/mockServiceWorker.js'
+const MOCK_WORKER_URL = `${import.meta.env.BASE_URL}mockServiceWorker.js`
+const MOCK_START_TIMEOUT_MS = 8000
 
-/**
- * MSW hangs/reloads when a mock worker is registered but not controlling the page.
- * Unregister those stale workers so `worker.start()` can do a clean register.
- */
-async function clearStaleMockWorkers(): Promise<void> {
-  if (!('serviceWorker' in navigator)) return
+function renderBootstrapFailure(error: unknown): void {
+  console.error('Application bootstrap failed', error)
 
-  const absoluteWorkerUrl = new URL(MOCK_WORKER_URL, window.location.href).href
-  const registrations = await navigator.serviceWorker.getRegistrations()
+  const rootElement = document.getElementById('root')
+  if (!rootElement) return
 
-  await Promise.all(
-    registrations.map(async (registration) => {
-      const scripts = [registration.active, registration.waiting, registration.installing]
-        .filter((worker): worker is ServiceWorker => worker != null)
-        .map((worker) => worker.scriptURL)
+  const message = error instanceof Error ? error.message : 'Unknown application startup error'
 
-      const isMockWorker = scripts.some((scriptUrl) => scriptUrl === absoluteWorkerUrl)
-      if (!isMockWorker) return
-
-      if (!navigator.serviceWorker.controller) {
-        await registration.unregister()
-      }
-    }),
-  )
+  rootElement.innerHTML = `
+    <main style="max-width:720px;margin:64px auto;padding:24px;font:14px/1.6 Inter,system-ui,sans-serif">
+      <h1 style="margin:0 0 12px;font-size:22px">Development app could not start</h1>
+      <p style="margin:0 0 12px">
+        ${message.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')}
+      </p>
+      <p style="margin:0">
+        If this is an MSW startup error, use <strong>http://localhost:5173</strong>.
+        After switching from the old startup code, unregister any old mock worker
+        once in DevTools → Application → Service Workers, then reload.
+      </p>
+    </main>
+  `
 }
 
-async function enableApiMocking(): Promise<void> {
-  if (!import.meta.env.DEV || !env.enableMocks) {
-    return
-  }
+async function startApiMocking(): Promise<void> {
+  if (!import.meta.env.DEV || !env.enableMocks) return
 
-  if (!window.isSecureContext || !('serviceWorker' in navigator)) {
-    console.warn(
-      'API mocks need http://localhost:5173 (secure context). Network IPs over HTTP cannot register the mock service worker.',
+  if (!window.isSecureContext) {
+    throw new Error(
+      'API mocking requires a secure browser context. Use http://localhost:5173 instead of a LAN IP over HTTP.',
     )
-    return
   }
 
-  await clearStaleMockWorkers()
+  if (!('serviceWorker' in navigator)) {
+    throw new Error('This browser does not support Service Workers required by MSW.')
+  }
 
   const { worker } = await import('@/mocks/browser')
+
+  let timeoutId: number | undefined
 
   try {
     await Promise.race([
@@ -62,25 +61,30 @@ async function enableApiMocking(): Promise<void> {
         },
       }),
       new Promise<never>((_, reject) => {
-        window.setTimeout(() => {
-          reject(new Error('Mock service worker start timed out'))
-        }, 5000)
+        timeoutId = window.setTimeout(() => {
+          reject(
+            new Error(
+              'MSW did not finish starting within 8 seconds. The app was not mounted because development API mocks are required.',
+            ),
+          )
+        }, MOCK_START_TIMEOUT_MS)
       }),
     ])
-  } catch (error) {
-    await clearStaleMockWorkers()
-    console.warn('API mocking could not start. Continuing without MSW.', error)
+  } finally {
+    if (timeoutId !== undefined) {
+      window.clearTimeout(timeoutId)
+    }
   }
 }
 
 async function bootstrap(): Promise<void> {
-  await enableApiMocking()
-
   const rootElement = document.getElementById('root')
 
   if (!rootElement) {
     throw new Error('The root application element was not found.')
   }
+
+  await startApiMocking()
 
   createRoot(rootElement).render(
     <StrictMode>
@@ -91,11 +95,4 @@ async function bootstrap(): Promise<void> {
   )
 }
 
-void bootstrap().catch((error) => {
-  console.error('Application bootstrap failed', error)
-  const rootElement = document.getElementById('root')
-  if (rootElement) {
-    rootElement.innerHTML =
-      '<main style="padding:24px;font:14px/1.5 system-ui,sans-serif"><h1>App failed to start</h1><p>Check the browser console for details, then hard-refresh.</p></main>'
-  }
-})
+void bootstrap().catch(renderBootstrapFailure)
