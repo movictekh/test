@@ -28,7 +28,7 @@ Real Estate Inventory preserves:
 - Selected Plot transaction editor;
 - Brokerage Listings.
 
-Specialized Service Control preserves the exact profile tabs and lifecycle definitions for Land Surveying, Engineering, Courier & Logistics and Information Technology. Requests come from Commercial Query and live orders come from Fulfillment Query rather than duplicated state.
+Survey / Engineering / Others preserves the exact profile tabs and lifecycle definitions for Land Surveying, Engineering, Courier & Logistics and Information Technology. Requests come from Commercial Query and live orders come from Fulfillment Query rather than duplicated state.
 
 ## Ownership standard
 
@@ -54,6 +54,6 @@ Manual pixel-match routes:
 - /app/execution-tasks
 - /app/deliverables
 - /app/real-estate-inventory
-- /app/specialized-service-control
+- /app/survey-engineering-others
 
 The repository `04_Pixel_Match_Review_Checklist.md` remains authoritative for desktop, laptop, tablet and mobile screenshot comparison.

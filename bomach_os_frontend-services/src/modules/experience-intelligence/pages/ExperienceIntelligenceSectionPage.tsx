@@ -1,0 +1,168 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMemo, useState } from 'react'
+
+import { commercialQueries } from '@/modules/commercial/api/commercial.queries'
+import { fulfillmentQueries } from '@/modules/fulfillment/api/fulfillment.queries'
+import { CompactPageToolbar } from '@/modules/service-administration/components/ServiceAdministrationUi'
+import { presentError } from '@/shared/errors'
+import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
+
+import { experienceIntelligenceApi } from '../api/experience-intelligence.api'
+import { experienceIntelligenceKeys } from '../api/experience-intelligence.keys'
+import { experienceIntelligenceQueries } from '../api/experience-intelligence.queries'
+import { AuditLogScreen } from '../screens/AuditLogScreen'
+import { FeedbackQualityScreen } from '../screens/FeedbackQualityScreen'
+import { ReportsAnalyticsScreen } from '../screens/ReportsAnalyticsScreen'
+import type {
+  CreateFeedbackInput,
+  ExperienceIntelligenceSection,
+  UpdateFeedbackInput,
+} from '../types/experience-intelligence.types'
+import {
+  deriveFeedbackSummary,
+  deriveReportSnapshot,
+} from '../workspaces/experience-intelligence.rules'
+import { FeedbackDetailWorkspace } from '../workspaces/FeedbackDetailWorkspace'
+import { RecordFeedbackWorkspace } from '../workspaces/RecordFeedbackWorkspace'
+import '../styles/experience-intelligence.css'
+
+const metadata: Record<ExperienceIntelligenceSection, { title: string; breadcrumb: string }> = {
+  'feedback-quality': {
+    title: 'Feedback & Quality',
+    breadcrumb: 'Client experience / Quality',
+  },
+  'reports-analytics': {
+    title: 'Reports & Analytics',
+    breadcrumb: 'Intelligence / Performance',
+  },
+  'audit-log': {
+    title: 'Audit Log',
+    breadcrumb: 'Governance / Accountability',
+  },
+}
+
+export function ExperienceIntelligenceSectionPage({
+  section,
+}: {
+  section: ExperienceIntelligenceSection
+}) {
+  const queryClient = useQueryClient()
+  const toast = useToast()
+
+  const experienceQuery = useQuery(experienceIntelligenceQueries.workspace())
+  const commercialQuery = useQuery(commercialQueries.workspace())
+  const fulfillmentQuery = useQuery(fulfillmentQueries.workspace())
+
+  const [recordFeedbackOpen, setRecordFeedbackOpen] = useState(false)
+  const [selectedFeedbackId, setSelectedFeedbackId] = useState<string | null>(null)
+
+  const updateCache = (workspace: NonNullable<typeof experienceQuery.data>) => {
+    queryClient.setQueryData(experienceIntelligenceKeys.workspace(), workspace)
+  }
+
+  const createFeedback = useMutation({
+    mutationFn: (input: CreateFeedbackInput) => experienceIntelligenceApi.createFeedback(input),
+    onSuccess: (workspace) => {
+      updateCache(workspace)
+      setRecordFeedbackOpen(false)
+      toast.success('Feedback recorded')
+    },
+    onError: (error) => {
+      const presented = presentError(error, 'form-submit')
+      toast.error('Feedback could not be recorded', {
+        description: presented.message,
+      })
+    },
+  })
+
+  const updateFeedback = useMutation({
+    mutationFn: ({ feedbackId, input }: { feedbackId: string; input: UpdateFeedbackInput }) =>
+      experienceIntelligenceApi.updateFeedback(feedbackId, input),
+    onSuccess: (workspace) => {
+      updateCache(workspace)
+      toast.success('Quality follow-up updated')
+    },
+    onError: (error) => {
+      const presented = presentError(error, 'background-action')
+      toast.error('Feedback could not be updated', {
+        description: presented.message,
+      })
+    },
+  })
+
+  const selectedFeedback = useMemo(() => {
+    if (!selectedFeedbackId || !experienceQuery.data) return null
+    return experienceQuery.data.feedback.find((item) => item.id === selectedFeedbackId) ?? null
+  }, [experienceQuery.data, selectedFeedbackId])
+
+  if (experienceQuery.isPending || commercialQuery.isPending || fulfillmentQuery.isPending) {
+    return <DashboardSkeleton />
+  }
+
+  if (experienceQuery.isError || commercialQuery.isError || fulfillmentQuery.isError) {
+    const sourceError = experienceQuery.error ?? commercialQuery.error ?? fulfillmentQuery.error
+    const presented = presentError(sourceError, 'page-load')
+
+    return (
+      <ErrorState
+        title={presented.title}
+        description={presented.message}
+        onRetry={() => {
+          void experienceQuery.refetch()
+          void commercialQuery.refetch()
+          void fulfillmentQuery.refetch()
+        }}
+      />
+    )
+  }
+
+  const page = metadata[section]
+  const feedbackSummary = deriveFeedbackSummary(experienceQuery.data.feedback)
+  const report = deriveReportSnapshot(
+    commercialQuery.data,
+    fulfillmentQuery.data,
+    experienceQuery.data.feedback,
+  )
+
+  return (
+    <>
+      <CompactPageToolbar title={page.title} breadcrumb={page.breadcrumb} />
+
+      {section === 'feedback-quality' ? (
+        <FeedbackQualityScreen
+          feedback={experienceQuery.data.feedback}
+          summary={feedbackSummary}
+          onRecord={() => setRecordFeedbackOpen(true)}
+          onOpen={(feedback) => setSelectedFeedbackId(feedback.id)}
+        />
+      ) : section === 'reports-analytics' ? (
+        <ReportsAnalyticsScreen report={report} />
+      ) : (
+        <AuditLogScreen events={experienceQuery.data.audit} />
+      )}
+
+      {recordFeedbackOpen ? (
+        <RecordFeedbackWorkspace
+          orders={fulfillmentQuery.data.orders}
+          saving={createFeedback.isPending}
+          onClose={() => setRecordFeedbackOpen(false)}
+          onSubmit={(input) => createFeedback.mutate(input)}
+        />
+      ) : null}
+
+      {selectedFeedback ? (
+        <FeedbackDetailWorkspace
+          feedback={selectedFeedback}
+          saving={updateFeedback.isPending}
+          onClose={() => setSelectedFeedbackId(null)}
+          onSave={(input) =>
+            updateFeedback.mutate({
+              feedbackId: selectedFeedback.id,
+              input,
+            })
+          }
+        />
+      ) : null}
+    </>
+  )
+}
