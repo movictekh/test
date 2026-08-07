@@ -7,7 +7,7 @@ export const Route = createFileRoute('/app/design-system')({
   beforeLoad: ({ context }) =>
     requireRoutePermission({
       auth: context.auth,
-      permissions: [PERMISSIONS.dashboardRead],
+      permissions: [PERMISSIONS.dashboardView],
     }),
   component: DesignSystemPage,
 })

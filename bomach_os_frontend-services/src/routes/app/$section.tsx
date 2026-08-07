@@ -92,7 +92,7 @@ export const Route = createFileRoute('/app/$section')({
 
     return requireRoutePermission({
       auth: context.auth,
-      permissions: matchingItem?.permissions ?? [PERMISSIONS.dashboardRead],
+      permissions: matchingItem?.permissions ?? [PERMISSIONS.dashboardView],
     })
   },
   component: AppShellRoute,

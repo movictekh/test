@@ -46,7 +46,7 @@ export function FoundationPage() {
         actions={
           <>
             <Button variant="outline">View standards</Button>
-            <PermissionGate permission={PERMISSIONS.serviceCreate}>
+            <PermissionGate permission={PERMISSIONS.servicesCreate}>
               <Button>
                 <IconPlus size={17} aria-hidden="true" />
                 Continue setup

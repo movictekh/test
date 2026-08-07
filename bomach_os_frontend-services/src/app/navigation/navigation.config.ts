@@ -13,7 +13,7 @@ export const operationsNavigation = [
         label: 'Command Center',
         icon: 'dashboard',
         to: '/app/dashboard',
-        permissions: [PERMISSIONS.dashboardRead],
+        permissions: [PERMISSIONS.dashboardView],
         exact: true,
       },
     ],
@@ -28,7 +28,7 @@ export const operationsNavigation = [
         icon: 'services',
         to: appSectionRoute,
         params: { section: 'service-catalogue' },
-        permissions: [PERMISSIONS.serviceRead],
+        permissions: [PERMISSIONS.servicesList],
       },
       {
         id: 'calculators',
@@ -36,7 +36,7 @@ export const operationsNavigation = [
         icon: 'calculator',
         to: appSectionRoute,
         params: { section: 'calculator-library' },
-        permissions: [PERMISSIONS.serviceRead],
+        permissions: [PERMISSIONS.servicePricingConfigsList],
       },
       {
         id: 'request-form-builder',
@@ -44,7 +44,7 @@ export const operationsNavigation = [
         icon: 'form',
         to: appSectionRoute,
         params: { section: 'request-form-builder' },
-        permissions: [PERMISSIONS.serviceRead],
+        permissions: [PERMISSIONS.serviceRequestFormsList],
       },
       {
         id: 'workflows',
@@ -52,7 +52,7 @@ export const operationsNavigation = [
         icon: 'workflow',
         to: appSectionRoute,
         params: { section: 'workflow-designer' },
-        permissions: [PERMISSIONS.serviceRead],
+        permissions: [PERMISSIONS.serviceWorkflowsList],
       },
       {
         id: 'branches',
@@ -60,7 +60,7 @@ export const operationsNavigation = [
         icon: 'branches',
         to: appSectionRoute,
         params: { section: 'branch-activation' },
-        permissions: [PERMISSIONS.serviceRead],
+        permissions: [PERMISSIONS.serviceBranchActivationsList],
       },
     ],
   },
@@ -74,7 +74,7 @@ export const operationsNavigation = [
         icon: 'requests',
         to: appSectionRoute,
         params: { section: 'service-requests' },
-        permissions: [PERMISSIONS.requestRead],
+        permissions: [PERMISSIONS.serviceRequestsList],
         badge: 1,
       },
       {
@@ -83,7 +83,7 @@ export const operationsNavigation = [
         icon: 'quotations',
         to: appSectionRoute,
         params: { section: 'quotations' },
-        permissions: [PERMISSIONS.quoteRead],
+        permissions: [PERMISSIONS.quotesList],
       },
       {
         id: 'invoices',
@@ -91,7 +91,7 @@ export const operationsNavigation = [
         icon: 'invoices',
         to: appSectionRoute,
         params: { section: 'invoices-payments' },
-        permissions: [PERMISSIONS.invoiceRead],
+        permissions: [PERMISSIONS.serviceInvoicesList],
       },
       {
         id: 'approvals',
@@ -115,7 +115,7 @@ export const operationsNavigation = [
         icon: 'orders',
         to: appSectionRoute,
         params: { section: 'service-orders' },
-        permissions: [PERMISSIONS.orderRead],
+        permissions: [PERMISSIONS.ordersList],
       },
       {
         id: 'tasks',
@@ -123,7 +123,7 @@ export const operationsNavigation = [
         icon: 'tasks',
         to: appSectionRoute,
         params: { section: 'execution-tasks' },
-        permissions: [PERMISSIONS.taskRead],
+        permissions: [PERMISSIONS.tasksList],
       },
       {
         id: 'deliverables',
@@ -153,7 +153,7 @@ export const operationsNavigation = [
         icon: 'orders',
         to: appSectionRoute,
         params: { section: 'survey-engineering-others' },
-        permissions: [PERMISSIONS.orderRead],
+        permissions: [PERMISSIONS.ordersList],
       },
     ],
   },
@@ -167,7 +167,7 @@ export const operationsNavigation = [
         icon: 'feedback',
         to: appSectionRoute,
         params: { section: 'feedback-quality' },
-        permissions: [PERMISSIONS.reportRead],
+        permissions: [PERMISSIONS.reportsView],
       },
       {
         id: 'reports',
@@ -175,7 +175,7 @@ export const operationsNavigation = [
         icon: 'reports',
         to: appSectionRoute,
         params: { section: 'reports-analytics' },
-        permissions: [PERMISSIONS.reportRead],
+        permissions: [PERMISSIONS.reportsView],
       },
       {
         id: 'audit',

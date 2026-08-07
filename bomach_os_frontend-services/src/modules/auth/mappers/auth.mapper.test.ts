@@ -45,9 +45,9 @@ describe('mapAuthenticatedUser', () => {
     )
 
     expect(mapped.permissions).toEqual([
-      PERMISSIONS.orderRead,
-      PERMISSIONS.requestRead,
-      PERMISSIONS.requestCreate,
+      PERMISSIONS.ordersList,
+      PERMISSIONS.serviceRequestsList,
+      PERMISSIONS.serviceRequestsCreate,
     ])
 
     expect(mapped.backendPermissions).toContain('unsupported_resource.read')
@@ -63,6 +63,6 @@ describe('mapAuthenticatedUser', () => {
 
     expect(mapped.role).toBe('UNKNOWN')
     expect(mapped.roleLabel).toBe('Regional Operations Supervisor')
-    expect(mapped.permissions).toEqual([PERMISSIONS.orderRead])
+    expect(mapped.permissions).toEqual([PERMISSIONS.ordersList])
   })
 })

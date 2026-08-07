@@ -13,27 +13,48 @@ describe('backend permission mapping', () => {
     ).toEqual(['orders.view', 'orders.list'])
   })
 
-  it('maps catalog-verified order capabilities to frontend read permission', () => {
+  it('preserves list and view as different permissions', () => {
     const result = mapBackendPermissions({
       orders: ['view', 'list'],
     })
 
-    expect(result.permissions).toEqual([PERMISSIONS.orderRead])
+    expect(result.permissions).toEqual([PERMISSIONS.ordersView, PERMISSIONS.ordersList])
     expect(result.unmappedBackendPermissions).toEqual([])
   })
 
-  it('maps catalog-verified service request capabilities', () => {
+  it('preserves exact service request capabilities', () => {
     const result = mapBackendPermissions({
       service_requests: ['view', 'list', 'create'],
     })
 
-    expect(result.permissions).toEqual([PERMISSIONS.requestRead, PERMISSIONS.requestCreate])
+    expect(result.permissions).toEqual([
+      PERMISSIONS.serviceRequestsView,
+      PERMISSIONS.serviceRequestsList,
+      PERMISSIONS.serviceRequestsCreate,
+    ])
   })
 
-  it('keeps valid but unmapped backend capabilities fail-closed', () => {
+  it('preserves exact Service Administration capabilities', () => {
+    const result = mapBackendPermissions({
+      services: ['list', 'view', 'create', 'update'],
+      service_pricing_configs: ['list', 'view'],
+    })
+
+    expect(result.permissions).toEqual([
+      PERMISSIONS.servicesList,
+      PERMISSIONS.servicesView,
+      PERMISSIONS.servicesCreate,
+      PERMISSIONS.servicesUpdate,
+      PERMISSIONS.servicePricingConfigsList,
+      PERMISSIONS.servicePricingConfigsView,
+    ])
+  })
+
+  it('keeps irrelevant or unknown backend capabilities fail-closed', () => {
     const result = mapBackendPermissions({
       roles: ['view_own'],
       employees: ['view_own', 'update_own'],
+      unknown_resource: ['read'],
     })
 
     expect(result.permissions).toEqual([])
@@ -41,14 +62,7 @@ describe('backend permission mapping', () => {
       'roles.view_own',
       'employees.view_own',
       'employees.update_own',
+      'unknown_resource.read',
     ])
-  })
-
-  it('temporarily accepts canonical frontend permissions used by MSW fixtures', () => {
-    const result = mapBackendPermissions({
-      order: ['read', 'update'],
-    })
-
-    expect(result.permissions).toEqual([PERMISSIONS.orderRead, PERMISSIONS.orderUpdate])
   })
 })

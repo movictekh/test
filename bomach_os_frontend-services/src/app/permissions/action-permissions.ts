@@ -3,17 +3,17 @@ import type { AuthUser } from '@/app/auth'
 import { PERMISSIONS, hasPermission } from './permissions'
 
 export const APP_ACTIONS = {
-  serviceCreate: 'service.create',
-  serviceUpdate: 'service.update',
-  requestCreate: 'request.create',
-  requestUpdate: 'request.update',
-  quoteCreate: 'quote.create',
-  quoteApprove: 'quote.approve',
-  invoiceCreate: 'invoice.create',
+  serviceCreate: 'services.create',
+  serviceUpdate: 'services.update',
+  requestCreate: 'service_requests.create',
+  requestUpdate: 'service_requests.update',
+  quoteCreate: 'quotes.create',
+  quoteApprove: 'quotes.approve',
+  invoiceCreate: 'service_invoices.create',
   paymentConfirm: 'payment.confirm',
   approvalAct: 'approval.act',
-  orderUpdate: 'order.update',
-  taskUpdate: 'task.update',
+  orderUpdate: 'orders.update',
+  taskUpdate: 'tasks.update',
   deliverableUpdate: 'deliverable.update',
   deliverableApprove: 'deliverable.approve',
 } as const
@@ -21,17 +21,17 @@ export const APP_ACTIONS = {
 export type AppAction = keyof typeof APP_ACTIONS
 
 const actionPermissions = {
-  serviceCreate: PERMISSIONS.serviceCreate,
-  serviceUpdate: PERMISSIONS.serviceUpdate,
-  requestCreate: PERMISSIONS.requestCreate,
-  requestUpdate: PERMISSIONS.requestUpdate,
-  quoteCreate: PERMISSIONS.quoteCreate,
-  quoteApprove: PERMISSIONS.quoteApprove,
-  invoiceCreate: PERMISSIONS.invoiceCreate,
+  serviceCreate: PERMISSIONS.servicesCreate,
+  serviceUpdate: PERMISSIONS.servicesUpdate,
+  requestCreate: PERMISSIONS.serviceRequestsCreate,
+  requestUpdate: PERMISSIONS.serviceRequestsUpdate,
+  quoteCreate: PERMISSIONS.quotesCreate,
+  quoteApprove: PERMISSIONS.quotesApprove,
+  invoiceCreate: PERMISSIONS.serviceInvoicesCreate,
   paymentConfirm: PERMISSIONS.paymentConfirm,
   approvalAct: PERMISSIONS.approvalAct,
-  orderUpdate: PERMISSIONS.orderUpdate,
-  taskUpdate: PERMISSIONS.taskUpdate,
+  orderUpdate: PERMISSIONS.ordersUpdate,
+  taskUpdate: PERMISSIONS.tasksUpdate,
   deliverableUpdate: PERMISSIONS.deliverableUpdate,
   deliverableApprove: PERMISSIONS.deliverableApprove,
 } as const

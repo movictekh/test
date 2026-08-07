@@ -1,20 +1,6 @@
-import { PERMISSIONS } from '@/app/permissions/permissions'
 import { APP_PERMISSION_VALUES, type AppPermission } from '@/app/permissions/permission.types'
-const canonicalAppPermissions = new Set<string>(APP_PERMISSION_VALUES)
 
-/**
- * Verified against the live auth/role API catalog generated 2026-08-07.
- *
- * Do not add inferred aliases here. Extend this table only when a backend
- * module contract or live role payload proves the resource/action pair.
- */
-const VERIFIED_BACKEND_PERMISSION_MAP: Readonly<Record<string, AppPermission>> = {
-  'orders.view': PERMISSIONS.orderRead,
-  'orders.list': PERMISSIONS.orderRead,
-  'service_requests.view': PERMISSIONS.requestRead,
-  'service_requests.list': PERMISSIONS.requestRead,
-  'service_requests.create': PERMISSIONS.requestCreate,
-}
+const appPermissions = new Set<string>(APP_PERMISSION_VALUES)
 
 export interface BackendPermissionMapping {
   permissions: AppPermission[]
@@ -33,32 +19,28 @@ export function flattenBackendPermissions(permissions: Record<string, string[]>)
   })
 }
 
+/**
+ * Backend permissions are canonical.
+ *
+ * There is intentionally no resource/action synonym translation here.
+ */
 export function mapBackendPermissions(
   permissions: Record<string, string[]>,
 ): BackendPermissionMapping {
   const backendPermissions = flattenBackendPermissions(permissions)
-  const mapped = new Set<AppPermission>()
+  const granted = new Set<AppPermission>()
   const unmappedBackendPermissions: string[] = []
 
   for (const backendPermission of backendPermissions) {
-    // Existing MSW/test fixtures currently use canonical frontend permissions.
-    // Accepting these keeps local development stable while mocks are migrated.
-    if (canonicalAppPermissions.has(backendPermission)) {
-      mapped.add(backendPermission as AppPermission)
-      continue
+    if (appPermissions.has(backendPermission)) {
+      granted.add(backendPermission as AppPermission)
+    } else {
+      unmappedBackendPermissions.push(backendPermission)
     }
-
-    const translated = VERIFIED_BACKEND_PERMISSION_MAP[backendPermission]
-    if (translated) {
-      mapped.add(translated)
-      continue
-    }
-
-    unmappedBackendPermissions.push(backendPermission)
   }
 
   return {
-    permissions: [...mapped],
+    permissions: [...granted],
     backendPermissions,
     unmappedBackendPermissions,
   }

@@ -19,6 +19,6 @@ describe('specialized services navigation', () => {
     const surveyEngineering = group?.items.find((item) => item.id === 'survey-engineering-others')
 
     expect(realEstate?.permissions).toEqual([PERMISSIONS.realEstateRead])
-    expect(surveyEngineering?.permissions).toEqual([PERMISSIONS.orderRead])
+    expect(surveyEngineering?.permissions).toEqual([PERMISSIONS.ordersList])
   })
 })
