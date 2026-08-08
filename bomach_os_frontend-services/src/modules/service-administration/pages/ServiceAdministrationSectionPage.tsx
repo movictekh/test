@@ -86,7 +86,14 @@ export function ServiceAdministrationSectionPage({
   const navigate = useNavigate()
   const { user } = useAuth()
   const toast = useToast()
-  const query = useQuery(serviceAdministrationQueries.workspace())
+  const workspaceQuery = useQuery({
+    ...serviceAdministrationQueries.workspace(),
+    enabled: section !== 'service-catalogue',
+  })
+  const catalogueQuery = useQuery({
+    ...serviceAdministrationQueries.catalogueList({ limit: 100, offset: 0 }),
+    enabled: section === 'service-catalogue',
+  })
   const [selectedService, setSelectedService] = useState<ServiceCatalogueItem | null>(null)
   const [newServiceOpen, setNewServiceOpen] = useState(false)
   const [calculatorEditor, setCalculatorEditor] = useState<PricingCalculator | null | 'new'>(null)
@@ -118,20 +125,6 @@ export function ServiceAdministrationSectionPage({
     onError: (error) => {
       const presented = presentError(error, 'background-action')
       toast.error('Service configuration could not be saved', {
-        description: presented.message,
-      })
-    },
-  })
-
-  const duplicateService = useMutation({
-    mutationFn: (input: { id: string }) => serviceAdministrationApi.duplicateService(input),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: serviceAdministrationKeys.all })
-      toast.success('Service duplicated as draft')
-    },
-    onError: (error) => {
-      const presented = presentError(error, 'background-action')
-      toast.error('Service could not be duplicated', {
         description: presented.message,
       })
     },
@@ -196,30 +189,53 @@ export function ServiceAdministrationSectionPage({
     },
   })
 
-  if (query.isPending) return <DashboardSkeleton />
-  if (query.isError) {
-    const error = presentError(query.error, 'page-load')
+  const activeQuery = section === 'service-catalogue' ? catalogueQuery : workspaceQuery
+
+  if (activeQuery.isPending) return <DashboardSkeleton />
+  if (activeQuery.isError) {
+    const error = presentError(activeQuery.error, 'page-load')
     return (
       <ErrorState
         title={error.title}
         description={error.message}
-        onRetry={() => void query.refetch()}
+        onRetry={() => void activeQuery.refetch()}
       />
     )
   }
 
-  const workspace = query.data
+  const workspace = workspaceQuery.data
+  const catalogue = catalogueQuery.data
   const page = metadata[section]
   const capabilities = getServiceAdministrationCapabilities(user)
-  const selectedCalculator = workspace.calculators.find(
+  const selectedCalculator = workspace?.calculators.find(
     (item) => item.serviceId === selectedService?.id,
   )
-  const selectedRequestForm = workspace.requestForms.find(
+  const selectedRequestForm = workspace?.requestForms.find(
     (item) => item.serviceId === selectedService?.id,
   )
-  const selectedWorkflow = workspace.workflows.find(
+  const selectedWorkflow = workspace?.workflows.find(
     (item) => item.serviceId === selectedService?.id,
   )
+
+  const openLiveServiceDetail = async (service: ServiceCatalogueItem) => {
+    try {
+      const serviceId = Number(service.id)
+
+      if (!Number.isFinite(serviceId)) {
+        throw new Error('The selected service has an invalid backend identifier.')
+      }
+
+      const detail = await queryClient.fetchQuery(
+        serviceAdministrationQueries.catalogueDetail(serviceId),
+      )
+      setSelectedService(detail)
+    } catch (error) {
+      const presented = presentError(error, 'page-load')
+      toast.error('Service details could not be loaded', {
+        description: presented.message,
+      })
+    }
+  }
 
   return (
     <>
@@ -242,7 +258,7 @@ export function ServiceAdministrationSectionPage({
           ) : undefined
         }
         primaryAction={
-          capabilities.canCreateService ? (
+          section !== 'service-catalogue' && capabilities.canCreateService ? (
             <CompactActionButton tone="primary" onClick={() => setNewServiceOpen(true)}>
               <IconPlus size={14} />
               Create Service
@@ -253,10 +269,11 @@ export function ServiceAdministrationSectionPage({
 
       {section === 'service-catalogue' ? (
         <ServiceCatalogueScreen
-          services={workspace.services}
-          {...(capabilities.canViewService ? { onConfigure: setSelectedService } : {})}
-          configureLabel={capabilities.canConfigureService ? 'Configure' : 'View'}
-          {...(capabilities.canCreateService ? { onCreate: () => setNewServiceOpen(true) } : {})}
+          services={catalogue?.items ?? []}
+          {...(capabilities.canViewService
+            ? { onConfigure: (service) => void openLiveServiceDetail(service) }
+            : {})}
+          configureLabel="View"
           {...(capabilities.canListBranchActivations
             ? {
                 onBranchAvailability: () =>
@@ -266,18 +283,12 @@ export function ServiceAdministrationSectionPage({
                   }),
               }
             : {})}
-          {...(capabilities.canCreateService
-            ? {
-                onDuplicate: (service: ServiceCatalogueItem) =>
-                  duplicateService.mutate({ id: service.id }),
-              }
-            : {})}
         />
       ) : null}
 
       {section === 'calculator-library' ? (
         <CalculatorLibraryScreen
-          calculators={workspace.calculators}
+          calculators={workspace?.calculators ?? []}
           {...(capabilities.canCreatePricingConfig
             ? { onCreate: () => setCalculatorEditor('new') }
             : {})}
@@ -286,7 +297,7 @@ export function ServiceAdministrationSectionPage({
 
       {section === 'request-form-builder' ? (
         <RequestFormBuilderScreen
-          forms={workspace.requestForms}
+          forms={workspace?.requestForms ?? []}
           {...(capabilities.canUpdateRequestForm
             ? { onSave: (input: SaveRequestFormInput) => saveRequestForm.mutate(input) }
             : {})}
@@ -295,8 +306,8 @@ export function ServiceAdministrationSectionPage({
 
       {section === 'workflow-designer' ? (
         <WorkflowDesignerScreen
-          services={workspace.services}
-          workflows={workspace.workflows}
+          services={workspace?.services ?? []}
+          workflows={workspace?.workflows ?? []}
           saving={saveWorkflow.isPending}
           {...(capabilities.canUpdateWorkflow
             ? { onSave: (input: SaveWorkflowInput) => saveWorkflow.mutate(input) }
@@ -306,8 +317,8 @@ export function ServiceAdministrationSectionPage({
 
       {section === 'branch-activation' ? (
         <BranchActivationScreen
-          services={workspace.services}
-          activations={workspace.branchActivations}
+          services={workspace?.services ?? []}
+          activations={workspace?.branchActivations ?? []}
           saving={saveBranchActivationMatrix.isPending}
           {...(capabilities.canUpdateBranchActivations
             ? {
@@ -333,10 +344,10 @@ export function ServiceAdministrationSectionPage({
               service: selectedService,
               pending: configureService.isPending,
               onClose: () => setSelectedService(null),
-              readOnly: !capabilities.canConfigureService,
+              readOnly: section === 'service-catalogue' || !capabilities.canConfigureService,
             }
 
-            if (capabilities.canConfigureService) {
+            if (section !== 'service-catalogue' && capabilities.canConfigureService) {
               configureWorkspaceProps.onSave = (input) => configureService.mutate(input)
             }
 
@@ -359,7 +370,7 @@ export function ServiceAdministrationSectionPage({
       {calculatorEditor ? (
         <CalculatorEditor
           {...(calculatorEditor === 'new' ? {} : { calculator: calculatorEditor })}
-          services={workspace.services}
+          services={workspace?.services ?? []}
           onClose={() => setCalculatorEditor(null)}
           onSave={(input) => saveCalculator.mutate(input)}
           saving={saveCalculator.isPending}
@@ -369,14 +380,14 @@ export function ServiceAdministrationSectionPage({
       {formEditor ? (
         <RequestFormEditor
           {...(formEditor === 'new' ? {} : { form: formEditor })}
-          services={workspace.services}
+          services={workspace?.services ?? []}
           onClose={() => setFormEditor(null)}
           onSave={(input) => saveRequestForm.mutate(input)}
           saving={saveRequestForm.isPending}
         />
       ) : null}
 
-      {capabilities.canCreateService ? (
+      {section !== 'service-catalogue' && capabilities.canCreateService ? (
         <CreateServiceWizard
           open={newServiceOpen}
           onClose={() => setNewServiceOpen(false)}
