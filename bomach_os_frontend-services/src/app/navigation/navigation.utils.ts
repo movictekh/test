@@ -53,3 +53,29 @@ export function getNavigationItemPath(item: NavigationItem): string {
 
   return path
 }
+
+export function getAuthenticatedNavigationPath(
+  groups: readonly NavigationGroup[],
+  user: AuthUser | null,
+  preferredPath?: string,
+): string | null {
+  if (!user) return null
+
+  if (preferredPath) {
+    const preferredItem = findNavigationItemByPath(groups, preferredPath)
+
+    if (preferredItem && canSeeNavigationItem(user, preferredItem)) {
+      return getNavigationItemPath(preferredItem)
+    }
+  }
+
+  for (const group of groups) {
+    for (const item of group.items) {
+      if (canSeeNavigationItem(user, item)) {
+        return getNavigationItemPath(item)
+      }
+    }
+  }
+
+  return null
+}

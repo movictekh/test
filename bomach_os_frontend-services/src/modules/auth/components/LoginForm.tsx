@@ -1,8 +1,10 @@
 import { useForm } from '@tanstack/react-form'
-import { useNavigate, useRouter } from '@tanstack/react-router'
+import { useRouter } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 
-import { getAuthenticatedHome, useAuth } from '@/app/auth'
+import { useAuth } from '@/app/auth'
+import { operationsNavigation } from '@/app/navigation/navigation.config'
+import { getAuthenticatedNavigationPath } from '@/app/navigation/navigation.utils'
 import { isAuthAccessError } from '@/modules/auth/errors/auth-access-error'
 import { presentError } from '@/shared/errors'
 import { Alert, Button, FormControl, Input } from '@/shared/ui'
@@ -69,7 +71,6 @@ export function LoginForm({
 }: LoginFormProps) {
   const auth = useAuth()
   const router = useRouter()
-  const navigate = useNavigate()
   const [formAlert, setFormAlert] = useState<FormAlertState | null>(null)
   const [twoFactorSession, setTwoFactorSession] = useState<string | null>(null)
   const [twoFactorMessage, setTwoFactorMessage] = useState<string | null>(null)
@@ -109,9 +110,16 @@ export function LoginForm({
         }
 
         await router.invalidate()
-        if (redirectTo) router.history.push(redirectTo)
-        else if (result.user)
-          await navigate({ to: getAuthenticatedHome(result.user), replace: true })
+
+        if (result.user) {
+          const destination = getAuthenticatedNavigationPath(
+            operationsNavigation,
+            result.user,
+            redirectTo,
+          )
+
+          router.history.replace(destination ?? '/forbidden')
+        }
       } catch (error) {
         showFormAlert(toFormAlert(error, 'login'))
       }
@@ -129,8 +137,9 @@ export function LoginForm({
         const user = await auth.verifyTwoFactor(twoFactorSession, value.code)
         await router.invalidate()
 
-        if (redirectTo) router.history.push(redirectTo)
-        else await navigate({ to: getAuthenticatedHome(user), replace: true })
+        const destination = getAuthenticatedNavigationPath(operationsNavigation, user, redirectTo)
+
+        router.history.replace(destination ?? '/forbidden')
       } catch (error) {
         showFormAlert(toFormAlert(error, 'two-factor'))
       }

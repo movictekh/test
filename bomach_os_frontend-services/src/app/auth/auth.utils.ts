@@ -18,12 +18,6 @@ export function formatRoleLabel(role: AppRole, roleLabel?: string): string {
   return roleLabel || roleLabels[role]
 }
 
-/** Staff app always lands on the operations dashboard. */
-export function getAuthenticatedHome(_user: AuthUser): '/app/dashboard' {
-  void _user
-  return '/app/dashboard'
-}
-
 export function isUserKind(user: AuthUser | null, allowedKinds: readonly AuthUserKind[]): boolean {
   return Boolean(user && allowedKinds.includes(user.kind))
 }

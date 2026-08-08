@@ -1,5 +1,9 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useRouter } from '@tanstack/react-router'
+import { useEffect } from 'react'
 
+import { useAuth } from '@/app/auth'
+import { operationsNavigation } from '@/app/navigation/navigation.config'
+import { getAuthenticatedNavigationPath } from '@/app/navigation/navigation.utils'
 import { LoginPage } from '@/modules/auth'
 
 interface LoginSearch {
@@ -31,6 +35,17 @@ function validateLoginSearch(search: Record<string, unknown>): LoginSearch {
 
 function LoginRouteComponent() {
   const search = Route.useSearch()
+  const { user, isAuthenticated, isLoading } = useAuth()
+  const router = useRouter()
+
+  const destination = getAuthenticatedNavigationPath(operationsNavigation, user, search.redirect)
+
+  useEffect(() => {
+    if (isLoading || !isAuthenticated) return
+    router.history.replace(destination ?? '/forbidden')
+  }, [destination, isAuthenticated, isLoading, router])
+
+  if (isLoading || isAuthenticated) return null
 
   return (
     <LoginPage

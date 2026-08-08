@@ -1,15 +1,27 @@
 import { IconArrowLeft, IconLockAccess } from '@tabler/icons-react'
-import { useNavigate } from '@tanstack/react-router'
+import { useRouter } from '@tanstack/react-router'
 
-import { getAuthenticatedHome, useAuth } from '@/app/auth'
+import { useAuth } from '@/app/auth'
+import { operationsNavigation } from '@/app/navigation/navigation.config'
+import { getAuthenticatedNavigationPath } from '@/app/navigation/navigation.utils'
 import { Button } from '@/shared/ui/button'
 import { Card, CardContent } from '@/shared/ui/card'
 
 export function ForbiddenPage() {
-  const { user } = useAuth()
-  const navigate = useNavigate()
+  const { user, signOut } = useAuth()
+  const router = useRouter()
 
-  const destination = user ? getAuthenticatedHome(user) : '/login'
+  const destination = getAuthenticatedNavigationPath(operationsNavigation, user)
+
+  const returnToWorkspace = async () => {
+    if (destination) {
+      router.history.replace(destination)
+      return
+    }
+
+    await signOut()
+    router.history.replace('/login')
+  }
 
   return (
     <main className="bg-background grid min-h-screen place-items-center p-5">
@@ -27,9 +39,9 @@ export function ForbiddenPage() {
             enforce the same rule when real APIs are connected.
           </p>
           <div className="mt-7 flex justify-center">
-            <Button onClick={() => navigate({ to: destination, replace: true })}>
+            <Button onClick={() => void returnToWorkspace()}>
               <IconArrowLeft size={17} aria-hidden="true" />
-              Return to your workspace
+              {destination ? 'Return to your workspace' : 'Sign out'}
             </Button>
           </div>
         </CardContent>

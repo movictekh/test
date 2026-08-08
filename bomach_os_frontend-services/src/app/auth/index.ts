@@ -1,6 +1,6 @@
 export { AuthProvider } from './AuthProvider'
 export { RequireAuth } from './RequireAuth'
-export { formatRoleLabel, getAuthenticatedHome, isUserKind } from './auth.utils'
+export { formatRoleLabel, isUserKind } from './auth.utils'
 export { requireAuthenticatedUser } from './route-guards'
 export { useAuth } from './useAuth'
 export {
