@@ -3,6 +3,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 
+import { useAuth } from '@/app/auth'
+
 import { CalculatorEditor, RequestFormEditor } from '../editors/ServiceAdministrationEditors'
 import {
   ConfigureServiceWorkspace,
@@ -23,6 +25,7 @@ import {
   ServiceCatalogueScreen,
 } from '../screens/ServiceAdministrationScreens'
 import { WorkflowDesignerScreen } from '../screens/WorkflowDesignerScreen'
+import { getServiceAdministrationCapabilities } from '../permissions'
 import type {
   ConfigureServiceInput,
   CreateServiceWizardInput,
@@ -81,6 +84,7 @@ export function ServiceAdministrationSectionPage({
 }) {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const toast = useToast()
   const query = useQuery(serviceAdministrationQueries.workspace())
   const [selectedService, setSelectedService] = useState<ServiceCatalogueItem | null>(null)
@@ -206,6 +210,7 @@ export function ServiceAdministrationSectionPage({
 
   const workspace = query.data
   const page = metadata[section]
+  const capabilities = getServiceAdministrationCapabilities(user)
   const selectedCalculator = workspace.calculators.find(
     (item) => item.serviceId === selectedService?.id,
   )
@@ -222,7 +227,7 @@ export function ServiceAdministrationSectionPage({
         title={page.title}
         breadcrumb={page.breadcrumb}
         secondaryAction={
-          <>
+          capabilities.canCreateServiceRequest ? (
             <CompactActionButton
               onClick={() =>
                 void navigate({
@@ -234,42 +239,57 @@ export function ServiceAdministrationSectionPage({
               <IconFilePlus size={14} />
               New Request
             </CompactActionButton>
-          </>
+          ) : undefined
         }
         primaryAction={
-          <CompactActionButton tone="primary" onClick={() => setNewServiceOpen(true)}>
-            <IconPlus size={14} />
-            Create Service
-          </CompactActionButton>
+          capabilities.canCreateService ? (
+            <CompactActionButton tone="primary" onClick={() => setNewServiceOpen(true)}>
+              <IconPlus size={14} />
+              Create Service
+            </CompactActionButton>
+          ) : undefined
         }
       />
 
       {section === 'service-catalogue' ? (
         <ServiceCatalogueScreen
           services={workspace.services}
-          onConfigure={setSelectedService}
-          onCreate={() => setNewServiceOpen(true)}
-          onBranchAvailability={() =>
-            void navigate({
-              to: '/app/$section',
-              params: { section: 'branch-activation' },
-            })
-          }
-          onDuplicate={(service) => duplicateService.mutate({ id: service.id })}
+          {...(capabilities.canViewService ? { onConfigure: setSelectedService } : {})}
+          configureLabel={capabilities.canConfigureService ? 'Configure' : 'View'}
+          {...(capabilities.canCreateService ? { onCreate: () => setNewServiceOpen(true) } : {})}
+          {...(capabilities.canListBranchActivations
+            ? {
+                onBranchAvailability: () =>
+                  void navigate({
+                    to: '/app/$section',
+                    params: { section: 'branch-activation' },
+                  }),
+              }
+            : {})}
+          {...(capabilities.canCreateService
+            ? {
+                onDuplicate: (service: ServiceCatalogueItem) =>
+                  duplicateService.mutate({ id: service.id }),
+              }
+            : {})}
         />
       ) : null}
 
       {section === 'calculator-library' ? (
         <CalculatorLibraryScreen
           calculators={workspace.calculators}
-          onCreate={() => setCalculatorEditor('new')}
+          {...(capabilities.canCreatePricingConfig
+            ? { onCreate: () => setCalculatorEditor('new') }
+            : {})}
         />
       ) : null}
 
       {section === 'request-form-builder' ? (
         <RequestFormBuilderScreen
           forms={workspace.requestForms}
-          onSave={(input) => saveRequestForm.mutate(input)}
+          {...(capabilities.canUpdateRequestForm
+            ? { onSave: (input: SaveRequestFormInput) => saveRequestForm.mutate(input) }
+            : {})}
         />
       ) : null}
 
@@ -278,7 +298,9 @@ export function ServiceAdministrationSectionPage({
           services={workspace.services}
           workflows={workspace.workflows}
           saving={saveWorkflow.isPending}
-          onSave={(input) => saveWorkflow.mutate(input)}
+          {...(capabilities.canUpdateWorkflow
+            ? { onSave: (input: SaveWorkflowInput) => saveWorkflow.mutate(input) }
+            : {})}
         />
       ) : null}
 
@@ -287,7 +309,12 @@ export function ServiceAdministrationSectionPage({
           services={workspace.services}
           activations={workspace.branchActivations}
           saving={saveBranchActivationMatrix.isPending}
-          onSave={(input) => saveBranchActivationMatrix.mutate(input)}
+          {...(capabilities.canUpdateBranchActivations
+            ? {
+                onSave: (input: SaveBranchActivationMatrixInput) =>
+                  saveBranchActivationMatrix.mutate(input),
+              }
+            : {})}
         />
       ) : null}
 
@@ -297,7 +324,8 @@ export function ServiceAdministrationSectionPage({
               service: ServiceCatalogueItem
               pending: boolean
               onClose: () => void
-              onSave: (input: ConfigureServiceInput) => void
+              onSave?: (input: ConfigureServiceInput) => void
+              readOnly?: boolean
               calculator?: PricingCalculator
               requestForm?: ServiceRequestForm
               workflow?: ServiceWorkflow
@@ -305,7 +333,11 @@ export function ServiceAdministrationSectionPage({
               service: selectedService,
               pending: configureService.isPending,
               onClose: () => setSelectedService(null),
-              onSave: (input) => configureService.mutate(input),
+              readOnly: !capabilities.canConfigureService,
+            }
+
+            if (capabilities.canConfigureService) {
+              configureWorkspaceProps.onSave = (input) => configureService.mutate(input)
             }
 
             if (selectedCalculator) {
@@ -344,12 +376,14 @@ export function ServiceAdministrationSectionPage({
         />
       ) : null}
 
-      <CreateServiceWizard
-        open={newServiceOpen}
-        onClose={() => setNewServiceOpen(false)}
-        pending={createService.isPending}
-        onSubmit={(value) => createService.mutate(value)}
-      />
+      {capabilities.canCreateService ? (
+        <CreateServiceWizard
+          open={newServiceOpen}
+          onClose={() => setNewServiceOpen(false)}
+          pending={createService.isPending}
+          onSubmit={(value) => createService.mutate(value)}
+        />
+      ) : null}
     </>
   )
 }

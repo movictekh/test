@@ -121,8 +121,9 @@ export function WorkflowDesignerScreen({
   services: ServiceCatalogueItem[]
   workflows: ServiceWorkflow[]
   saving: boolean
-  onSave: (input: SaveWorkflowInput) => void
+  onSave?: (input: SaveWorkflowInput) => void
 }) {
+  const canEdit = Boolean(onSave)
   const toast = useToast()
   const [selectedServiceId, setSelectedServiceId] = useState(
     () => services[0]?.id ?? workflows[0]?.serviceId ?? '',
@@ -224,6 +225,8 @@ export function WorkflowDesignerScreen({
       return
     }
 
+    if (!onSave) return
+
     onSave({
       ...(linkedWorkflow?.id ? { id: linkedWorkflow.id } : {}),
       name: linkedWorkflow?.name ?? `${selectedService.name} Workflow`,
@@ -278,17 +281,21 @@ export function WorkflowDesignerScreen({
                 </option>
               ))}
             </select>
-            <button type="button" className="service-admin-button" onClick={addStage}>
-              Add Stage
-            </button>
-            <button
-              type="button"
-              className="service-admin-button service-admin-button-primary"
-              disabled={saving}
-              onClick={saveWorkflow}
-            >
-              {saving ? 'Saving...' : 'Save Workflow'}
-            </button>
+            {canEdit ? (
+              <>
+                <button type="button" className="service-admin-button" onClick={addStage}>
+                  Add Stage
+                </button>
+                <button
+                  type="button"
+                  className="service-admin-button service-admin-button-primary"
+                  disabled={saving}
+                  onClick={saveWorkflow}
+                >
+                  {saving ? 'Saving...' : 'Save Workflow'}
+                </button>
+              </>
+            ) : null}
           </div>
         </div>
 
@@ -325,22 +332,24 @@ export function WorkflowDesignerScreen({
                   <td>{stage.requiresApproval ? 'Yes' : 'No'}</td>
                   <td>{stage.requiresEvidence ? 'Required' : 'Optional'}</td>
                   <td>
-                    <div className="service-admin-acts">
-                      <button
-                        type="button"
-                        className="service-admin-button service-admin-button-small"
-                        onClick={() => openEdit(index)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        className="service-admin-button service-admin-button-small"
-                        onClick={() => deleteStage(index)}
-                      >
-                        Delete
-                      </button>
-                    </div>
+                    {canEdit ? (
+                      <div className="service-admin-acts">
+                        <button
+                          type="button"
+                          className="service-admin-button service-admin-button-small"
+                          onClick={() => openEdit(index)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          className="service-admin-button service-admin-button-small"
+                          onClick={() => deleteStage(index)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    ) : null}
                   </td>
                 </tr>
               ))}
@@ -356,6 +365,7 @@ export function WorkflowDesignerScreen({
             <button
               type="button"
               className="service-admin-button service-admin-button-small"
+              disabled={!canEdit}
               onClick={() => setRuleOpen(true)}
             >
               Add Rule
@@ -393,7 +403,7 @@ export function WorkflowDesignerScreen({
         </div>
       </div>
 
-      {editingIndex !== null && stageDraft ? (
+      {canEdit && editingIndex !== null && stageDraft ? (
         <div
           className="service-admin-editor-backdrop"
           role="presentation"
@@ -535,7 +545,7 @@ export function WorkflowDesignerScreen({
         </div>
       ) : null}
 
-      {ruleOpen ? (
+      {canEdit && ruleOpen ? (
         <div
           className="service-admin-editor-backdrop"
           role="presentation"

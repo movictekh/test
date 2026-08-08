@@ -21,8 +21,9 @@ export function BranchActivationScreen({
   services: ServiceCatalogueItem[]
   activations: BranchActivation[]
   saving: boolean
-  onSave: (input: SaveBranchActivationMatrixInput) => void
+  onSave?: (input: SaveBranchActivationMatrixInput) => void
 }) {
+  const canEdit = Boolean(onSave)
   const initialMatrix = useMemo(
     () =>
       Object.fromEntries(
@@ -59,6 +60,7 @@ export function BranchActivationScreen({
   }
 
   const save = () => {
+    if (!onSave) return
     onSave({
       updates: services.flatMap((service) =>
         branchNames.map((branchName) => ({
@@ -97,14 +99,16 @@ export function BranchActivationScreen({
             </div>
           </div>
 
-          <button
-            type="button"
-            className="service-admin-button service-admin-button-primary"
-            disabled={saving}
-            onClick={save}
-          >
-            {saving ? 'Saving...' : 'Save Changes'}
-          </button>
+          {canEdit ? (
+            <button
+              type="button"
+              className="service-admin-button service-admin-button-primary"
+              disabled={saving}
+              onClick={save}
+            >
+              {saving ? 'Saving...' : 'Save Changes'}
+            </button>
+          ) : null}
         </div>
 
         <div className="service-admin-table-wrap">
@@ -138,6 +142,7 @@ export function BranchActivationScreen({
                           <input
                             type="checkbox"
                             checked={active}
+                            disabled={!canEdit}
                             onChange={() => toggle(service.id, branchName)}
                           />
                           <span>{active ? 'Active' : 'Off'}</span>

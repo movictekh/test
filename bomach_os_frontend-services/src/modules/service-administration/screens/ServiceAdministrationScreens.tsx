@@ -30,15 +30,17 @@ function statusClass(status: string) {
 export function ServiceCatalogueScreen({
   services,
   onConfigure,
+  configureLabel = 'Configure',
   onCreate,
   onBranchAvailability,
   onDuplicate,
 }: {
   services: ServiceCatalogueItem[]
-  onConfigure: (service: ServiceCatalogueItem) => void
-  onCreate: () => void
-  onBranchAvailability: () => void
-  onDuplicate: (service: ServiceCatalogueItem) => void
+  onConfigure?: (service: ServiceCatalogueItem) => void
+  configureLabel?: 'Configure' | 'View'
+  onCreate?: () => void
+  onBranchAvailability?: () => void
+  onDuplicate?: (service: ServiceCatalogueItem) => void
 }) {
   const [query, setQuery] = useState('')
   const [division, setDivision] = useState('')
@@ -81,16 +83,20 @@ export function ServiceCatalogueScreen({
             <option value="inactive">Inactive</option>
           </select>
           <span className="service-admin-grow" />
-          <button type="button" className="service-admin-button" onClick={onBranchAvailability}>
-            Branch Availability
-          </button>
-          <button
-            type="button"
-            className="service-admin-button service-admin-button-primary"
-            onClick={onCreate}
-          >
-            Create Service
-          </button>
+          {onBranchAvailability ? (
+            <button type="button" className="service-admin-button" onClick={onBranchAvailability}>
+              Branch Availability
+            </button>
+          ) : null}
+          {onCreate ? (
+            <button
+              type="button"
+              className="service-admin-button service-admin-button-primary"
+              onClick={onCreate}
+            >
+              Create Service
+            </button>
+          ) : null}
         </div>
 
         <div className="service-admin-service-grid">
@@ -114,21 +120,25 @@ export function ServiceCatalogueScreen({
                     {service.status}
                   </span>
                   <div className="flex gap-1">
-                    <button
-                      type="button"
-                      className="service-admin-button service-admin-button-small"
-                      onClick={() => onConfigure(service)}
-                    >
-                      Configure
-                    </button>
-                    <button
-                      type="button"
-                      className="service-admin-button service-admin-button-small"
-                      aria-label="Duplicate service"
-                      onClick={() => onDuplicate(service)}
-                    >
-                      <IconCopy size={13} />
-                    </button>
+                    {onConfigure ? (
+                      <button
+                        type="button"
+                        className="service-admin-button service-admin-button-small"
+                        onClick={() => onConfigure(service)}
+                      >
+                        {configureLabel}
+                      </button>
+                    ) : null}
+                    {onDuplicate ? (
+                      <button
+                        type="button"
+                        className="service-admin-button service-admin-button-small"
+                        aria-label="Duplicate service"
+                        onClick={() => onDuplicate(service)}
+                      >
+                        <IconCopy size={13} />
+                      </button>
+                    ) : null}
                   </div>
                 </div>
               </article>
@@ -155,7 +165,7 @@ export function CalculatorLibraryScreen({
   onCreate,
 }: {
   calculators: PricingCalculator[]
-  onCreate: () => void
+  onCreate?: () => void
 }) {
   const [activeId, setActiveId] = useState(calculators[0]?.id ?? '')
   const active = calculators.find((calculator) => calculator.id === activeId) ?? calculators[0]
@@ -184,13 +194,15 @@ export function CalculatorLibraryScreen({
                 Reusable formulas for estimates, quotes and invoices
               </div>
             </div>
-            <button
-              type="button"
-              className="service-admin-button service-admin-button-primary"
-              onClick={onCreate}
-            >
-              New Calculator
-            </button>
+            {onCreate ? (
+              <button
+                type="button"
+                className="service-admin-button service-admin-button-primary"
+                onClick={onCreate}
+              >
+                New Calculator
+              </button>
+            ) : null}
           </div>
 
           <div className="service-admin-table-wrap">
@@ -326,8 +338,9 @@ export function RequestFormBuilderScreen({
   onSave,
 }: {
   forms: ServiceRequestForm[]
-  onSave: (input: SaveRequestFormInput) => void
+  onSave?: (input: SaveRequestFormInput) => void
 }) {
+  const canEdit = Boolean(onSave)
   const [activeId, setActiveId] = useState(forms[0]?.id ?? '')
   const active = forms.find((form) => form.id === activeId) ?? forms[0]
   const [fields, setFields] = useState<RequestFormField[]>(active?.fields ?? [])
@@ -353,6 +366,7 @@ export function RequestFormBuilderScreen({
               <button
                 key={item.label}
                 type="button"
+                disabled={!canEdit}
                 onClick={() =>
                   setFields((current) => [
                     ...current,
@@ -371,21 +385,23 @@ export function RequestFormBuilderScreen({
               </button>
             ))}
           </div>
-          <button
-            type="button"
-            className="service-admin-request-save"
-            onClick={() =>
-              onSave({
-                id: active.id,
-                name: active.name,
-                serviceId: active.serviceId,
-                status: active.status,
-                fields,
-              })
-            }
-          >
-            Save Form
-          </button>
+          {onSave ? (
+            <button
+              type="button"
+              className="service-admin-request-save"
+              onClick={() =>
+                onSave({
+                  id: active.id,
+                  name: active.name,
+                  serviceId: active.serviceId,
+                  status: active.status,
+                  fields,
+                })
+              }
+            >
+              Save Form
+            </button>
+          ) : null}
         </aside>
 
         <section className="service-admin-request-canvas">
@@ -413,24 +429,28 @@ export function RequestFormBuilderScreen({
                     {field.type} · {field.required ? 'Required' : 'Optional'}
                   </small>
                 </div>
-                <button type="button" onClick={() => setEditingIndex(index)}>
-                  Edit
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setFields((current) => current.filter((_, itemIndex) => itemIndex !== index))
-                  }
-                >
-                  Delete
-                </button>
+                {canEdit ? (
+                  <button type="button" onClick={() => setEditingIndex(index)}>
+                    Edit
+                  </button>
+                ) : null}
+                {canEdit ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFields((current) => current.filter((_, itemIndex) => itemIndex !== index))
+                    }
+                  >
+                    Delete
+                  </button>
+                ) : null}
               </article>
             ))}
           </div>
         </section>
       </div>
 
-      {editingField && editingIndex !== null ? (
+      {canEdit && editingField && editingIndex !== null ? (
         <div
           className="service-admin-editor-backdrop"
           role="presentation"
