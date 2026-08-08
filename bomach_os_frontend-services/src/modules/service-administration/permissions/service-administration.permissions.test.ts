@@ -39,31 +39,6 @@ describe('Service Administration capabilities', () => {
     expect(capabilities.canListServices).toBe(true)
     expect(capabilities.canViewService).toBe(true)
     expect(capabilities.canCreateService).toBe(false)
-    expect(capabilities.canConfigureService).toBe(false)
-  })
-
-  it('does not treat services.update as authority to update nested configuration', () => {
-    const capabilities = getServiceAdministrationCapabilities(
-      user([PERMISSIONS.servicesList, PERMISSIONS.servicesView, PERMISSIONS.servicesUpdate]),
-    )
-
-    expect(capabilities.canUpdateService).toBe(true)
-    expect(capabilities.canConfigureService).toBe(false)
-  })
-
-  it('allows the current combined configure workspace only with all affected updates', () => {
-    const capabilities = getServiceAdministrationCapabilities(
-      user([
-        PERMISSIONS.servicesUpdate,
-        PERMISSIONS.serviceSubservicesUpdate,
-        PERMISSIONS.serviceRequestFormsUpdate,
-        PERMISSIONS.servicePricingConfigsUpdate,
-        PERMISSIONS.serviceWorkflowsUpdate,
-        PERMISSIONS.serviceBranchActivationsUpdate,
-      ]),
-    )
-
-    expect(capabilities.canConfigureService).toBe(true)
   })
 
   it('keeps request-form, workflow and branch writes independent', () => {
@@ -98,5 +73,32 @@ describe('Service Administration capabilities', () => {
     expect(listOnly.canListPricingConfigs).toBe(true)
     expect(listOnly.canViewPricingConfig).toBe(false)
     expect(listAndView.canViewPricingConfig).toBe(true)
+  })
+
+  it('allows the wizard to start with only core create authority', () => {
+    const capabilities = getServiceAdministrationCapabilities(
+      user([PERMISSIONS.servicesCreate, PERMISSIONS.categoriesList]),
+    )
+    expect(capabilities.canCreateInitialServiceSetup).toBe(true)
+    expect(capabilities.canUpdateSubservices).toBe(false)
+    expect(capabilities.canCreatePricingConfig).toBe(false)
+    expect(capabilities.canCreateRequestForm).toBe(false)
+    expect(capabilities.canCreateWorkflow).toBe(false)
+  })
+
+  it('keeps optional create-wizard stages permission-independent', () => {
+    const capabilities = getServiceAdministrationCapabilities(
+      user([
+        PERMISSIONS.servicesCreate,
+        PERMISSIONS.categoriesList,
+        PERMISSIONS.servicePricingConfigsCreate,
+        PERMISSIONS.serviceWorkflowsCreate,
+      ]),
+    )
+    expect(capabilities.canCreateInitialServiceSetup).toBe(true)
+    expect(capabilities.canCreatePricingConfig).toBe(true)
+    expect(capabilities.canCreateWorkflow).toBe(true)
+    expect(capabilities.canCreateRequestForm).toBe(false)
+    expect(capabilities.canUpdateBranchActivations).toBe(false)
   })
 })

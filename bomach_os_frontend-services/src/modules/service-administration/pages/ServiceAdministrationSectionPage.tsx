@@ -25,14 +25,13 @@ import {
 import { serviceAdministrationBackendApi } from '../api/service-administration.backend-api'
 import { serviceAdministrationKeys } from '../api/service-administration.keys'
 import {
-  createServiceThroughRequestForm,
   publishLiveService,
   saveLivePricingConfig,
   saveLiveRequestForm,
   saveLiveWorkflow,
-  ServiceSetupStageError,
 } from '../api/service-administration.live-mutations'
 import { serviceAdministrationQueries } from '../api/service-administration.queries'
+import { runLiveServiceSetup } from '../api/service-setup.orchestrator'
 import { BranchActivationScreen } from '../screens/BranchActivationScreen'
 import {
   CalculatorLibraryScreen,
@@ -44,6 +43,9 @@ import { getServiceAdministrationCapabilities } from '../permissions'
 import type {
   ConfigureServiceInput,
   CreateServiceWizardInput,
+  ServiceSetupStageProgress,
+  ServiceSetupStageId,
+  CreateServiceStageAccess,
   PricingCalculator,
   ServiceCatalogueItem,
   ServiceRequestForm,
@@ -116,6 +118,15 @@ export function ServiceAdministrationSectionPage({
   const catalogueStatus = section === 'service-catalogue' ? (recordSearch.status ?? '') : ''
   const cataloguePage = section === 'service-catalogue' ? Math.max(1, recordSearch.page ?? 1) : 1
   const cataloguePageSize = 12
+  const createStageAccess: CreateServiceStageAccess = {
+    subservices: capabilities.canUpdateSubservices,
+    pricing: capabilities.canCreatePricingConfig,
+    requestForm: capabilities.canCreateRequestForm,
+    workflow: capabilities.canCreateWorkflow,
+    branches: capabilities.canListBranches && capabilities.canUpdateBranchActivations,
+    publish: capabilities.canPublishService,
+    ownerRoles: capabilities.canListRoles,
+  }
   const usesLiveCatalogue =
     section === 'service-catalogue' ||
     section === 'request-form-builder' ||
@@ -160,7 +171,16 @@ export function ServiceAdministrationSectionPage({
   })
   const rolesQuery = useQuery({
     ...serviceAdministrationQueries.roles(),
-    enabled: section === 'workflow-designer' && capabilities.canListRoles,
+    enabled:
+      capabilities.canListRoles &&
+      (section === 'workflow-designer' || capabilities.canCreateInitialServiceSetup),
+  })
+  const createWizardBranchesQuery = useQuery({
+    ...serviceAdministrationQueries.branches(),
+    enabled:
+      capabilities.canCreateInitialServiceSetup &&
+      capabilities.canListBranches &&
+      capabilities.canUpdateBranchActivations,
   })
   const branchMatrixQuery = useQuery({
     ...serviceAdministrationQueries.branchActivationMatrix(),
@@ -168,6 +188,10 @@ export function ServiceAdministrationSectionPage({
   })
   const [selectedService, setSelectedService] = useState<ServiceCatalogueItem | null>(null)
   const [newServiceOpen, setNewServiceOpen] = useState(false)
+  const [serviceSetupProgress, setServiceSetupProgress] = useState<ServiceSetupStageProgress[]>([])
+  const [serviceSetupId, setServiceSetupId] = useState<number | null>(null)
+  const [lastServiceSetupInput, setLastServiceSetupInput] =
+    useState<CreateServiceWizardInput | null>(null)
   const [calculatorEditor, setCalculatorEditor] = useState<PricingCalculator | null | 'new'>(null)
   const [formEditor, setFormEditor] = useState<ServiceRequestForm | null | 'new'>(null)
   const [selectedRequestFormServiceId, setSelectedRequestFormServiceId] = useState('')
@@ -202,29 +226,87 @@ export function ServiceAdministrationSectionPage({
       requestFormServiceId > 0,
   })
 
+  const mergeSetupProgress = (stage: ServiceSetupStageProgress) => {
+    setServiceSetupProgress((current) => {
+      const found = current.some((item) => item.id === stage.id)
+      return found
+        ? current.map((item) => (item.id === stage.id ? stage : item))
+        : [...current, stage]
+    })
+  }
+
   const createService = useMutation({
-    mutationFn: (input: CreateServiceWizardInput) => createServiceThroughRequestForm(input),
-    onSuccess: async (service) => {
+    mutationFn: async (input: CreateServiceWizardInput) => {
+      setLastServiceSetupInput(input)
+      setServiceSetupId(null)
+      setServiceSetupProgress([])
+      return runLiveServiceSetup(input, createStageAccess, { onProgress: mergeSetupProgress })
+    },
+    onSuccess: async (result) => {
+      setServiceSetupId(result.serviceId)
       await queryClient.invalidateQueries({ queryKey: serviceAdministrationKeys.catalogue() })
-      setNewServiceOpen(false)
-      toast.success('Initial Service setup created', {
-        description: `${service.name} is saved as a draft with sub-services and a request form.`,
+      const needsAttention = result.stages.some(
+        (stage) => stage.state === 'failed' || stage.state === 'skipped',
+      )
+      if (!needsAttention) {
+        setNewServiceOpen(false)
+        setServiceSetupProgress([])
+        setServiceSetupId(null)
+        setLastServiceSetupInput(null)
+        toast.success('Service setup completed')
+        return
+      }
+      toast.error('Service created with setup items requiring attention', {
+        description: result.stages
+          .filter((stage) => stage.state === 'failed' || stage.state === 'skipped')
+          .map((stage) => stage.label)
+          .join(', '),
       })
     },
     onError: async (error) => {
       await queryClient.invalidateQueries({ queryKey: serviceAdministrationKeys.catalogue() })
-
-      if (error instanceof ServiceSetupStageError && error.serviceId) {
-        toast.error('Service draft needs attention', {
-          description: error.message,
-        })
-        return
-      }
-
       const presented = presentError(error, 'background-action')
-      toast.error('Service could not be created', {
-        description: presented.message,
+      toast.error('Service could not be created', { description: presented.message })
+    },
+  })
+
+  const retryServiceSetup = useMutation({
+    mutationFn: async () => {
+      if (!lastServiceSetupInput || !serviceSetupId) {
+        throw new Error('There is no partial Service setup to retry.')
+      }
+      const retryStages = serviceSetupProgress
+        .filter((stage) => stage.state === 'failed' || stage.state === 'skipped')
+        .map((stage) => stage.id)
+        .filter((stage): stage is ServiceSetupStageId => stage !== 'service-core')
+      return runLiveServiceSetup(lastServiceSetupInput, createStageAccess, {
+        existingServiceId: serviceSetupId,
+        onlyStages: retryStages,
+        onProgress: mergeSetupProgress,
       })
+    },
+    onSuccess: async (result) => {
+      await queryClient.invalidateQueries({ queryKey: serviceAdministrationKeys.catalogue() })
+      const merged = new Map(serviceSetupProgress.map((stage) => [stage.id, stage]))
+      result.stages.forEach((stage) => merged.set(stage.id, stage))
+      const remaining = [...merged.values()].filter(
+        (stage) => stage.state === 'failed' || stage.state === 'skipped',
+      )
+      if (remaining.length === 0) {
+        setNewServiceOpen(false)
+        setServiceSetupProgress([])
+        setServiceSetupId(null)
+        setLastServiceSetupInput(null)
+        toast.success('Service setup completed')
+      } else {
+        toast.error('Some setup items still need attention', {
+          description: remaining.map((stage) => stage.label).join(', '),
+        })
+      }
+    },
+    onError: (error) => {
+      const presented = presentError(error, 'background-action')
+      toast.error('Setup retry failed', { description: presented.message })
     },
   })
 
@@ -706,9 +788,20 @@ export function ServiceAdministrationSectionPage({
         <CreateServiceWizard
           open={newServiceOpen}
           categories={categoryQuery.data ?? []}
-          onClose={() => setNewServiceOpen(false)}
-          pending={createService.isPending}
+          branches={createWizardBranchesQuery.data ?? []}
+          ownerRoles={rolesQuery.data ?? []}
+          stageAccess={createStageAccess}
+          progress={serviceSetupProgress}
+          setupServiceId={serviceSetupId}
+          onClose={() => {
+            setNewServiceOpen(false)
+            setServiceSetupProgress([])
+            setServiceSetupId(null)
+            setLastServiceSetupInput(null)
+          }}
+          pending={createService.isPending || retryServiceSetup.isPending}
           onSubmit={(value) => createService.mutate(value)}
+          onRetryFailed={() => retryServiceSetup.mutate()}
         />
       ) : null}
     </>

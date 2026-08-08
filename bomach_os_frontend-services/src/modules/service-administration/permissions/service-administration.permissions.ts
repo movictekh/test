@@ -8,8 +8,8 @@ export interface ServiceAdministrationCapabilities {
   canUpdateService: boolean
   canDeleteService: boolean
   canListCategories: boolean
+  canUpdateSubservices: boolean
   canCreateInitialServiceSetup: boolean
-  canConfigureService: boolean
 
   canListPricingConfigs: boolean
   canViewPricingConfig: boolean
@@ -45,30 +45,10 @@ export function getServiceAdministrationCapabilities(
     canListCategories: hasPermission(user, PERMISSIONS.categoriesList),
     canCreateInitialServiceSetup: hasPermissions(
       user,
-      [
-        PERMISSIONS.servicesCreate,
-        PERMISSIONS.categoriesList,
-        PERMISSIONS.serviceSubservicesUpdate,
-        PERMISSIONS.serviceRequestFormsCreate,
-      ],
+      [PERMISSIONS.servicesCreate, PERMISSIONS.categoriesList],
       'all',
     ),
-
-    // The current mock Configure Service workspace saves several backend
-    // resources together. Until API-1 splits that persistence into real
-    // endpoint mutations, require all affected update permissions.
-    canConfigureService: hasPermissions(
-      user,
-      [
-        PERMISSIONS.servicesUpdate,
-        PERMISSIONS.serviceSubservicesUpdate,
-        PERMISSIONS.serviceRequestFormsUpdate,
-        PERMISSIONS.servicePricingConfigsUpdate,
-        PERMISSIONS.serviceWorkflowsUpdate,
-        PERMISSIONS.serviceBranchActivationsUpdate,
-      ],
-      'all',
-    ),
+    canUpdateSubservices: hasPermission(user, PERMISSIONS.serviceSubservicesUpdate),
 
     canListPricingConfigs: hasPermission(user, PERMISSIONS.servicePricingConfigsList),
     canViewPricingConfig: hasPermission(user, PERMISSIONS.servicePricingConfigsView),
