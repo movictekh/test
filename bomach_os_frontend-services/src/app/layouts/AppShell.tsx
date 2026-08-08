@@ -17,7 +17,6 @@ import {
   IconPackage,
   IconReceipt,
   IconChartBar,
-  IconSearch,
   IconSettings,
   IconShieldCheck,
   IconListCheck,
@@ -94,7 +93,6 @@ export function AppShell({ children, navigation }: AppShellProps) {
   }
 
   const productName = 'Service Operations OS'
-  const searchPlaceholder = 'Search requests, clients, and orders'
 
   return (
     <div className="bg-background h-dvh overflow-hidden">
@@ -122,24 +120,12 @@ export function AppShell({ children, navigation }: AppShellProps) {
           </div>
         </div>
 
-        <div className="hidden w-full max-w-sm items-center gap-2 rounded-full bg-white/10 px-4 py-2 md:flex">
-          <IconSearch size={16} className="shrink-0 text-white/60" aria-hidden="true" />
-          <input
-            type="search"
-            aria-label="Global search"
-            placeholder={searchPlaceholder}
-            className="w-full border-0 bg-transparent text-xs text-white outline-none placeholder:text-white/50"
-          />
-        </div>
-
         <div className="flex items-center gap-2">
           {user ? (
             <span className="hidden rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold xl:inline-flex">
               {formatRoleLabel(user.role)}
             </span>
           ) : null}
-
-          <NotificationPanel />
 
           <div className="hidden text-right sm:block">
             <p className="max-w-36 truncate text-xs font-semibold">{user?.name ?? 'Bomach User'}</p>
@@ -151,6 +137,8 @@ export function AppShell({ children, navigation }: AppShellProps) {
           <span className="grid size-9 shrink-0 place-items-center rounded-full bg-white/15 text-xs font-bold">
             {user?.initials ?? 'BU'}
           </span>
+
+          <NotificationPanel />
         </div>
       </header>
 
