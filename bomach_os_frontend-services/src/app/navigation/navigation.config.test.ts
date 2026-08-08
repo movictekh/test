@@ -18,7 +18,11 @@ describe('specialized services navigation', () => {
     const realEstate = group?.items.find((item) => item.id === 'real-estate-inventory')
     const surveyEngineering = group?.items.find((item) => item.id === 'survey-engineering-others')
 
-    expect(realEstate?.permissions).toEqual([PERMISSIONS.realEstateRead])
+    expect(realEstate?.permissions).toEqual([
+      PERMISSIONS.estatesList,
+      PERMISSIONS.propertiesList,
+      PERMISSIONS.brokerageList,
+    ])
     expect(surveyEngineering?.permissions).toEqual([PERMISSIONS.ordersList])
   })
 })
