@@ -77,4 +77,106 @@ describe('live Service Catalogue queries', () => {
       { id: 12, name: 'Project Manager' },
     ])
   })
+
+  it('hydrates pricing config fields from detail endpoints when detail access is enabled', async () => {
+    vi.spyOn(serviceAdministrationBackendApi, 'listPricingConfigs').mockResolvedValue({
+      count: 1,
+      items: [
+        {
+          id: 22,
+          service_id: 9,
+          service_name: 'Survey',
+          name: 'Survey Pricing',
+          version: 1,
+          pricing_type: 'unit_rate',
+          formula: '',
+          tax_rate: '0',
+          deposit_percent: '70',
+          discount_approval_threshold_percent: '5',
+          status: 'active',
+          is_active: true,
+          field_count: 1,
+          created_by_id: 1,
+          created_at: '2026-08-08T00:00:00Z',
+          updated_at: '2026-08-08T00:00:00Z',
+        },
+      ],
+    })
+
+    const detailSpy = vi
+      .spyOn(serviceAdministrationBackendApi, 'getPricingConfig')
+      .mockResolvedValue({
+        id: 22,
+        service_id: 9,
+        service_name: 'Survey',
+        name: 'Survey Pricing',
+        version: 1,
+        pricing_type: 'unit_rate',
+        formula: '',
+        tax_rate: '0',
+        deposit_percent: '70',
+        discount_approval_threshold_percent: '5',
+        status: 'active',
+        is_active: true,
+        field_count: 1,
+        created_by_id: 1,
+        created_at: '2026-08-08T00:00:00Z',
+        updated_at: '2026-08-08T00:00:00Z',
+        fields: [
+          {
+            id: 3,
+            pricing_config_id: 22,
+            key: 'quantity',
+            label: 'Quantity',
+            field_type: 'number',
+            default_value: 1,
+            required: true,
+            options: [],
+            validation: {},
+            sort_order: 0,
+          },
+        ],
+      })
+
+    const query = serviceAdministrationQueries.pricingConfigs(true)
+    const result = await query.queryFn!({} as never)
+
+    expect(detailSpy).toHaveBeenCalledWith(9, 22)
+    expect(result[0]?.variables).toEqual([
+      expect.objectContaining({ key: 'quantity', label: 'Quantity' }),
+    ])
+  })
+
+  it('does not fetch pricing details for a list-only user', async () => {
+    vi.spyOn(serviceAdministrationBackendApi, 'listPricingConfigs').mockResolvedValue({
+      count: 1,
+      items: [
+        {
+          id: 22,
+          service_id: 9,
+          service_name: 'Survey',
+          name: 'Survey Pricing',
+          version: 1,
+          pricing_type: 'fixed',
+          formula: '',
+          tax_rate: '0',
+          deposit_percent: '0',
+          discount_approval_threshold_percent: '0',
+          status: 'draft',
+          is_active: false,
+          field_count: 1,
+          created_by_id: 1,
+          created_at: '2026-08-08T00:00:00Z',
+          updated_at: '2026-08-08T00:00:00Z',
+        },
+      ],
+    })
+    const detailSpy = vi.spyOn(serviceAdministrationBackendApi, 'getPricingConfig')
+
+    const query = serviceAdministrationQueries.pricingConfigs(false)
+    const result = await query.queryFn!({} as never)
+
+    expect(detailSpy).not.toHaveBeenCalled()
+    expect(result[0]?.variables).toEqual([])
+  })
 })

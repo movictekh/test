@@ -48,17 +48,24 @@ export function mapServiceCatalogueCard(dto: ServiceCatalogueCardDto): ServiceCa
 }
 
 export function mapServiceCatalogueDetail(dto: ServiceCatalogueDetailDto): ServiceCatalogueItem {
+  const activeRequestForm =
+    dto.request_forms.find((form) => form.id === dto.active_request_form_id) ??
+    dto.active_request_form
+
+  const activeWorkflow =
+    dto.workflows.find((workflow) => workflow.id === dto.active_workflow_id) ?? dto.active_workflow
+
   return {
     ...mapServiceCatalogueCard(dto),
     subservices: dto.subservices
       .slice()
       .sort((a, b) => a.sort_order - b.sort_order)
       .map((item) => item.name),
-    requestFields: (dto.active_request_form?.fields ?? [])
+    requestFields: (activeRequestForm?.fields ?? [])
       .slice()
       .sort((a, b) => a.sort_order - b.sort_order)
       .map((field) => field.label),
-    workflowStages: (dto.active_workflow?.stages ?? [])
+    workflowStages: (activeWorkflow?.stages ?? [])
       .slice()
       .sort((a, b) => a.sort_order - b.sort_order)
       .map((stage) => stage.name),

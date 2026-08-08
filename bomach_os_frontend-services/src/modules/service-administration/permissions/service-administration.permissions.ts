@@ -12,6 +12,7 @@ export interface ServiceAdministrationCapabilities {
   canConfigureService: boolean
 
   canListPricingConfigs: boolean
+  canViewPricingConfig: boolean
   canCreatePricingConfig: boolean
   canUpdatePricingConfig: boolean
 
@@ -70,6 +71,7 @@ export function getServiceAdministrationCapabilities(
     ),
 
     canListPricingConfigs: hasPermission(user, PERMISSIONS.servicePricingConfigsList),
+    canViewPricingConfig: hasPermission(user, PERMISSIONS.servicePricingConfigsView),
     canCreatePricingConfig: hasPermission(user, PERMISSIONS.servicePricingConfigsCreate),
     canUpdatePricingConfig: hasPermission(user, PERMISSIONS.servicePricingConfigsUpdate),
 
@@ -86,16 +88,7 @@ export function getServiceAdministrationCapabilities(
     canListBranchActivations: hasPermission(user, PERMISSIONS.serviceBranchActivationsList),
     canUpdateBranchActivations: hasPermission(user, PERMISSIONS.serviceBranchActivationsUpdate),
 
-    canPublishService: hasPermissions(
-      user,
-      [
-        PERMISSIONS.servicesUpdate,
-        PERMISSIONS.serviceRequestFormsUpdate,
-        PERMISSIONS.servicePricingConfigsUpdate,
-        PERMISSIONS.serviceBranchActivationsUpdate,
-      ],
-      'all',
-    ),
+    canPublishService: hasPermission(user, PERMISSIONS.servicesUpdate),
     canCreateServiceRequest: hasPermission(user, PERMISSIONS.serviceRequestsCreate),
   }
 }

@@ -213,4 +213,59 @@ describe('service catalogue mapper', () => {
       workflowStages: ['Review', 'Execution'],
     })
   })
+
+  it('resolves active request form and workflow from full detail arrays', () => {
+    const detail: ServiceCatalogueDetailDto = {
+      ...card,
+      subservices: [],
+      pricing_configs: [],
+      branch_activations: [],
+      request_forms: [
+        {
+          ...card.active_request_form!,
+          fields: [
+            {
+              id: 31,
+              form_id: 10,
+              key: 'site',
+              label: 'Site location',
+              field_type: 'location',
+              required: true,
+              options: [],
+              validation: {},
+              help_text: '',
+              placeholder: '',
+              sort_order: 0,
+            },
+          ],
+        },
+      ],
+      workflows: [
+        {
+          ...card.active_workflow!,
+          stages: [
+            {
+              id: 41,
+              workflow_id: 12,
+              name: 'Inspection',
+              owner_role_id: 3,
+              owner_role_name: 'Service Manager',
+              sla_days: 1,
+              requires_approval: true,
+              requires_evidence: true,
+              client_visible: true,
+              sort_order: 0,
+            },
+          ],
+        },
+      ],
+      active_request_form: { ...card.active_request_form! },
+      active_workflow: { ...card.active_workflow! },
+    }
+
+    expect(mapServiceCatalogueDetail(detail)).toMatchObject({
+      requestFields: ['Site location'],
+      workflowStages: ['Inspection'],
+    })
+  })
 })

@@ -80,4 +80,23 @@ describe('Service Administration capabilities', () => {
     expect(capabilities.canUpdateWorkflow).toBe(true)
     expect(capabilities.canUpdateBranchActivations).toBe(false)
   })
+
+  it('matches publish permission to the backend services.update endpoint', () => {
+    const capabilities = getServiceAdministrationCapabilities(user([PERMISSIONS.servicesUpdate]))
+
+    expect(capabilities.canPublishService).toBe(true)
+  })
+
+  it('keeps pricing list and detail permissions independent', () => {
+    const listOnly = getServiceAdministrationCapabilities(
+      user([PERMISSIONS.servicePricingConfigsList]),
+    )
+    const listAndView = getServiceAdministrationCapabilities(
+      user([PERMISSIONS.servicePricingConfigsList, PERMISSIONS.servicePricingConfigsView]),
+    )
+
+    expect(listOnly.canListPricingConfigs).toBe(true)
+    expect(listOnly.canViewPricingConfig).toBe(false)
+    expect(listAndView.canViewPricingConfig).toBe(true)
+  })
 })

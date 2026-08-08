@@ -148,7 +148,7 @@ export function ServiceAdministrationSectionPage({
     enabled: section === 'request-form-builder' && capabilities.canListRequestForms,
   })
   const pricingQuery = useQuery({
-    ...serviceAdministrationQueries.pricingConfigs(),
+    ...serviceAdministrationQueries.pricingConfigs(capabilities.canViewPricingConfig),
     enabled: section === 'calculator-library' && capabilities.canListPricingConfigs,
   })
   const branchesQuery = useQuery({
@@ -576,7 +576,11 @@ export function ServiceAdministrationSectionPage({
             form={requestFormsQuery.data?.[0] ?? null}
             fieldTypes={fieldTypesQuery.data ?? []}
             saving={saveRequestForm.isPending}
-            {...(capabilities.canCreateRequestForm || capabilities.canUpdateRequestForm
+            {...((
+              requestFormsQuery.data?.[0]
+                ? capabilities.canUpdateRequestForm
+                : capabilities.canCreateRequestForm
+            )
               ? { onSave: (input: SaveRequestFormInput) => saveRequestForm.mutate(input) }
               : {})}
           />
@@ -590,7 +594,11 @@ export function ServiceAdministrationSectionPage({
             onSelectedServiceChange={setSelectedWorkflowServiceId}
             ownerRoles={rolesQuery.data ?? []}
             saving={saveWorkflow.isPending}
-            {...(capabilities.canUpdateWorkflow
+            {...((
+              workflowsQuery.data?.[0]
+                ? capabilities.canUpdateWorkflow
+                : capabilities.canCreateWorkflow
+            )
               ? { onSave: (input: SaveWorkflowInput) => saveWorkflow.mutate(input) }
               : {})}
           />
@@ -613,7 +621,6 @@ export function ServiceAdministrationSectionPage({
 
         {selectedService &&
         section === 'service-catalogue' &&
-        capabilities.canPublishService &&
         selectedService.status !== 'active' ? (
           <div className="service-admin-page service-admin-content">
             <div className="service-admin-card">
@@ -627,7 +634,11 @@ export function ServiceAdministrationSectionPage({
                 <button
                   type="button"
                   className="service-admin-button service-admin-button-primary"
-                  disabled={selectedService.readiness < 100 || publishService.isPending}
+                  disabled={
+                    !capabilities.canPublishService ||
+                    selectedService.readiness < 100 ||
+                    publishService.isPending
+                  }
                   onClick={() => publishService.mutate(Number(selectedService.id))}
                 >
                   {publishService.isPending ? 'Publishing…' : 'Publish Service'}

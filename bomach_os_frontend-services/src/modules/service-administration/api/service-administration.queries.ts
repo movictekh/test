@@ -72,13 +72,29 @@ export const serviceAdministrationQueries = {
       staleTime: 30_000,
     }),
 
-  pricingConfigs: () =>
+  pricingConfigs: (hydrateDetails = false) =>
     queryOptions({
-      queryKey: serviceAdministrationKeys.pricingConfigs({ limit: 100, offset: 0 }),
-      queryFn: async () =>
-        (
+      queryKey: [
+        ...serviceAdministrationKeys.pricingConfigs({ limit: 100, offset: 0 }),
+        { hydrateDetails },
+      ] as const,
+      queryFn: async () => {
+        const summaries = (
           await serviceAdministrationBackendApi.listPricingConfigs({ limit: 100, offset: 0 })
-        ).items.map(mapPricingConfigDto),
+        ).items
+
+        if (!hydrateDetails) {
+          return summaries.map(mapPricingConfigDto)
+        }
+
+        const detailed = await Promise.all(
+          summaries.map((config) =>
+            serviceAdministrationBackendApi.getPricingConfig(config.service_id, config.id),
+          ),
+        )
+
+        return detailed.map(mapPricingConfigDto)
+      },
       staleTime: 30_000,
     }),
 
