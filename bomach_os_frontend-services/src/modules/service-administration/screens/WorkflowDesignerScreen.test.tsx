@@ -2,6 +2,8 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
+import { ToastProvider } from '@/shared/ui'
+
 import { WorkflowDesignerScreen } from './WorkflowDesignerScreen'
 import type { ServiceCatalogueItem, ServiceWorkflow } from '../types/service-administration.types'
 
@@ -64,13 +66,15 @@ describe('WorkflowDesignerScreen service selection', () => {
     const onSelectedServiceChange = vi.fn()
 
     render(
-      <WorkflowDesignerScreen
-        services={services}
-        workflows={[]}
-        selectedServiceId="1"
-        onSelectedServiceChange={onSelectedServiceChange}
-        saving={false}
-      />,
+      <ToastProvider>
+        <WorkflowDesignerScreen
+          services={services}
+          workflows={[]}
+          selectedServiceId="1"
+          onSelectedServiceChange={onSelectedServiceChange}
+          saving={false}
+        />
+      </ToastProvider>,
     )
 
     await user.selectOptions(screen.getByLabelText('Select service'), '2')
@@ -80,13 +84,15 @@ describe('WorkflowDesignerScreen service selection', () => {
 
   it('renders workflow data for the controlled selected Service', () => {
     render(
-      <WorkflowDesignerScreen
-        services={services}
-        workflows={workflows}
-        selectedServiceId="2"
-        onSelectedServiceChange={vi.fn()}
-        saving={false}
-      />,
+      <ToastProvider>
+        <WorkflowDesignerScreen
+          services={services}
+          workflows={workflows}
+          selectedServiceId="2"
+          onSelectedServiceChange={vi.fn()}
+          saving={false}
+        />
+      </ToastProvider>,
     )
 
     expect(screen.getByText('Inspect Site')).toBeInTheDocument()
