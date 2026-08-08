@@ -2,6 +2,30 @@ export type ServiceStatus = 'active' | 'draft' | 'inactive'
 export type ConfigurationStatus = 'active' | 'draft' | 'inactive'
 export type BranchActivationState = 'active' | 'inactive' | 'setup-required'
 
+export interface ServiceCategoryOption {
+  id: number
+  name: string
+}
+
+export interface RequestFieldTypeOption {
+  value:
+    | 'text'
+    | 'textarea'
+    | 'number'
+    | 'money'
+    | 'date'
+    | 'select'
+    | 'multiselect'
+    | 'checkbox'
+    | 'file'
+    | 'location'
+    | 'email'
+    | 'phone'
+  label: string
+  supportsOptions: boolean
+  supportsValidation: boolean
+}
+
 export interface ServiceAdministrationSummary {
   totalServices: number
   activeServices: number
@@ -65,7 +89,19 @@ export interface RequestFormField {
   id: string
   label: string
   key: string
-  type: 'text' | 'textarea' | 'number' | 'date' | 'select' | 'file' | 'checkbox'
+  type:
+    | 'text'
+    | 'textarea'
+    | 'number'
+    | 'money'
+    | 'date'
+    | 'select'
+    | 'multiselect'
+    | 'checkbox'
+    | 'file'
+    | 'location'
+    | 'email'
+    | 'phone'
   required: boolean
   helpText?: string
   options?: string[]
@@ -186,6 +222,7 @@ export interface ServicePricingSetup {
 
 export interface CreateServiceWizardInput {
   name: string
+  categoryId: number
   code: string
   division: string
   description: string

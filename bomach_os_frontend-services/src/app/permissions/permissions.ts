@@ -11,6 +11,8 @@ export const PERMISSIONS = {
   servicesUpdate: 'services.update',
   servicesDelete: 'services.delete',
 
+  categoriesList: 'categories.list',
+
   serviceSubservicesList: 'service_subservices.list',
   serviceSubservicesView: 'service_subservices.view',
   serviceSubservicesCreate: 'service_subservices.create',

@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 
 import type {
   PricingCalculator,
+  RequestFieldTypeOption,
   RequestFormField,
   ServiceCatalogueItem,
   SaveRequestFormInput,
@@ -318,29 +319,20 @@ export function CalculatorLibraryScreen({
   )
 }
 
-const requestBuilderPalette: {
-  label: string
-  type: RequestFormField['type']
-}[] = [
-  { label: 'Text Field', type: 'text' },
-  { label: 'Number Field', type: 'number' },
-  { label: 'Dropdown', type: 'select' },
-  { label: 'Date Field', type: 'date' },
-  { label: 'File Upload', type: 'file' },
-  { label: 'Consent Checkbox', type: 'checkbox' },
-  { label: 'Location', type: 'text' },
-  { label: 'Client Identity', type: 'text' },
-  { label: 'Budget Range', type: 'number' },
-]
-
 export function RequestFormBuilderScreen({
   forms,
+  fieldTypes,
   onSave,
 }: {
   forms: ServiceRequestForm[]
+  fieldTypes: RequestFieldTypeOption[]
   onSave?: (input: SaveRequestFormInput) => void
 }) {
   const canEdit = Boolean(onSave)
+  const requestBuilderPalette = fieldTypes.map((item) => ({
+    label: item.label,
+    type: item.value,
+  }))
   const [activeId, setActiveId] = useState(forms[0]?.id ?? '')
   const active = forms.find((form) => form.id === activeId) ?? forms[0]
   const [fields, setFields] = useState<RequestFormField[]>(active?.fields ?? [])

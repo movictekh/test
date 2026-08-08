@@ -1,17 +1,12 @@
-import { IconFilePlus, IconPlus } from '@tabler/icons-react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link, useNavigate } from '@tanstack/react-router'
-import { useState } from 'react'
+import { IconFilePlus } from '@tabler/icons-react'
+import { useQuery } from '@tanstack/react-query'
+import { Link } from '@tanstack/react-router'
 
 import { useAuth } from '@/app/auth'
 import { presentError } from '@/shared/errors'
 import { formatCurrency } from '@/shared/lib/formatters'
 import { cn } from '@/shared/lib/cn'
-import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
-import { CreateServiceWizard } from '@/modules/service-administration'
-import { serviceAdministrationApi } from '@/modules/service-administration/api/service-administration.api'
-import { serviceAdministrationKeys } from '@/modules/service-administration/api/service-administration.keys'
-import type { CreateServiceWizardInput } from '@/modules/service-administration/types/service-administration.types'
+import { DashboardSkeleton, ErrorState } from '@/shared/ui'
 import '@/modules/service-administration/styles/service-administration.css'
 
 import { dashboardQueries } from '../api/dashboard.queries'
@@ -147,8 +142,6 @@ function LifecycleCard({ stages }: { stages: DashboardPipelineStage[] }) {
 }
 
 function RequestsTable({ items }: { items: DashboardAttentionItem[] }) {
-  const navigate = useNavigate()
-
   return (
     <section className="command-center-card">
       <div className="command-center-card-header">
@@ -301,28 +294,10 @@ function RecentActivityCard({ items }: { items: DashboardActivityItem[] }) {
 
 export function OperationsDashboardPage() {
   const { user } = useAuth()
-  const queryClient = useQueryClient()
-  const toast = useToast()
-  const navigate = useNavigate()
   const userId = user?.id ?? ''
-  const [newServiceOpen, setNewServiceOpen] = useState(false)
 
   const summaryQuery = useQuery({ ...dashboardQueries.summary(userId), enabled: Boolean(userId) })
   const activityQuery = useQuery(dashboardQueries.recentActivity())
-
-  const createService = useMutation({
-    mutationFn: (input: CreateServiceWizardInput) =>
-      serviceAdministrationApi.createServiceWizard(input),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: serviceAdministrationKeys.all })
-      setNewServiceOpen(false)
-      toast.success('Service created successfully')
-      void navigate({
-        to: '/app/$section',
-        params: { section: 'service-catalogue' },
-      })
-    },
-  })
 
   if (summaryQuery.isPending) return <DashboardSkeleton />
   if (summaryQuery.isError) {
@@ -354,14 +329,6 @@ export function OperationsDashboardPage() {
           <IconFilePlus size={14} />
           New Request
         </Link>
-        <button
-          type="button"
-          className="command-center-btn command-center-btn-primary"
-          onClick={() => setNewServiceOpen(true)}
-        >
-          <IconPlus size={14} />
-          Create Service
-        </button>
       </section>
 
       <main className="command-center-content">
@@ -397,13 +364,6 @@ export function OperationsDashboardPage() {
           )}
         </div>
       </main>
-
-      <CreateServiceWizard
-        open={newServiceOpen}
-        onClose={() => setNewServiceOpen(false)}
-        pending={createService.isPending}
-        onSubmit={(value) => createService.mutate(value)}
-      />
     </div>
   )
 }

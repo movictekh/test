@@ -7,6 +7,7 @@ import type {
   ConfigureServiceInput,
   CreateServiceWizardInput,
   PricingCalculator,
+  ServiceCategoryOption,
   ServiceCatalogueItem,
   ServiceRequestForm,
   ServiceWorkflow,
@@ -123,11 +124,13 @@ function Field({
 export function CreateServiceWizard({
   open,
   pending,
+  categories,
   onClose,
   onSubmit,
 }: {
   open: boolean
   pending: boolean
+  categories: ServiceCategoryOption[]
   onClose: () => void
   onSubmit: (input: CreateServiceWizardInput) => void
 }) {
@@ -135,6 +138,7 @@ export function CreateServiceWizard({
   const [maxReachedStep, setMaxReachedStep] = useState(0)
   const [name, setName] = useState('')
   const [code, setCode] = useState('')
+  const [categoryId, setCategoryId] = useState<number>(categories[0]?.id ?? 0)
   const [division, setDivision] = useState(divisions[0] ?? '')
   const [owner, setOwner] = useState('Service Manager')
   const [description, setDescription] = useState('')
@@ -166,12 +170,14 @@ export function CreateServiceWizard({
 
   if (!open) return null
 
+  const selectedCategoryId = categoryId || categories[0]?.id || 0
+
   const validateStep = (index: number): string | null => {
     if (index === 0) {
       if (!name.trim()) return 'Service name is required.'
       if (!code.trim()) return 'Service code is required.'
+      if (!selectedCategoryId) return 'Service category is required.'
       if (!division.trim()) return 'Division is required.'
-      if (!owner.trim()) return 'Owner role is required.'
       if (!description.trim()) return 'Description is required.'
       if (!Number.isFinite(slaDays) || slaDays < 1) return 'SLA must be at least 1 day.'
       if (!fulfilmentMode.trim()) return 'Fulfillment mode is required.'
@@ -241,6 +247,7 @@ export function CreateServiceWizard({
     if (step === wizardSteps.length - 1) {
       onSubmit({
         name: name.trim(),
+        categoryId: selectedCategoryId,
         code: code.trim(),
         division,
         description: description.trim(),
@@ -352,6 +359,19 @@ export function CreateServiceWizard({
               onChange={(event) => setCode(event.target.value)}
             />
           </Field>
+          <Field label="Category" required>
+            <select
+              value={selectedCategoryId}
+              required
+              onChange={(event) => setCategoryId(Number(event.target.value))}
+            >
+              {categories.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
+              ))}
+            </select>
+          </Field>
           <Field label="Division" required>
             <select value={division} required onChange={(event) => setDivision(event.target.value)}>
               {divisions.map((item) => (
@@ -359,8 +379,12 @@ export function CreateServiceWizard({
               ))}
             </select>
           </Field>
-          <Field label="Owner role" required>
-            <input value={owner} required onChange={(event) => setOwner(event.target.value)} />
+          <Field label="Owner role">
+            <input
+              value={owner}
+              placeholder="Assigned later when role lookup is integrated"
+              onChange={(event) => setOwner(event.target.value)}
+            />
           </Field>
           <Field label="Description" full required>
             <textarea
@@ -548,8 +572,9 @@ export function CreateServiceWizard({
             </Field>
           </div>
           <div className="service-admin-notice service-admin-notice-green">
-            <b>Ready to create.</b> The service, calculator, request form, workflow and branch
-            activation will be created together.
+            <b>Initial backend setup.</b> This step creates the Service as a draft, then saves its
+            sub-services and request form. Pricing, workflow, branch activation and publish remain
+            for the next API stages.
           </div>
         </>
       ) : null}

@@ -17,6 +17,11 @@ import { CompactPageToolbar, CompactActionButton } from '@/shared/ui/module-cont
 
 import { serviceAdministrationApi } from '../api/service-administration.api'
 import { serviceAdministrationKeys } from '../api/service-administration.keys'
+import {
+  createServiceThroughRequestForm,
+  saveLiveRequestForm,
+  ServiceSetupStageError,
+} from '../api/service-administration.live-mutations'
 import { serviceAdministrationQueries } from '../api/service-administration.queries'
 import { BranchActivationScreen } from '../screens/BranchActivationScreen'
 import {
@@ -86,28 +91,66 @@ export function ServiceAdministrationSectionPage({
   const navigate = useNavigate()
   const { user } = useAuth()
   const toast = useToast()
+  const capabilities = getServiceAdministrationCapabilities(user)
+  const usesLiveCatalogue = section === 'service-catalogue' || section === 'request-form-builder'
+
   const workspaceQuery = useQuery({
     ...serviceAdministrationQueries.workspace(),
-    enabled: section !== 'service-catalogue',
+    enabled: !usesLiveCatalogue,
   })
   const catalogueQuery = useQuery({
     ...serviceAdministrationQueries.catalogueList({ limit: 100, offset: 0 }),
-    enabled: section === 'service-catalogue',
+    enabled: usesLiveCatalogue,
+  })
+  const categoryQuery = useQuery({
+    ...serviceAdministrationQueries.categories(),
+    enabled: section === 'service-catalogue' && capabilities.canCreateInitialServiceSetup,
+  })
+  const fieldTypesQuery = useQuery({
+    ...serviceAdministrationQueries.requestFieldTypes(),
+    enabled: section === 'request-form-builder' && capabilities.canListRequestForms,
   })
   const [selectedService, setSelectedService] = useState<ServiceCatalogueItem | null>(null)
   const [newServiceOpen, setNewServiceOpen] = useState(false)
   const [calculatorEditor, setCalculatorEditor] = useState<PricingCalculator | null | 'new'>(null)
   const [formEditor, setFormEditor] = useState<ServiceRequestForm | null | 'new'>(null)
+  const [selectedRequestFormServiceId, setSelectedRequestFormServiceId] = useState('')
+
+  const requestFormService =
+    catalogueQuery.data?.items.find((item) => item.id === selectedRequestFormServiceId) ??
+    catalogueQuery.data?.items[0]
+  const requestFormServiceId = Number(requestFormService?.id ?? 0)
+  const requestFormsQuery = useQuery({
+    ...serviceAdministrationQueries.requestForms(
+      requestFormServiceId,
+      requestFormService?.name ?? 'Service',
+    ),
+    enabled:
+      section === 'request-form-builder' &&
+      capabilities.canListRequestForms &&
+      Number.isFinite(requestFormServiceId) &&
+      requestFormServiceId > 0,
+  })
 
   const createService = useMutation({
-    mutationFn: (input: CreateServiceWizardInput) =>
-      serviceAdministrationApi.createServiceWizard(input),
-    onSuccess: (workspace) => {
-      queryClient.setQueryData(serviceAdministrationKeys.workspace(), workspace)
+    mutationFn: (input: CreateServiceWizardInput) => createServiceThroughRequestForm(input),
+    onSuccess: async (service) => {
+      await queryClient.invalidateQueries({ queryKey: serviceAdministrationKeys.catalogue() })
       setNewServiceOpen(false)
-      toast.success('Service created successfully')
+      toast.success('Initial Service setup created', {
+        description: `${service.name} is saved as a draft with sub-services and a request form.`,
+      })
     },
-    onError: (error) => {
+    onError: async (error) => {
+      await queryClient.invalidateQueries({ queryKey: serviceAdministrationKeys.catalogue() })
+
+      if (error instanceof ServiceSetupStageError && error.serviceId) {
+        toast.error('Service draft needs attention', {
+          description: error.message,
+        })
+        return
+      }
+
       const presented = presentError(error, 'background-action')
       toast.error('Service could not be created', {
         description: presented.message,
@@ -146,9 +189,16 @@ export function ServiceAdministrationSectionPage({
   })
 
   const saveRequestForm = useMutation({
-    mutationFn: (input: SaveRequestFormInput) => serviceAdministrationApi.saveRequestForm(input),
-    onSuccess: (workspace) => {
-      queryClient.setQueryData(serviceAdministrationKeys.workspace(), workspace)
+    mutationFn: async (input: SaveRequestFormInput) => {
+      const service = catalogueQuery.data?.items.find((item) => item.id === input.serviceId)
+      return saveLiveRequestForm(input, service?.name ?? 'Service')
+    },
+    onSuccess: async (form) => {
+      await queryClient.invalidateQueries({
+        queryKey: serviceAdministrationKeys.requestForms(Number(form.serviceId)),
+      })
+      await queryClient.invalidateQueries({ queryKey: serviceAdministrationKeys.catalogue() })
+      setSelectedRequestFormServiceId(form.serviceId)
       setFormEditor(null)
       toast.success('Request form saved')
     },
@@ -189,7 +239,7 @@ export function ServiceAdministrationSectionPage({
     },
   })
 
-  const activeQuery = section === 'service-catalogue' ? catalogueQuery : workspaceQuery
+  const activeQuery = usesLiveCatalogue ? catalogueQuery : workspaceQuery
 
   if (activeQuery.isPending) return <DashboardSkeleton />
   if (activeQuery.isError) {
@@ -203,10 +253,39 @@ export function ServiceAdministrationSectionPage({
     )
   }
 
+  if (
+    section === 'request-form-builder' &&
+    requestFormService &&
+    (requestFormsQuery.isPending || fieldTypesQuery.isPending)
+  ) {
+    return <DashboardSkeleton />
+  }
+
+  if (section === 'request-form-builder' && requestFormsQuery.isError) {
+    const error = presentError(requestFormsQuery.error, 'page-load')
+    return (
+      <ErrorState
+        title={error.title}
+        description={error.message}
+        onRetry={() => void requestFormsQuery.refetch()}
+      />
+    )
+  }
+
+  if (section === 'request-form-builder' && fieldTypesQuery.isError) {
+    const error = presentError(fieldTypesQuery.error, 'page-load')
+    return (
+      <ErrorState
+        title={error.title}
+        description={error.message}
+        onRetry={() => void fieldTypesQuery.refetch()}
+      />
+    )
+  }
+
   const workspace = workspaceQuery.data
   const catalogue = catalogueQuery.data
   const page = metadata[section]
-  const capabilities = getServiceAdministrationCapabilities(user)
   const selectedCalculator = workspace?.calculators.find(
     (item) => item.serviceId === selectedService?.id,
   )
@@ -258,10 +337,15 @@ export function ServiceAdministrationSectionPage({
           ) : undefined
         }
         primaryAction={
-          section !== 'service-catalogue' && capabilities.canCreateService ? (
+          section === 'service-catalogue' && capabilities.canCreateInitialServiceSetup ? (
             <CompactActionButton tone="primary" onClick={() => setNewServiceOpen(true)}>
               <IconPlus size={14} />
               Create Service
+            </CompactActionButton>
+          ) : section === 'request-form-builder' && capabilities.canCreateRequestForm ? (
+            <CompactActionButton tone="primary" onClick={() => setFormEditor('new')}>
+              <IconPlus size={14} />
+              New Request Form
             </CompactActionButton>
           ) : undefined
         }
@@ -274,6 +358,9 @@ export function ServiceAdministrationSectionPage({
             ? { onConfigure: (service) => void openLiveServiceDetail(service) }
             : {})}
           configureLabel="View"
+          {...(capabilities.canCreateInitialServiceSetup
+            ? { onCreate: () => setNewServiceOpen(true) }
+            : {})}
           {...(capabilities.canListBranchActivations
             ? {
                 onBranchAvailability: () =>
@@ -296,12 +383,49 @@ export function ServiceAdministrationSectionPage({
       ) : null}
 
       {section === 'request-form-builder' ? (
-        <RequestFormBuilderScreen
-          forms={workspace?.requestForms ?? []}
-          {...(capabilities.canUpdateRequestForm
-            ? { onSave: (input: SaveRequestFormInput) => saveRequestForm.mutate(input) }
-            : {})}
-        />
+        <>
+          <div className="service-admin-page service-admin-content">
+            <div className="service-admin-card">
+              <div className="service-admin-card-header">
+                <div>
+                  <div className="service-admin-card-title">Service scope</div>
+                  <div className="service-admin-card-subtitle">
+                    Request forms are backend resources scoped to one Service.
+                  </div>
+                </div>
+                <select
+                  value={requestFormService?.id ?? ''}
+                  onChange={(event) => setSelectedRequestFormServiceId(event.target.value)}
+                >
+                  {(catalogue?.items ?? []).map((service) => (
+                    <option key={service.id} value={service.id}>
+                      {service.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {requestFormsQuery.data?.length ? (
+            <RequestFormBuilderScreen
+              forms={requestFormsQuery.data}
+              fieldTypes={fieldTypesQuery.data ?? []}
+              {...(capabilities.canUpdateRequestForm
+                ? { onSave: (input: SaveRequestFormInput) => saveRequestForm.mutate(input) }
+                : {})}
+            />
+          ) : (
+            <div className="service-admin-page service-admin-content">
+              <div className="service-admin-card">
+                <div className="service-admin-card-title">No request form yet</div>
+                <div className="service-admin-card-subtitle">
+                  Create the first request form for {requestFormService?.name ?? 'this service'}.
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       ) : null}
 
       {section === 'workflow-designer' ? (
@@ -380,16 +504,17 @@ export function ServiceAdministrationSectionPage({
       {formEditor ? (
         <RequestFormEditor
           {...(formEditor === 'new' ? {} : { form: formEditor })}
-          services={workspace?.services ?? []}
+          services={catalogue?.items ?? []}
           onClose={() => setFormEditor(null)}
           onSave={(input) => saveRequestForm.mutate(input)}
           saving={saveRequestForm.isPending}
         />
       ) : null}
 
-      {section !== 'service-catalogue' && capabilities.canCreateService ? (
+      {section === 'service-catalogue' && capabilities.canCreateInitialServiceSetup ? (
         <CreateServiceWizard
           open={newServiceOpen}
+          categories={categoryQuery.data ?? []}
           onClose={() => setNewServiceOpen(false)}
           pending={createService.isPending}
           onSubmit={(value) => createService.mutate(value)}

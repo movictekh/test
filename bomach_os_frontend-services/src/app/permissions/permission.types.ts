@@ -15,6 +15,8 @@ export const VERIFIED_APP_PERMISSION_VALUES = [
   'services.update',
   'services.delete',
 
+  'categories.list',
+
   'service_subservices.list',
   'service_subservices.view',
   'service_subservices.create',

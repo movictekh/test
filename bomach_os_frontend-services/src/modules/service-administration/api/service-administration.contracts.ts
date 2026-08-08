@@ -37,6 +37,14 @@ export interface BranchActivationMatrixFilters {
   search?: string
 }
 
+export interface ServiceCategoryDto {
+  id: number
+  name: string
+  description: string
+  created_at: string
+  updated_at: string
+}
+
 export interface FieldTypeDto {
   value: string
   label: string

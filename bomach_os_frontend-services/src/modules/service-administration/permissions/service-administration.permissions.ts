@@ -7,6 +7,8 @@ export interface ServiceAdministrationCapabilities {
   canCreateService: boolean
   canUpdateService: boolean
   canDeleteService: boolean
+  canListCategories: boolean
+  canCreateInitialServiceSetup: boolean
   canConfigureService: boolean
 
   canListPricingConfigs: boolean
@@ -36,6 +38,17 @@ export function getServiceAdministrationCapabilities(
     canCreateService: hasPermission(user, PERMISSIONS.servicesCreate),
     canUpdateService: hasPermission(user, PERMISSIONS.servicesUpdate),
     canDeleteService: hasPermission(user, PERMISSIONS.servicesDelete),
+    canListCategories: hasPermission(user, PERMISSIONS.categoriesList),
+    canCreateInitialServiceSetup: hasPermissions(
+      user,
+      [
+        PERMISSIONS.servicesCreate,
+        PERMISSIONS.categoriesList,
+        PERMISSIONS.serviceSubservicesUpdate,
+        PERMISSIONS.serviceRequestFormsCreate,
+      ],
+      'all',
+    ),
 
     // The current mock Configure Service workspace saves several backend
     // resources together. Until API-1 splits that persistence into real

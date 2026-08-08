@@ -16,6 +16,7 @@ import type {
   RequestFormUpdateDto,
   ServiceCatalogueCardDto,
   ServiceCatalogueDetailDto,
+  ServiceCategoryDto,
   ServiceCoreDto,
   ServiceCreateDto,
   ServiceListFilters,
@@ -66,6 +67,12 @@ function serviceListPath(path: string, filters: ServiceListFilters = {}) {
 }
 
 export const serviceAdministrationBackendApi = {
+  listCategories(limit = 100, offset = 0) {
+    return apiClient.get<LimitOffsetPageDto<ServiceCategoryDto>>(
+      withQuery('/categories', { limit, offset }),
+    )
+  },
+
   listFieldTypes() {
     return apiClient.get<FieldTypeDto[]>(`${basePath}/request-field-types`)
   },

@@ -23,6 +23,8 @@ export const serviceAdministrationKeys = {
   serviceDetail: (serviceId: number) =>
     [...serviceAdministrationKeys.services(), 'detail', serviceId] as const,
 
+  categories: () => [...serviceAdministrationKeys.all, 'categories'] as const,
+
   requestFieldTypes: () => [...serviceAdministrationKeys.all, 'request-field-types'] as const,
 
   subservices: (serviceId: number) =>
