@@ -1,5 +1,5 @@
 import { useNavigate } from '@tanstack/react-router'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 
 import { Alert } from '@/shared/ui'
 
@@ -12,16 +12,9 @@ interface LoginPageProps {
 
 export function LoginPage({ redirectTo, reason }: LoginPageProps) {
   const navigate = useNavigate()
-  const [showSessionExpired, setShowSessionExpired] = useState(reason === 'session-expired')
   const [hasFormAlert, setHasFormAlert] = useState(false)
 
-  useEffect(() => {
-    setShowSessionExpired(reason === 'session-expired')
-  }, [reason])
-
   const dismissSessionExpired = useCallback(() => {
-    setShowSessionExpired(false)
-
     if (reason !== 'session-expired') return
 
     void navigate({
@@ -34,6 +27,8 @@ export function LoginPage({ redirectTo, reason }: LoginPageProps) {
       replace: true,
     })
   }, [navigate, reason])
+
+  const showSessionExpired = reason === 'session-expired' && !hasFormAlert
 
   return (
     <main className="min-h-screen bg-[linear-gradient(135deg,#112957,#1f3d7a_58%,#3159aa)] px-4 py-8 sm:grid sm:place-items-center">
@@ -48,7 +43,7 @@ export function LoginPage({ redirectTo, reason }: LoginPageProps) {
           </p>
         </header>
 
-        {showSessionExpired && !hasFormAlert ? (
+        {showSessionExpired ? (
           <Alert
             className="mb-4"
             tone="warning"

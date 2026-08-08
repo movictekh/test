@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 
 import type { AuthContextValue, AuthUser } from '@/app/auth'
 
+import { PERMISSIONS } from './permissions'
 import { requireRoutePermission } from './route-permissions'
 
 const noOpAsync = vi.fn(() => Promise.resolve(undefined))
@@ -43,7 +44,7 @@ describe('requireRoutePermission', () => {
         isAuthenticated: false,
         isLoading: true,
       }),
-      permissions: ['service.read'],
+      permissions: [PERMISSIONS.servicesList],
     })
 
     expect(result).toBeUndefined()
@@ -52,35 +53,35 @@ describe('requireRoutePermission', () => {
   it('does not convert an unauthenticated state into a permission denial', () => {
     const result = requireRoutePermission({
       auth: makeAuth(),
-      permissions: ['service.read'],
+      permissions: [PERMISSIONS.servicesList],
     })
 
     expect(result).toBeUndefined()
   })
 
   it('allows an authenticated user with the required permission', () => {
-    const user = makeUser(['service.read'])
+    const user = makeUser([PERMISSIONS.servicesList])
 
     const result = requireRoutePermission({
       auth: makeAuth({
         user,
         isAuthenticated: true,
       }),
-      permissions: ['service.read'],
+      permissions: [PERMISSIONS.servicesList],
     })
 
     expect(result).toBeUndefined()
   })
 
   it('returns a forbidden redirect only after auth is resolved and permission is missing', () => {
-    const user = makeUser(['dashboard.read'])
+    const user = makeUser([PERMISSIONS.dashboardView])
 
     const result = requireRoutePermission({
       auth: makeAuth({
         user,
         isAuthenticated: true,
       }),
-      permissions: ['service.read'],
+      permissions: [PERMISSIONS.servicesList],
     })
 
     expect(result).toBeDefined()
