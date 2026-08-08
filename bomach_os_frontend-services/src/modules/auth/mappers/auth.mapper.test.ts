@@ -45,7 +45,9 @@ describe('mapAuthenticatedUser', () => {
     )
 
     expect(mapped.permissions).toEqual([
+      PERMISSIONS.ordersView,
       PERMISSIONS.ordersList,
+      PERMISSIONS.serviceRequestsView,
       PERMISSIONS.serviceRequestsList,
       PERMISSIONS.serviceRequestsCreate,
     ])
@@ -57,7 +59,7 @@ describe('mapAuthenticatedUser', () => {
     const mapped = mapAuthenticatedUser(
       user,
       role('Regional Operations Supervisor', {
-        order: ['read'],
+        orders: ['list'],
       }),
     )
 

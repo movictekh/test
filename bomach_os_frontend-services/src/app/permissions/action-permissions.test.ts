@@ -24,19 +24,19 @@ function user(permissions: AuthUser['permissions']): AuthUser {
 describe('action permissions', () => {
   it('does not infer write access from role or read access', () => {
     const staff = user([PERMISSIONS.serviceInvoicesList, PERMISSIONS.ordersList])
-    expect(canPerformAction(staff, 'paymentConfirm')).toBe(false)
+    expect(canPerformAction(staff, 'paymentsCreate')).toBe(false)
     expect(canPerformAction(staff, 'orderUpdate')).toBe(false)
   })
 
   it('allows only the explicit backend capability', () => {
     const staff = user([
       PERMISSIONS.serviceInvoicesList,
-      PERMISSIONS.paymentConfirm,
+      PERMISSIONS.paymentsCreate,
       PERMISSIONS.ordersList,
       PERMISSIONS.ordersUpdate,
     ])
 
-    expect(canPerformAction(staff, 'paymentConfirm')).toBe(true)
+    expect(canPerformAction(staff, 'paymentsCreate')).toBe(true)
     expect(canPerformAction(staff, 'orderUpdate')).toBe(true)
     expect(canPerformAction(staff, 'deliverableApprove')).toBe(false)
   })

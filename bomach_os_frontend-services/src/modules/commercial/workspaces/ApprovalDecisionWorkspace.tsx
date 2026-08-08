@@ -9,13 +9,15 @@ export function ApprovalDecisionWorkspace({
   approval,
   saving,
   onClose,
-  canAct,
+  canApprove,
+  canReject,
   onDecide,
 }: {
   approval: CommercialApproval
   saving: boolean
   onClose: () => void
-  canAct: boolean
+  canApprove: boolean
+  canReject: boolean
   onDecide: (input: DecideApprovalInput) => void
 }) {
   const [note, setNote] = useState('')
@@ -112,7 +114,7 @@ export function ApprovalDecisionWorkspace({
             </div>
           </section>
 
-          {approval.status === 'Pending' && canAct ? (
+          {approval.status === 'Pending' && (canApprove || canReject) ? (
             <section className="commercial-form-section">
               <h3>Decision note</h3>
               <p className="commercial-form-note">
@@ -147,24 +149,28 @@ export function ApprovalDecisionWorkspace({
             </button>
           </div>
           <div className="commercial-modal-footer-actions">
-            {approval.status === 'Pending' && canAct ? (
+            {approval.status === 'Pending' && (canApprove || canReject) ? (
               <>
-                <button
-                  type="button"
-                  className="commercial-btn"
-                  disabled={saving}
-                  onClick={() => submit('reject')}
-                >
-                  {saving ? 'Saving...' : 'Reject'}
-                </button>
-                <button
-                  type="button"
-                  className="commercial-btn commercial-btn-green"
-                  disabled={saving}
-                  onClick={() => submit('approve')}
-                >
-                  {saving ? 'Saving...' : 'Approve'}
-                </button>
+                {canReject ? (
+                  <button
+                    type="button"
+                    className="commercial-btn"
+                    disabled={saving}
+                    onClick={() => submit('reject')}
+                  >
+                    {saving ? 'Saving...' : 'Reject'}
+                  </button>
+                ) : null}
+                {canApprove ? (
+                  <button
+                    type="button"
+                    className="commercial-btn commercial-btn-green"
+                    disabled={saving}
+                    onClick={() => submit('approve')}
+                  >
+                    {saving ? 'Saving...' : 'Approve'}
+                  </button>
+                ) : null}
               </>
             ) : null}
           </div>

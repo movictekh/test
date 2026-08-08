@@ -96,13 +96,28 @@ export const PERMISSIONS = {
   reportsView: 'reports.view',
   auditLogsList: 'audit_logs.list',
 
+  estatesList: 'estates.list',
+  estatesView: 'estates.view',
+  estatesCreate: 'estates.create',
+  estatesUpdate: 'estates.update',
+  estatesDelete: 'estates.delete',
+
+  propertiesList: 'properties.list',
+  propertiesView: 'properties.view',
+  propertiesCreate: 'properties.create',
+  propertiesUpdate: 'properties.update',
+  propertiesDelete: 'properties.delete',
+
+  brokerageList: 'brokerage.list',
+  brokerageView: 'brokerage.view',
+  brokerageCreate: 'brokerage.create',
+  brokerageUpdate: 'brokerage.update',
+  brokerageDelete: 'brokerage.delete',
+
   // Deferred until owning backend contracts are verified.
-  paymentConfirm: 'payment.confirm',
-  approvalAct: 'approval.act',
   deliverableRead: 'deliverable.read',
   deliverableUpdate: 'deliverable.update',
   deliverableApprove: 'deliverable.approve',
-  realEstateRead: 'real-estate.read',
 } as const satisfies Record<string, AppPermission>
 
 export function getUserPermissions(user: AuthUser | null): readonly AppPermission[] {

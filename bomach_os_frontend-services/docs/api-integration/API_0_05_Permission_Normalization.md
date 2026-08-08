@@ -81,3 +81,17 @@ Wire exact permissions into:
 - Workflow actions;
 - Branch Activation actions;
 - read-only regression tests.
+
+---
+
+## Trace update — payment, approvals, deliverables, real estate
+
+The deeper backend trace resolved the earlier synthetic aliases:
+
+- `payment.confirm` → `payments.create`
+- `approval.act` → separate `approval_requests.approve` / `approval_requests.reject`
+- `real-estate.read` → composite `estates.*`, `properties.*`, `brokerage.*`
+
+Deliverables remains the only traced area without a matching backend domain contract. The backend Documents API is not treated as equivalent because it does not implement Deliverables approval/rejection semantics.
+
+See `docs/api-integration/Missing_Backend_Contracts.md`.

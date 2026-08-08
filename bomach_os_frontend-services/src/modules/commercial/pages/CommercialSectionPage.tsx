@@ -223,8 +223,9 @@ export function CommercialSectionPage({
         ? canPerformAction(user, 'quoteCreate')
         : canPerformAction(user, 'invoiceCreate')
 
-  const canConfirmPayment = canPerformAction(user, 'paymentConfirm')
-  const canActApproval = canPerformAction(user, 'approvalAct')
+  const canConfirmPayment = canPerformAction(user, 'paymentsCreate')
+  const canApproveApproval = canPerformAction(user, 'approvalRequestsApprove')
+  const canRejectApproval = canPerformAction(user, 'approvalRequestsReject')
 
   return (
     <>
@@ -384,7 +385,8 @@ export function CommercialSectionPage({
           approval={selectedApproval}
           saving={decideApproval.isPending}
           onClose={() => setSelectedApprovalId(null)}
-          canAct={canActApproval}
+          canApprove={canApproveApproval}
+          canReject={canRejectApproval}
           onDecide={(input) => decideApproval.mutate(input)}
         />
       ) : null}

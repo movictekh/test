@@ -99,6 +99,24 @@ export const VERIFIED_APP_PERMISSION_VALUES = [
 
   'reports.view',
   'audit_logs.list',
+
+  'estates.list',
+  'estates.view',
+  'estates.create',
+  'estates.update',
+  'estates.delete',
+
+  'properties.list',
+  'properties.view',
+  'properties.create',
+  'properties.update',
+  'properties.delete',
+
+  'brokerage.list',
+  'brokerage.view',
+  'brokerage.create',
+  'brokerage.update',
+  'brokerage.delete',
 ] as const
 
 /**
@@ -106,12 +124,9 @@ export const VERIFIED_APP_PERMISSION_VALUES = [
  * authorization contract is not yet signed off.
  */
 export const DEFERRED_FRONTEND_PERMISSION_VALUES = [
-  'payment.confirm',
-  'approval.act',
   'deliverable.read',
   'deliverable.update',
   'deliverable.approve',
-  'real-estate.read',
 ] as const
 
 export const APP_PERMISSION_VALUES = [
