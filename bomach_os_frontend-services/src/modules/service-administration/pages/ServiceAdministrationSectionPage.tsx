@@ -21,7 +21,6 @@ import {
   ModulePageStatus,
 } from '@/shared/ui/module-controls'
 
-import { serviceAdministrationApi } from '../api/service-administration.api'
 import { serviceAdministrationBackendApi } from '../api/service-administration.backend-api'
 import { serviceAdministrationKeys } from '../api/service-administration.keys'
 import {
@@ -42,7 +41,6 @@ import {
 import { WorkflowDesignerScreen } from '../screens/WorkflowDesignerScreen'
 import { getServiceAdministrationCapabilities } from '../permissions'
 import type {
-  ConfigureServiceInput,
   CreateServiceWizardInput,
   PricingCalculator,
   ServiceCatalogueItem,
@@ -223,21 +221,6 @@ export function ServiceAdministrationSectionPage({
 
       const presented = presentError(error, 'background-action')
       toast.error('Service could not be created', {
-        description: presented.message,
-      })
-    },
-  })
-
-  const configureService = useMutation({
-    mutationFn: (input: ConfigureServiceInput) => serviceAdministrationApi.configureService(input),
-    onSuccess: (workspace) => {
-      queryClient.setQueryData(serviceAdministrationKeys.workspace(), workspace)
-      setSelectedService(null)
-      toast.success('Service configuration saved')
-    },
-    onError: (error) => {
-      const presented = presentError(error, 'background-action')
-      toast.error('Service configuration could not be saved', {
         description: presented.message,
       })
     },
@@ -665,13 +648,9 @@ export function ServiceAdministrationSectionPage({
               workflow?: ServiceWorkflow
             } = {
               service: selectedService,
-              pending: configureService.isPending,
+              pending: false,
               onClose: () => setSelectedService(null),
-              readOnly: section === 'service-catalogue' || !capabilities.canConfigureService,
-            }
-
-            if (section !== 'service-catalogue' && capabilities.canConfigureService) {
-              configureWorkspaceProps.onSave = (input) => configureService.mutate(input)
+              readOnly: true,
             }
 
             if (selectedCalculator) {

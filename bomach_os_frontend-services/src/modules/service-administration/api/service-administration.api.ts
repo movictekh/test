@@ -2,7 +2,6 @@ import { apiClient } from '@/shared/api/api-client'
 import { MOCK_API_PREFIX } from '@/mocks/mock-api'
 
 import type {
-  ConfigureServiceInput,
   CreateServiceInput,
   CreateServiceWizardInput,
   DuplicateServiceInput,
@@ -29,10 +28,6 @@ export const serviceAdministrationApi = {
 
   createServiceWizard(input: CreateServiceWizardInput) {
     return apiClient.post<ServiceAdministrationWorkspace>(`${basePath}/services/wizard`, input)
-  },
-
-  configureService(input: ConfigureServiceInput) {
-    return apiClient.put<ServiceAdministrationWorkspace>(`${basePath}/services/${input.id}`, input)
   },
 
   duplicateService(input: DuplicateServiceInput) {
