@@ -127,16 +127,6 @@ export function ServiceAdministrationSectionPage({
     publish: capabilities.canPublishService,
     ownerRoles: capabilities.canListRoles,
   }
-  const usesLiveCatalogue =
-    section === 'service-catalogue' ||
-    section === 'request-form-builder' ||
-    section === 'calculator-library' ||
-    section === 'workflow-designer'
-
-  const workspaceQuery = useQuery({
-    ...serviceAdministrationQueries.workspace(),
-    enabled: !usesLiveCatalogue,
-  })
   const catalogueQuery = useQuery({
     ...serviceAdministrationQueries.catalogueList({
       ...(section === 'service-catalogue' && catalogueSearch ? { search: catalogueSearch } : {}),
@@ -147,7 +137,7 @@ export function ServiceAdministrationSectionPage({
       limit: section === 'service-catalogue' ? cataloguePageSize : 100,
       offset: section === 'service-catalogue' ? (cataloguePage - 1) * cataloguePageSize : 0,
     }),
-    enabled: usesLiveCatalogue,
+    enabled: true,
     placeholderData: (previousData) => previousData,
   })
   const categoryQuery = useQuery({
@@ -419,15 +409,11 @@ export function ServiceAdministrationSectionPage({
   })
 
   const activeQuery =
-    section === 'service-catalogue' ||
-    section === 'request-form-builder' ||
-    section === 'workflow-designer'
-      ? catalogueQuery
-      : section === 'calculator-library'
-        ? pricingQuery
-        : section === 'branch-activation'
-          ? branchMatrixQuery
-          : workspaceQuery
+    section === 'calculator-library'
+      ? pricingQuery
+      : section === 'branch-activation'
+        ? branchMatrixQuery
+        : catalogueQuery
 
   if (activeQuery.isLoading)
     return (
@@ -486,18 +472,11 @@ export function ServiceAdministrationSectionPage({
     )
   }
 
-  const workspace = workspaceQuery.data
   const catalogue = catalogueQuery.data
   const page = metadata[section]
-  const selectedCalculator = workspace?.calculators.find(
-    (item) => item.serviceId === selectedService?.id,
-  )
-  const selectedRequestForm = workspace?.requestForms.find(
-    (item) => item.serviceId === selectedService?.id,
-  )
-  const selectedWorkflow = workspace?.workflows.find(
-    (item) => item.serviceId === selectedService?.id,
-  )
+  const selectedCalculator = selectedService?.activeCalculator
+  const selectedRequestForm = selectedService?.activeRequestForm
+  const selectedWorkflow = selectedService?.activeWorkflow
 
   const openLiveServiceDetail = async (service: ServiceCatalogueItem) => {
     try {

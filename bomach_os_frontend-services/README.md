@@ -34,6 +34,29 @@ npm run dev
 npm run check
 ```
 
+## Sync to GitHub production repo
+
+This workspace is the development copy. The publishable repo is
+`../../bomach_os_frontend/services`.
+
+```bash
+# Preview what would change
+npm run sync -- --dry-run
+
+# Copy production code (excludes tests/stories/local env/session docs)
+npm run sync
+```
+
+Then in the destination repo, review and commit:
+
+```bash
+cd ../../bomach_os_frontend/services
+git status
+git add -A
+git commit -m "…"
+git push
+```
+
 ## Component workshop
 
 ```bash

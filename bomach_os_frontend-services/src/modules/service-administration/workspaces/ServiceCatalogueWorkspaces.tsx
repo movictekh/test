@@ -1,5 +1,5 @@
 import { IconX } from '@tabler/icons-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { formatNumberFieldValue, parseNumberFieldValue } from '@/shared/lib/number-input'
 
@@ -216,10 +216,17 @@ export function CreateServiceWizard({
   )
   const [error, setError] = useState('')
 
-  if (!branchesInitialized && access.branches && branchOptions.length > 0) {
-    setSelectedBranchIds(branchOptions.map((branch) => branch.id))
-    setBranchesInitialized(true)
-  }
+  useEffect(() => {
+    if (!open) {
+      setBranchesInitialized(false)
+      return
+    }
+
+    if (!branchesInitialized && access.branches && branchOptions.length > 0) {
+      setSelectedBranchIds(branchOptions.map((branch) => branch.id))
+      setBranchesInitialized(true)
+    }
+  }, [access.branches, branchOptions, branchesInitialized, open])
 
   if (!open) return null
 

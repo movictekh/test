@@ -86,6 +86,9 @@ export interface ServiceCatalogueItem {
   subservices?: string[]
   requestFields?: string[]
   workflowStages?: string[]
+  activeCalculator?: PricingCalculator
+  activeRequestForm?: ServiceRequestForm
+  activeWorkflow?: ServiceWorkflow
 }
 
 export interface CalculatorVariable {
