@@ -473,16 +473,14 @@ export function ServiceAdministrationSectionPage({
               to: '/app/$section',
               params: { section: 'service-catalogue' },
               search: (previous) => {
-                const {
-                  search: _search,
-                  division: _division,
-                  status: _status,
-                  page: _page,
-                  ...rest
-                } = previous
+                const next = { ...previous }
+                delete next.search
+                delete next.division
+                delete next.status
+                delete next.page
 
                 return {
-                  ...rest,
+                  ...next,
                   ...(filters.query ? { search: filters.query } : {}),
                   ...(filters.division ? { division: filters.division } : {}),
                   ...(filters.status ? { status: filters.status } : {}),
@@ -496,10 +494,11 @@ export function ServiceAdministrationSectionPage({
               to: '/app/$section',
               params: { section: 'service-catalogue' },
               search: (previous) => {
-                const { page: _page, ...rest } = previous
+                const next = { ...previous }
+                delete next.page
 
                 return {
-                  ...rest,
+                  ...next,
                   ...(nextPage > 1 ? { page: nextPage } : {}),
                 }
               },

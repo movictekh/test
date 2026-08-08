@@ -95,6 +95,6 @@ describe('WorkflowDesignerScreen service selection', () => {
       </ToastProvider>,
     )
 
-    expect(screen.getByText('Inspect Site')).toBeInTheDocument()
+    expect(screen.getAllByText('Inspect Site')).toHaveLength(2)
   })
 })
