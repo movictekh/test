@@ -1667,7 +1667,11 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
   text-align: left;
 }
 .service-admin-request-save {
+  display: inline-flex;
   width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   border: 1px solid #1f3d7a;
   border-radius: 8px;
   background: #1f3d7a;

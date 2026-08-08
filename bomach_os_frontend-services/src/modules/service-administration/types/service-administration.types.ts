@@ -237,11 +237,15 @@ export interface CreateServiceWizardInput {
   code: string
   division: string
   description: string
+  owner: string
   slaDays: number
   fulfilmentMode: string
-  basePrice: number
+  status: ServiceStatus
+  branchNames: string[]
   subservices: string[]
+  pricing: ServicePricingSetup
   requestFields: string[]
+  workflowStages: string[]
 }
 
 export interface ConfigureServiceInput {

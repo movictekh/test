@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 
+import { AccessLockIcon } from '@/shared/ui/module-controls'
 import type {
   BranchActivation,
   SaveBranchActivationMatrixInput,
@@ -96,8 +97,16 @@ export function BranchActivationScreen({
             type="button"
             className="service-admin-button service-admin-button-primary"
             disabled={!canEdit || saving || services.length === 0 || branches.length === 0}
+            title={
+              !canEdit
+                ? 'You do not have permission to update branch activations'
+                : services.length === 0 || branches.length === 0
+                  ? 'Add services and branches before saving'
+                  : undefined
+            }
             onClick={save}
           >
+            <AccessLockIcon show={!canEdit} />
             {saving ? 'Saving...' : 'Save Changes'}
           </button>
         </div>

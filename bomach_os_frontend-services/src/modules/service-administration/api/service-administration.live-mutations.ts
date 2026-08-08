@@ -86,7 +86,7 @@ export async function createServiceThroughRequestForm(
       category_id: input.categoryId,
       division: input.division,
       description: input.description,
-      base_price: input.basePrice,
+      base_price: input.pricing.rate,
       status: 'draft',
       default_sla_days: input.slaDays,
       fulfillment_mode: fulfillmentMode(input.fulfilmentMode),

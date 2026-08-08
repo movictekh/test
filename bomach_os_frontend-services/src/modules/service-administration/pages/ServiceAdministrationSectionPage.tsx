@@ -15,6 +15,7 @@ import { presentError } from '@/shared/errors'
 import { ApiError } from '@/shared/api/api-error'
 import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
 import {
+  AccessLockIcon,
   CompactPageToolbar,
   CompactActionButton,
   ModulePageFrame,
@@ -41,6 +42,7 @@ import {
 import { WorkflowDesignerScreen } from '../screens/WorkflowDesignerScreen'
 import { getServiceAdministrationCapabilities } from '../permissions'
 import type {
+  ConfigureServiceInput,
   CreateServiceWizardInput,
   PricingCalculator,
   ServiceCatalogueItem,
@@ -445,6 +447,7 @@ export function ServiceAdministrationSectionPage({
             secondaryAction={
               <CompactActionButton
                 disabled={!capabilities.canCreateServiceRequest}
+                locked={!capabilities.canCreateServiceRequest}
                 onClick={() =>
                   void navigate({
                     to: '/app/$section',
@@ -460,6 +463,7 @@ export function ServiceAdministrationSectionPage({
               <CompactActionButton
                 tone="primary"
                 disabled={!capabilities.canCreateInitialServiceSetup}
+                locked={!capabilities.canCreateInitialServiceSetup}
                 onClick={() => setNewServiceOpen(true)}
               >
                 <IconPlus size={14} />
@@ -548,6 +552,7 @@ export function ServiceAdministrationSectionPage({
             createDisabled={
               !capabilities.canCreatePricingConfig || (catalogue?.items.length ?? 0) === 0
             }
+            createLocked={!capabilities.canCreatePricingConfig}
           />
         ) : null}
 
@@ -622,8 +627,16 @@ export function ServiceAdministrationSectionPage({
                     selectedService.readiness < 100 ||
                     publishService.isPending
                   }
+                  title={
+                    !capabilities.canPublishService
+                      ? 'You do not have permission to publish services'
+                      : selectedService.readiness < 100
+                        ? 'Complete request form, pricing, and branch activation before publishing'
+                        : undefined
+                  }
                   onClick={() => publishService.mutate(Number(selectedService.id))}
                 >
+                  <AccessLockIcon show={!capabilities.canPublishService} />
                   {publishService.isPending ? 'Publishing…' : 'Publish Service'}
                 </button>
               </div>

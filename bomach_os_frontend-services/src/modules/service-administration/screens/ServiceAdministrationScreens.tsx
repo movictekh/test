@@ -1,6 +1,7 @@
 import { IconApps, IconCopy } from '@tabler/icons-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
+import { AccessLockIcon } from '@/shared/ui/module-controls'
 import type {
   PricingCalculator,
   PricingType,
@@ -152,16 +153,24 @@ export function ServiceCatalogueScreen({
             type="button"
             className="service-admin-button"
             disabled={branchAvailabilityDisabled || !onBranchAvailability}
+            title={
+              branchAvailabilityDisabled
+                ? 'You do not have permission to view branch availability'
+                : undefined
+            }
             onClick={() => onBranchAvailability?.()}
           >
+            <AccessLockIcon show={branchAvailabilityDisabled} />
             Branch Availability
           </button>
           <button
             type="button"
             className="service-admin-button service-admin-button-primary"
             disabled={createDisabled || !onCreate}
+            title={createDisabled ? 'You do not have permission to create services' : undefined}
             onClick={() => onCreate?.()}
           >
+            <AccessLockIcon show={createDisabled} />
             Create Service
           </button>
         </div>
@@ -181,16 +190,26 @@ export function ServiceCatalogueScreen({
                     type="button"
                     className="service-admin-button service-admin-button-primary"
                     disabled={createDisabled || !onCreate}
+                    title={
+                      createDisabled ? 'You do not have permission to create services' : undefined
+                    }
                     onClick={() => onCreate?.()}
                   >
+                    <AccessLockIcon show={createDisabled} />
                     Create first Service
                   </button>
                   <button
                     type="button"
                     className="service-admin-button"
                     disabled={branchAvailabilityDisabled || !onBranchAvailability}
+                    title={
+                      branchAvailabilityDisabled
+                        ? 'You do not have permission to view branch availability'
+                        : undefined
+                    }
                     onClick={() => onBranchAvailability?.()}
                   >
+                    <AccessLockIcon show={branchAvailabilityDisabled} />
                     Branch Availability
                   </button>
                 </div>
@@ -222,8 +241,14 @@ export function ServiceCatalogueScreen({
                       type="button"
                       className="service-admin-button service-admin-button-small"
                       disabled={!onConfigure}
+                      title={
+                        !onConfigure
+                          ? 'You do not have permission to view this service'
+                          : undefined
+                      }
                       onClick={() => onConfigure?.(service)}
                     >
+                      <AccessLockIcon show={!onConfigure} size={11} />
                       {configureLabel}
                     </button>
                     {onDuplicate ? (
@@ -297,11 +322,14 @@ export function CalculatorLibraryScreen({
   calculators,
   onCreate,
   createDisabled = false,
+  createLocked = false,
   hasServices = true,
 }: {
   calculators: PricingCalculator[]
   onCreate?: (() => void) | undefined
   createDisabled?: boolean
+  /** True only when create is blocked by permission (not empty catalogue). */
+  createLocked?: boolean
   hasServices?: boolean
 }) {
   const [activeId, setActiveId] = useState(calculators[0]?.id ?? '')
@@ -320,6 +348,8 @@ export function CalculatorLibraryScreen({
       active.charges.map((charge) => charge.label).join(' + '))
     : 'No calculator selected'
 
+  const showCreateLock = createLocked && (createDisabled || !onCreate)
+
   return (
     <div className="service-admin-page service-admin-content">
       <div className="service-admin-grid-2-1">
@@ -336,14 +366,15 @@ export function CalculatorLibraryScreen({
               className="service-admin-button service-admin-button-primary"
               disabled={createDisabled || !onCreate}
               title={
-                !hasServices
-                  ? 'Create a service in the catalogue before adding a calculator'
-                  : createDisabled
-                    ? 'You do not have permission to create calculators'
+                showCreateLock
+                  ? 'You do not have permission to create calculators'
+                  : !hasServices
+                    ? 'Create a service in the catalogue before adding a calculator'
                     : undefined
               }
               onClick={() => onCreate?.()}
             >
+              <AccessLockIcon show={showCreateLock} />
               New Calculator
             </button>
           </div>
@@ -519,6 +550,7 @@ export function RequestFormBuilderScreen({
   const editingField = editingIndex === null ? undefined : fields[editingIndex]
   const paletteDisabled = !canEdit || !selectedService
   const saveDisabled = !canEdit || !selectedService || saving
+  const saveLocked = !canEdit
 
   const saveForm = () => {
     if (!selectedService || !onSave) return
@@ -584,8 +616,16 @@ export function RequestFormBuilderScreen({
             type="button"
             className="service-admin-request-save"
             disabled={saveDisabled}
+            title={
+              saveLocked
+                ? 'You do not have permission to save this form'
+                : !selectedService
+                  ? 'Select a service before saving'
+                  : undefined
+            }
             onClick={saveForm}
           >
+            <AccessLockIcon show={saveLocked && saveDisabled} />
             {saving ? 'Saving…' : 'Save Form'}
           </button>
         </aside>

@@ -1,4 +1,4 @@
-import { IconSearch } from '@tabler/icons-react'
+import { IconKey, IconSearch } from '@tabler/icons-react'
 import type { ReactNode } from 'react'
 
 import { cn } from '@/shared/lib/cn'
@@ -44,6 +44,12 @@ export function ModuleScrollArea({ children }: { children: ReactNode }) {
   return <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">{children}</div>
 }
 
+/** Key icon for permission-locked actions — only render when `show` is true. */
+export function AccessLockIcon({ show, size = 12 }: { show: boolean; size?: number }) {
+  if (!show) return null
+  return <IconKey size={size} stroke={1.75} aria-hidden="true" className="shrink-0 opacity-90" />
+}
+
 export function CompactPageToolbar({
   title,
   breadcrumb,
@@ -79,18 +85,26 @@ export function CompactActionButton({
   tone = 'secondary',
   type = 'button',
   disabled,
+  locked = false,
+  title,
 }: {
   children: ReactNode
   onClick?: () => void
   tone?: 'primary' | 'secondary' | 'ghost'
   type?: 'button' | 'submit'
   disabled?: boolean
+  /** When true and the button is disabled, show a key icon for permission lock. */
+  locked?: boolean
+  title?: string
 }) {
+  const showLock = Boolean(disabled && locked)
+
   return (
     <button
       type={type}
       onClick={onClick}
       disabled={disabled}
+      title={title ?? (showLock ? 'You do not have permission for this action' : undefined)}
       className={cn(
         'rounded-control inline-flex h-7 items-center justify-center gap-1.5 px-2.5 text-[0.625rem] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50',
         tone === 'primary' && 'bg-brand-600 hover:bg-brand-800 text-white',
@@ -99,6 +113,7 @@ export function CompactActionButton({
         tone === 'ghost' && 'text-foreground hover:bg-surface-muted',
       )}
     >
+      <AccessLockIcon show={showLock} size={12} />
       {children}
     </button>
   )

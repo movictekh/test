@@ -1,6 +1,7 @@
 import { IconBolt, IconSubtask } from '@tabler/icons-react'
 import { useMemo, useState } from 'react'
 
+import { AccessLockIcon } from '@/shared/ui/module-controls'
 import { useToast } from '@/shared/ui'
 import { formatNumberFieldValue, parseNumberFieldValue } from '@/shared/lib/number-input'
 
@@ -388,7 +389,28 @@ export function WorkflowDesignerScreen({
                   {saving ? 'Saving...' : 'Save Workflow'}
                 </button>
               </>
-            ) : null}
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className="service-admin-button"
+                  disabled
+                  title="You do not have permission to edit workflows"
+                >
+                  <AccessLockIcon show />
+                  Add Stage
+                </button>
+                <button
+                  type="button"
+                  className="service-admin-button service-admin-button-primary"
+                  disabled
+                  title="You do not have permission to edit workflows"
+                >
+                  <AccessLockIcon show />
+                  Save Workflow
+                </button>
+              </>
+            )}
           </div>
         </div>
 
@@ -459,8 +481,12 @@ export function WorkflowDesignerScreen({
               type="button"
               className="service-admin-button service-admin-button-small"
               disabled={!canEdit}
+              title={
+                !canEdit ? 'You do not have permission to edit workflows' : undefined
+              }
               onClick={() => setRuleOpen(true)}
             >
+              <AccessLockIcon show={!canEdit} size={11} />
               Add Rule
             </button>
           </div>

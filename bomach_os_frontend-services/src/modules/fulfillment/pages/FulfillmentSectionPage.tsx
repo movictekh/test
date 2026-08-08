@@ -261,19 +261,20 @@ export function FulfillmentSectionPage({
         title={page.title}
         breadcrumb={page.breadcrumb}
         primaryAction={
-          canCreatePrimary ? (
-            <CompactActionButton
-              tone="primary"
-              onClick={() => {
-                if (section === 'service-orders') setCreateOrderOpen(true)
-                if (section === 'execution-tasks') setCreateTaskOpen(true)
-                if (section === 'deliverables') setCreateDeliverableOrderId('')
-              }}
-            >
-              {section === 'deliverables' ? <IconFilePlus size={14} /> : <IconPlus size={14} />}{' '}
-              {primaryLabel}
-            </CompactActionButton>
-          ) : undefined
+          <CompactActionButton
+            tone="primary"
+            disabled={!canCreatePrimary}
+            locked={!canCreatePrimary}
+            onClick={() => {
+              if (!canCreatePrimary) return
+              if (section === 'service-orders') setCreateOrderOpen(true)
+              if (section === 'execution-tasks') setCreateTaskOpen(true)
+              if (section === 'deliverables') setCreateDeliverableOrderId('')
+            }}
+          >
+            {section === 'deliverables' ? <IconFilePlus size={14} /> : <IconPlus size={14} />}{' '}
+            {primaryLabel}
+          </CompactActionButton>
         }
           />
         }

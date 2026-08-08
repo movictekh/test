@@ -106,11 +106,21 @@ describe('initial Service setup mutation', () => {
       code: 'SUR-1',
       division: 'Survey',
       description: 'Survey',
+      owner: '',
       slaDays: 5,
       fulfilmentMode: 'Managed service case',
-      basePrice: 100,
+      status: 'draft',
+      branchNames: [],
       subservices: ['Standard'],
+      pricing: {
+        method: 'Fixed',
+        rate: 100,
+        depositPercent: 0,
+        taxPercent: 0,
+        discountApprovalPercent: 0,
+      },
       requestFields: ['Location / site'],
+      workflowStages: [],
     })
 
     expect(calls).toEqual(['service', 'subservices', 'request-form', 'detail'])

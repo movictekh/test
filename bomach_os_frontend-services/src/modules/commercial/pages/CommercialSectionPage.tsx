@@ -241,38 +241,39 @@ export function CommercialSectionPage({
         title={page.title}
         breadcrumb={page.breadcrumb}
         primaryAction={
-          canCreatePrimary ? (
-            <CompactActionButton
-              tone="primary"
-              onClick={() => {
-                if (section === 'service-requests' || section === 'approvals') {
-                  if (section === 'approvals') {
-                    void navigate({
-                      to: '/app/$section',
-                      params: { section: 'service-requests' },
-                    })
-                  }
-                  setCreateOpen(true)
-                  return
+          <CompactActionButton
+            tone="primary"
+            disabled={!canCreatePrimary}
+            locked={!canCreatePrimary}
+            onClick={() => {
+              if (!canCreatePrimary) return
+              if (section === 'service-requests' || section === 'approvals') {
+                if (section === 'approvals') {
+                  void navigate({
+                    to: '/app/$section',
+                    params: { section: 'service-requests' },
+                  })
                 }
-                if (section === 'quotations') setQuotationBuilderOpen(true)
-                if (section === 'invoices-payments') setInvoiceBuilderOpen(true)
-              }}
-            >
-              {section === 'service-requests' || section === 'approvals' ? (
-                <IconFilePlus size={14} />
-              ) : (
-                <IconPlus size={14} />
-              )}{' '}
-              {section === 'service-requests' || section === 'approvals'
-                ? 'New Request'
-                : section === 'quotations'
-                  ? 'Build Quote'
-                  : section === 'invoices-payments'
-                    ? 'New Invoice'
-                    : 'Create'}
-            </CompactActionButton>
-          ) : undefined
+                setCreateOpen(true)
+                return
+              }
+              if (section === 'quotations') setQuotationBuilderOpen(true)
+              if (section === 'invoices-payments') setInvoiceBuilderOpen(true)
+            }}
+          >
+            {section === 'service-requests' || section === 'approvals' ? (
+              <IconFilePlus size={14} />
+            ) : (
+              <IconPlus size={14} />
+            )}{' '}
+            {section === 'service-requests' || section === 'approvals'
+              ? 'New Request'
+              : section === 'quotations'
+                ? 'Build Quote'
+                : section === 'invoices-payments'
+                  ? 'New Invoice'
+                  : 'Create'}
+          </CompactActionButton>
         }
           />
         }

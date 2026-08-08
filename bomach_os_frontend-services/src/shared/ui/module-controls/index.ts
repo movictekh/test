@@ -1,4 +1,5 @@
 export {
+  AccessLockIcon,
   CompactActionButton,
   CompactPageToolbar,
   FilterBar,
