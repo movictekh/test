@@ -41,7 +41,9 @@ export function ServiceCatalogueScreen({
   onConfigure,
   configureLabel = 'Configure',
   onCreate,
+  createDisabled = false,
   onBranchAvailability,
+  branchAvailabilityDisabled = false,
   onDuplicate,
 }: {
   services: ServiceCatalogueItem[]
@@ -56,7 +58,9 @@ export function ServiceCatalogueScreen({
   onConfigure?: (service: ServiceCatalogueItem) => void
   configureLabel?: 'Configure' | 'View'
   onCreate?: () => void
+  createDisabled?: boolean
   onBranchAvailability?: () => void
+  branchAvailabilityDisabled?: boolean
   onDuplicate?: (service: ServiceCatalogueItem) => void
 }) {
   const divisions = useMemo(
@@ -94,23 +98,56 @@ export function ServiceCatalogueScreen({
             <option value="inactive">Inactive</option>
           </select>
           <span className="service-admin-grow" />
-          {onBranchAvailability ? (
-            <button type="button" className="service-admin-button" onClick={onBranchAvailability}>
-              Branch Availability
-            </button>
-          ) : null}
-          {onCreate ? (
-            <button
-              type="button"
-              className="service-admin-button service-admin-button-primary"
-              onClick={onCreate}
-            >
-              Create Service
-            </button>
-          ) : null}
+          <button
+            type="button"
+            className="service-admin-button"
+            disabled={branchAvailabilityDisabled || !onBranchAvailability}
+            onClick={() => onBranchAvailability?.()}
+          >
+            Branch Availability
+          </button>
+          <button
+            type="button"
+            className="service-admin-button service-admin-button-primary"
+            disabled={createDisabled || !onCreate}
+            onClick={() => onCreate?.()}
+          >
+            Create Service
+          </button>
         </div>
 
         <div className="service-admin-service-grid">
+          {services.length === 0 ? (
+            <section className="service-admin-card border-dashed p-6 sm:p-8">
+              <div className="mx-auto max-w-xl text-center">
+                <div className="service-admin-card-title">No services in the catalogue yet</div>
+                <div className="service-admin-card-subtitle mt-1">
+                  Service cards will appear here after the first Service is created. You can still
+                  search, filter, review branch availability, and start the setup flow from this
+                  page.
+                </div>
+                <div className="mt-4 flex flex-wrap justify-center gap-2">
+                  <button
+                    type="button"
+                    className="service-admin-button service-admin-button-primary"
+                    disabled={createDisabled || !onCreate}
+                    onClick={() => onCreate?.()}
+                  >
+                    Create first Service
+                  </button>
+                  <button
+                    type="button"
+                    className="service-admin-button"
+                    disabled={branchAvailabilityDisabled || !onBranchAvailability}
+                    onClick={() => onBranchAvailability?.()}
+                  >
+                    Branch Availability
+                  </button>
+                </div>
+              </div>
+            </section>
+          ) : null}
+
           {services.map((service) => {
             const divisionClassName =
               divisionClassNames[service.division] ?? 'service-admin-service-icon--default'
@@ -131,15 +168,14 @@ export function ServiceCatalogueScreen({
                     {service.status}
                   </span>
                   <div className="flex gap-1">
-                    {onConfigure ? (
-                      <button
-                        type="button"
-                        className="service-admin-button service-admin-button-small"
-                        onClick={() => onConfigure(service)}
-                      >
-                        {configureLabel}
-                      </button>
-                    ) : null}
+                    <button
+                      type="button"
+                      className="service-admin-button service-admin-button-small"
+                      disabled={!onConfigure}
+                      onClick={() => onConfigure?.(service)}
+                    >
+                      {configureLabel}
+                    </button>
                     {onDuplicate ? (
                       <button
                         type="button"
@@ -197,25 +233,27 @@ function calculatorNumericFields(calculator: PricingCalculator) {
 export function CalculatorLibraryScreen({
   calculators,
   onCreate,
+  createDisabled = false,
 }: {
   calculators: PricingCalculator[]
   onCreate?: () => void
+  createDisabled?: boolean
 }) {
   const [activeId, setActiveId] = useState(calculators[0]?.id ?? '')
   const active = calculators.find((calculator) => calculator.id === activeId) ?? calculators[0]
   const [inputs, setInputs] = useState<Record<string, number>>({})
 
-  if (!active) return null
-
-  const fields = calculatorNumericFields(active)
-  const estimated =
-    Object.keys(inputs).length === 0
+  const fields = active ? calculatorNumericFields(active) : []
+  const estimated = active
+    ? Object.keys(inputs).length === 0
       ? active.sampleTotal
       : Object.values(inputs).reduce((total, value) => total + Number(value || 0), 0)
+    : 0
 
-  const formula =
-    active.charges.find((charge) => charge.kind === 'formula')?.value ??
-    active.charges.map((charge) => charge.label).join(' + ')
+  const formula = active
+    ? (active.charges.find((charge) => charge.kind === 'formula')?.value ??
+      active.charges.map((charge) => charge.label).join(' + '))
+    : 'No calculator selected'
 
   return (
     <div className="service-admin-page service-admin-content">
@@ -228,15 +266,14 @@ export function CalculatorLibraryScreen({
                 Reusable formulas for estimates, quotes and invoices
               </div>
             </div>
-            {onCreate ? (
-              <button
-                type="button"
-                className="service-admin-button service-admin-button-primary"
-                onClick={onCreate}
-              >
-                New Calculator
-              </button>
-            ) : null}
+            <button
+              type="button"
+              className="service-admin-button service-admin-button-primary"
+              disabled={createDisabled || !onCreate}
+              onClick={() => onCreate?.()}
+            >
+              New Calculator
+            </button>
           </div>
 
           <div className="service-admin-table-wrap">
@@ -253,8 +290,20 @@ export function CalculatorLibraryScreen({
                 </tr>
               </thead>
               <tbody>
+                {calculators.length === 0 ? (
+                  <tr>
+                    <td colSpan={7}>
+                      <div className="py-8 text-center">
+                        <div className="service-admin-card-title">No calculators configured</div>
+                        <div className="service-admin-card-subtitle mt-1">
+                          Pricing configurations will appear here once a Service has a calculator.
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                ) : null}
                 {calculators.map((calculator) => {
-                  const isActive = calculator.id === active.id
+                  const isActive = calculator.id === active?.id
 
                   return (
                     <tr
@@ -313,9 +362,20 @@ export function CalculatorLibraryScreen({
           <div className="service-admin-card-header">
             <div>
               <div className="service-admin-card-title">Live Calculator Test</div>
-              <div className="service-admin-card-subtitle">{active.name}</div>
+              <div className="service-admin-card-subtitle">
+                {active?.name ?? 'Select or create a calculator to preview pricing'}
+              </div>
             </div>
           </div>
+
+          {!active ? (
+            <div className="service-admin-notice service-admin-notice-blue">
+              <b>No live calculator to test yet</b>
+              <br />
+              Create a calculator to configure variables, formula rules, deposits, taxes and
+              approval thresholds. This panel will then become the live test workspace.
+            </div>
+          ) : null}
 
           {fields.map((field) => (
             <div className="service-admin-field" key={field.key}>
@@ -410,23 +470,23 @@ export function RequestFormBuilderScreen({
               </button>
             ))}
           </div>
-          {onSave ? (
-            <button
-              type="button"
-              className="service-admin-request-save"
-              onClick={() =>
-                onSave({
-                  id: active.id,
-                  name: active.name,
-                  serviceId: active.serviceId,
-                  status: active.status,
-                  fields,
-                })
-              }
-            >
-              Save Form
-            </button>
-          ) : null}
+          <button
+            type="button"
+            className="service-admin-request-save"
+            disabled={!canEdit || !active}
+            onClick={() =>
+              active &&
+              onSave?.({
+                id: active.id,
+                name: active.name,
+                serviceId: active.serviceId,
+                status: active.status,
+                fields,
+              })
+            }
+          >
+            Save Form
+          </button>
         </aside>
 
         <section className="service-admin-request-canvas">

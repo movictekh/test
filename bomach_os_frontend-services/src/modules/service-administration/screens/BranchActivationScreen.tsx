@@ -65,19 +65,6 @@ export function BranchActivationScreen({
     })
   }
 
-  if (services.length === 0) {
-    return (
-      <main className="service-admin-page service-admin-content">
-        <section className="service-admin-card p-6 text-center" role="status">
-          <h2 className="service-admin-card-title">No services available</h2>
-          <p className="service-admin-card-subtitle mt-1">
-            Create a service before configuring branch availability.
-          </p>
-        </section>
-      </main>
-    )
-  }
-
   return (
     <div className="service-admin-page service-admin-content">
       <section className="service-admin-card service-admin-branch-card">
@@ -88,16 +75,14 @@ export function BranchActivationScreen({
               Availability, capacity and default SLA by branch
             </div>
           </div>
-          {canEdit ? (
-            <button
-              type="button"
-              className="service-admin-button service-admin-button-primary"
-              disabled={saving}
-              onClick={save}
-            >
-              {saving ? 'Saving...' : 'Save Changes'}
-            </button>
-          ) : null}
+          <button
+            type="button"
+            className="service-admin-button service-admin-button-primary"
+            disabled={!canEdit || saving || services.length === 0 || branches.length === 0}
+            onClick={save}
+          >
+            {saving ? 'Saving...' : 'Save Changes'}
+          </button>
         </div>
 
         {branches.length === 0 ? (
@@ -118,6 +103,21 @@ export function BranchActivationScreen({
                 </tr>
               </thead>
               <tbody>
+                {services.length === 0 ? (
+                  <tr>
+                    <td colSpan={branches.length + 3}>
+                      <div className="py-8 text-center" role="status">
+                        <div className="service-admin-card-title">
+                          No Services available for branch activation
+                        </div>
+                        <div className="service-admin-card-subtitle mt-1">
+                          The activation matrix will populate here after the first Service is
+                          created. Existing branch columns remain part of the same page structure.
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                ) : null}
                 {services.map((service) => (
                   <tr key={service.id}>
                     <td>

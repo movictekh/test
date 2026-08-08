@@ -430,28 +430,35 @@ export function ServiceAdministrationSectionPage({
         title={page.title}
         breadcrumb={page.breadcrumb}
         secondaryAction={
-          capabilities.canCreateServiceRequest ? (
-            <CompactActionButton
-              onClick={() =>
-                void navigate({
-                  to: '/app/$section',
-                  params: { section: 'service-requests' },
-                })
-              }
-            >
-              <IconFilePlus size={14} />
-              New Request
-            </CompactActionButton>
-          ) : undefined
+          <CompactActionButton
+            disabled={!capabilities.canCreateServiceRequest}
+            onClick={() =>
+              void navigate({
+                to: '/app/$section',
+                params: { section: 'service-requests' },
+              })
+            }
+          >
+            <IconFilePlus size={14} />
+            New Request
+          </CompactActionButton>
         }
         primaryAction={
-          section === 'service-catalogue' && capabilities.canCreateInitialServiceSetup ? (
-            <CompactActionButton tone="primary" onClick={() => setNewServiceOpen(true)}>
+          section === 'service-catalogue' ? (
+            <CompactActionButton
+              tone="primary"
+              disabled={!capabilities.canCreateInitialServiceSetup}
+              onClick={() => setNewServiceOpen(true)}
+            >
               <IconPlus size={14} />
               Create Service
             </CompactActionButton>
-          ) : section === 'request-form-builder' && capabilities.canCreateRequestForm ? (
-            <CompactActionButton tone="primary" onClick={() => setFormEditor('new')}>
+          ) : section === 'request-form-builder' ? (
+            <CompactActionButton
+              tone="primary"
+              disabled={!capabilities.canCreateRequestForm || !requestFormService}
+              onClick={() => setFormEditor('new')}
+            >
               <IconPlus size={14} />
               New Request Form
             </CompactActionButton>
@@ -505,31 +512,36 @@ export function ServiceAdministrationSectionPage({
               replace: true,
             })
           }}
-          {...(capabilities.canViewService
-            ? { onConfigure: (service) => void openLiveServiceDetail(service) }
-            : {})}
+          onConfigure={
+            capabilities.canViewService
+              ? (service) => void openLiveServiceDetail(service)
+              : undefined
+          }
           configureLabel="View"
-          {...(capabilities.canCreateInitialServiceSetup
-            ? { onCreate: () => setNewServiceOpen(true) }
-            : {})}
-          {...(capabilities.canListBranchActivations
-            ? {
-                onBranchAvailability: () =>
+          onCreate={
+            capabilities.canCreateInitialServiceSetup ? () => setNewServiceOpen(true) : undefined
+          }
+          createDisabled={!capabilities.canCreateInitialServiceSetup}
+          onBranchAvailability={
+            capabilities.canListBranchActivations
+              ? () =>
                   void navigate({
                     to: '/app/$section',
                     params: { section: 'branch-activation' },
-                  }),
-              }
-            : {})}
+                  })
+              : undefined
+          }
+          branchAvailabilityDisabled={!capabilities.canListBranchActivations}
         />
       ) : null}
 
       {section === 'calculator-library' ? (
         <CalculatorLibraryScreen
           calculators={pricingQuery.data ?? []}
-          {...(capabilities.canCreatePricingConfig
-            ? { onCreate: () => setCalculatorEditor('new') }
-            : {})}
+          onCreate={
+            capabilities.canCreatePricingConfig ? () => setCalculatorEditor('new') : undefined
+          }
+          createDisabled={!capabilities.canCreatePricingConfig}
         />
       ) : null}
 
@@ -568,11 +580,47 @@ export function ServiceAdministrationSectionPage({
             />
           ) : (
             <div className="service-admin-page service-admin-content">
-              <div className="service-admin-card">
-                <div className="service-admin-card-title">No request form yet</div>
-                <div className="service-admin-card-subtitle">
-                  Create the first request form for {requestFormService?.name ?? 'this service'}.
-                </div>
+              <div className="service-admin-request-builder">
+                <aside className="service-admin-request-palette">
+                  <h2>Field Palette</h2>
+                  <div className="service-admin-request-palette-list">
+                    {(fieldTypesQuery.data ?? []).map((fieldType) => (
+                      <button key={fieldType.value} type="button" disabled>
+                        <span>+</span>
+                        {fieldType.label}
+                      </button>
+                    ))}
+                    {(fieldTypesQuery.data ?? []).length === 0 ? (
+                      <div className="service-admin-card-subtitle py-4">
+                        Field types will appear here when a Service is available.
+                      </div>
+                    ) : null}
+                  </div>
+                  <button type="button" className="service-admin-request-save" disabled>
+                    Save Form
+                  </button>
+                </aside>
+
+                <section className="service-admin-card min-h-[360px]">
+                  <div className="service-admin-card-header">
+                    <div>
+                      <div className="service-admin-card-title">Request Form Canvas</div>
+                      <div className="service-admin-card-subtitle">
+                        Form fields and validation rules are configured here.
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex min-h-[260px] items-center justify-center text-center">
+                    <div className="max-w-md">
+                      <div className="service-admin-card-title">No request form yet</div>
+                      <div className="service-admin-card-subtitle mt-1">
+                        {requestFormService
+                          ? `Create the first request form for ${requestFormService.name}.`
+                          : 'Create a Service first, then build its request form here.'}
+                      </div>
+                    </div>
+                  </div>
+                </section>
               </div>
             </div>
           )}

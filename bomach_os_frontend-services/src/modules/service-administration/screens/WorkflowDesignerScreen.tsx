@@ -250,10 +250,104 @@ export function WorkflowDesignerScreen({
   if (!selectedService) {
     return (
       <div className="service-admin-page service-admin-content">
-        <div className="service-admin-card" role="status">
-          <div className="service-admin-card-title">No services available</div>
-          <div className="service-admin-card-subtitle">
-            Create a service before designing its workflow.
+        <div className="service-admin-card">
+          <div className="service-admin-card-header">
+            <div>
+              <div className="service-admin-card-title">Workflow & Fulfillment Designer</div>
+              <div className="service-admin-card-subtitle">
+                Stages, owners, SLAs, approvals, evidence and client checkpoints
+              </div>
+            </div>
+            <div className="service-admin-acts">
+              <select aria-label="Select service" disabled value="">
+                <option value="">No services available</option>
+              </select>
+              <button type="button" className="service-admin-button" disabled>
+                Add Stage
+              </button>
+              <button
+                type="button"
+                className="service-admin-button service-admin-button-primary"
+                disabled
+              >
+                Save Workflow
+              </button>
+            </div>
+          </div>
+
+          <div className="service-admin-life">
+            {['Request Review', 'Execution', 'Quality Review', 'Client Acceptance'].map(
+              (name, index) => (
+                <article key={name} className="service-admin-step opacity-60">
+                  <small>{String(index + 1).padStart(2, '0')}</small>
+                  <b>{name}</b>
+                  <span>Not configured</span>
+                </article>
+              ),
+            )}
+          </div>
+
+          <div className="service-admin-table-wrap" style={{ marginTop: 12 }}>
+            <table className="service-admin-table">
+              <thead>
+                <tr>
+                  <th>Stage</th>
+                  <th>Owner</th>
+                  <th>SLA</th>
+                  <th>Approval</th>
+                  <th>Evidence</th>
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colSpan={6}>
+                    <div className="py-8 text-center" role="status">
+                      <div className="service-admin-card-title">No workflow to configure yet</div>
+                      <div className="service-admin-card-subtitle mt-1">
+                        Create a Service first. Its workflow stages will be configured here without
+                        changing the page layout.
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="service-admin-g2">
+          <div className="service-admin-card">
+            <div className="service-admin-card-header">
+              <div className="service-admin-card-title">Automation Rules</div>
+              <button
+                type="button"
+                className="service-admin-button service-admin-button-small"
+                disabled
+              >
+                Add Rule
+              </button>
+            </div>
+            <div className="service-admin-card-subtitle py-5">
+              Automation rules will appear here after a workflow exists.
+            </div>
+          </div>
+
+          <div className="service-admin-card">
+            <div className="service-admin-card-header">
+              <div className="service-admin-card-title">Fulfillment Modes</div>
+            </div>
+            {fulfillmentModes.map(([title, description]) => (
+              <div key={title} className="service-admin-list-row opacity-60">
+                <div className="service-admin-list-ico service-admin-list-ico--mode">
+                  <IconSubtask size={16} aria-hidden="true" />
+                </div>
+                <div className="service-admin-list-meta">
+                  <div className="service-admin-list-name">{title}</div>
+                  <div className="service-admin-list-sub">{description}</div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
