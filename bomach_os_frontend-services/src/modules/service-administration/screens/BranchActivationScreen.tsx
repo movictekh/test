@@ -5,20 +5,17 @@ import type {
   SaveBranchActivationMatrixInput,
   ServiceCatalogueItem,
 } from '../types/service-administration.types'
-
-const branchNames = ['Enugu', 'Port Harcourt', 'Lagos', 'Abuja'] as const
-
-function toBranchId(branchName: string) {
-  return branchName.toLowerCase().replace(/[^a-z0-9]+/g, '-')
-}
+import type { BranchOption } from '../mappers/branch-activation.mapper'
 
 export function BranchActivationScreen({
   services,
+  branches,
   activations,
   saving,
   onSave,
 }: {
   services: ServiceCatalogueItem[]
+  branches: BranchOption[]
   activations: BranchActivation[]
   saving: boolean
   onSave?: (input: SaveBranchActivationMatrixInput) => void
@@ -28,19 +25,15 @@ export function BranchActivationScreen({
     () =>
       Object.fromEntries(
         services.flatMap((service) =>
-          branchNames.map((branchName) => {
+          branches.map((branch) => {
             const activation = activations.find(
-              (item) => item.serviceId === service.id && item.branchName === branchName,
+              (item) => item.serviceId === service.id && Number(item.branchId) === branch.id,
             )
-            const active =
-              activation?.state === 'active' ||
-              (!activation && service.branchNames.includes(branchName))
-
-            return [`${service.id}:${branchName}`, active]
+            return [`${service.id}:${branch.id}`, activation?.state === 'active']
           }),
         ),
       ) as Record<string, boolean>,
-    [activations, services],
+    [activations, branches, services],
   )
 
   const [matrix, setMatrix] = useState(initialMatrix)
@@ -51,24 +44,21 @@ export function BranchActivationScreen({
     setMatrix(initialMatrix)
   }
 
-  const toggle = (serviceId: string, branchName: string) => {
-    const key = `${serviceId}:${branchName}`
-    setMatrix((current) => ({
-      ...current,
-      [key]: !(current[key] ?? false),
-    }))
+  const toggle = (serviceId: string, branchId: number) => {
+    const key = `${serviceId}:${branchId}`
+    setMatrix((current) => ({ ...current, [key]: !(current[key] ?? false) }))
   }
 
   const save = () => {
     if (!onSave) return
     onSave({
       updates: services.flatMap((service) =>
-        branchNames.map((branchName) => ({
+        branches.map((branch) => ({
           serviceId: service.id,
           serviceName: service.name,
-          branchId: toBranchId(branchName),
-          branchName,
-          active: matrix[`${service.id}:${branchName}`] ?? false,
+          branchId: String(branch.id),
+          branchName: branch.name,
+          active: matrix[`${service.id}:${branch.id}`] ?? false,
           slaDays: service.slaDays ?? 5,
         })),
       ),
@@ -78,7 +68,7 @@ export function BranchActivationScreen({
   if (services.length === 0) {
     return (
       <main className="service-admin-page service-admin-content">
-        <section className="service-admin-card p-6 text-center" role="status" aria-live="polite">
+        <section className="service-admin-card p-6 text-center" role="status">
           <h2 className="service-admin-card-title">No services available</h2>
           <p className="service-admin-card-subtitle mt-1">
             Create a service before configuring branch availability.
@@ -98,7 +88,6 @@ export function BranchActivationScreen({
               Availability, capacity and default SLA by branch
             </div>
           </div>
-
           {canEdit ? (
             <button
               type="button"
@@ -111,55 +100,57 @@ export function BranchActivationScreen({
           ) : null}
         </div>
 
-        <div className="service-admin-table-wrap">
-          <table className="service-admin-table service-admin-branch-table">
-            <thead>
-              <tr>
-                <th>Service</th>
-                {branchNames.map((branchName) => (
-                  <th key={branchName}>{branchName}</th>
-                ))}
-                <th>SLA</th>
-                <th>Capacity</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {services.map((service) => (
-                <tr key={service.id}>
-                  <td>
-                    <b>{service.name}</b>
-                    <div className="service-admin-row-subtitle">{service.division}</div>
-                  </td>
-
-                  {branchNames.map((branchName) => {
-                    const key = `${service.id}:${branchName}`
-                    const active = matrix[key] ?? false
-
-                    return (
-                      <td key={branchName}>
-                        <label className="service-admin-branch-check">
-                          <input
-                            type="checkbox"
-                            checked={active}
-                            disabled={!canEdit}
-                            onChange={() => toggle(service.id, branchName)}
-                          />
-                          <span>{active ? 'Active' : 'Off'}</span>
-                        </label>
-                      </td>
-                    )
-                  })}
-
-                  <td>{service.slaDays ?? 5}d</td>
-                  <td>
-                    <span className="service-admin-pill service-admin-pill-green">Available</span>
-                  </td>
+        {branches.length === 0 ? (
+          <div className="service-admin-notice service-admin-notice-yellow">
+            No active branches are available from the backend.
+          </div>
+        ) : (
+          <div className="service-admin-table-wrap">
+            <table className="service-admin-table service-admin-branch-table">
+              <thead>
+                <tr>
+                  <th>Service</th>
+                  {branches.map((branch) => (
+                    <th key={branch.id}>{branch.name}</th>
+                  ))}
+                  <th>SLA</th>
+                  <th>Capacity</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {services.map((service) => (
+                  <tr key={service.id}>
+                    <td>
+                      <b>{service.name}</b>
+                      <div className="service-admin-row-subtitle">{service.division}</div>
+                    </td>
+                    {branches.map((branch) => {
+                      const key = `${service.id}:${branch.id}`
+                      const active = matrix[key] ?? false
+                      return (
+                        <td key={branch.id}>
+                          <label className="service-admin-branch-check">
+                            <input
+                              type="checkbox"
+                              checked={active}
+                              disabled={!canEdit}
+                              onChange={() => toggle(service.id, branch.id)}
+                            />
+                            <span>{active ? 'Active' : 'Off'}</span>
+                          </label>
+                        </td>
+                      )
+                    })}
+                    <td>{service.slaDays ?? 5}d</td>
+                    <td>
+                      <span className="service-admin-pill service-admin-pill-green">Available</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
     </div>
   )

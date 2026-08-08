@@ -13,6 +13,8 @@ export const PERMISSIONS = {
 
   categoriesList: 'categories.list',
 
+  branchesList: 'branches.list',
+
   serviceSubservicesList: 'service_subservices.list',
   serviceSubservicesView: 'service_subservices.view',
   serviceSubservicesCreate: 'service_subservices.create',

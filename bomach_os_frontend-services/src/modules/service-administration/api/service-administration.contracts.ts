@@ -37,6 +37,18 @@ export interface BranchActivationMatrixFilters {
   search?: string
 }
 
+export interface BranchDto {
+  id: number
+  branch_name: string
+  branch_id: string
+  country: string
+  state: string
+  city: string | null
+  operational_status: string
+  is_active: boolean
+  is_operational: boolean
+}
+
 export interface ServiceCategoryDto {
   id: number
   name: string

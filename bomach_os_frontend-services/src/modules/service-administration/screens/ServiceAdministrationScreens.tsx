@@ -30,6 +30,14 @@ function statusClass(status: string) {
 
 export function ServiceCatalogueScreen({
   services,
+  totalCount,
+  query,
+  division,
+  status,
+  page,
+  pageSize,
+  onFiltersChange,
+  onPageChange,
   onConfigure,
   configureLabel = 'Configure',
   onCreate,
@@ -37,29 +45,25 @@ export function ServiceCatalogueScreen({
   onDuplicate,
 }: {
   services: ServiceCatalogueItem[]
+  totalCount: number
+  query: string
+  division: string
+  status: string
+  page: number
+  pageSize: number
+  onFiltersChange: (filters: { query: string; division: string; status: string }) => void
+  onPageChange: (page: number) => void
   onConfigure?: (service: ServiceCatalogueItem) => void
   configureLabel?: 'Configure' | 'View'
   onCreate?: () => void
   onBranchAvailability?: () => void
   onDuplicate?: (service: ServiceCatalogueItem) => void
 }) {
-  const [query, setQuery] = useState('')
-  const [division, setDivision] = useState('')
-  const [status, setStatus] = useState('')
-
   const divisions = useMemo(
     () => Array.from(new Set(services.map((service) => service.division))),
     [services],
   )
-
-  const filtered = services.filter((service) => {
-    const text = `${service.name} ${service.description}`.toLowerCase()
-    return (
-      (!query || text.includes(query.toLowerCase())) &&
-      (!division || service.division === division) &&
-      (!status || service.status === status)
-    )
-  })
+  const pageCount = Math.max(1, Math.ceil(totalCount / pageSize))
 
   return (
     <div className="service-admin-page service-admin-content">
@@ -68,16 +72,22 @@ export function ServiceCatalogueScreen({
           <input
             className="service-admin-grow"
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => onFiltersChange({ query: event.target.value, division, status })}
             placeholder="Search services..."
           />
-          <select value={division} onChange={(event) => setDivision(event.target.value)}>
+          <select
+            value={division}
+            onChange={(event) => onFiltersChange({ query, division: event.target.value, status })}
+          >
             <option value="">All divisions</option>
             {divisions.map((item) => (
               <option key={item}>{item}</option>
             ))}
           </select>
-          <select value={status} onChange={(event) => setStatus(event.target.value)}>
+          <select
+            value={status}
+            onChange={(event) => onFiltersChange({ query, division, status: event.target.value })}
+          >
             <option value="">All statuses</option>
             <option value="active">Active</option>
             <option value="draft">Draft</option>
@@ -101,7 +111,7 @@ export function ServiceCatalogueScreen({
         </div>
 
         <div className="service-admin-service-grid">
-          {filtered.map((service) => {
+          {services.map((service) => {
             const divisionClassName =
               divisionClassNames[service.division] ?? 'service-admin-service-icon--default'
 
@@ -145,6 +155,29 @@ export function ServiceCatalogueScreen({
               </article>
             )
           })}
+        </div>
+
+        <div className="service-admin-filter-group service-admin-catalog-filter">
+          <span>
+            Page {page} of {pageCount} · {totalCount} service{totalCount === 1 ? '' : 's'}
+          </span>
+          <span className="service-admin-grow" />
+          <button
+            type="button"
+            className="service-admin-button"
+            disabled={page <= 1}
+            onClick={() => onPageChange(page - 1)}
+          >
+            Previous
+          </button>
+          <button
+            type="button"
+            className="service-admin-button"
+            disabled={page >= pageCount}
+            onClick={() => onPageChange(page + 1)}
+          >
+            Next
+          </button>
         </div>
       </div>
     </div>

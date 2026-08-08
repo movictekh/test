@@ -1,0 +1,126 @@
+import type {
+  PricingConfigDto,
+  PricingConfigInputDto,
+  PricingConfigUpdateDto,
+} from '../api/service-administration.contracts'
+import type {
+  CalculatorCharge,
+  CalculatorVariable,
+  PricingCalculator,
+  SaveCalculatorInput,
+} from '../types/service-administration.types'
+
+function numberValue(value: string | number): number {
+  return Number(value) || 0
+}
+
+function pricingStatus(status: string): PricingCalculator['status'] {
+  return status === 'active' || status === 'draft' ? status : 'inactive'
+}
+
+function domainVariableType(fieldType: string): CalculatorVariable['type'] {
+  if (fieldType === 'checkbox') return 'boolean'
+  if (fieldType === 'select' || fieldType === 'multiselect') return 'select'
+  return 'number'
+}
+
+export function mapPricingConfigDto(dto: PricingConfigDto): PricingCalculator {
+  const charges: CalculatorCharge[] = []
+
+  if (dto.formula) {
+    charges.push({
+      id: `formula-${dto.id}`,
+      label: 'Formula',
+      kind: 'formula',
+      value: dto.formula,
+    })
+  }
+
+  charges.push(
+    {
+      id: `deposit-${dto.id}`,
+      label: 'Deposit',
+      kind: 'percentage',
+      value: numberValue(dto.deposit_percent),
+    },
+    {
+      id: `tax-${dto.id}`,
+      label: 'Tax',
+      kind: 'percentage',
+      value: numberValue(dto.tax_rate),
+    },
+    {
+      id: `approval-${dto.id}`,
+      label: 'Discount approval',
+      kind: 'percentage',
+      value: numberValue(dto.discount_approval_threshold_percent),
+    },
+  )
+
+  const variables: CalculatorVariable[] = (dto.fields ?? [])
+    .slice()
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((field) => ({
+      id: String(field.id),
+      label: field.label,
+      key: field.key,
+      type: domainVariableType(field.field_type),
+      ...(field.default_value !== null && field.default_value !== undefined
+        ? { unit: String(field.default_value) }
+        : {}),
+    }))
+
+  return {
+    id: String(dto.id),
+    name: dto.name,
+    code: `CALC-${dto.id}`,
+    serviceId: String(dto.service_id),
+    serviceName: dto.service_name,
+    description: `${dto.pricing_type} pricing configuration`,
+    status: pricingStatus(dto.status),
+    version: dto.version,
+    variables,
+    charges,
+    sampleTotal: 0,
+    updatedAt: dto.updated_at,
+  }
+}
+
+function backendPricingType(input: SaveCalculatorInput): string {
+  const formula = input.charges.find((charge) => charge.kind === 'formula')?.value
+  if (formula && String(formula).trim()) return 'formula'
+  return 'fixed'
+}
+
+function percentage(input: SaveCalculatorInput, keyword: string): number {
+  const value = input.charges.find((charge) => charge.label.toLowerCase().includes(keyword))?.value
+  return typeof value === 'number' ? value : Number(value) || 0
+}
+
+export function mapSaveCalculatorInput(
+  input: SaveCalculatorInput,
+): PricingConfigInputDto | PricingConfigUpdateDto {
+  const formula = input.charges.find((charge) => charge.kind === 'formula')?.value ?? ''
+
+  return {
+    name: input.name,
+    pricing_type: backendPricingType(input),
+    formula: String(formula),
+    tax_rate: percentage(input, 'tax'),
+    deposit_percent: percentage(input, 'deposit'),
+    discount_approval_threshold_percent: percentage(input, 'approval'),
+    status: input.status === 'inactive' ? 'archived' : input.status,
+    is_active: input.status === 'active',
+    fields: input.variables.map((variable, index) => ({
+      key: variable.key,
+      label: variable.label,
+      field_type:
+        variable.type === 'boolean' ? 'checkbox' : variable.type === 'select' ? 'select' : 'number',
+      default_value: variable.unit ?? null,
+      required: true,
+      options: [],
+      validation: {},
+      sort_order: index,
+    })),
+  }
+}

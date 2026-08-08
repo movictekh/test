@@ -1,10 +1,16 @@
 import { mapServiceCatalogueDetail } from '../mappers/service-catalogue.mapper'
 import { mapSaveRequestFormInput } from '../mappers/request-form.mapper'
+import { mapPricingConfigDto, mapSaveCalculatorInput } from '../mappers/pricing-config.mapper'
+import { mapSaveWorkflowInput, mapWorkflowDto } from '../mappers/workflow.mapper'
 import type {
   CreateServiceWizardInput,
+  PricingCalculator,
+  SaveCalculatorInput,
   SaveRequestFormInput,
+  SaveWorkflowInput,
   ServiceCatalogueItem,
   ServiceRequestForm,
+  ServiceWorkflow,
 } from '../types/service-administration.types'
 import { mapRequestFormDto } from '../mappers/request-form.mapper'
 import { serviceAdministrationBackendApi } from './service-administration.backend-api'
@@ -161,5 +167,63 @@ export async function saveLiveRequestForm(
       payload as Parameters<typeof serviceAdministrationBackendApi.createRequestForm>[1],
     ),
     serviceName,
+  )
+}
+
+export async function saveLivePricingConfig(
+  input: SaveCalculatorInput,
+): Promise<PricingCalculator> {
+  const serviceId = Number(input.serviceId)
+  if (!Number.isFinite(serviceId)) throw new Error('Invalid Service identifier.')
+
+  const payload = mapSaveCalculatorInput(input)
+  const dto = input.id
+    ? await serviceAdministrationBackendApi.updatePricingConfig(
+        serviceId,
+        Number(input.id),
+        payload,
+      )
+    : await serviceAdministrationBackendApi.createPricingConfig(
+        serviceId,
+        payload as PricingConfigInputDto,
+      )
+
+  if (input.status === 'active' && !dto.is_active) {
+    return mapPricingConfigDto(
+      await serviceAdministrationBackendApi.activatePricingConfig(serviceId, dto.id),
+    )
+  }
+
+  return mapPricingConfigDto(dto)
+}
+
+export async function saveLiveWorkflow(
+  input: SaveWorkflowInput,
+  serviceName: string,
+): Promise<ServiceWorkflow> {
+  const serviceId = Number(input.serviceId)
+  if (!Number.isFinite(serviceId)) throw new Error('Invalid Service identifier.')
+
+  const payload = mapSaveWorkflowInput(input)
+  const dto = input.id
+    ? await serviceAdministrationBackendApi.updateWorkflow(serviceId, Number(input.id), payload)
+    : await serviceAdministrationBackendApi.createWorkflow(serviceId, payload as WorkflowInputDto)
+
+  if (input.status === 'active' && !dto.is_active) {
+    return mapWorkflowDto(
+      await serviceAdministrationBackendApi.activateWorkflow(serviceId, dto.id),
+      serviceName,
+    )
+  }
+
+  return mapWorkflowDto(dto, serviceName)
+}
+
+export async function publishLiveService(serviceId: number): Promise<ServiceCatalogueItem> {
+  return mapServiceCatalogueDetail(
+    await serviceAdministrationBackendApi.publishService(serviceId, {
+      status: 'active',
+      client_visibility: 'visible',
+    }),
   )
 }

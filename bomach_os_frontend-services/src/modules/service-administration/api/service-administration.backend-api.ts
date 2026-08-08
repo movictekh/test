@@ -2,6 +2,7 @@ import { apiClient } from '@/shared/api/api-client'
 
 import type {
   BranchActivationDto,
+  BranchDto,
   BranchActivationInputDto,
   BranchActivationMatrixFilters,
   FieldTypeDto,
@@ -67,6 +68,12 @@ function serviceListPath(path: string, filters: ServiceListFilters = {}) {
 }
 
 export const serviceAdministrationBackendApi = {
+  listBranches(limit = 100, offset = 0) {
+    return apiClient.get<LimitOffsetPageDto<BranchDto>>(
+      withQuery('/branches', { is_active: true, limit, offset }),
+    )
+  },
+
   listCategories(limit = 100, offset = 0) {
     return apiClient.get<LimitOffsetPageDto<ServiceCategoryDto>>(
       withQuery('/categories', { limit, offset }),

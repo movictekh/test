@@ -16,10 +16,14 @@ import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
 import { CompactPageToolbar, CompactActionButton } from '@/shared/ui/module-controls'
 
 import { serviceAdministrationApi } from '../api/service-administration.api'
+import { serviceAdministrationBackendApi } from '../api/service-administration.backend-api'
 import { serviceAdministrationKeys } from '../api/service-administration.keys'
 import {
   createServiceThroughRequestForm,
+  publishLiveService,
+  saveLivePricingConfig,
   saveLiveRequestForm,
+  saveLiveWorkflow,
   ServiceSetupStageError,
 } from '../api/service-administration.live-mutations'
 import { serviceAdministrationQueries } from '../api/service-administration.queries'
@@ -31,6 +35,7 @@ import {
 } from '../screens/ServiceAdministrationScreens'
 import { WorkflowDesignerScreen } from '../screens/WorkflowDesignerScreen'
 import { getServiceAdministrationCapabilities } from '../permissions'
+import { mapBranchActivationDto } from '../mappers/branch-activation.mapper'
 import type {
   ConfigureServiceInput,
   CreateServiceWizardInput,
@@ -92,14 +97,24 @@ export function ServiceAdministrationSectionPage({
   const { user } = useAuth()
   const toast = useToast()
   const capabilities = getServiceAdministrationCapabilities(user)
-  const usesLiveCatalogue = section === 'service-catalogue' || section === 'request-form-builder'
+  const usesLiveCatalogue =
+    section === 'service-catalogue' ||
+    section === 'request-form-builder' ||
+    section === 'calculator-library' ||
+    section === 'workflow-designer'
 
   const workspaceQuery = useQuery({
     ...serviceAdministrationQueries.workspace(),
     enabled: !usesLiveCatalogue,
   })
   const catalogueQuery = useQuery({
-    ...serviceAdministrationQueries.catalogueList({ limit: 100, offset: 0 }),
+    ...serviceAdministrationQueries.catalogueList({
+      search: catalogueSearch || undefined,
+      division: catalogueDivision || undefined,
+      status: catalogueStatus || undefined,
+      limit: cataloguePageSize,
+      offset: (cataloguePage - 1) * cataloguePageSize,
+    }),
     enabled: usesLiveCatalogue,
   })
   const categoryQuery = useQuery({
@@ -110,11 +125,42 @@ export function ServiceAdministrationSectionPage({
     ...serviceAdministrationQueries.requestFieldTypes(),
     enabled: section === 'request-form-builder' && capabilities.canListRequestForms,
   })
+  const pricingQuery = useQuery({
+    ...serviceAdministrationQueries.pricingConfigs(),
+    enabled: section === 'calculator-library' && capabilities.canListPricingConfigs,
+  })
+  const branchesQuery = useQuery({
+    ...serviceAdministrationQueries.branches(),
+    enabled:
+      section === 'branch-activation' &&
+      capabilities.canListBranches &&
+      capabilities.canListBranchActivations,
+  })
+  const branchMatrixQuery = useQuery({
+    ...serviceAdministrationQueries.branchActivationMatrix(),
+    enabled: section === 'branch-activation' && capabilities.canListBranchActivations,
+  })
   const [selectedService, setSelectedService] = useState<ServiceCatalogueItem | null>(null)
   const [newServiceOpen, setNewServiceOpen] = useState(false)
   const [calculatorEditor, setCalculatorEditor] = useState<PricingCalculator | null | 'new'>(null)
   const [formEditor, setFormEditor] = useState<ServiceRequestForm | null | 'new'>(null)
   const [selectedRequestFormServiceId, setSelectedRequestFormServiceId] = useState('')
+  const [catalogueSearch, setCatalogueSearch] = useState('')
+  const [catalogueDivision, setCatalogueDivision] = useState('')
+  const [catalogueStatus, setCatalogueStatus] = useState('')
+  const [cataloguePage, setCataloguePage] = useState(1)
+  const cataloguePageSize = 12
+
+  const workflowService = catalogueQuery.data?.items[0]
+  const workflowServiceId = Number(workflowService?.id ?? 0)
+  const workflowsQuery = useQuery({
+    ...serviceAdministrationQueries.workflows(
+      workflowServiceId,
+      workflowService?.name ?? 'Service',
+    ),
+    enabled:
+      section === 'workflow-designer' && capabilities.canListWorkflows && workflowServiceId > 0,
+  })
 
   const requestFormService =
     catalogueQuery.data?.items.find((item) => item.id === selectedRequestFormServiceId) ??
@@ -174,17 +220,18 @@ export function ServiceAdministrationSectionPage({
   })
 
   const saveCalculator = useMutation({
-    mutationFn: (input: SaveCalculatorInput) => serviceAdministrationApi.saveCalculator(input),
-    onSuccess: (workspace) => {
-      queryClient.setQueryData(serviceAdministrationKeys.workspace(), workspace)
+    mutationFn: (input: SaveCalculatorInput) => saveLivePricingConfig(input),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: serviceAdministrationKeys.pricingConfigs({}),
+      })
+      await queryClient.invalidateQueries({ queryKey: serviceAdministrationKeys.catalogue() })
       setCalculatorEditor(null)
       toast.success('Calculator saved')
     },
     onError: (error) => {
       const presented = presentError(error, 'background-action')
-      toast.error('Calculator could not be saved', {
-        description: presented.message,
-      })
+      toast.error('Calculator could not be saved', { description: presented.message })
     },
   })
 
@@ -211,35 +258,82 @@ export function ServiceAdministrationSectionPage({
   })
 
   const saveWorkflow = useMutation({
-    mutationFn: (input: SaveWorkflowInput) => serviceAdministrationApi.saveWorkflow(input),
-    onSuccess: (workspace) => {
-      queryClient.setQueryData(serviceAdministrationKeys.workspace(), workspace)
+    mutationFn: (input: SaveWorkflowInput) => {
+      const service = catalogueQuery.data?.items.find((item) => item.id === input.serviceId)
+      return saveLiveWorkflow(input, service?.name ?? 'Service')
+    },
+    onSuccess: async (workflow) => {
+      await queryClient.invalidateQueries({
+        queryKey: serviceAdministrationKeys.workflows(Number(workflow.serviceId)),
+      })
+      await queryClient.invalidateQueries({ queryKey: serviceAdministrationKeys.catalogue() })
       toast.success('Workflow saved')
     },
     onError: (error) => {
       const presented = presentError(error, 'background-action')
-      toast.error('Workflow could not be saved', {
-        description: presented.message,
-      })
+      toast.error('Workflow could not be saved', { description: presented.message })
     },
   })
 
   const saveBranchActivationMatrix = useMutation({
-    mutationFn: (input: SaveBranchActivationMatrixInput) =>
-      serviceAdministrationApi.saveBranchActivationMatrix(input),
-    onSuccess: (workspace) => {
-      queryClient.setQueryData(serviceAdministrationKeys.workspace(), workspace)
+    mutationFn: async (input: SaveBranchActivationMatrixInput) => {
+      const byService = new Map<string, typeof input.updates>()
+      for (const update of input.updates) {
+        const current = byService.get(update.serviceId) ?? []
+        current.push(update)
+        byService.set(update.serviceId, current)
+      }
+
+      await Promise.all(
+        [...byService.entries()].map(([serviceId, updates]) =>
+          serviceAdministrationBackendApi.upsertBranchActivations(
+            Number(serviceId),
+            updates.map((update) => ({
+              branch_id: Number(update.branchId),
+              status: update.active ? 'active' : 'inactive',
+              client_visible: update.active,
+              capacity: null,
+            })),
+          ),
+        ),
+      )
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: serviceAdministrationKeys.branchActivationMatrix({}),
+      })
+      await queryClient.invalidateQueries({ queryKey: serviceAdministrationKeys.catalogue() })
       toast.success('Branch settings saved')
     },
     onError: (error) => {
       const presented = presentError(error, 'background-action')
-      toast.error('Branch settings could not be saved', {
-        description: presented.message,
-      })
+      toast.error('Branch settings could not be saved', { description: presented.message })
     },
   })
 
-  const activeQuery = usesLiveCatalogue ? catalogueQuery : workspaceQuery
+  const publishService = useMutation({
+    mutationFn: (serviceId: number) => publishLiveService(serviceId),
+    onSuccess: async (service) => {
+      await queryClient.invalidateQueries({ queryKey: serviceAdministrationKeys.catalogue() })
+      setSelectedService(service)
+      toast.success('Service published successfully')
+    },
+    onError: (error) => {
+      const presented = presentError(error, 'background-action')
+      toast.error('Service could not be published', { description: presented.message })
+    },
+  })
+
+  const activeQuery =
+    section === 'service-catalogue' ||
+    section === 'request-form-builder' ||
+    section === 'workflow-designer'
+      ? catalogueQuery
+      : section === 'calculator-library'
+        ? pricingQuery
+        : section === 'branch-activation'
+          ? branchMatrixQuery
+          : workspaceQuery
 
   if (activeQuery.isPending) return <DashboardSkeleton />
   if (activeQuery.isError) {
@@ -354,6 +448,19 @@ export function ServiceAdministrationSectionPage({
       {section === 'service-catalogue' ? (
         <ServiceCatalogueScreen
           services={catalogue?.items ?? []}
+          totalCount={catalogue?.count ?? 0}
+          query={catalogueSearch}
+          division={catalogueDivision}
+          status={catalogueStatus}
+          page={cataloguePage}
+          pageSize={cataloguePageSize}
+          onFiltersChange={(filters) => {
+            setCatalogueSearch(filters.query)
+            setCatalogueDivision(filters.division)
+            setCatalogueStatus(filters.status)
+            setCataloguePage(1)
+          }}
+          onPageChange={setCataloguePage}
           {...(capabilities.canViewService
             ? { onConfigure: (service) => void openLiveServiceDetail(service) }
             : {})}
@@ -375,7 +482,7 @@ export function ServiceAdministrationSectionPage({
 
       {section === 'calculator-library' ? (
         <CalculatorLibraryScreen
-          calculators={workspace?.calculators ?? []}
+          calculators={pricingQuery.data ?? []}
           {...(capabilities.canCreatePricingConfig
             ? { onCreate: () => setCalculatorEditor('new') }
             : {})}
@@ -430,8 +537,8 @@ export function ServiceAdministrationSectionPage({
 
       {section === 'workflow-designer' ? (
         <WorkflowDesignerScreen
-          services={workspace?.services ?? []}
-          workflows={workspace?.workflows ?? []}
+          services={catalogue?.items ?? []}
+          workflows={workflowsQuery.data ?? []}
           saving={saveWorkflow.isPending}
           {...(capabilities.canUpdateWorkflow
             ? { onSave: (input: SaveWorkflowInput) => saveWorkflow.mutate(input) }
@@ -441,8 +548,28 @@ export function ServiceAdministrationSectionPage({
 
       {section === 'branch-activation' ? (
         <BranchActivationScreen
-          services={workspace?.services ?? []}
-          activations={workspace?.branchActivations ?? []}
+          services={branchMatrixQuery.data ?? []}
+          branches={branchesQuery.data ?? []}
+          activations={(branchMatrixQuery.data ?? []).flatMap((service) =>
+            service.branchNames.map((branchName, index) =>
+              mapBranchActivationDto(
+                {
+                  id: index + 1,
+                  service_id: Number(service.id),
+                  branch_id:
+                    branchesQuery.data?.find((branch) => branch.name === branchName)?.id ?? 0,
+                  branch_name: branchName,
+                  status: 'active',
+                  client_visible: true,
+                  capacity: null,
+                  activated_at: null,
+                  created_at: '',
+                  updated_at: '',
+                },
+                service,
+              ),
+            ),
+          )}
           saving={saveBranchActivationMatrix.isPending}
           {...(capabilities.canUpdateBranchActivations
             ? {
@@ -451,6 +578,35 @@ export function ServiceAdministrationSectionPage({
               }
             : {})}
         />
+      ) : null}
+
+      {selectedService &&
+      section === 'service-catalogue' &&
+      capabilities.canPublishService &&
+      selectedService.status !== 'active' ? (
+        <div className="service-admin-page service-admin-content">
+          <div className="service-admin-card">
+            <div className="service-admin-card-header">
+              <div>
+                <div className="service-admin-card-title">Publish readiness</div>
+                <div className="service-admin-card-subtitle">
+                  Backend readiness: request form + pricing config + active branch.
+                </div>
+              </div>
+              <button
+                type="button"
+                className="service-admin-button service-admin-button-primary"
+                disabled={selectedService.readiness < 100 || publishService.isPending}
+                onClick={() => publishService.mutate(Number(selectedService.id))}
+              >
+                {publishService.isPending ? 'Publishing…' : 'Publish Service'}
+              </button>
+            </div>
+            <div className="service-admin-notice service-admin-notice-blue">
+              Readiness: {selectedService.readiness}%
+            </div>
+          </div>
+        </div>
       ) : null}
 
       {selectedService
@@ -494,7 +650,7 @@ export function ServiceAdministrationSectionPage({
       {calculatorEditor ? (
         <CalculatorEditor
           {...(calculatorEditor === 'new' ? {} : { calculator: calculatorEditor })}
-          services={workspace?.services ?? []}
+          services={catalogue?.items ?? []}
           onClose={() => setCalculatorEditor(null)}
           onSave={(input) => saveCalculator.mutate(input)}
           saving={saveCalculator.isPending}

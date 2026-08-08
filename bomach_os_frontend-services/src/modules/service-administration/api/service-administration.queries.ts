@@ -68,4 +68,42 @@ export const serviceAdministrationQueries = {
         ),
       staleTime: 30_000,
     }),
+
+  pricingConfigs: () =>
+    queryOptions({
+      queryKey: serviceAdministrationKeys.pricingConfigs({ limit: 100, offset: 0 }),
+      queryFn: async () =>
+        (
+          await serviceAdministrationBackendApi.listPricingConfigs({ limit: 100, offset: 0 })
+        ).items.map(mapPricingConfigDto),
+      staleTime: 30_000,
+    }),
+
+  workflows: (serviceId: number, serviceName: string) =>
+    queryOptions({
+      queryKey: serviceAdministrationKeys.workflows(serviceId),
+      queryFn: async () =>
+        (await serviceAdministrationBackendApi.listWorkflows(serviceId)).map((workflow) =>
+          mapWorkflowDto(workflow, serviceName),
+        ),
+      staleTime: 30_000,
+    }),
+
+  branches: () =>
+    queryOptions({
+      queryKey: serviceAdministrationKeys.branches(),
+      queryFn: async () =>
+        (await serviceAdministrationBackendApi.listBranches()).items.map(mapBranchDto),
+      staleTime: 5 * 60_000,
+    }),
+
+  branchActivationMatrix: () =>
+    queryOptions({
+      queryKey: serviceAdministrationKeys.branchActivationMatrix({}),
+      queryFn: async () =>
+        (await serviceAdministrationBackendApi.getBranchActivationMatrix()).map(
+          mapServiceCatalogueCard,
+        ),
+      staleTime: 30_000,
+    }),
 }

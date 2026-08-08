@@ -23,9 +23,11 @@ export interface ServiceAdministrationCapabilities {
   canCreateWorkflow: boolean
   canUpdateWorkflow: boolean
 
+  canListBranches: boolean
   canListBranchActivations: boolean
   canUpdateBranchActivations: boolean
 
+  canPublishService: boolean
   canCreateServiceRequest: boolean
 }
 
@@ -78,9 +80,20 @@ export function getServiceAdministrationCapabilities(
     canCreateWorkflow: hasPermission(user, PERMISSIONS.serviceWorkflowsCreate),
     canUpdateWorkflow: hasPermission(user, PERMISSIONS.serviceWorkflowsUpdate),
 
+    canListBranches: hasPermission(user, PERMISSIONS.branchesList),
     canListBranchActivations: hasPermission(user, PERMISSIONS.serviceBranchActivationsList),
     canUpdateBranchActivations: hasPermission(user, PERMISSIONS.serviceBranchActivationsUpdate),
 
+    canPublishService: hasPermissions(
+      user,
+      [
+        PERMISSIONS.servicesUpdate,
+        PERMISSIONS.serviceRequestFormsUpdate,
+        PERMISSIONS.servicePricingConfigsUpdate,
+        PERMISSIONS.serviceBranchActivationsUpdate,
+      ],
+      'all',
+    ),
     canCreateServiceRequest: hasPermission(user, PERMISSIONS.serviceRequestsCreate),
   }
 }
