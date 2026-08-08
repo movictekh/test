@@ -97,6 +97,11 @@ export function ServiceAdministrationSectionPage({
   const { user } = useAuth()
   const toast = useToast()
   const capabilities = getServiceAdministrationCapabilities(user)
+  const [catalogueSearch, setCatalogueSearch] = useState('')
+  const [catalogueDivision, setCatalogueDivision] = useState('')
+  const [catalogueStatus, setCatalogueStatus] = useState('')
+  const [cataloguePage, setCataloguePage] = useState(1)
+  const cataloguePageSize = 12
   const usesLiveCatalogue =
     section === 'service-catalogue' ||
     section === 'request-form-builder' ||
@@ -109,9 +114,9 @@ export function ServiceAdministrationSectionPage({
   })
   const catalogueQuery = useQuery({
     ...serviceAdministrationQueries.catalogueList({
-      search: catalogueSearch || undefined,
-      division: catalogueDivision || undefined,
-      status: catalogueStatus || undefined,
+      ...(catalogueSearch ? { search: catalogueSearch } : {}),
+      ...(catalogueDivision ? { division: catalogueDivision } : {}),
+      ...(catalogueStatus ? { status: catalogueStatus } : {}),
       limit: cataloguePageSize,
       offset: (cataloguePage - 1) * cataloguePageSize,
     }),
@@ -145,11 +150,6 @@ export function ServiceAdministrationSectionPage({
   const [calculatorEditor, setCalculatorEditor] = useState<PricingCalculator | null | 'new'>(null)
   const [formEditor, setFormEditor] = useState<ServiceRequestForm | null | 'new'>(null)
   const [selectedRequestFormServiceId, setSelectedRequestFormServiceId] = useState('')
-  const [catalogueSearch, setCatalogueSearch] = useState('')
-  const [catalogueDivision, setCatalogueDivision] = useState('')
-  const [catalogueStatus, setCatalogueStatus] = useState('')
-  const [cataloguePage, setCataloguePage] = useState(1)
-  const cataloguePageSize = 12
 
   const workflowService = catalogueQuery.data?.items[0]
   const workflowServiceId = Number(workflowService?.id ?? 0)

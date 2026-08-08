@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
 import { BranchActivationScreen } from './BranchActivationScreen'
+import type { BranchOption } from '../mappers/branch-activation.mapper'
 
 import type {
   BranchActivation,
@@ -26,12 +27,17 @@ const services: ServiceCatalogueItem[] = [
   },
 ]
 
+const branches: BranchOption[] = [
+  { id: 1, name: 'Enugu', code: 'BR-ENU' },
+  { id: 2, name: 'Port Harcourt', code: 'BR-PH' },
+]
+
 const activations: BranchActivation[] = [
   {
     id: 'activation-one',
     serviceId: 'service-one',
     serviceName: 'Estate Plot Sales',
-    branchId: 'enugu',
+    branchId: '1',
     branchName: 'Enugu',
     state: 'active',
     capacity: 80,
@@ -43,7 +49,13 @@ const activations: BranchActivation[] = [
 describe('BranchActivationScreen', () => {
   it('renders an empty state when no services exist', () => {
     render(
-      <BranchActivationScreen services={[]} activations={[]} saving={false} onSave={vi.fn()} />,
+      <BranchActivationScreen
+        services={[]}
+        branches={[]}
+        activations={[]}
+        saving={false}
+        onSave={vi.fn()}
+      />,
     )
 
     expect(screen.getByRole('status')).toHaveTextContent('No services available')
@@ -56,6 +68,7 @@ describe('BranchActivationScreen', () => {
     render(
       <BranchActivationScreen
         services={services}
+        branches={branches}
         activations={activations}
         saving={false}
         onSave={onSave}
@@ -90,7 +103,7 @@ describe('BranchActivationScreen', () => {
     expect(portHarcourtUpdate).toEqual({
       serviceId: 'service-one',
       serviceName: 'Estate Plot Sales',
-      branchId: 'port-harcourt',
+      branchId: '2',
       branchName: 'Port Harcourt',
       active: true,
       slaDays: 5,
@@ -101,6 +114,7 @@ describe('BranchActivationScreen', () => {
     render(
       <BranchActivationScreen
         services={services}
+        branches={branches}
         activations={activations}
         saving
         onSave={vi.fn()}

@@ -13,6 +13,7 @@ import type {
   ServiceWorkflow,
 } from '../types/service-administration.types'
 import { mapRequestFormDto } from '../mappers/request-form.mapper'
+import type { PricingConfigInputDto, WorkflowInputDto } from './service-administration.contracts'
 import { serviceAdministrationBackendApi } from './service-administration.backend-api'
 
 export type ServiceSetupStage = 'service-core' | 'subservices' | 'request-form'
@@ -76,7 +77,7 @@ function requestFieldType(label: string): string {
 export async function createServiceThroughRequestForm(
   input: CreateServiceWizardInput,
 ): Promise<ServiceCatalogueItem> {
-  let serviceId: number | null = null
+  let serviceId: number
 
   try {
     const service = await serviceAdministrationBackendApi.createService({

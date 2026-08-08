@@ -66,7 +66,14 @@ export function mapPricingConfigDto(dto: PricingConfigDto): PricingCalculator {
       key: field.key,
       type: domainVariableType(field.field_type),
       ...(field.default_value !== null && field.default_value !== undefined
-        ? { unit: String(field.default_value) }
+        ? {
+            unit:
+              typeof field.default_value === 'string' ||
+              typeof field.default_value === 'number' ||
+              typeof field.default_value === 'boolean'
+                ? String(field.default_value)
+                : JSON.stringify(field.default_value),
+          }
         : {}),
     }))
 

@@ -10,9 +10,9 @@ describe('initial Service setup mutation', () => {
   it('persists core, subservices and request form in backend order', async () => {
     const calls: string[] = []
 
-    vi.spyOn(serviceAdministrationBackendApi, 'createService').mockImplementation(async () => {
+    vi.spyOn(serviceAdministrationBackendApi, 'createService').mockImplementation(() => {
       calls.push('service')
-      return {
+      return Promise.resolve({
         id: 9,
         code: 'SUR-1',
         name: 'Survey',
@@ -36,17 +36,17 @@ describe('initial Service setup mutation', () => {
         created_at: '2026-08-08T00:00:00Z',
         updated_at: '2026-08-08T00:00:00Z',
         created_by_id: 1,
-      }
+      })
     })
 
-    vi.spyOn(serviceAdministrationBackendApi, 'replaceSubservices').mockImplementation(async () => {
+    vi.spyOn(serviceAdministrationBackendApi, 'replaceSubservices').mockImplementation(() => {
       calls.push('subservices')
-      return []
+      return Promise.resolve([])
     })
 
-    vi.spyOn(serviceAdministrationBackendApi, 'createRequestForm').mockImplementation(async () => {
+    vi.spyOn(serviceAdministrationBackendApi, 'createRequestForm').mockImplementation(() => {
       calls.push('request-form')
-      return {
+      return Promise.resolve({
         id: 4,
         service_id: 9,
         name: 'Survey Request Form',
@@ -58,12 +58,12 @@ describe('initial Service setup mutation', () => {
         created_at: '2026-08-08T00:00:00Z',
         updated_at: '2026-08-08T00:00:00Z',
         fields: [],
-      }
+      })
     })
 
-    vi.spyOn(serviceAdministrationBackendApi, 'getCatalogueDetail').mockImplementation(async () => {
+    vi.spyOn(serviceAdministrationBackendApi, 'getCatalogueDetail').mockImplementation(() => {
       calls.push('detail')
-      return {
+      return Promise.resolve({
         id: 9,
         code: 'SUR-1',
         name: 'Survey',
@@ -96,7 +96,7 @@ describe('initial Service setup mutation', () => {
         pricing_configs: [],
         workflows: [],
         branch_activations: [],
-      }
+      })
     })
 
     await createServiceThroughRequestForm({

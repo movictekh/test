@@ -1,6 +1,9 @@
 import { queryOptions } from '@tanstack/react-query'
 
 import { mapFieldTypeDto, mapRequestFormDto } from '../mappers/request-form.mapper'
+import { mapPricingConfigDto } from '../mappers/pricing-config.mapper'
+import { mapWorkflowDto } from '../mappers/workflow.mapper'
+import { mapBranchDto } from '../mappers/branch-activation.mapper'
 import {
   mapServiceCatalogueCard,
   mapServiceCatalogueDetail,
@@ -61,7 +64,7 @@ export const serviceAdministrationQueries = {
 
   requestForms: (serviceId: number, serviceName: string) =>
     queryOptions({
-      queryKey: serviceAdministrationKeys.requestForms(serviceId),
+      queryKey: [...serviceAdministrationKeys.requestForms(serviceId), serviceName],
       queryFn: async () =>
         (await serviceAdministrationBackendApi.listRequestForms(serviceId)).map((form) =>
           mapRequestFormDto(form, serviceName),
@@ -81,7 +84,7 @@ export const serviceAdministrationQueries = {
 
   workflows: (serviceId: number, serviceName: string) =>
     queryOptions({
-      queryKey: serviceAdministrationKeys.workflows(serviceId),
+      queryKey: [...serviceAdministrationKeys.workflows(serviceId), serviceName],
       queryFn: async () =>
         (await serviceAdministrationBackendApi.listWorkflows(serviceId)).map((workflow) =>
           mapWorkflowDto(workflow, serviceName),
