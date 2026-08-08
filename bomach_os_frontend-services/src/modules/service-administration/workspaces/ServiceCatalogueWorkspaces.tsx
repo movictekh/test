@@ -339,232 +339,220 @@ export function CreateServiceWizard({
 
       {error ? <div className="service-admin-notice service-admin-notice-red">{error}</div> : null}
 
-      {readOnly ? (
-        <div className="service-admin-notice service-admin-notice-blue">
-          View-only access. Your role can inspect this service but cannot change its configuration.
+      {step === 0 ? (
+        <div className="service-admin-form-grid">
+          <Field label="Service name" required>
+            <input value={name} required onChange={(event) => setName(event.target.value)} />
+          </Field>
+          <Field label="Service code" required>
+            <input
+              value={code}
+              required
+              placeholder="ENG-REN"
+              onChange={(event) => setCode(event.target.value)}
+            />
+          </Field>
+          <Field label="Division" required>
+            <select value={division} required onChange={(event) => setDivision(event.target.value)}>
+              {divisions.map((item) => (
+                <option key={item}>{item}</option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Owner role" required>
+            <input value={owner} required onChange={(event) => setOwner(event.target.value)} />
+          </Field>
+          <Field label="Description" full required>
+            <textarea
+              value={description}
+              required
+              onChange={(event) => setDescription(event.target.value)}
+            />
+          </Field>
+          <Field label="SLA (days)" required>
+            <input
+              type="number"
+              min={1}
+              required
+              value={formatNumberFieldValue(slaDays)}
+              onChange={(event) => setSlaDays(parseNumberFieldValue(event.target.value))}
+            />
+          </Field>
+          <Field label="Fulfillment mode" required>
+            <select
+              value={fulfilmentMode}
+              required
+              onChange={(event) => setFulfilmentMode(event.target.value)}
+            >
+              <option>Quick service order</option>
+              <option>Managed service case</option>
+              <option>Project & worksite</option>
+              <option>Transaction & allocation</option>
+              <option>Supply order</option>
+            </select>
+          </Field>
         </div>
       ) : null}
 
-      <fieldset disabled={readOnly} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
-        {step === 0 ? (
-          <div className="service-admin-form-grid">
-            <Field label="Service name" required>
-              <input value={name} required onChange={(event) => setName(event.target.value)} />
-            </Field>
-            <Field label="Service code" required>
-              <input
-                value={code}
-                required
-                placeholder="ENG-REN"
-                onChange={(event) => setCode(event.target.value)}
-              />
-            </Field>
-            <Field label="Division" required>
-              <select
-                value={division}
-                required
-                onChange={(event) => setDivision(event.target.value)}
-              >
-                {divisions.map((item) => (
-                  <option key={item}>{item}</option>
-                ))}
-              </select>
-            </Field>
-            <Field label="Owner role" required>
-              <input value={owner} required onChange={(event) => setOwner(event.target.value)} />
-            </Field>
-            <Field label="Description" full required>
-              <textarea
-                value={description}
-                required
-                onChange={(event) => setDescription(event.target.value)}
-              />
-            </Field>
-            <Field label="SLA (days)" required>
-              <input
-                type="number"
-                min={1}
-                required
-                value={formatNumberFieldValue(slaDays)}
-                onChange={(event) => setSlaDays(parseNumberFieldValue(event.target.value))}
-              />
-            </Field>
-            <Field label="Fulfillment mode" required>
-              <select
-                value={fulfilmentMode}
-                required
-                onChange={(event) => setFulfilmentMode(event.target.value)}
-              >
-                <option>Quick service order</option>
-                <option>Managed service case</option>
-                <option>Project & worksite</option>
-                <option>Transaction & allocation</option>
-                <option>Supply order</option>
-              </select>
-            </Field>
-          </div>
-        ) : null}
+      {step === 1 ? (
+        <Field label="Sub-services — one per line" full required>
+          <textarea
+            className="service-admin-wizard-textarea"
+            value={subservices}
+            required
+            onChange={(event) => setSubservices(event.target.value)}
+          />
+        </Field>
+      ) : null}
 
-        {step === 1 ? (
-          <Field label="Sub-services — one per line" full required>
-            <textarea
-              className="service-admin-wizard-textarea"
-              value={subservices}
+      {step === 2 ? (
+        <div className="service-admin-form-grid">
+          <Field label="Pricing method" required>
+            <select
+              value={pricingMethod}
               required
-              onChange={(event) => setSubservices(event.target.value)}
+              onChange={(event) => setPricingMethod(event.target.value)}
+            >
+              <option>Fixed</option>
+              <option>Unit rate</option>
+              <option>Area rate</option>
+              <option>Percentage</option>
+            </select>
+          </Field>
+          <Field label="Base / unit price" required>
+            <input
+              type="number"
+              min={0}
+              required
+              value={formatNumberFieldValue(rate)}
+              onChange={(event) => setRate(parseNumberFieldValue(event.target.value))}
             />
           </Field>
-        ) : null}
+          <Field label="Deposit (%)" required>
+            <input
+              type="number"
+              min={0}
+              max={100}
+              required
+              value={formatNumberFieldValue(depositPercent)}
+              onChange={(event) => setDepositPercent(parseNumberFieldValue(event.target.value))}
+            />
+          </Field>
+          <Field label="Tax (%)" required>
+            <input
+              type="number"
+              min={0}
+              max={100}
+              required
+              value={formatNumberFieldValue(taxPercent)}
+              onChange={(event) => setTaxPercent(parseNumberFieldValue(event.target.value))}
+            />
+          </Field>
+          <Field label="Discount approval above (%)" required>
+            <input
+              type="number"
+              min={0}
+              max={100}
+              required
+              value={formatNumberFieldValue(discountApprovalPercent)}
+              onChange={(event) =>
+                setDiscountApprovalPercent(parseNumberFieldValue(event.target.value))
+              }
+            />
+          </Field>
+        </div>
+      ) : null}
 
-        {step === 2 ? (
-          <div className="service-admin-form-grid">
-            <Field label="Pricing method" required>
-              <select
-                value={pricingMethod}
-                required
-                onChange={(event) => setPricingMethod(event.target.value)}
-              >
-                <option>Fixed</option>
-                <option>Unit rate</option>
-                <option>Area rate</option>
-                <option>Percentage</option>
-              </select>
-            </Field>
-            <Field label="Base / unit price" required>
-              <input
-                type="number"
-                min={0}
-                required
-                value={formatNumberFieldValue(rate)}
-                onChange={(event) => setRate(parseNumberFieldValue(event.target.value))}
-              />
-            </Field>
-            <Field label="Deposit (%)" required>
-              <input
-                type="number"
-                min={0}
-                max={100}
-                required
-                value={formatNumberFieldValue(depositPercent)}
-                onChange={(event) => setDepositPercent(parseNumberFieldValue(event.target.value))}
-              />
-            </Field>
-            <Field label="Tax (%)" required>
-              <input
-                type="number"
-                min={0}
-                max={100}
-                required
-                value={formatNumberFieldValue(taxPercent)}
-                onChange={(event) => setTaxPercent(parseNumberFieldValue(event.target.value))}
-              />
-            </Field>
-            <Field label="Discount approval above (%)" required>
-              <input
-                type="number"
-                min={0}
-                max={100}
-                required
-                value={formatNumberFieldValue(discountApprovalPercent)}
-                onChange={(event) =>
-                  setDiscountApprovalPercent(parseNumberFieldValue(event.target.value))
-                }
-              />
-            </Field>
+      {step === 3 ? (
+        <>
+          <div className="service-admin-notice service-admin-notice-blue">
+            Select information required before submission.
+            <em className="service-admin-required">*</em>
           </div>
-        ) : null}
+          <div className="service-admin-check-grid">
+            {requestFieldOptions.map((field) => (
+              <label key={field} className="service-admin-check-option">
+                <input
+                  type="checkbox"
+                  checked={requestFields.includes(field)}
+                  onChange={(event) =>
+                    setRequestFields((current) =>
+                      event.target.checked
+                        ? [...current, field]
+                        : current.filter((item) => item !== field),
+                    )
+                  }
+                />
+                {field}
+              </label>
+            ))}
+          </div>
+        </>
+      ) : null}
 
-        {step === 3 ? (
-          <>
-            <div className="service-admin-notice service-admin-notice-blue">
-              Select information required before submission.
-              <em className="service-admin-required">*</em>
-            </div>
-            <div className="service-admin-check-grid">
-              {requestFieldOptions.map((field) => (
-                <label key={field} className="service-admin-check-option">
+      {step === 4 ? (
+        <Field label="Workflow stages — one per line" full required>
+          <textarea
+            className="service-admin-wizard-textarea"
+            value={workflow}
+            required
+            onChange={(event) => setWorkflow(event.target.value)}
+          />
+        </Field>
+      ) : null}
+
+      {step === 5 ? (
+        <>
+          <Field label="Active branches" full required>
+            <div className="service-admin-check-grid service-admin-check-grid--branches">
+              {branches.map((branch) => (
+                <label key={branch} className="service-admin-check-option">
                   <input
                     type="checkbox"
-                    checked={requestFields.includes(field)}
+                    checked={selectedBranches.includes(branch)}
                     onChange={(event) =>
-                      setRequestFields((current) =>
+                      setSelectedBranches((current) =>
                         event.target.checked
-                          ? [...current, field]
-                          : current.filter((item) => item !== field),
+                          ? [...current, branch]
+                          : current.filter((item) => item !== branch),
                       )
                     }
                   />
-                  {field}
+                  {branch}
                 </label>
               ))}
             </div>
-          </>
-        ) : null}
-
-        {step === 4 ? (
-          <Field label="Workflow stages — one per line" full required>
-            <textarea
-              className="service-admin-wizard-textarea"
-              value={workflow}
-              required
-              onChange={(event) => setWorkflow(event.target.value)}
-            />
           </Field>
-        ) : null}
-
-        {step === 5 ? (
-          <>
-            <Field label="Active branches" full required>
-              <div className="service-admin-check-grid service-admin-check-grid--branches">
-                {branches.map((branch) => (
-                  <label key={branch} className="service-admin-check-option">
-                    <input
-                      type="checkbox"
-                      checked={selectedBranches.includes(branch)}
-                      onChange={(event) =>
-                        setSelectedBranches((current) =>
-                          event.target.checked
-                            ? [...current, branch]
-                            : current.filter((item) => item !== branch),
-                        )
-                      }
-                    />
-                    {branch}
-                  </label>
-                ))}
-              </div>
+          <div className="service-admin-form-grid service-admin-publish-grid">
+            <Field label="Status" required>
+              <select
+                value={status}
+                required
+                onChange={(event) => setStatus(event.target.value as typeof status)}
+              >
+                <option value="draft">Draft</option>
+                <option value="active">Active</option>
+                <option value="inactive">Paused</option>
+              </select>
             </Field>
-            <div className="service-admin-form-grid service-admin-publish-grid">
-              <Field label="Status" required>
-                <select
-                  value={status}
-                  required
-                  onChange={(event) => setStatus(event.target.value as typeof status)}
-                >
-                  <option value="draft">Draft</option>
-                  <option value="active">Active</option>
-                  <option value="inactive">Paused</option>
-                </select>
-              </Field>
-              <Field label="Client visibility" required>
-                <select
-                  value={clientVisibility}
-                  required
-                  onChange={(event) => setClientVisibility(event.target.value)}
-                >
-                  <option>Visible in catalogue</option>
-                  <option>Internal only</option>
-                  <option>Hidden</option>
-                </select>
-              </Field>
-            </div>
-            <div className="service-admin-notice service-admin-notice-green">
-              <b>Ready to create.</b> The service, calculator, request form, workflow and branch
-              activation will be created together.
-            </div>
-          </>
-        ) : null}
-      </fieldset>
+            <Field label="Client visibility" required>
+              <select
+                value={clientVisibility}
+                required
+                onChange={(event) => setClientVisibility(event.target.value)}
+              >
+                <option>Visible in catalogue</option>
+                <option>Internal only</option>
+                <option>Hidden</option>
+              </select>
+            </Field>
+          </div>
+          <div className="service-admin-notice service-admin-notice-green">
+            <b>Ready to create.</b> The service, calculator, request form, workflow and branch
+            activation will be created together.
+          </div>
+        </>
+      ) : null}
     </ModalShell>
   )
 }
@@ -838,216 +826,228 @@ export function ConfigureServiceWorkspace({
 
       {error ? <div className="service-admin-notice service-admin-notice-red">{error}</div> : null}
 
-      {step === 0 ? (
-        <div className="service-admin-form-grid">
-          <Field label="Service name" required>
-            <input value={name} required onChange={(event) => setName(event.target.value)} />
-          </Field>
-          <Field label="Service code" required>
-            <input value={code} required onChange={(event) => setCode(event.target.value)} />
-          </Field>
-          <Field label="Division" required>
-            <select value={division} required onChange={(event) => setDivision(event.target.value)}>
-              {divisions.map((item) => (
-                <option key={item}>{item}</option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Owner role" required>
-            <input value={owner} required onChange={(event) => setOwner(event.target.value)} />
-          </Field>
-          <Field label="Description" full required>
+      {readOnly ? (
+        <div className="service-admin-notice service-admin-notice-blue">
+          View-only access. Your role can inspect this service but cannot change its configuration.
+        </div>
+      ) : null}
+
+      <fieldset disabled={readOnly} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
+        {step === 0 ? (
+          <div className="service-admin-form-grid">
+            <Field label="Service name" required>
+              <input value={name} required onChange={(event) => setName(event.target.value)} />
+            </Field>
+            <Field label="Service code" required>
+              <input value={code} required onChange={(event) => setCode(event.target.value)} />
+            </Field>
+            <Field label="Division" required>
+              <select
+                value={division}
+                required
+                onChange={(event) => setDivision(event.target.value)}
+              >
+                {divisions.map((item) => (
+                  <option key={item}>{item}</option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Owner role" required>
+              <input value={owner} required onChange={(event) => setOwner(event.target.value)} />
+            </Field>
+            <Field label="Description" full required>
+              <textarea
+                value={description}
+                required
+                onChange={(event) => setDescription(event.target.value)}
+              />
+            </Field>
+            <Field label="SLA (days)" required>
+              <input
+                type="number"
+                min={1}
+                required
+                value={formatNumberFieldValue(slaDays)}
+                onChange={(event) => setSlaDays(parseNumberFieldValue(event.target.value))}
+              />
+            </Field>
+            <Field label="Fulfillment mode" required>
+              <select
+                value={fulfilmentMode}
+                required
+                onChange={(event) => setFulfilmentMode(event.target.value)}
+              >
+                <option>Quick service order</option>
+                <option>Managed service case</option>
+                <option>Project & worksite</option>
+                <option>Transaction & allocation</option>
+                <option>Supply order</option>
+              </select>
+            </Field>
+          </div>
+        ) : null}
+
+        {step === 1 ? (
+          <Field label="Sub-services — one per line" full required>
             <textarea
-              value={description}
+              className="service-admin-wizard-textarea"
+              value={subservices}
               required
-              onChange={(event) => setDescription(event.target.value)}
+              onChange={(event) => setSubservices(event.target.value)}
             />
           </Field>
-          <Field label="SLA (days)" required>
-            <input
-              type="number"
-              min={1}
-              required
-              value={formatNumberFieldValue(slaDays)}
-              onChange={(event) => setSlaDays(parseNumberFieldValue(event.target.value))}
-            />
-          </Field>
-          <Field label="Fulfillment mode" required>
-            <select
-              value={fulfilmentMode}
-              required
-              onChange={(event) => setFulfilmentMode(event.target.value)}
-            >
-              <option>Quick service order</option>
-              <option>Managed service case</option>
-              <option>Project & worksite</option>
-              <option>Transaction & allocation</option>
-              <option>Supply order</option>
-            </select>
-          </Field>
-        </div>
-      ) : null}
+        ) : null}
 
-      {step === 1 ? (
-        <Field label="Sub-services — one per line" full required>
-          <textarea
-            className="service-admin-wizard-textarea"
-            value={subservices}
-            required
-            onChange={(event) => setSubservices(event.target.value)}
-          />
-        </Field>
-      ) : null}
-
-      {step === 2 ? (
-        <div className="service-admin-form-grid">
-          <Field label="Pricing method" required>
-            <select
-              value={pricingMethod}
-              required
-              onChange={(event) => setPricingMethod(event.target.value)}
-            >
-              <option>Fixed</option>
-              <option>Unit rate</option>
-              <option>Area rate</option>
-              <option>Percentage</option>
-              <option>Custom formula</option>
-            </select>
-          </Field>
-          <Field label="Base / unit price" required>
-            <input
-              type="number"
-              min={0}
-              required
-              value={formatNumberFieldValue(rate)}
-              onChange={(event) => setRate(parseNumberFieldValue(event.target.value))}
-            />
-          </Field>
-          <Field label="Deposit (%)" required>
-            <input
-              type="number"
-              min={0}
-              max={100}
-              required
-              value={formatNumberFieldValue(depositPercent)}
-              onChange={(event) => setDepositPercent(parseNumberFieldValue(event.target.value))}
-            />
-          </Field>
-          <Field label="Tax (%)" required>
-            <input
-              type="number"
-              min={0}
-              max={100}
-              required
-              value={formatNumberFieldValue(taxPercent)}
-              onChange={(event) => setTaxPercent(parseNumberFieldValue(event.target.value))}
-            />
-          </Field>
-          <Field label="Discount approval above (%)" required>
-            <input
-              type="number"
-              min={0}
-              max={100}
-              required
-              value={formatNumberFieldValue(discountApprovalPercent)}
-              onChange={(event) =>
-                setDiscountApprovalPercent(parseNumberFieldValue(event.target.value))
-              }
-            />
-          </Field>
-        </div>
-      ) : null}
-
-      {step === 3 ? (
-        <>
-          <div className="service-admin-notice service-admin-notice-blue">
-            Select information required before submission.
-            <em className="service-admin-required">*</em>
+        {step === 2 ? (
+          <div className="service-admin-form-grid">
+            <Field label="Pricing method" required>
+              <select
+                value={pricingMethod}
+                required
+                onChange={(event) => setPricingMethod(event.target.value)}
+              >
+                <option>Fixed</option>
+                <option>Unit rate</option>
+                <option>Area rate</option>
+                <option>Percentage</option>
+                <option>Custom formula</option>
+              </select>
+            </Field>
+            <Field label="Base / unit price" required>
+              <input
+                type="number"
+                min={0}
+                required
+                value={formatNumberFieldValue(rate)}
+                onChange={(event) => setRate(parseNumberFieldValue(event.target.value))}
+              />
+            </Field>
+            <Field label="Deposit (%)" required>
+              <input
+                type="number"
+                min={0}
+                max={100}
+                required
+                value={formatNumberFieldValue(depositPercent)}
+                onChange={(event) => setDepositPercent(parseNumberFieldValue(event.target.value))}
+              />
+            </Field>
+            <Field label="Tax (%)" required>
+              <input
+                type="number"
+                min={0}
+                max={100}
+                required
+                value={formatNumberFieldValue(taxPercent)}
+                onChange={(event) => setTaxPercent(parseNumberFieldValue(event.target.value))}
+              />
+            </Field>
+            <Field label="Discount approval above (%)" required>
+              <input
+                type="number"
+                min={0}
+                max={100}
+                required
+                value={formatNumberFieldValue(discountApprovalPercent)}
+                onChange={(event) =>
+                  setDiscountApprovalPercent(parseNumberFieldValue(event.target.value))
+                }
+              />
+            </Field>
           </div>
-          <div className="service-admin-check-grid">
-            {requestFieldOptions.map((field) => (
-              <label key={field} className="service-admin-check-option">
-                <input
-                  type="checkbox"
-                  checked={requestFields.includes(field)}
-                  onChange={(event) =>
-                    setRequestFields((current) =>
-                      event.target.checked
-                        ? [...current, field]
-                        : current.filter((item) => item !== field),
-                    )
-                  }
-                />
-                {field}
-              </label>
-            ))}
-          </div>
-        </>
-      ) : null}
+        ) : null}
 
-      {step === 4 ? (
-        <Field label="Workflow stages — one per line" full required>
-          <textarea
-            className="service-admin-wizard-textarea"
-            value={workflowText}
-            required
-            onChange={(event) => setWorkflowText(event.target.value)}
-          />
-        </Field>
-      ) : null}
-
-      {step === 5 ? (
-        <>
-          <Field label="Active branches" full required>
-            <div className="service-admin-check-grid service-admin-check-grid--branches">
-              {branches.map((branch) => (
-                <label key={branch} className="service-admin-check-option">
+        {step === 3 ? (
+          <>
+            <div className="service-admin-notice service-admin-notice-blue">
+              Select information required before submission.
+              <em className="service-admin-required">*</em>
+            </div>
+            <div className="service-admin-check-grid">
+              {requestFieldOptions.map((field) => (
+                <label key={field} className="service-admin-check-option">
                   <input
                     type="checkbox"
-                    checked={selectedBranches.includes(branch)}
+                    checked={requestFields.includes(field)}
                     onChange={(event) =>
-                      setSelectedBranches((current) =>
+                      setRequestFields((current) =>
                         event.target.checked
-                          ? [...current, branch]
-                          : current.filter((item) => item !== branch),
+                          ? [...current, field]
+                          : current.filter((item) => item !== field),
                       )
                     }
                   />
-                  {branch}
+                  {field}
                 </label>
               ))}
             </div>
+          </>
+        ) : null}
+
+        {step === 4 ? (
+          <Field label="Workflow stages — one per line" full required>
+            <textarea
+              className="service-admin-wizard-textarea"
+              value={workflowText}
+              required
+              onChange={(event) => setWorkflowText(event.target.value)}
+            />
           </Field>
-          <div className="service-admin-form-grid service-admin-publish-grid">
-            <Field label="Status" required>
-              <select
-                value={status}
-                required
-                onChange={(event) => setStatus(event.target.value as typeof status)}
-              >
-                <option value="draft">Draft</option>
-                <option value="active">Active</option>
-                <option value="inactive">Paused</option>
-              </select>
+        ) : null}
+
+        {step === 5 ? (
+          <>
+            <Field label="Active branches" full required>
+              <div className="service-admin-check-grid service-admin-check-grid--branches">
+                {branches.map((branch) => (
+                  <label key={branch} className="service-admin-check-option">
+                    <input
+                      type="checkbox"
+                      checked={selectedBranches.includes(branch)}
+                      onChange={(event) =>
+                        setSelectedBranches((current) =>
+                          event.target.checked
+                            ? [...current, branch]
+                            : current.filter((item) => item !== branch),
+                        )
+                      }
+                    />
+                    {branch}
+                  </label>
+                ))}
+              </div>
             </Field>
-            <Field label="Client visibility" required>
-              <select
-                value={clientVisibility}
-                required
-                onChange={(event) => setClientVisibility(event.target.value)}
-              >
-                <option>Visible in catalogue</option>
-                <option>Internal only</option>
-                <option>Hidden</option>
-              </select>
-            </Field>
-          </div>
-          <div className="service-admin-notice service-admin-notice-green">
-            <b>Ready to update.</b> Changes across basic setup, pricing, request form, workflow and
-            branch activation will be saved together.
-          </div>
-        </>
-      ) : null}
+            <div className="service-admin-form-grid service-admin-publish-grid">
+              <Field label="Status" required>
+                <select
+                  value={status}
+                  required
+                  onChange={(event) => setStatus(event.target.value as typeof status)}
+                >
+                  <option value="draft">Draft</option>
+                  <option value="active">Active</option>
+                  <option value="inactive">Paused</option>
+                </select>
+              </Field>
+              <Field label="Client visibility" required>
+                <select
+                  value={clientVisibility}
+                  required
+                  onChange={(event) => setClientVisibility(event.target.value)}
+                >
+                  <option>Visible in catalogue</option>
+                  <option>Internal only</option>
+                  <option>Hidden</option>
+                </select>
+              </Field>
+            </div>
+            <div className="service-admin-notice service-admin-notice-green">
+              <b>Ready to update.</b> Changes across basic setup, pricing, request form, workflow
+              and branch activation will be saved together.
+            </div>
+          </>
+        ) : null}
+      </fieldset>
     </ModalShell>
   )
 }
