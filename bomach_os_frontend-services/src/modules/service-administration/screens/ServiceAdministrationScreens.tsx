@@ -55,13 +55,13 @@ export function ServiceCatalogueScreen({
   pageSize: number
   onFiltersChange: (filters: { query: string; division: string; status: string }) => void
   onPageChange: (page: number) => void
-  onConfigure?: (service: ServiceCatalogueItem) => void
+  onConfigure?: ((service: ServiceCatalogueItem) => void) | undefined
   configureLabel?: 'Configure' | 'View'
-  onCreate?: () => void
+  onCreate?: (() => void) | undefined
   createDisabled?: boolean
-  onBranchAvailability?: () => void
+  onBranchAvailability?: (() => void) | undefined
   branchAvailabilityDisabled?: boolean
-  onDuplicate?: (service: ServiceCatalogueItem) => void
+  onDuplicate?: ((service: ServiceCatalogueItem) => void) | undefined
 }) {
   const divisions = useMemo(
     () => Array.from(new Set(services.map((service) => service.division))),
@@ -236,7 +236,7 @@ export function CalculatorLibraryScreen({
   createDisabled = false,
 }: {
   calculators: PricingCalculator[]
-  onCreate?: () => void
+  onCreate?: (() => void) | undefined
   createDisabled?: boolean
 }) {
   const [activeId, setActiveId] = useState(calculators[0]?.id ?? '')
