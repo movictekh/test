@@ -1,6 +1,6 @@
 import { IconFilePlus } from '@tabler/icons-react'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 
 import { useAuth } from '@/app/auth'
 import { presentError } from '@/shared/errors'
@@ -142,6 +142,8 @@ function LifecycleCard({ stages }: { stages: DashboardPipelineStage[] }) {
 }
 
 function RequestsTable({ items }: { items: DashboardAttentionItem[] }) {
+  const navigate = useNavigate()
+
   return (
     <section className="command-center-card">
       <div className="command-center-card-header">
