@@ -87,20 +87,29 @@ const metadata: Record<
   },
 }
 
+export interface ServiceAdministrationRecordSearch {
+  search?: string
+  status?: string
+  division?: string
+  page?: number
+}
+
 export function ServiceAdministrationSectionPage({
   section,
+  recordSearch = {},
 }: {
   section: ServiceAdministrationSection
+  recordSearch?: ServiceAdministrationRecordSearch
 }) {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const { user } = useAuth()
   const toast = useToast()
   const capabilities = getServiceAdministrationCapabilities(user)
-  const [catalogueSearch, setCatalogueSearch] = useState('')
-  const [catalogueDivision, setCatalogueDivision] = useState('')
-  const [catalogueStatus, setCatalogueStatus] = useState('')
-  const [cataloguePage, setCataloguePage] = useState(1)
+  const catalogueSearch = section === 'service-catalogue' ? (recordSearch.search ?? '') : ''
+  const catalogueDivision = section === 'service-catalogue' ? (recordSearch.division ?? '') : ''
+  const catalogueStatus = section === 'service-catalogue' ? (recordSearch.status ?? '') : ''
+  const cataloguePage = section === 'service-catalogue' ? Math.max(1, recordSearch.page ?? 1) : 1
   const cataloguePageSize = 12
   const usesLiveCatalogue =
     section === 'service-catalogue' ||
@@ -114,11 +123,13 @@ export function ServiceAdministrationSectionPage({
   })
   const catalogueQuery = useQuery({
     ...serviceAdministrationQueries.catalogueList({
-      ...(catalogueSearch ? { search: catalogueSearch } : {}),
-      ...(catalogueDivision ? { division: catalogueDivision } : {}),
-      ...(catalogueStatus ? { status: catalogueStatus } : {}),
-      limit: cataloguePageSize,
-      offset: (cataloguePage - 1) * cataloguePageSize,
+      ...(section === 'service-catalogue' && catalogueSearch ? { search: catalogueSearch } : {}),
+      ...(section === 'service-catalogue' && catalogueDivision
+        ? { division: catalogueDivision }
+        : {}),
+      ...(section === 'service-catalogue' && catalogueStatus ? { status: catalogueStatus } : {}),
+      limit: section === 'service-catalogue' ? cataloguePageSize : 100,
+      offset: section === 'service-catalogue' ? (cataloguePage - 1) * cataloguePageSize : 0,
     }),
     enabled: usesLiveCatalogue,
   })
@@ -150,8 +161,11 @@ export function ServiceAdministrationSectionPage({
   const [calculatorEditor, setCalculatorEditor] = useState<PricingCalculator | null | 'new'>(null)
   const [formEditor, setFormEditor] = useState<ServiceRequestForm | null | 'new'>(null)
   const [selectedRequestFormServiceId, setSelectedRequestFormServiceId] = useState('')
+  const [selectedWorkflowServiceId, setSelectedWorkflowServiceId] = useState('')
 
-  const workflowService = catalogueQuery.data?.items[0]
+  const workflowService =
+    catalogueQuery.data?.items.find((item) => item.id === selectedWorkflowServiceId) ??
+    catalogueQuery.data?.items[0]
   const workflowServiceId = Number(workflowService?.id ?? 0)
   const workflowsQuery = useQuery({
     ...serviceAdministrationQueries.workflows(
@@ -455,12 +469,30 @@ export function ServiceAdministrationSectionPage({
           page={cataloguePage}
           pageSize={cataloguePageSize}
           onFiltersChange={(filters) => {
-            setCatalogueSearch(filters.query)
-            setCatalogueDivision(filters.division)
-            setCatalogueStatus(filters.status)
-            setCataloguePage(1)
+            void navigate({
+              to: '/app/$section',
+              params: { section: 'service-catalogue' },
+              search: (previous) => ({
+                ...previous,
+                search: filters.query || undefined,
+                division: filters.division || undefined,
+                status: filters.status || undefined,
+                page: undefined,
+              }),
+              replace: true,
+            })
           }}
-          onPageChange={setCataloguePage}
+          onPageChange={(nextPage) => {
+            void navigate({
+              to: '/app/$section',
+              params: { section: 'service-catalogue' },
+              search: (previous) => ({
+                ...previous,
+                page: nextPage > 1 ? nextPage : undefined,
+              }),
+              replace: true,
+            })
+          }}
           {...(capabilities.canViewService
             ? { onConfigure: (service) => void openLiveServiceDetail(service) }
             : {})}
@@ -539,6 +571,8 @@ export function ServiceAdministrationSectionPage({
         <WorkflowDesignerScreen
           services={catalogue?.items ?? []}
           workflows={workflowsQuery.data ?? []}
+          selectedServiceId={workflowService?.id ?? ''}
+          onSelectedServiceChange={setSelectedWorkflowServiceId}
           saving={saveWorkflow.isPending}
           {...(capabilities.canUpdateWorkflow
             ? { onSave: (input: SaveWorkflowInput) => saveWorkflow.mutate(input) }

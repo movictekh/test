@@ -115,19 +115,20 @@ function stageToDraft(stage: WorkflowStage): StageDraft {
 export function WorkflowDesignerScreen({
   services,
   workflows,
+  selectedServiceId,
+  onSelectedServiceChange,
   saving,
   onSave,
 }: {
   services: ServiceCatalogueItem[]
   workflows: ServiceWorkflow[]
+  selectedServiceId: string
+  onSelectedServiceChange: (serviceId: string) => void
   saving: boolean
   onSave?: (input: SaveWorkflowInput) => void
 }) {
   const canEdit = Boolean(onSave)
   const toast = useToast()
-  const [selectedServiceId, setSelectedServiceId] = useState(
-    () => services[0]?.id ?? workflows[0]?.serviceId ?? '',
-  )
 
   const selectedService =
     services.find((service) => service.id === selectedServiceId) ?? services[0]
@@ -273,7 +274,7 @@ export function WorkflowDesignerScreen({
             <select
               aria-label="Select service"
               value={selectedService.id}
-              onChange={(event) => setSelectedServiceId(event.target.value)}
+              onChange={(event) => onSelectedServiceChange(event.target.value)}
             >
               {services.map((service) => (
                 <option key={service.id} value={service.id}>

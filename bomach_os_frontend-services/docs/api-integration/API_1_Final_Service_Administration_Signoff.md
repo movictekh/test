@@ -48,8 +48,25 @@ Until a verified role selector is added, the frontend deliberately submits
 
 ## Catalogue filters
 
-Catalogue search/status/division and pagination now participate in the backend
-query rather than downloading a large fixed record set and filtering it locally.
+Catalogue search/status/division and pagination participate in the backend query
+and are stored in TanStack Router search params:
+
+```text
+search
+status
+division
+page
+```
+
+This means refresh, browser back/forward and shared URLs preserve the Catalogue
+view rather than resetting local component state.
+
+## Workflow service selection
+
+Workflow Designer keeps the existing Service selector UI, but the selected
+Service ID is owned by the page and drives the TanStack Query key. Switching
+Services therefore fetches and edits that Service's own workflow data rather
+than reusing the first Service's workflow response.
 
 ## Command Center
 
