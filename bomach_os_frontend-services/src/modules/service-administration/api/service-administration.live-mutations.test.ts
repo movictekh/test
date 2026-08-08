@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { serviceAdministrationBackendApi } from './service-administration.backend-api'
 import {
   createServiceThroughRequestForm,
+  saveLiveRequestForm,
   ServiceSetupStageError,
 } from './service-administration.live-mutations'
 
@@ -157,5 +158,53 @@ describe('initial Service setup mutation', () => {
         workflowStages: [],
       }),
     ).rejects.toBeInstanceOf(ServiceSetupStageError)
+  })
+})
+
+describe('request form activation persistence', () => {
+  it('activates an active request form when backend update returns it inactive', async () => {
+    vi.spyOn(serviceAdministrationBackendApi, 'updateRequestForm').mockResolvedValue({
+      id: 4,
+      service_id: 9,
+      name: 'Survey Request Form',
+      version: 1,
+      status: 'draft',
+      is_active: false,
+      field_count: 0,
+      created_by_id: 1,
+      created_at: '2026-08-08T00:00:00Z',
+      updated_at: '2026-08-08T00:00:00Z',
+      fields: [],
+    })
+
+    const activate = vi
+      .spyOn(serviceAdministrationBackendApi, 'activateRequestForm')
+      .mockResolvedValue({
+        id: 4,
+        service_id: 9,
+        name: 'Survey Request Form',
+        version: 1,
+        status: 'active',
+        is_active: true,
+        field_count: 0,
+        created_by_id: 1,
+        created_at: '2026-08-08T00:00:00Z',
+        updated_at: '2026-08-08T00:00:00Z',
+        fields: [],
+      })
+
+    const result = await saveLiveRequestForm(
+      {
+        id: '4',
+        name: 'Survey Request Form',
+        serviceId: '9',
+        status: 'active',
+        fields: [],
+      },
+      'Survey',
+    )
+
+    expect(activate).toHaveBeenCalledWith(9, 4)
+    expect(result.status).toBe('active')
   })
 })

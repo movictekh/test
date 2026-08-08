@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 
 import type {
   PricingCalculator,
+  PricingType,
   RequestFieldTypeOption,
   RequestFormField,
   ServiceCatalogueItem,
@@ -267,6 +268,21 @@ export function ServiceCatalogueScreen({
   )
 }
 
+function pricingTypeLabel(type: PricingType | undefined) {
+  switch (type) {
+    case 'unit_rate':
+      return 'Unit rate'
+    case 'area_rate':
+      return 'Area rate'
+    case 'percentage':
+      return 'Percentage'
+    case 'formula':
+      return 'Formula'
+    default:
+      return 'Fixed'
+  }
+}
+
 function calculatorNumericFields(calculator: PricingCalculator) {
   return calculator.variables
     .filter((variable) => variable.type === 'number')
@@ -374,13 +390,7 @@ export function CalculatorLibraryScreen({
                         <div className="service-admin-row-subtitle">{calculator.code}</div>
                       </td>
                       <td>{calculator.serviceName}</td>
-                      <td>
-                        {calculator.charges.some((charge) => charge.kind === 'formula')
-                          ? 'Formula'
-                          : calculator.charges.some((charge) => charge.kind === 'percentage')
-                            ? 'Percentage'
-                            : 'Fixed'}
-                      </td>
+                      <td>{pricingTypeLabel(calculator.pricingType)}</td>
                       <td>{calculator.variables.length}</td>
                       <td>
                         {calculator.charges.find((charge) =>
@@ -493,11 +503,15 @@ export function RequestFormBuilderScreen({
   const formSourceKey = `${selectedService?.id ?? ''}:${form?.id ?? 'new'}:${form?.updatedAt ?? ''}`
 
   const [draftKey, setDraftKey] = useState(formSourceKey)
+  const [formStatus, setFormStatus] = useState<ServiceRequestForm['status']>(
+    form?.status ?? 'draft',
+  )
   const [fields, setFields] = useState<RequestFormField[]>(form?.fields ?? [])
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
 
   if (formSourceKey !== draftKey) {
     setDraftKey(formSourceKey)
+    setFormStatus(form?.status ?? 'draft')
     setFields(form?.fields ?? [])
     setEditingIndex(null)
   }
@@ -513,7 +527,7 @@ export function RequestFormBuilderScreen({
       ...(form?.id ? { id: form.id } : {}),
       name: form?.name ?? `${selectedService.name} Request Form`,
       serviceId: selectedService.id,
-      status: form?.status ?? 'draft',
+      status: formStatus,
       fields,
     })
   }
@@ -552,6 +566,20 @@ export function RequestFormBuilderScreen({
               </div>
             ) : null}
           </div>
+          <label className="service-admin-field">
+            <span>Form status</span>
+            <select
+              value={formStatus}
+              disabled={!canEdit || !selectedService}
+              onChange={(event) =>
+                setFormStatus(event.target.value as ServiceRequestForm['status'])
+              }
+            >
+              <option value="draft">Draft</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </label>
           <button
             type="button"
             className="service-admin-request-save"
@@ -682,23 +710,23 @@ export function RequestFormBuilderScreen({
                     )
                   }
                 >
-                  {fieldTypes.length > 0
-                    ? fieldTypes.map((type) => (
-                        <option key={type.value} value={type.value}>
-                          {type.label}
-                        </option>
-                      ))
-                    : (
-                        <>
-                          <option value="text">Text</option>
-                          <option value="textarea">Long text</option>
-                          <option value="number">Number</option>
-                          <option value="date">Date</option>
-                          <option value="select">Dropdown</option>
-                          <option value="file">File upload</option>
-                          <option value="checkbox">Checkbox</option>
-                        </>
-                      )}
+                  {fieldTypes.length > 0 ? (
+                    fieldTypes.map((type) => (
+                      <option key={type.value} value={type.value}>
+                        {type.label}
+                      </option>
+                    ))
+                  ) : (
+                    <>
+                      <option value="text">Text</option>
+                      <option value="textarea">Long text</option>
+                      <option value="number">Number</option>
+                      <option value="date">Date</option>
+                      <option value="select">Dropdown</option>
+                      <option value="file">File upload</option>
+                      <option value="checkbox">Checkbox</option>
+                    </>
+                  )}
                 </select>
               </label>
               <label className="service-admin-field-editor-check">
@@ -708,9 +736,7 @@ export function RequestFormBuilderScreen({
                   onChange={(event) =>
                     setFields((current) =>
                       current.map((item, index) =>
-                        index === editingIndex
-                          ? { ...item, required: event.target.checked }
-                          : item,
+                        index === editingIndex ? { ...item, required: event.target.checked } : item,
                       ),
                     )
                   }

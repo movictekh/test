@@ -7,6 +7,7 @@ import type {
   CalculatorCharge,
   CalculatorVariable,
   PricingCalculator,
+  PricingType,
   RequestFormField,
   SaveCalculatorInput,
   SaveRequestFormInput,
@@ -87,6 +88,14 @@ function EditorField({
   )
 }
 
+const pricingTemplateOptions: Array<{ value: PricingType; label: string }> = [
+  { value: 'fixed', label: 'Fixed' },
+  { value: 'unit_rate', label: 'Unit rate' },
+  { value: 'area_rate', label: 'Area rate' },
+  { value: 'percentage', label: 'Percentage' },
+  { value: 'formula', label: 'Custom formula' },
+]
+
 function percentageCharge(
   calculator: PricingCalculator | undefined,
   keyword: string,
@@ -136,9 +145,8 @@ export function CalculatorEditor({
 }) {
   const [name, setName] = useState(calculator?.name ?? '')
   const [serviceId, setServiceId] = useState(calculator?.serviceId ?? '')
-  const [template, setTemplate] = useState(
-    calculator?.charges.some((charge) => charge.kind === 'formula') ? 'Custom formula' : 'Fixed',
-  )
+  const [pricingType, setPricingType] = useState<PricingType>(calculator?.pricingType ?? 'fixed')
+  const [status, setStatus] = useState(calculator?.status ?? 'draft')
   const [formula, setFormula] = useState(
     String(
       calculator?.charges.find((charge) => charge.kind === 'formula')?.value ??
@@ -168,14 +176,18 @@ export function CalculatorEditor({
         if (!canSave) return
 
         const charges: CalculatorCharge[] = [
-          {
-            id:
-              calculator?.charges.find((charge) => charge.kind === 'formula')?.id ??
-              `formula-${Date.now()}`,
-            label: 'Formula',
-            kind: 'formula',
-            value: formula,
-          },
+          ...(pricingType === 'formula'
+            ? [
+                {
+                  id:
+                    calculator?.charges.find((charge) => charge.kind === 'formula')?.id ??
+                    `formula-${Date.now()}`,
+                  label: 'Formula',
+                  kind: 'formula' as const,
+                  value: formula,
+                },
+              ]
+            : []),
           {
             id:
               calculator?.charges.find((charge) => charge.label.toLowerCase().includes('deposit'))
@@ -199,8 +211,11 @@ export function CalculatorEditor({
           name: name.trim(),
           code: calculator?.code ?? `CALC-${service?.code ?? 'NEW'}-01`,
           serviceId,
-          description: `${template} calculator for ${service?.name ?? 'service pricing'}.`,
-          status: calculator?.status ?? 'draft',
+          description: `${
+            pricingTemplateOptions.find((item) => item.value === pricingType)?.label ?? 'Pricing'
+          } calculator for ${service?.name ?? 'service pricing'}.`,
+          pricingType,
+          status,
           variables: parseVariables(fieldsText),
           charges,
           sampleTotal: calculator?.sampleTotal ?? 0,
@@ -209,11 +224,7 @@ export function CalculatorEditor({
     >
       <div className="service-admin-editor-grid">
         <EditorField label="Name">
-          <input
-            value={name}
-            required
-            onChange={(event) => setName(event.target.value)}
-          />
+          <input value={name} required onChange={(event) => setName(event.target.value)} />
         </EditorField>
         <EditorField label="Service">
           <select
@@ -238,16 +249,33 @@ export function CalculatorEditor({
           </select>
         </EditorField>
         <EditorField label="Template">
-          <select value={template} onChange={(event) => setTemplate(event.target.value)}>
-            <option>Fixed</option>
-            <option>Unit rate</option>
-            <option>Area rate</option>
-            <option>Percentage</option>
-            <option>Custom formula</option>
+          <select
+            value={pricingType}
+            onChange={(event) => setPricingType(event.target.value as PricingType)}
+          >
+            {pricingTemplateOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </EditorField>
+        <EditorField label="Status">
+          <select
+            value={status}
+            onChange={(event) => setStatus(event.target.value as typeof status)}
+          >
+            <option value="draft">Draft</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
           </select>
         </EditorField>
         <EditorField label="Formula">
-          <input value={formula} onChange={(event) => setFormula(event.target.value)} />
+          <input
+            value={formula}
+            disabled={pricingType !== 'formula'}
+            onChange={(event) => setFormula(event.target.value)}
+          />
         </EditorField>
         <EditorField label="Deposit (%)">
           <input

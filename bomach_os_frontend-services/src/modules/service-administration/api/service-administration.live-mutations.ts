@@ -156,19 +156,27 @@ export async function saveLiveRequestForm(
       throw new Error('Request form has an invalid backend form identifier.')
     }
 
-    return mapRequestFormDto(
-      await serviceAdministrationBackendApi.updateRequestForm(serviceId, formId, payload),
-      serviceName,
+    const updated = await serviceAdministrationBackendApi.updateRequestForm(
+      serviceId,
+      formId,
+      payload,
     )
+    const dto =
+      input.status === 'active' && !updated.is_active
+        ? await serviceAdministrationBackendApi.activateRequestForm(serviceId, formId)
+        : updated
+    return mapRequestFormDto(dto, serviceName)
   }
 
-  return mapRequestFormDto(
-    await serviceAdministrationBackendApi.createRequestForm(
-      serviceId,
-      payload as Parameters<typeof serviceAdministrationBackendApi.createRequestForm>[1],
-    ),
-    serviceName,
+  const created = await serviceAdministrationBackendApi.createRequestForm(
+    serviceId,
+    payload as Parameters<typeof serviceAdministrationBackendApi.createRequestForm>[1],
   )
+  const dto =
+    input.status === 'active' && !created.is_active
+      ? await serviceAdministrationBackendApi.activateRequestForm(serviceId, created.id)
+      : created
+  return mapRequestFormDto(dto, serviceName)
 }
 
 export async function saveLivePricingConfig(

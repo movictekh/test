@@ -9,6 +9,7 @@ describe('pricing config mapper', () => {
         code: 'CALC-1',
         serviceId: '9',
         description: '',
+        pricingType: 'formula',
         status: 'active',
         variables: [],
         charges: [

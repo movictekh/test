@@ -7,11 +7,25 @@ import type {
   CalculatorCharge,
   CalculatorVariable,
   PricingCalculator,
+  PricingType,
   SaveCalculatorInput,
 } from '../types/service-administration.types'
 
 function numberValue(value: string | number): number {
   return Number(value) || 0
+}
+
+function normalizePricingType(value: string): PricingType {
+  if (
+    value === 'fixed' ||
+    value === 'unit_rate' ||
+    value === 'area_rate' ||
+    value === 'percentage' ||
+    value === 'formula'
+  ) {
+    return value
+  }
+  return 'fixed'
 }
 
 function pricingStatus(status: string): PricingCalculator['status'] {
@@ -84,6 +98,7 @@ export function mapPricingConfigDto(dto: PricingConfigDto): PricingCalculator {
     serviceId: String(dto.service_id),
     serviceName: dto.service_name,
     description: `${dto.pricing_type} pricing configuration`,
+    pricingType: normalizePricingType(dto.pricing_type),
     status: pricingStatus(dto.status),
     version: dto.version,
     variables,
@@ -91,12 +106,6 @@ export function mapPricingConfigDto(dto: PricingConfigDto): PricingCalculator {
     sampleTotal: 0,
     updatedAt: dto.updated_at,
   }
-}
-
-function backendPricingType(input: SaveCalculatorInput): string {
-  const formula = input.charges.find((charge) => charge.kind === 'formula')?.value
-  if (formula && String(formula).trim()) return 'formula'
-  return 'fixed'
 }
 
 function percentage(input: SaveCalculatorInput, keyword: string): number {
@@ -107,11 +116,15 @@ function percentage(input: SaveCalculatorInput, keyword: string): number {
 export function mapSaveCalculatorInput(
   input: SaveCalculatorInput,
 ): PricingConfigInputDto | PricingConfigUpdateDto {
-  const formula = input.charges.find((charge) => charge.kind === 'formula')?.value ?? ''
+  const pricingType = input.pricingType ?? 'fixed'
+  const formula =
+    pricingType === 'formula'
+      ? (input.charges.find((charge) => charge.kind === 'formula')?.value ?? '')
+      : ''
 
   return {
     name: input.name,
-    pricing_type: backendPricingType(input),
+    pricing_type: pricingType,
     formula: String(formula),
     tax_rate: percentage(input, 'tax'),
     deposit_percent: percentage(input, 'deposit'),

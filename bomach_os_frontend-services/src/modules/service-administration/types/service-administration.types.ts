@@ -1,5 +1,6 @@
 export type ServiceStatus = 'active' | 'draft' | 'inactive'
 export type ConfigurationStatus = 'active' | 'draft' | 'inactive'
+export type PricingType = 'fixed' | 'unit_rate' | 'area_rate' | 'percentage' | 'formula'
 export type BranchActivationState = 'active' | 'inactive' | 'setup-required'
 
 export interface ServiceCategoryOption {
@@ -82,6 +83,7 @@ export interface PricingCalculator {
   serviceId: string
   serviceName: string
   description: string
+  pricingType?: PricingType
   status: ConfigurationStatus
   version: number
   variables: CalculatorVariable[]
@@ -194,6 +196,7 @@ export interface SaveCalculatorInput {
   code: string
   serviceId: string
   description: string
+  pricingType?: PricingType
   status: ConfigurationStatus
   variables: CalculatorVariable[]
   charges: CalculatorCharge[]
