@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { IconFilePlus, IconPlus } from '@tabler/icons-react'
 
-import { CompactPageToolbar, CompactActionButton } from '@/shared/ui/module-controls'
+import { CompactPageToolbar, CompactActionButton, ModulePageFrame, ModulePageStatus } from '@/shared/ui/module-controls'
 import { serviceAdministrationQueries } from '@/modules/service-administration/api/service-administration.queries'
 import { presentError } from '@/shared/errors'
 import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
@@ -190,7 +190,11 @@ export function FulfillmentSectionPage({
   }, [query.data, selectedTask])
 
   if (query.isPending || serviceQuery.isPending) {
-    return <DashboardSkeleton />
+    return (
+      <ModulePageStatus title={metadata[section].title} breadcrumb={metadata[section].breadcrumb}>
+        <DashboardSkeleton />
+      </ModulePageStatus>
+    )
   }
 
   if (query.isError || serviceQuery.isError) {
@@ -198,14 +202,16 @@ export function FulfillmentSectionPage({
     const e = presentError(sourceError, 'page-load')
 
     return (
-      <ErrorState
-        title={e.title}
-        description={e.message}
-        onRetry={() => {
-          void query.refetch()
-          void serviceQuery.refetch()
-        }}
-      />
+      <ModulePageStatus title={metadata[section].title} breadcrumb={metadata[section].breadcrumb}>
+        <ErrorState
+          title={e.title}
+          description={e.message}
+          onRetry={() => {
+            void query.refetch()
+            void serviceQuery.refetch()
+          }}
+        />
+      </ModulePageStatus>
     )
   }
 
@@ -249,7 +255,9 @@ export function FulfillmentSectionPage({
 
   return (
     <>
-      <CompactPageToolbar
+      <ModulePageFrame
+        header={
+          <CompactPageToolbar
         title={page.title}
         breadcrumb={page.breadcrumb}
         primaryAction={
@@ -267,7 +275,9 @@ export function FulfillmentSectionPage({
             </CompactActionButton>
           ) : undefined
         }
-      />
+          />
+        }
+      >
 
       {section === 'service-orders' ? (
         <ServiceOrdersScreen
@@ -386,6 +396,7 @@ export function FulfillmentSectionPage({
           }
         />
       ) : null}
+      </ModulePageFrame>
     </>
   )
 }

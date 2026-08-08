@@ -12,8 +12,9 @@ import {
 } from '../workspaces/ServiceCatalogueWorkspaces'
 
 import { presentError } from '@/shared/errors'
+import { ApiError } from '@/shared/api/api-error'
 import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
-import { CompactPageToolbar, CompactActionButton } from '@/shared/ui/module-controls'
+import { CompactPageToolbar, CompactActionButton, ModulePageFrame, ModulePageStatus } from '@/shared/ui/module-controls'
 
 import { serviceAdministrationApi } from '../api/service-administration.api'
 import { serviceAdministrationBackendApi } from '../api/service-administration.backend-api'
@@ -132,10 +133,11 @@ export function ServiceAdministrationSectionPage({
       offset: section === 'service-catalogue' ? (cataloguePage - 1) * cataloguePageSize : 0,
     }),
     enabled: usesLiveCatalogue,
+    placeholderData: (previousData) => previousData,
   })
   const categoryQuery = useQuery({
     ...serviceAdministrationQueries.categories(),
-    enabled: section === 'service-catalogue' && capabilities.canCreateInitialServiceSetup,
+    enabled: capabilities.canCreateInitialServiceSetup,
   })
   const fieldTypesQuery = useQuery({
     ...serviceAdministrationQueries.requestFieldTypes(),
@@ -245,7 +247,11 @@ export function ServiceAdministrationSectionPage({
     },
     onError: (error) => {
       const presented = presentError(error, 'background-action')
-      toast.error('Calculator could not be saved', { description: presented.message })
+      const description =
+        error instanceof Error && !(error instanceof ApiError)
+          ? error.message
+          : presented.message
+      toast.error('Calculator could not be saved', { description })
     },
   })
 
@@ -349,15 +355,22 @@ export function ServiceAdministrationSectionPage({
           ? branchMatrixQuery
           : workspaceQuery
 
-  if (activeQuery.isPending) return <DashboardSkeleton />
+  if (activeQuery.isLoading)
+    return (
+      <ModulePageStatus title={metadata[section].title} breadcrumb={metadata[section].breadcrumb}>
+        <DashboardSkeleton />
+      </ModulePageStatus>
+    )
   if (activeQuery.isError) {
     const error = presentError(activeQuery.error, 'page-load')
     return (
-      <ErrorState
-        title={error.title}
-        description={error.message}
-        onRetry={() => void activeQuery.refetch()}
-      />
+      <ModulePageStatus title={metadata[section].title} breadcrumb={metadata[section].breadcrumb}>
+        <ErrorState
+          title={error.title}
+          description={error.message}
+          onRetry={() => void activeQuery.refetch()}
+        />
+      </ModulePageStatus>
     )
   }
 
@@ -366,28 +379,36 @@ export function ServiceAdministrationSectionPage({
     requestFormService &&
     (requestFormsQuery.isPending || fieldTypesQuery.isPending)
   ) {
-    return <DashboardSkeleton />
+    return (
+      <ModulePageStatus title={metadata[section].title} breadcrumb={metadata[section].breadcrumb}>
+        <DashboardSkeleton />
+      </ModulePageStatus>
+    )
   }
 
   if (section === 'request-form-builder' && requestFormsQuery.isError) {
     const error = presentError(requestFormsQuery.error, 'page-load')
     return (
-      <ErrorState
-        title={error.title}
-        description={error.message}
-        onRetry={() => void requestFormsQuery.refetch()}
-      />
+      <ModulePageStatus title={metadata[section].title} breadcrumb={metadata[section].breadcrumb}>
+        <ErrorState
+          title={error.title}
+          description={error.message}
+          onRetry={() => void requestFormsQuery.refetch()}
+        />
+      </ModulePageStatus>
     )
   }
 
   if (section === 'request-form-builder' && fieldTypesQuery.isError) {
     const error = presentError(fieldTypesQuery.error, 'page-load')
     return (
-      <ErrorState
-        title={error.title}
-        description={error.message}
-        onRetry={() => void fieldTypesQuery.refetch()}
-      />
+      <ModulePageStatus title={metadata[section].title} breadcrumb={metadata[section].breadcrumb}>
+        <ErrorState
+          title={error.title}
+          description={error.message}
+          onRetry={() => void fieldTypesQuery.refetch()}
+        />
+      </ModulePageStatus>
     )
   }
 
@@ -426,46 +447,38 @@ export function ServiceAdministrationSectionPage({
 
   return (
     <>
-      <CompactPageToolbar
-        title={page.title}
-        breadcrumb={page.breadcrumb}
-        secondaryAction={
-          <CompactActionButton
-            disabled={!capabilities.canCreateServiceRequest}
-            onClick={() =>
-              void navigate({
-                to: '/app/$section',
-                params: { section: 'service-requests' },
-              })
+      <ModulePageFrame
+        header={
+          <CompactPageToolbar
+            title={page.title}
+            breadcrumb={page.breadcrumb}
+            secondaryAction={
+              <CompactActionButton
+                disabled={!capabilities.canCreateServiceRequest}
+                onClick={() =>
+                  void navigate({
+                    to: '/app/$section',
+                    params: { section: 'service-requests' },
+                  })
+                }
+              >
+                <IconFilePlus size={14} />
+                New Request
+              </CompactActionButton>
             }
-          >
-            <IconFilePlus size={14} />
-            New Request
-          </CompactActionButton>
+            primaryAction={
+              <CompactActionButton
+                tone="primary"
+                disabled={!capabilities.canCreateInitialServiceSetup}
+                onClick={() => setNewServiceOpen(true)}
+              >
+                <IconPlus size={14} />
+                Create Service
+              </CompactActionButton>
+            }
+          />
         }
-        primaryAction={
-          section === 'service-catalogue' ? (
-            <CompactActionButton
-              tone="primary"
-              disabled={!capabilities.canCreateInitialServiceSetup}
-              onClick={() => setNewServiceOpen(true)}
-            >
-              <IconPlus size={14} />
-              Create Service
-            </CompactActionButton>
-          ) : section === 'request-form-builder' ? (
-            <CompactActionButton
-              tone="primary"
-              disabled={!capabilities.canCreateRequestForm || !requestFormService}
-              onClick={() => setFormEditor('new')}
-            >
-              <IconPlus size={14} />
-              New Request Form
-            </CompactActionButton>
-          ) : undefined
-        }
-      />
-
+      >
       {section === 'service-catalogue' ? (
         <ServiceCatalogueScreen
           services={catalogue?.items ?? []}
@@ -538,93 +551,28 @@ export function ServiceAdministrationSectionPage({
       {section === 'calculator-library' ? (
         <CalculatorLibraryScreen
           calculators={pricingQuery.data ?? []}
+          hasServices={(catalogue?.items.length ?? 0) > 0}
           onCreate={
             capabilities.canCreatePricingConfig ? () => setCalculatorEditor('new') : undefined
           }
-          createDisabled={!capabilities.canCreatePricingConfig}
+          createDisabled={
+            !capabilities.canCreatePricingConfig || (catalogue?.items.length ?? 0) === 0
+          }
         />
       ) : null}
 
       {section === 'request-form-builder' ? (
-        <>
-          <div className="service-admin-page service-admin-content">
-            <div className="service-admin-card">
-              <div className="service-admin-card-header">
-                <div>
-                  <div className="service-admin-card-title">Service scope</div>
-                  <div className="service-admin-card-subtitle">
-                    Request forms are backend resources scoped to one Service.
-                  </div>
-                </div>
-                <select
-                  value={requestFormService?.id ?? ''}
-                  onChange={(event) => setSelectedRequestFormServiceId(event.target.value)}
-                >
-                  {(catalogue?.items ?? []).map((service) => (
-                    <option key={service.id} value={service.id}>
-                      {service.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {requestFormsQuery.data?.length ? (
-            <RequestFormBuilderScreen
-              forms={requestFormsQuery.data}
-              fieldTypes={fieldTypesQuery.data ?? []}
-              {...(capabilities.canUpdateRequestForm
-                ? { onSave: (input: SaveRequestFormInput) => saveRequestForm.mutate(input) }
-                : {})}
-            />
-          ) : (
-            <div className="service-admin-page service-admin-content">
-              <div className="service-admin-request-builder">
-                <aside className="service-admin-request-palette">
-                  <h2>Field Palette</h2>
-                  <div className="service-admin-request-palette-list">
-                    {(fieldTypesQuery.data ?? []).map((fieldType) => (
-                      <button key={fieldType.value} type="button" disabled>
-                        <span>+</span>
-                        {fieldType.label}
-                      </button>
-                    ))}
-                    {(fieldTypesQuery.data ?? []).length === 0 ? (
-                      <div className="service-admin-card-subtitle py-4">
-                        Field types will appear here when a Service is available.
-                      </div>
-                    ) : null}
-                  </div>
-                  <button type="button" className="service-admin-request-save" disabled>
-                    Save Form
-                  </button>
-                </aside>
-
-                <section className="service-admin-card min-h-[360px]">
-                  <div className="service-admin-card-header">
-                    <div>
-                      <div className="service-admin-card-title">Request Form Canvas</div>
-                      <div className="service-admin-card-subtitle">
-                        Form fields and validation rules are configured here.
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex min-h-[260px] items-center justify-center text-center">
-                    <div className="max-w-md">
-                      <div className="service-admin-card-title">No request form yet</div>
-                      <div className="service-admin-card-subtitle mt-1">
-                        {requestFormService
-                          ? `Create the first request form for ${requestFormService.name}.`
-                          : 'Create a Service first, then build its request form here.'}
-                      </div>
-                    </div>
-                  </div>
-                </section>
-              </div>
-            </div>
-          )}
-        </>
+        <RequestFormBuilderScreen
+          services={catalogue?.items ?? []}
+          selectedServiceId={requestFormService?.id ?? ''}
+          onSelectedServiceChange={setSelectedRequestFormServiceId}
+          form={requestFormsQuery.data?.[0] ?? null}
+          fieldTypes={fieldTypesQuery.data ?? []}
+          saving={saveRequestForm.isPending}
+          {...(capabilities.canCreateRequestForm || capabilities.canUpdateRequestForm
+            ? { onSave: (input: SaveRequestFormInput) => saveRequestForm.mutate(input) }
+            : {})}
+        />
       ) : null}
 
       {section === 'workflow-designer' ? (
@@ -702,6 +650,7 @@ export function ServiceAdministrationSectionPage({
           </div>
         </div>
       ) : null}
+      </ModulePageFrame>
 
       {selectedService
         ? (() => {
@@ -761,7 +710,7 @@ export function ServiceAdministrationSectionPage({
         />
       ) : null}
 
-      {section === 'service-catalogue' && capabilities.canCreateInitialServiceSetup ? (
+      {capabilities.canCreateInitialServiceSetup ? (
         <CreateServiceWizard
           open={newServiceOpen}
           categories={categoryQuery.data ?? []}

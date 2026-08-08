@@ -5,7 +5,7 @@ import { IconFilePlus, IconPlus } from '@tabler/icons-react'
 
 import { commercialQueries } from '@/modules/commercial/api/commercial.queries'
 import { fulfillmentQueries } from '@/modules/fulfillment/api/fulfillment.queries'
-import { CompactPageToolbar, CompactActionButton } from '@/shared/ui/module-controls'
+import { CompactPageToolbar, CompactActionButton, ModulePageFrame, ModulePageStatus } from '@/shared/ui/module-controls'
 import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
 import { presentError } from '@/shared/errors'
 import { specializedServicesApi } from '../api/specialized-services.api'
@@ -73,26 +73,35 @@ export function SpecializedServicesSectionPage({
       toast.success('Property listing added')
     },
   })
-  if (q.isPending || fq.isPending || cq.isPending) return <DashboardSkeleton />
+  if (q.isPending || fq.isPending || cq.isPending)
+    return (
+      <ModulePageStatus title={meta[section].title} breadcrumb={meta[section].breadcrumb}>
+        <DashboardSkeleton />
+      </ModulePageStatus>
+    )
   if (q.isError || fq.isError || cq.isError) {
     const e = presentError(q.error ?? fq.error ?? cq.error, 'page-load')
     return (
-      <ErrorState
-        title={e.title}
-        description={e.message}
-        onRetry={() => {
-          void q.refetch()
-          void fq.refetch()
-          void cq.refetch()
-        }}
-      />
+      <ModulePageStatus title={meta[section].title} breadcrumb={meta[section].breadcrumb}>
+        <ErrorState
+          title={e.title}
+          description={e.message}
+          onRetry={() => {
+            void q.refetch()
+            void fq.refetch()
+            void cq.refetch()
+          }}
+        />
+      </ModulePageStatus>
     )
   }
   const estateId = selectedEstateId || q.data.estates[0]?.id || ''
 
   return (
     <>
-      <CompactPageToolbar
+      <ModulePageFrame
+        header={
+          <CompactPageToolbar
         title={meta[section].title}
         breadcrumb={meta[section].breadcrumb}
         {...(section === 'real-estate-inventory'
@@ -126,7 +135,9 @@ export function SpecializedServicesSectionPage({
                 </CompactActionButton>
               ),
             })}
-      />
+          />
+        }
+      >
       {section === 'real-estate-inventory' ? (
         <RealEstateInventoryScreen
           estates={q.data.estates}
@@ -174,6 +185,7 @@ export function SpecializedServicesSectionPage({
           onSubmit={(x) => cp.mutate(x)}
         />
       ) : null}
+      </ModulePageFrame>
     </>
   )
 }

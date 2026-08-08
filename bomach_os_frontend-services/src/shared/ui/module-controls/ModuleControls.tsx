@@ -3,6 +3,47 @@ import type { ReactNode } from 'react'
 
 import { cn } from '@/shared/lib/cn'
 
+/** Pins a page toolbar above a scrolling body — same structure as the Service Module HTML topbar. */
+export function ModulePageFrame({
+  header,
+  children,
+}: {
+  header: ReactNode
+  children: ReactNode
+}) {
+  return (
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
+      <div className="shrink-0">{header}</div>
+      <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">{children}</div>
+    </div>
+  )
+}
+
+/**
+ * Loading / error body with the section toolbar still pinned above.
+ * Keeps CompactPageToolbar visible when queries fail or are pending.
+ */
+export function ModulePageStatus({
+  title,
+  breadcrumb,
+  children,
+}: {
+  title: string
+  breadcrumb: string
+  children: ReactNode
+}) {
+  return (
+    <ModulePageFrame header={<CompactPageToolbar title={title} breadcrumb={breadcrumb} />}>
+      <div className="p-3 lg:p-5">{children}</div>
+    </ModulePageFrame>
+  )
+}
+
+/** Full-height scroll surface for pages without a pinned CompactPageToolbar. */
+export function ModuleScrollArea({ children }: { children: ReactNode }) {
+  return <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">{children}</div>
+}
+
 export function CompactPageToolbar({
   title,
   breadcrumb,
@@ -15,7 +56,7 @@ export function CompactPageToolbar({
   secondaryAction?: ReactNode
 }) {
   return (
-    <section className="border-border bg-surface sticky top-0 z-20 flex min-h-[58px] flex-col gap-2 border-b px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between lg:px-5">
+    <section className="border-border bg-surface flex min-h-[58px] flex-col gap-2 border-b px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between lg:px-5">
       <div className="min-w-0 flex-1">
         <h1 className="text-foreground truncate text-[0.875rem] leading-tight font-extrabold">
           {title}

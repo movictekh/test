@@ -3,5 +3,8 @@ export {
   CompactPageToolbar,
   FilterBar,
   FilterSelect,
+  ModulePageFrame,
+  ModulePageStatus,
+  ModuleScrollArea,
   SummaryStrip,
 } from './ModuleControls'

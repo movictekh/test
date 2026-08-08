@@ -87,70 +87,71 @@ export function BranchActivationScreen({
 
         {branches.length === 0 ? (
           <div className="service-admin-notice service-admin-notice-yellow">
-            No active branches are available from the backend.
+            No branches are configured yet. Add at least one active branch to manage service
+            availability, capacity, and default SLAs.
           </div>
-        ) : (
-          <div className="service-admin-table-wrap">
-            <table className="service-admin-table service-admin-branch-table">
-              <thead>
-                <tr>
-                  <th>Service</th>
-                  {branches.map((branch) => (
-                    <th key={branch.id}>{branch.name}</th>
-                  ))}
-                  <th>SLA</th>
-                  <th>Capacity</th>
-                </tr>
-              </thead>
-              <tbody>
-                {services.length === 0 ? (
-                  <tr>
-                    <td colSpan={branches.length + 3}>
-                      <div className="py-8 text-center" role="status">
-                        <div className="service-admin-card-title">
-                          No Services available for branch activation
-                        </div>
-                        <div className="service-admin-card-subtitle mt-1">
-                          The activation matrix will populate here after the first Service is
-                          created. Existing branch columns remain part of the same page structure.
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                ) : null}
-                {services.map((service) => (
-                  <tr key={service.id}>
-                    <td>
-                      <b>{service.name}</b>
-                      <div className="service-admin-row-subtitle">{service.division}</div>
-                    </td>
-                    {branches.map((branch) => {
-                      const key = `${service.id}:${branch.id}`
-                      const active = matrix[key] ?? false
-                      return (
-                        <td key={branch.id}>
-                          <label className="service-admin-branch-check">
-                            <input
-                              type="checkbox"
-                              checked={active}
-                              disabled={!canEdit}
-                              onChange={() => toggle(service.id, branch.id)}
-                            />
-                            <span>{active ? 'Active' : 'Off'}</span>
-                          </label>
-                        </td>
-                      )
-                    })}
-                    <td>{service.slaDays ?? 5}d</td>
-                    <td>
-                      <span className="service-admin-pill service-admin-pill-green">Available</span>
-                    </td>
-                  </tr>
+        ) : null}
+
+        <div className="service-admin-table-wrap">
+          <table className="service-admin-table service-admin-branch-table">
+            <thead>
+              <tr>
+                <th>Service</th>
+                {branches.map((branch) => (
+                  <th key={branch.id}>{branch.name}</th>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                <th>SLA</th>
+                <th>Capacity</th>
+              </tr>
+            </thead>
+            <tbody>
+              {services.length === 0 ? (
+                <tr>
+                  <td colSpan={Math.max(3, branches.length + 3)}>
+                    <div className="service-admin-empty-table-state" role="status">
+                      <div className="service-admin-card-title">
+                        No services available for branch activation
+                      </div>
+                      <div className="service-admin-card-subtitle mt-1">
+                        Create the first Service to populate this matrix. Branch availability,
+                        default SLA and capacity will stay in this same table layout.
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              ) : null}
+              {services.map((service) => (
+                <tr key={service.id}>
+                  <td>
+                    <b>{service.name}</b>
+                    <div className="service-admin-row-subtitle">{service.division}</div>
+                  </td>
+                  {branches.map((branch) => {
+                    const key = `${service.id}:${branch.id}`
+                    const active = matrix[key] ?? false
+                    return (
+                      <td key={branch.id}>
+                        <label className="service-admin-branch-check">
+                          <input
+                            type="checkbox"
+                            checked={active}
+                            disabled={!canEdit}
+                            onChange={() => toggle(service.id, branch.id)}
+                          />
+                          <span>{active ? 'Active' : 'Off'}</span>
+                        </label>
+                      </td>
+                    )
+                  })}
+                  <td>{service.slaDays ?? 5}d</td>
+                  <td>
+                    <span className="service-admin-pill service-admin-pill-green">Available</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
     </div>
   )

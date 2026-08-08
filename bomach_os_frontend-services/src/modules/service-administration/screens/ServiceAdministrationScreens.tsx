@@ -1,5 +1,5 @@
 import { IconApps, IconCopy } from '@tabler/icons-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import type {
   PricingCalculator,
@@ -68,6 +68,45 @@ export function ServiceCatalogueScreen({
     [services],
   )
   const pageCount = Math.max(1, Math.ceil(totalCount / pageSize))
+  const [searchDraft, setSearchDraft] = useState(query)
+  const [syncedQuery, setSyncedQuery] = useState(query)
+  const onFiltersChangeRef = useRef(onFiltersChange)
+  const divisionRef = useRef(division)
+  const statusRef = useRef(status)
+
+  if (query !== syncedQuery) {
+    setSyncedQuery(query)
+    setSearchDraft(query)
+  }
+
+  useEffect(() => {
+    onFiltersChangeRef.current = onFiltersChange
+  }, [onFiltersChange])
+
+  useEffect(() => {
+    divisionRef.current = division
+    statusRef.current = status
+  }, [division, status])
+
+  useEffect(() => {
+    if (searchDraft === query) return
+
+    const timeoutId = window.setTimeout(() => {
+      onFiltersChangeRef.current({
+        query: searchDraft,
+        division: divisionRef.current,
+        status: statusRef.current,
+      })
+    }, 350)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [searchDraft, query])
+
+  const pageSummary = (
+    <span>
+      Page {page} of {pageCount} · {totalCount} service{totalCount === 1 ? '' : 's'}
+    </span>
+  )
 
   return (
     <div className="service-admin-page service-admin-content">
@@ -75,13 +114,21 @@ export function ServiceCatalogueScreen({
         <div className="service-admin-filter-group service-admin-catalog-filter">
           <input
             className="service-admin-grow"
-            value={query}
-            onChange={(event) => onFiltersChange({ query: event.target.value, division, status })}
+            value={searchDraft}
+            onChange={(event) => setSearchDraft(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key !== 'Enter') return
+              event.preventDefault()
+              if (searchDraft === query) return
+              onFiltersChange({ query: searchDraft, division, status })
+            }}
             placeholder="Search services..."
           />
           <select
             value={division}
-            onChange={(event) => onFiltersChange({ query, division: event.target.value, status })}
+            onChange={(event) =>
+              onFiltersChange({ query: searchDraft, division: event.target.value, status })
+            }
           >
             <option value="">All divisions</option>
             {divisions.map((item) => (
@@ -90,7 +137,9 @@ export function ServiceCatalogueScreen({
           </select>
           <select
             value={status}
-            onChange={(event) => onFiltersChange({ query, division, status: event.target.value })}
+            onChange={(event) =>
+              onFiltersChange({ query: searchDraft, division, status: event.target.value })
+            }
           >
             <option value="">All statuses</option>
             <option value="active">Active</option>
@@ -118,7 +167,7 @@ export function ServiceCatalogueScreen({
 
         <div className="service-admin-service-grid">
           {services.length === 0 ? (
-            <section className="service-admin-card border-dashed p-6 sm:p-8">
+            <section className="service-admin-card col-span-full border-dashed p-6 sm:p-8">
               <div className="mx-auto max-w-xl text-center">
                 <div className="service-admin-card-title">No services in the catalogue yet</div>
                 <div className="service-admin-card-subtitle mt-1">
@@ -194,9 +243,7 @@ export function ServiceCatalogueScreen({
         </div>
 
         <div className="service-admin-filter-group service-admin-catalog-filter">
-          <span>
-            Page {page} of {pageCount} · {totalCount} service{totalCount === 1 ? '' : 's'}
-          </span>
+          {pageSummary}
           <span className="service-admin-grow" />
           <button
             type="button"
@@ -234,10 +281,12 @@ export function CalculatorLibraryScreen({
   calculators,
   onCreate,
   createDisabled = false,
+  hasServices = true,
 }: {
   calculators: PricingCalculator[]
   onCreate?: (() => void) | undefined
   createDisabled?: boolean
+  hasServices?: boolean
 }) {
   const [activeId, setActiveId] = useState(calculators[0]?.id ?? '')
   const active = calculators.find((calculator) => calculator.id === activeId) ?? calculators[0]
@@ -270,6 +319,13 @@ export function CalculatorLibraryScreen({
               type="button"
               className="service-admin-button service-admin-button-primary"
               disabled={createDisabled || !onCreate}
+              title={
+                !hasServices
+                  ? 'Create a service in the catalogue before adding a calculator'
+                  : createDisabled
+                    ? 'You do not have permission to create calculators'
+                    : undefined
+              }
               onClick={() => onCreate?.()}
             >
               New Calculator
@@ -296,7 +352,9 @@ export function CalculatorLibraryScreen({
                       <div className="py-8 text-center">
                         <div className="service-admin-card-title">No calculators configured</div>
                         <div className="service-admin-card-subtitle mt-1">
-                          Pricing configurations will appear here once a Service has a calculator.
+                          {!hasServices
+                            ? 'Create a service in the catalogue first, then add a calculator for it.'
+                            : 'Pricing configurations will appear here once a Service has a calculator.'}
                         </div>
                       </div>
                     </td>
@@ -413,33 +471,52 @@ export function CalculatorLibraryScreen({
 }
 
 export function RequestFormBuilderScreen({
-  forms,
+  services,
+  selectedServiceId,
+  onSelectedServiceChange,
+  form,
   fieldTypes,
+  saving = false,
   onSave,
 }: {
-  forms: ServiceRequestForm[]
+  services: ServiceCatalogueItem[]
+  selectedServiceId: string
+  onSelectedServiceChange: (serviceId: string) => void
+  form: ServiceRequestForm | null
   fieldTypes: RequestFieldTypeOption[]
+  saving?: boolean
   onSave?: (input: SaveRequestFormInput) => void
 }) {
   const canEdit = Boolean(onSave)
-  const requestBuilderPalette = fieldTypes.map((item) => ({
-    label: item.label,
-    type: item.value,
-  }))
-  const [activeId, setActiveId] = useState(forms[0]?.id ?? '')
-  const active = forms.find((form) => form.id === activeId) ?? forms[0]
-  const [fields, setFields] = useState<RequestFormField[]>(active?.fields ?? [])
+  const selectedService =
+    services.find((service) => service.id === selectedServiceId) ?? services[0] ?? null
+  const formSourceKey = `${selectedService?.id ?? ''}:${form?.id ?? 'new'}:${form?.updatedAt ?? ''}`
+
+  const [draftKey, setDraftKey] = useState(formSourceKey)
+  const [fields, setFields] = useState<RequestFormField[]>(form?.fields ?? [])
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
 
-  const selectForm = (id: string) => {
-    setActiveId(id)
-    const next = forms.find((form) => form.id === id)
-    setFields(next?.fields ?? [])
+  if (formSourceKey !== draftKey) {
+    setDraftKey(formSourceKey)
+    setFields(form?.fields ?? [])
     setEditingIndex(null)
   }
 
-  if (!active) return null
   const editingField = editingIndex === null ? undefined : fields[editingIndex]
+  const paletteDisabled = !canEdit || !selectedService
+  const saveDisabled = !canEdit || !selectedService || saving
+
+  const saveForm = () => {
+    if (!selectedService || !onSave) return
+
+    onSave({
+      ...(form?.id ? { id: form.id } : {}),
+      name: form?.name ?? `${selectedService.name} Request Form`,
+      serviceId: selectedService.id,
+      status: form?.status ?? 'draft',
+      fields,
+    })
+  }
 
   return (
     <div className="service-admin-page service-admin-content">
@@ -447,11 +524,11 @@ export function RequestFormBuilderScreen({
         <aside className="service-admin-request-palette">
           <h2>Field Palette</h2>
           <div className="service-admin-request-palette-list">
-            {requestBuilderPalette.map((item) => (
+            {fieldTypes.map((item) => (
               <button
-                key={item.label}
+                key={item.value}
                 type="button"
-                disabled={!canEdit}
+                disabled={paletteDisabled}
                 onClick={() =>
                   setFields((current) => [
                     ...current,
@@ -459,7 +536,7 @@ export function RequestFormBuilderScreen({
                       id: `field-${Date.now()}`,
                       label: item.label,
                       key: item.label.toLowerCase().replace(/[^a-z0-9]+/g, '_'),
-                      type: item.type,
+                      type: item.value,
                       required: false,
                     },
                   ])
@@ -469,23 +546,19 @@ export function RequestFormBuilderScreen({
                 {item.label}
               </button>
             ))}
+            {fieldTypes.length === 0 ? (
+              <div className="service-admin-card-subtitle py-3">
+                Field types will load once the form builder is available.
+              </div>
+            ) : null}
           </div>
           <button
             type="button"
             className="service-admin-request-save"
-            disabled={!canEdit || !active}
-            onClick={() =>
-              active &&
-              onSave?.({
-                id: active.id,
-                name: active.name,
-                serviceId: active.serviceId,
-                status: active.status,
-                fields,
-              })
-            }
+            disabled={saveDisabled}
+            onClick={saveForm}
           >
-            Save Form
+            {saving ? 'Saving…' : 'Save Form'}
           </button>
         </aside>
 
@@ -495,43 +568,70 @@ export function RequestFormBuilderScreen({
               <h2>Service Request Form Builder</h2>
               <p>Create the exact information required per service</p>
             </div>
-            <select value={activeId} onChange={(event) => selectForm(event.target.value)}>
-              {forms.map((form) => (
-                <option key={form.id} value={form.id}>
-                  {form.serviceName}
-                </option>
-              ))}
-            </select>
+            <label className="service-admin-request-service-picker">
+              <span>Service</span>
+              <select
+                aria-label="Select service"
+                value={selectedService?.id ?? ''}
+                disabled={services.length === 0}
+                onChange={(event) => onSelectedServiceChange(event.target.value)}
+              >
+                {services.length === 0 ? (
+                  <option value="">Create a service first</option>
+                ) : (
+                  services.map((service) => (
+                    <option key={service.id} value={service.id}>
+                      {service.name}
+                    </option>
+                  ))
+                )}
+              </select>
+            </label>
           </div>
 
-          <div className="service-admin-request-field-list">
-            {fields.map((field, index) => (
-              <article key={field.id} className="service-admin-request-field-row">
-                <span className="service-admin-request-drag">::</span>
-                <div className="service-admin-grow">
-                  <b>{field.label}</b>
-                  <small>
-                    {field.type} · {field.required ? 'Required' : 'Optional'}
-                  </small>
-                </div>
-                {canEdit ? (
-                  <button type="button" onClick={() => setEditingIndex(index)}>
-                    Edit
-                  </button>
-                ) : null}
-                {canEdit ? (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setFields((current) => current.filter((_, itemIndex) => itemIndex !== index))
-                    }
-                  >
-                    Delete
-                  </button>
-                ) : null}
-              </article>
-            ))}
-          </div>
+          {fields.length === 0 ? (
+            <div className="service-admin-empty-table-state" role="status">
+              <div className="service-admin-card-title">
+                {selectedService ? 'No fields on this form yet' : 'No service selected'}
+              </div>
+              <div className="service-admin-card-subtitle mt-1">
+                {selectedService
+                  ? 'Add fields from the palette to define what clients must provide for this service.'
+                  : 'Create a service in the catalogue first, then return here to design its request form.'}
+              </div>
+            </div>
+          ) : (
+            <div className="service-admin-request-field-list">
+              {fields.map((field, index) => (
+                <article key={field.id} className="service-admin-request-field-row">
+                  <span className="service-admin-request-drag">::</span>
+                  <div className="service-admin-grow">
+                    <b>{field.label}</b>
+                    <small>
+                      {field.type} · {field.required ? 'Required' : 'Optional'}
+                    </small>
+                  </div>
+                  {canEdit ? (
+                    <button type="button" onClick={() => setEditingIndex(index)}>
+                      Edit
+                    </button>
+                  ) : null}
+                  {canEdit ? (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setFields((current) =>
+                          current.filter((_, itemIndex) => itemIndex !== index),
+                        )
+                      }
+                    >
+                      Delete
+                    </button>
+                  ) : null}
+                </article>
+              ))}
+            </div>
+          )}
         </section>
       </div>
 
@@ -582,13 +682,23 @@ export function RequestFormBuilderScreen({
                     )
                   }
                 >
-                  <option value="text">Text</option>
-                  <option value="textarea">Long text</option>
-                  <option value="number">Number</option>
-                  <option value="date">Date</option>
-                  <option value="select">Dropdown</option>
-                  <option value="file">File upload</option>
-                  <option value="checkbox">Checkbox</option>
+                  {fieldTypes.length > 0
+                    ? fieldTypes.map((type) => (
+                        <option key={type.value} value={type.value}>
+                          {type.label}
+                        </option>
+                      ))
+                    : (
+                        <>
+                          <option value="text">Text</option>
+                          <option value="textarea">Long text</option>
+                          <option value="number">Number</option>
+                          <option value="date">Date</option>
+                          <option value="select">Dropdown</option>
+                          <option value="file">File upload</option>
+                          <option value="checkbox">Checkbox</option>
+                        </>
+                      )}
                 </select>
               </label>
               <label className="service-admin-field-editor-check">
@@ -598,7 +708,9 @@ export function RequestFormBuilderScreen({
                   onChange={(event) =>
                     setFields((current) =>
                       current.map((item, index) =>
-                        index === editingIndex ? { ...item, required: event.target.checked } : item,
+                        index === editingIndex
+                          ? { ...item, required: event.target.checked }
+                          : item,
                       ),
                     )
                   }

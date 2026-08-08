@@ -301,15 +301,21 @@ export function OperationsDashboardPage() {
   const summaryQuery = useQuery({ ...dashboardQueries.summary(userId), enabled: Boolean(userId) })
   const activityQuery = useQuery(dashboardQueries.recentActivity())
 
-  if (summaryQuery.isPending) return <DashboardSkeleton />
+  if (summaryQuery.isPending) return (
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <DashboardSkeleton />
+      </div>
+    )
   if (summaryQuery.isError) {
     const error = presentError(summaryQuery.error, 'page-load')
     return (
-      <ErrorState
-        title={error.title}
-        description={error.message}
-        onRetry={() => void summaryQuery.refetch()}
-      />
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <ErrorState
+          title={error.title}
+          description={error.message}
+          onRetry={() => void summaryQuery.refetch()}
+        />
+      </div>
     )
   }
 

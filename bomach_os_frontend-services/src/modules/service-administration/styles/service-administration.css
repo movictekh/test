@@ -224,7 +224,7 @@
   font-weight: 700;
 }
 
-.service-admin-button:hover {
+.service-admin-button:hover:not(:disabled) {
   background: var(--service-admin-surface-muted);
 }
 
@@ -234,7 +234,7 @@
   color: #fff;
 }
 
-.service-admin-button-primary:hover {
+.service-admin-button-primary:hover:not(:disabled) {
   background: var(--service-admin-brand-strong);
 }
 
@@ -771,6 +771,33 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
 .service-admin-config-field textarea {
   min-height: 82px;
   resize: vertical;
+}
+
+.service-admin-description-textarea {
+  display: block;
+  width: 100%;
+  min-height: 82px;
+  box-sizing: border-box;
+  border: 1.5px solid var(--service-admin-border);
+  border-radius: 8px;
+  background: var(--service-admin-surface-muted);
+  padding: 9px 10px;
+  color: var(--service-admin-foreground);
+  font: inherit;
+  font-size: 11px;
+  line-height: 1.45;
+  resize: vertical;
+}
+
+.service-admin-description-textarea::placeholder {
+  color: var(--service-admin-foreground-subtle, #8c95a8);
+}
+
+.service-admin-description-textarea:focus {
+  border-color: #93acd9;
+  background: #fff;
+  box-shadow: 0 0 0 2px #dbe7ff;
+  outline: 0;
 }
 
 .service-admin-config-field input:focus,
@@ -1361,7 +1388,7 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
   color: #ffffff;
 }
 
-.service-admin-modal-footer .service-admin-button-primary:hover {
+.service-admin-modal-footer .service-admin-button-primary:hover:not(:disabled) {
   background: #132b59;
 }
 
@@ -1507,7 +1534,7 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
   cursor: pointer;
 }
 
-.service-admin-editor-footer .service-admin-button:hover {
+.service-admin-editor-footer .service-admin-button:hover:not(:disabled) {
   background: var(--service-admin-surface-muted);
 }
 
@@ -1517,7 +1544,7 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
   color: #ffffff;
 }
 
-.service-admin-editor-footer .service-admin-button-primary:hover {
+.service-admin-editor-footer .service-admin-button-primary:hover:not(:disabled) {
   background: var(--service-admin-brand-strong);
 }
 
@@ -1661,11 +1688,34 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
   color: #8c95a8;
   font-size: 9px;
 }
+.service-admin-request-service-picker {
+  display: flex;
+  min-width: 220px;
+  flex-direction: column;
+  gap: 4px;
+}
+.service-admin-request-service-picker span {
+  color: var(--service-admin-foreground-subtle);
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.service-admin-request-service-picker select,
 .service-admin-request-canvas-header select {
-  min-width: 210px;
-  border: 1px solid #aab4c2;
-  background: #fff;
-  font-size: 10px;
+  min-height: 32px;
+  min-width: 220px;
+  border: 1px solid var(--service-admin-border);
+  border-radius: 8px;
+  background: var(--service-admin-surface-muted);
+  padding: 6px 9px;
+  color: var(--service-admin-foreground);
+  font: inherit;
+  font-size: 10.5px;
+}
+.service-admin-request-service-picker select:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
 }
 .service-admin-request-field-list {
   display: flex;
@@ -1781,8 +1831,11 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
   .service-admin-request-canvas-header {
     flex-direction: column;
   }
+  .service-admin-request-service-picker,
+  .service-admin-request-service-picker select,
   .service-admin-request-canvas-header select {
     width: 100%;
+    min-width: 0;
   }
 }
 
@@ -2099,4 +2152,24 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
   .service-admin-stage-editor-check-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* Integrated empty / permission states */
+.service-admin-button:disabled,
+.service-admin-request-save:disabled,
+.service-admin-request-palette button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+  pointer-events: none;
+}
+
+.service-admin-button-primary:disabled {
+  border-color: #94a3b8;
+  background: #94a3b8;
+  color: #fff;
+}
+
+.service-admin-empty-table-state {
+  padding: 28px 16px;
+  text-align: center;
 }

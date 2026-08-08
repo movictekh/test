@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 
 import { commercialQueries } from '@/modules/commercial/api/commercial.queries'
 import { fulfillmentQueries } from '@/modules/fulfillment/api/fulfillment.queries'
-import { CompactPageToolbar, CompactActionButton } from '@/shared/ui/module-controls'
+import { CompactPageToolbar, CompactActionButton, ModulePageFrame, ModulePageStatus } from '@/shared/ui/module-controls'
 import { presentError } from '@/shared/errors'
 import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
 import { useDeepLinkedSelection, type AppRecordSearch } from '@/shared/navigation'
@@ -100,7 +100,11 @@ export function ExperienceIntelligenceSectionPage({
   }, [experienceQuery.data, selectedFeedbackId])
 
   if (experienceQuery.isPending || commercialQuery.isPending || fulfillmentQuery.isPending) {
-    return <DashboardSkeleton />
+    return (
+      <ModulePageStatus title={metadata[section].title} breadcrumb={metadata[section].breadcrumb}>
+        <DashboardSkeleton />
+      </ModulePageStatus>
+    )
   }
 
   if (experienceQuery.isError || commercialQuery.isError || fulfillmentQuery.isError) {
@@ -108,15 +112,17 @@ export function ExperienceIntelligenceSectionPage({
     const presented = presentError(sourceError, 'page-load')
 
     return (
-      <ErrorState
-        title={presented.title}
-        description={presented.message}
-        onRetry={() => {
-          void experienceQuery.refetch()
-          void commercialQuery.refetch()
-          void fulfillmentQuery.refetch()
-        }}
-      />
+      <ModulePageStatus title={metadata[section].title} breadcrumb={metadata[section].breadcrumb}>
+        <ErrorState
+          title={presented.title}
+          description={presented.message}
+          onRetry={() => {
+            void experienceQuery.refetch()
+            void commercialQuery.refetch()
+            void fulfillmentQuery.refetch()
+          }}
+        />
+      </ModulePageStatus>
     )
   }
 
@@ -130,7 +136,9 @@ export function ExperienceIntelligenceSectionPage({
 
   return (
     <>
-      <CompactPageToolbar
+      <ModulePageFrame
+        header={
+          <CompactPageToolbar
         title={page.title}
         breadcrumb={page.breadcrumb}
         primaryAction={
@@ -140,7 +148,9 @@ export function ExperienceIntelligenceSectionPage({
             </CompactActionButton>
           ) : undefined
         }
-      />
+          />
+        }
+      >
 
       {section === 'feedback-quality' ? (
         <FeedbackQualityScreen
@@ -176,6 +186,7 @@ export function ExperienceIntelligenceSectionPage({
           }
         />
       ) : null}
+      </ModulePageFrame>
     </>
   )
 }

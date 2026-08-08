@@ -1,3 +1,5 @@
+import './styles/service-administration.css'
+
 export {
   ServiceAdministrationSectionPage,
   type ServiceAdministrationSection,

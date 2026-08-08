@@ -3,6 +3,7 @@ import { IconArrowLeft } from '@tabler/icons-react'
 import type { ReactNode } from 'react'
 
 import { Card, CardContent, EmptyState, PageHeader } from '@/shared/ui'
+import { ModuleScrollArea } from '@/shared/ui/module-controls'
 
 interface ModuleShellPageProps {
   eyebrow: string
@@ -22,7 +23,7 @@ export function ModuleShellPage({
   footerNote,
 }: ModuleShellPageProps) {
   return (
-    <>
+    <ModuleScrollArea>
       <PageHeader
         eyebrow={eyebrow}
         title={title}
@@ -89,6 +90,6 @@ export function ModuleShellPage({
           </Card>
         ) : null}
       </main>
-    </>
+    </ModuleScrollArea>
   )
 }

@@ -17,14 +17,19 @@
   --cc-shadow: 0 2px 9px #14204012;
   color: var(--cc-t);
   font-size: 12px;
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .command-center-toolbar {
-  position: sticky;
-  top: 0;
   z-index: 20;
   display: flex;
   min-height: 58px;
+  flex-shrink: 0;
   flex-wrap: wrap;
   align-items: center;
   gap: 7px;
@@ -84,6 +89,10 @@
 }
 
 .command-center-content {
+  min-height: 0;
+  flex: 1;
+  overflow-x: hidden;
+  overflow-y: auto;
   padding: 19px;
 }
 

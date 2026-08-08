@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
 
-import { CompactPageToolbar, CompactActionButton } from '@/shared/ui/module-controls'
+import { CompactPageToolbar, CompactActionButton, ModulePageFrame, ModulePageStatus } from '@/shared/ui/module-controls'
 import { presentError } from '@/shared/errors'
 import { serviceAdministrationQueries } from '@/modules/service-administration/api/service-administration.queries'
 import { fulfillmentKeys } from '@/modules/fulfillment/api/fulfillment.keys'
@@ -198,20 +198,26 @@ export function CommercialSectionPage({
   }, [query.data, selectedApprovalId])
 
   if (query.isPending || serviceAdministrationQuery.isPending) {
-    return <DashboardSkeleton />
+    return (
+      <ModulePageStatus title={metadata[section].title} breadcrumb={metadata[section].breadcrumb}>
+        <DashboardSkeleton />
+      </ModulePageStatus>
+    )
   }
   if (query.isError || serviceAdministrationQuery.isError) {
     const sourceError = query.error ?? serviceAdministrationQuery.error
     const e = presentError(sourceError, 'page-load')
     return (
-      <ErrorState
-        title={e.title}
-        description={e.message}
-        onRetry={() => {
-          void query.refetch()
-          void serviceAdministrationQuery.refetch()
-        }}
-      />
+      <ModulePageStatus title={metadata[section].title} breadcrumb={metadata[section].breadcrumb}>
+        <ErrorState
+          title={e.title}
+          description={e.message}
+          onRetry={() => {
+            void query.refetch()
+            void serviceAdministrationQuery.refetch()
+          }}
+        />
+      </ModulePageStatus>
     )
   }
 
@@ -229,7 +235,9 @@ export function CommercialSectionPage({
 
   return (
     <>
-      <CompactPageToolbar
+      <ModulePageFrame
+        header={
+          <CompactPageToolbar
         title={page.title}
         breadcrumb={page.breadcrumb}
         primaryAction={
@@ -266,7 +274,9 @@ export function CommercialSectionPage({
             </CompactActionButton>
           ) : undefined
         }
-      />
+          />
+        }
+      >
 
       {section === 'service-requests' ? (
         <ServiceRequestsScreen
@@ -390,6 +400,7 @@ export function CommercialSectionPage({
           onDecide={(input) => decideApproval.mutate(input)}
         />
       ) : null}
+      </ModulePageFrame>
     </>
   )
 }

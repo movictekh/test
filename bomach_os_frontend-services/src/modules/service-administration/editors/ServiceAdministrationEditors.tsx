@@ -24,6 +24,7 @@ function EditorModal({
   onSave,
   saving,
   saveLabel,
+  saveDisabled = false,
 }: {
   title: string
   children: ReactNode
@@ -31,6 +32,7 @@ function EditorModal({
   onSave: () => void
   saving: boolean
   saveLabel: string
+  saveDisabled?: boolean
 }) {
   return (
     <div className="service-admin-editor-backdrop" role="presentation" onMouseDown={onClose}>
@@ -55,7 +57,7 @@ function EditorModal({
           <button
             type="button"
             className="service-admin-button service-admin-button-primary"
-            disabled={saving}
+            disabled={saving || saveDisabled}
             onClick={onSave}
           >
             {saving ? 'Saving…' : saveLabel}
@@ -133,7 +135,7 @@ export function CalculatorEditor({
   saving: boolean
 }) {
   const [name, setName] = useState(calculator?.name ?? '')
-  const [serviceId, setServiceId] = useState(calculator?.serviceId ?? services[0]?.id ?? '')
+  const [serviceId, setServiceId] = useState(calculator?.serviceId ?? '')
   const [template, setTemplate] = useState(
     calculator?.charges.some((charge) => charge.kind === 'formula') ? 'Custom formula' : 'Fixed',
   )
@@ -152,14 +154,19 @@ export function CalculatorEditor({
   )
 
   const service = services.find((item) => item.id === serviceId)
+  const hasValidService = Boolean(serviceId && Number(serviceId) > 0 && service)
+  const canSave = Boolean(name.trim() && hasValidService)
 
   return (
     <EditorModal
       title={calculator ? `Edit ${calculator.name}` : 'Create Service Calculator'}
       onClose={onClose}
       saving={saving}
+      saveDisabled={!canSave}
       saveLabel={calculator ? 'Save Calculator' : 'Create Calculator'}
       onSave={() => {
+        if (!canSave) return
+
         const charges: CalculatorCharge[] = [
           {
             id:
@@ -189,7 +196,7 @@ export function CalculatorEditor({
 
         onSave({
           ...(calculator?.id ? { id: calculator.id } : {}),
-          name,
+          name: name.trim(),
           code: calculator?.code ?? `CALC-${service?.code ?? 'NEW'}-01`,
           serviceId,
           description: `${template} calculator for ${service?.name ?? 'service pricing'}.`,
@@ -202,15 +209,32 @@ export function CalculatorEditor({
     >
       <div className="service-admin-editor-grid">
         <EditorField label="Name">
-          <input value={name} onChange={(event) => setName(event.target.value)} />
+          <input
+            value={name}
+            required
+            onChange={(event) => setName(event.target.value)}
+          />
         </EditorField>
         <EditorField label="Service">
-          <select value={serviceId} onChange={(event) => setServiceId(event.target.value)}>
-            {services.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name}
-              </option>
-            ))}
+          <select
+            value={serviceId}
+            required
+            aria-required="true"
+            disabled={services.length === 0}
+            onChange={(event) => setServiceId(event.target.value)}
+          >
+            {services.length === 0 ? (
+              <option value="">Create a service first</option>
+            ) : (
+              <>
+                {!calculator ? <option value="">Select a service</option> : null}
+                {services.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </>
+            )}
           </select>
         </EditorField>
         <EditorField label="Template">

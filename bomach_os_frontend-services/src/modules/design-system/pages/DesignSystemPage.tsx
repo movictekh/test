@@ -24,6 +24,7 @@ import {
   Tooltip,
   useToast,
 } from '@/shared/ui'
+import { ModuleScrollArea } from '@/shared/ui/module-controls'
 
 const lifecycleSteps = [
   { id: 'request', label: 'Request', status: 'complete' },
@@ -40,7 +41,7 @@ export function DesignSystemPage() {
   const toast = useToast()
 
   return (
-    <>
+    <ModuleScrollArea>
       <PageHeader
         eyebrow="Phase 2"
         title="Design System Showcase"
@@ -184,6 +185,6 @@ export function DesignSystemPage() {
           toast.success('Draft deleted')
         }}
       />
-    </>
+    </ModuleScrollArea>
   )
 }

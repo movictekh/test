@@ -175,7 +175,10 @@ export async function saveLivePricingConfig(
   input: SaveCalculatorInput,
 ): Promise<PricingCalculator> {
   const serviceId = Number(input.serviceId)
-  if (!Number.isFinite(serviceId)) throw new Error('Invalid Service identifier.')
+  // Number('') === 0 — treat empty/missing service as invalid before calling the API.
+  if (!Number.isFinite(serviceId) || serviceId <= 0) {
+    throw new Error('Select a service before saving this calculator.')
+  }
 
   const payload = mapSaveCalculatorInput(input)
   const dto = input.id

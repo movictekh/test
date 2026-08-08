@@ -110,7 +110,7 @@ function Field({
 }) {
   return (
     <label
-      className={`service-admin-config-field${full ? 'service-admin-config-field--full' : ''}`}
+      className={`service-admin-config-field${full ? ' service-admin-config-field--full' : ''}`}
     >
       <span>
         {label}
@@ -119,6 +119,25 @@ function Field({
       {children}
     </label>
   )
+}
+
+/** Backend stores category slugs; show human labels in the wizard. */
+const SERVICE_CATEGORY_LABELS: Record<string, string> = {
+  surveying: 'Surveying',
+  construction: 'Construction',
+  it: 'Information Technology (IT)',
+  civil_engineering: 'Civil Engineering',
+  mechanical_engineering: 'Mechanical Engineering',
+  electrical_engineering: 'Electrical Engineering',
+  environmental_engineering: 'Environmental Engineering',
+  project_management: 'Project Management',
+  property_sale_rent: 'Property Sale/Rent',
+  maintenance: 'Maintenance & Technical Support',
+  others: 'Others',
+}
+
+function categoryLabel(name: string) {
+  return SERVICE_CATEGORY_LABELS[name] ?? name
 }
 
 export function CreateServiceWizard({
@@ -138,7 +157,7 @@ export function CreateServiceWizard({
   const [maxReachedStep, setMaxReachedStep] = useState(0)
   const [name, setName] = useState('')
   const [code, setCode] = useState('')
-  const [categoryId, setCategoryId] = useState<number>(categories[0]?.id ?? 0)
+  const [categoryId, setCategoryId] = useState<number>(0)
   const [division, setDivision] = useState(divisions[0] ?? '')
   const [owner, setOwner] = useState('Service Manager')
   const [description, setDescription] = useState('')
@@ -170,7 +189,7 @@ export function CreateServiceWizard({
 
   if (!open) return null
 
-  const selectedCategoryId = categoryId || categories[0]?.id || 0
+  const selectedCategoryId = categoryId
 
   const validateStep = (index: number): string | null => {
     if (index === 0) {
@@ -361,15 +380,23 @@ export function CreateServiceWizard({
           </Field>
           <Field label="Category" required>
             <select
-              value={selectedCategoryId}
+              value={selectedCategoryId || ''}
               required
+              disabled={categories.length === 0}
               onChange={(event) => setCategoryId(Number(event.target.value))}
             >
-              {categories.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name}
-                </option>
-              ))}
+              {categories.length === 0 ? (
+                <option value="">No categories available</option>
+              ) : (
+                <>
+                  <option value="">Select a category</option>
+                  {categories.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {categoryLabel(item.name)}
+                    </option>
+                  ))}
+                </>
+              )}
             </select>
           </Field>
           <Field label="Division" required>
@@ -388,8 +415,11 @@ export function CreateServiceWizard({
           </Field>
           <Field label="Description" full required>
             <textarea
+              className="service-admin-description-textarea"
               value={description}
               required
+              rows={4}
+              placeholder="Describe what this service covers, who it is for, and typical delivery outcomes"
               onChange={(event) => setDescription(event.target.value)}
             />
           </Field>
@@ -572,9 +602,9 @@ export function CreateServiceWizard({
             </Field>
           </div>
           <div className="service-admin-notice service-admin-notice-green">
-            <b>Initial backend setup.</b> This step creates the Service as a draft, then saves its
-            sub-services and request form. Pricing, workflow, branch activation and publish remain
-            for the next API stages.
+            <b>Ready to create.</b> Your service will be saved as a draft with the sub-services and
+            request form from this wizard. Pricing, workflow, and branch availability can be
+            finished from the service catalogue afterward.
           </div>
         </>
       ) : null}
@@ -882,8 +912,11 @@ export function ConfigureServiceWorkspace({
             </Field>
             <Field label="Description" full required>
               <textarea
+                className="service-admin-description-textarea"
                 value={description}
                 required
+                rows={4}
+                placeholder="Describe what this service covers, who it is for, and typical delivery outcomes"
                 onChange={(event) => setDescription(event.target.value)}
               />
             </Field>
