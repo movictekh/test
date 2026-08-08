@@ -1,5 +1,5 @@
 import { IconX } from '@tabler/icons-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import { formatNumberFieldValue, parseNumberFieldValue } from '@/shared/lib/number-input'
 
@@ -208,25 +208,12 @@ export function CreateServiceWizard({
   const [workflow, setWorkflow] = useState(
     'Request Review\nTechnical Assessment\nQuotation\nApproval\nInvoice & Payment\nService Order\nExecution\nQuality Review\nClient Acceptance\nCompletion & Feedback',
   )
-  const [selectedBranchIds, setSelectedBranchIds] = useState<number[]>([])
-  const [branchesInitialized, setBranchesInitialized] = useState(false)
+  const [selectedBranchIds, setSelectedBranchIds] = useState<number[] | null>(null)
   const [status, setStatus] = useState<'active' | 'draft' | 'inactive'>('draft')
   const [clientVisibility, setClientVisibility] = useState<'visible' | 'internal' | 'hidden'>(
     'visible',
   )
   const [error, setError] = useState('')
-
-  useEffect(() => {
-    if (!open) {
-      setBranchesInitialized(false)
-      return
-    }
-
-    if (!branchesInitialized && access.branches && branchOptions.length > 0) {
-      setSelectedBranchIds(branchOptions.map((branch) => branch.id))
-      setBranchesInitialized(true)
-    }
-  }, [access.branches, branchOptions, branchesInitialized, open])
 
   if (!open) return null
 
@@ -243,6 +230,8 @@ export function CreateServiceWizard({
     { id: 'review', label: access.publish ? 'Review & Publish' : 'Review' },
   ]
   const currentStage = steps[Math.min(step, steps.length - 1)]?.id ?? 'basic'
+  const effectiveSelectedBranchIds =
+    selectedBranchIds ?? branchOptions.map((branch) => branch.id)
 
   const validateStage = (stage: WizardStage): string | null => {
     if (stage === 'basic') {
@@ -274,7 +263,7 @@ export function CreateServiceWizard({
       return 'Select at least one request form field.'
     if (stage === 'workflow' && splitLines(workflow).length === 0)
       return 'Add at least one workflow stage.'
-    if (stage === 'branches' && selectedBranchIds.length === 0)
+    if (stage === 'branches' && effectiveSelectedBranchIds.length === 0)
       return 'Select at least one active branch.'
     return null
   }
@@ -299,7 +288,9 @@ export function CreateServiceWizard({
       ...(status !== 'draft' && access.publish ? ['publish' as const] : []),
     ]
     const selectedOwner = ownerRoles.find((role) => role.id === ownerRoleId)
-    const selectedBranches = branchOptions.filter((branch) => selectedBranchIds.includes(branch.id))
+    const selectedBranches = branchOptions.filter((branch) =>
+      effectiveSelectedBranchIds.includes(branch.id),
+    )
 
     setError('')
     onSubmit({
@@ -315,7 +306,7 @@ export function CreateServiceWizard({
       status,
       clientVisibility,
       branchNames: selectedBranches.map((branch) => branch.name),
-      branchIds: selectedBranchIds,
+      branchIds: effectiveSelectedBranchIds,
       subservices: splitLines(subservices),
       pricing: { method: pricingMethod, rate, depositPercent, taxPercent, discountApprovalPercent },
       requestFields,
@@ -600,12 +591,14 @@ export function CreateServiceWizard({
                 <label key={branch.id} className="service-admin-check-option">
                   <input
                     type="checkbox"
-                    checked={selectedBranchIds.includes(branch.id)}
+                    checked={effectiveSelectedBranchIds.includes(branch.id)}
                     onChange={(event) =>
                       setSelectedBranchIds((current) =>
                         event.target.checked
-                          ? [...current, branch.id]
-                          : current.filter((item) => item !== branch.id),
+                          ? [...(current ?? effectiveSelectedBranchIds), branch.id]
+                          : (current ?? effectiveSelectedBranchIds).filter(
+                              (item) => item !== branch.id,
+                            ),
                       )
                     }
                   />

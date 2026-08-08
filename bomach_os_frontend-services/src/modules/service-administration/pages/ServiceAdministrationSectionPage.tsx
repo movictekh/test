@@ -763,9 +763,9 @@ export function ServiceAdministrationSectionPage({
         />
       ) : null}
 
-      {capabilities.canCreateInitialServiceSetup ? (
+      {capabilities.canCreateInitialServiceSetup && newServiceOpen ? (
         <CreateServiceWizard
-          open={newServiceOpen}
+          open
           categories={categoryQuery.data ?? []}
           branches={createWizardBranchesQuery.data ?? []}
           ownerRoles={rolesQuery.data ?? []}

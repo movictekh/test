@@ -8,11 +8,24 @@ import {
   mapServiceCatalogueCard,
   mapServiceCatalogueDetail,
 } from '../mappers/service-catalogue.mapper'
+import { serviceAdministrationApi } from './service-administration.api'
 import { serviceAdministrationBackendApi } from './service-administration.backend-api'
 import type { ServiceListFilters } from './service-administration.contracts'
 import { serviceAdministrationKeys } from './service-administration.keys'
 
 export const serviceAdministrationQueries = {
+  /**
+   * Compatibility query for Commercial/Fulfillment while those modules still
+   * consume the legacy Service workspace. Service Administration itself must
+   * not use this query.
+   */
+  workspace: () =>
+    queryOptions({
+      queryKey: serviceAdministrationKeys.workspace(),
+      queryFn: () => serviceAdministrationApi.getWorkspace(),
+      staleTime: 30_000,
+    }),
+
   categories: () =>
     queryOptions({
       queryKey: serviceAdministrationKeys.categories(),
