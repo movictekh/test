@@ -27,7 +27,9 @@ export function mapBranchActivationDto(
     branchName: dto.branch_name,
     state:
       dto.status === 'active' ? 'active' : dto.status === 'draft' ? 'setup-required' : 'inactive',
-    capacity: dto.capacity ?? 0,
+    capacity: dto.capacity ?? null,
+    clientVisible: dto.client_visible,
+    activatedAt: dto.activated_at,
     activeOrders: 0,
     ownerName: '',
   }

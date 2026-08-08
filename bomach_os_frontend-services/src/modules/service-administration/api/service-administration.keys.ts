@@ -27,6 +27,8 @@ export const serviceAdministrationKeys = {
 
   branches: () => [...serviceAdministrationKeys.all, 'branches'] as const,
 
+  roles: () => [...serviceAdministrationKeys.all, 'roles'] as const,
+
   requestFieldTypes: () => [...serviceAdministrationKeys.all, 'request-field-types'] as const,
 
   subservices: (serviceId: number) =>

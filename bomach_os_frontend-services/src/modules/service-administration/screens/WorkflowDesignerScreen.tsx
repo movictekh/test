@@ -8,25 +8,9 @@ import type {
   SaveWorkflowInput,
   ServiceCatalogueItem,
   ServiceWorkflow,
+  WorkflowOwnerRoleOption,
   WorkflowStage,
 } from '../types/service-administration.types'
-
-const ownerRoles = [
-  'CSRC / Sales',
-  'Service Owner',
-  'Finance',
-  'Operations',
-  'Assigned Team',
-  'Supervisor',
-  'Client',
-  'Service Administrator',
-  'Estate Manager',
-  'Head of Real Estate',
-  'Finance Officer',
-  'Project Manager',
-  'Commercial Manager',
-  'Head of Operations',
-] as const
 
 const defaultAutomationRules = [
   'Payment threshold met → create order and notify Operations',
@@ -72,31 +56,40 @@ function cloneStages(stages: WorkflowStage[]) {
     .map((stage) => ({ ...stage }))
 }
 
-function stagesFromNames(names: string[]): WorkflowStage[] {
-  return names.map((name, index) => ({
-    id: `stage-seed-${index}-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
-    name,
-    order: index + 1,
-    ownerRole: ownerRoles[Math.min(index, ownerRoles.length - 1)] ?? 'Service Owner',
-    slaHours: daysToHours(index === 0 ? 1 : 2),
-    requiresApproval: /Approval|Review|Payment|Inspection/i.test(name),
-    requiresEvidence: index > 1,
-    clientVisible: true,
-  }))
+function stagesFromNames(names: string[], ownerRoles: WorkflowOwnerRoleOption[]): WorkflowStage[] {
+  return names.map((name, index) => {
+    const role = ownerRoles[Math.min(index, Math.max(0, ownerRoles.length - 1))]
+    return {
+      id: `stage-seed-${index}-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+      name,
+      order: index + 1,
+      ownerRole: role?.name ?? 'Unassigned',
+      ownerRoleId: role?.id ?? null,
+      slaHours: daysToHours(index === 0 ? 1 : 2),
+      requiresApproval: /Approval|Review|Payment|Inspection/i.test(name),
+      requiresEvidence: index > 1,
+      clientVisible: true,
+    }
+  })
 }
 
 function buildStagesForService(
   service: ServiceCatalogueItem,
   workflow: ServiceWorkflow | undefined,
+  ownerRoles: WorkflowOwnerRoleOption[],
 ): WorkflowStage[] {
   if (workflow?.stages.length) return cloneStages(workflow.stages)
-  if (service.workflowStages?.length) return stagesFromNames(service.workflowStages)
-  return stagesFromNames(['Request Review', 'Execution', 'Quality Review', 'Client Acceptance'])
+  if (service.workflowStages?.length) return stagesFromNames(service.workflowStages, ownerRoles)
+  return stagesFromNames(
+    ['Request Review', 'Execution', 'Quality Review', 'Client Acceptance'],
+    ownerRoles,
+  )
 }
 
 type StageDraft = {
   name: string
   ownerRole: string
+  ownerRoleId: number | null
   slaDays: number
   requiresApproval: boolean
   requiresEvidence: boolean
@@ -106,6 +99,7 @@ function stageToDraft(stage: WorkflowStage): StageDraft {
   return {
     name: stage.name,
     ownerRole: stage.ownerRole,
+    ownerRoleId: stage.ownerRoleId ?? null,
     slaDays: hoursToDays(stage.slaHours),
     requiresApproval: stage.requiresApproval,
     requiresEvidence: stage.requiresEvidence,
@@ -117,6 +111,7 @@ export function WorkflowDesignerScreen({
   workflows,
   selectedServiceId,
   onSelectedServiceChange,
+  ownerRoles,
   saving,
   onSave,
 }: {
@@ -124,6 +119,7 @@ export function WorkflowDesignerScreen({
   workflows: ServiceWorkflow[]
   selectedServiceId: string
   onSelectedServiceChange: (serviceId: string) => void
+  ownerRoles: WorkflowOwnerRoleOption[]
   saving: boolean
   onSave?: (input: SaveWorkflowInput) => void
 }) {
@@ -145,7 +141,7 @@ export function WorkflowDesignerScreen({
 
   const [draftKey, setDraftKey] = useState(sourceKey)
   const [stages, setStages] = useState<WorkflowStage[]>(() =>
-    selectedService ? buildStagesForService(selectedService, linkedWorkflow) : [],
+    selectedService ? buildStagesForService(selectedService, linkedWorkflow, ownerRoles) : [],
   )
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
   const [stageDraft, setStageDraft] = useState<StageDraft | null>(null)
@@ -157,7 +153,7 @@ export function WorkflowDesignerScreen({
 
   if (sourceKey !== draftKey && selectedService) {
     setDraftKey(sourceKey)
-    setStages(buildStagesForService(selectedService, linkedWorkflow))
+    setStages(buildStagesForService(selectedService, linkedWorkflow, ownerRoles))
     setEditingIndex(null)
     setStageDraft(null)
   }
@@ -176,7 +172,8 @@ export function WorkflowDesignerScreen({
         id: `stage-new-${Date.now()}`,
         name: 'New Stage',
         order: current.length + 1,
-        ownerRole: 'Service Owner',
+        ownerRole: ownerRoles[0]?.name ?? 'Unassigned',
+        ownerRoleId: ownerRoles[0]?.id ?? null,
         slaHours: 24,
         requiresApproval: false,
         requiresEvidence: true,
@@ -207,7 +204,8 @@ export function WorkflowDesignerScreen({
           ? {
               ...stage,
               name,
-              ownerRole: stageDraft.ownerRole.trim() || 'Service Owner',
+              ownerRole: stageDraft.ownerRole,
+              ownerRoleId: stageDraft.ownerRoleId,
               slaHours: daysToHours(stageDraft.slaDays),
               requiresApproval: stageDraft.requiresApproval,
               requiresEvidence: stageDraft.requiresEvidence,
@@ -546,20 +544,28 @@ export function WorkflowDesignerScreen({
               <label className="service-admin-stage-editor-field">
                 <span>Owner role</span>
                 <select
-                  value={stageDraft.ownerRole}
-                  onChange={(event) =>
+                  value={stageDraft.ownerRoleId ?? ''}
+                  disabled={ownerRoles.length === 0}
+                  onChange={(event) => {
+                    const roleId = event.target.value ? Number(event.target.value) : null
+                    const role = ownerRoles.find((item) => item.id === roleId)
                     setStageDraft((current) =>
-                      current ? { ...current, ownerRole: event.target.value } : current,
+                      current
+                        ? {
+                            ...current,
+                            ownerRoleId: role?.id ?? null,
+                            ownerRole: role?.name ?? 'Unassigned',
+                          }
+                        : current,
                     )
-                  }
+                  }}
                 >
-                  {[stageDraft.ownerRole, ...ownerRoles]
-                    .filter((role, index, all) => all.indexOf(role) === index)
-                    .map((role) => (
-                      <option key={role} value={role}>
-                        {role}
-                      </option>
-                    ))}
+                  <option value="">Unassigned</option>
+                  {ownerRoles.map((role) => (
+                    <option key={role.id} value={role.id}>
+                      {role.name}
+                    </option>
+                  ))}
                 </select>
               </label>
               <label className="service-admin-stage-editor-field">

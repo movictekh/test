@@ -37,6 +37,15 @@ export interface BranchActivationMatrixFilters {
   search?: string
 }
 
+export interface RoleDto {
+  id: number
+  name: string
+  branches: Array<{ id: number; branch_name: string }>
+  permissions: Record<string, string[]>
+  created_at: string
+  updated_at: string
+}
+
 export interface BranchDto {
   id: number
   branch_name: string

@@ -72,6 +72,7 @@ describe('WorkflowDesignerScreen service selection', () => {
           workflows={[]}
           selectedServiceId="1"
           onSelectedServiceChange={onSelectedServiceChange}
+          ownerRoles={[{ id: 12, name: 'Project Manager' }]}
           saving={false}
         />
       </ToastProvider>,
@@ -90,6 +91,7 @@ describe('WorkflowDesignerScreen service selection', () => {
           workflows={workflows}
           selectedServiceId="2"
           onSelectedServiceChange={vi.fn()}
+          ownerRoles={[{ id: 12, name: 'Project Manager' }]}
           saving={false}
         />
       </ToastProvider>,

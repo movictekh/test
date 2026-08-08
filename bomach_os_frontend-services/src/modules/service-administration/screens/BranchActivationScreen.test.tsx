@@ -41,6 +41,8 @@ const activations: BranchActivation[] = [
     branchName: 'Enugu',
     state: 'active',
     capacity: 80,
+    clientVisible: false,
+    activatedAt: '2026-08-01T10:00:00Z',
     activeOrders: 2,
     ownerName: 'Branch Owner',
   },
@@ -107,7 +109,11 @@ describe('BranchActivationScreen', () => {
       branchName: 'Port Harcourt',
       active: true,
       slaDays: 5,
+      capacity: null,
+      clientVisible: true,
+      activatedAt: null,
     })
+    expect(payload?.updates).toHaveLength(1)
   })
 
   it('disables the save action while the matrix is saving', () => {

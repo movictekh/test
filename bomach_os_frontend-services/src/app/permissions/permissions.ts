@@ -15,6 +15,8 @@ export const PERMISSIONS = {
 
   branchesList: 'branches.list',
 
+  rolesList: 'roles.list',
+
   serviceSubservicesList: 'service_subservices.list',
   serviceSubservicesView: 'service_subservices.view',
   serviceSubservicesCreate: 'service_subservices.create',

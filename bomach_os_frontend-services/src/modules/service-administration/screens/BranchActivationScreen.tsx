@@ -53,14 +53,31 @@ export function BranchActivationScreen({
     if (!onSave) return
     onSave({
       updates: services.flatMap((service) =>
-        branches.map((branch) => ({
-          serviceId: service.id,
-          serviceName: service.name,
-          branchId: String(branch.id),
-          branchName: branch.name,
-          active: matrix[`${service.id}:${branch.id}`] ?? false,
-          slaDays: service.slaDays ?? 5,
-        })),
+        branches.flatMap((branch) => {
+          const key = `${service.id}:${branch.id}`
+          const active = matrix[key] ?? false
+          const wasActive = initialMatrix[key] ?? false
+          if (active === wasActive) return []
+
+          const existing = activations.find(
+            (activation) =>
+              activation.serviceId === service.id && Number(activation.branchId) === branch.id,
+          )
+
+          return [
+            {
+              serviceId: service.id,
+              serviceName: service.name,
+              branchId: String(branch.id),
+              branchName: branch.name,
+              active,
+              slaDays: service.slaDays ?? 5,
+              capacity: existing?.capacity ?? null,
+              clientVisible: existing?.clientVisible ?? true,
+              activatedAt: existing?.activatedAt ?? null,
+            },
+          ]
+        }),
       ),
     })
   }

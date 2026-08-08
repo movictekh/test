@@ -24,6 +24,7 @@ export interface ServiceAdministrationCapabilities {
   canUpdateWorkflow: boolean
 
   canListBranches: boolean
+  canListRoles: boolean
   canListBranchActivations: boolean
   canUpdateBranchActivations: boolean
 
@@ -81,6 +82,7 @@ export function getServiceAdministrationCapabilities(
     canUpdateWorkflow: hasPermission(user, PERMISSIONS.serviceWorkflowsUpdate),
 
     canListBranches: hasPermission(user, PERMISSIONS.branchesList),
+    canListRoles: hasPermission(user, PERMISSIONS.rolesList),
     canListBranchActivations: hasPermission(user, PERMISSIONS.serviceBranchActivationsList),
     canUpdateBranchActivations: hasPermission(user, PERMISSIONS.serviceBranchActivationsUpdate),
 

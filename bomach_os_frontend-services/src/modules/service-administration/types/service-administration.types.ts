@@ -7,6 +7,11 @@ export interface ServiceCategoryOption {
   name: string
 }
 
+export interface WorkflowOwnerRoleOption {
+  id: number
+  name: string
+}
+
 export interface RequestFieldTypeOption {
   value:
     | 'text'
@@ -123,6 +128,7 @@ export interface WorkflowStage {
   name: string
   order: number
   ownerRole: string
+  ownerRoleId?: number | null
   slaHours: number
   requiresEvidence: boolean
   requiresApproval: boolean
@@ -147,7 +153,9 @@ export interface BranchActivation {
   branchId: string
   branchName: string
   state: BranchActivationState
-  capacity: number
+  capacity: number | null
+  clientVisible?: boolean
+  activatedAt?: string | null
   activeOrders: number
   ownerName: string
 }
@@ -261,6 +269,9 @@ export interface BranchActivationMatrixUpdate {
   branchName: string
   active: boolean
   slaDays: number
+  capacity: number | null
+  clientVisible: boolean
+  activatedAt: string | null
 }
 
 export interface SaveBranchActivationMatrixInput {

@@ -22,6 +22,7 @@ export function mapWorkflowDto(dto: WorkflowDto, serviceName: string): ServiceWo
       name: stage.name,
       order: index + 1,
       ownerRole: stage.owner_role_name || 'Unassigned',
+      ownerRoleId: stage.owner_role_id,
       slaHours: Math.max(0, stage.sla_days) * 24,
       requiresEvidence: stage.requires_evidence,
       requiresApproval: stage.requires_approval,
@@ -49,8 +50,7 @@ export function mapSaveWorkflowInput(
     is_active: input.status === 'active',
     stages: input.stages.map((stage, index) => ({
       name: stage.name,
-      // The UI still carries a display role string. Do not guess backend IDs.
-      owner_role_id: null,
+      owner_role_id: stage.ownerRoleId ?? null,
       sla_days: Math.max(0, Math.round(stage.slaHours / 24)),
       requires_approval: stage.requiresApproval,
       requires_evidence: stage.requiresEvidence,

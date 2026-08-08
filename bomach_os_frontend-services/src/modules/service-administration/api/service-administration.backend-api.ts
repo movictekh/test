@@ -15,6 +15,7 @@ import type {
   RequestFormDto,
   RequestFormInputDto,
   RequestFormUpdateDto,
+  RoleDto,
   ServiceCatalogueCardDto,
   ServiceCatalogueDetailDto,
   ServiceCategoryDto,
@@ -68,6 +69,12 @@ function serviceListPath(path: string, filters: ServiceListFilters = {}) {
 }
 
 export const serviceAdministrationBackendApi = {
+  listRoles(limit = 100, offset = 0, search?: string) {
+    return apiClient.get<LimitOffsetPageDto<RoleDto>>(
+      withQuery('/roles', { limit, offset, search }),
+    )
+  },
+
   listBranches(limit = 100, offset = 0) {
     return apiClient.get<LimitOffsetPageDto<BranchDto>>(
       withQuery('/branches', { is_active: true, limit, offset }),

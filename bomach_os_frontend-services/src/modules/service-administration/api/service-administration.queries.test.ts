@@ -57,4 +57,24 @@ describe('live Service Catalogue queries', () => {
       ],
     })
   })
+
+  it('maps backend Roles for workflow ownership', async () => {
+    vi.spyOn(serviceAdministrationBackendApi, 'listRoles').mockResolvedValue({
+      count: 1,
+      items: [
+        {
+          id: 12,
+          name: 'Project Manager',
+          branches: [],
+          permissions: {},
+          created_at: '2026-08-08T00:00:00Z',
+          updated_at: '2026-08-08T00:00:00Z',
+        },
+      ],
+    })
+    const query = serviceAdministrationQueries.roles()
+    await expect(query.queryFn!({} as never)).resolves.toEqual([
+      { id: 12, name: 'Project Manager' },
+    ])
+  })
 })

@@ -14,7 +14,12 @@ import {
 import { presentError } from '@/shared/errors'
 import { ApiError } from '@/shared/api/api-error'
 import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
-import { CompactPageToolbar, CompactActionButton, ModulePageFrame, ModulePageStatus } from '@/shared/ui/module-controls'
+import {
+  CompactPageToolbar,
+  CompactActionButton,
+  ModulePageFrame,
+  ModulePageStatus,
+} from '@/shared/ui/module-controls'
 
 import { serviceAdministrationApi } from '../api/service-administration.api'
 import { serviceAdministrationBackendApi } from '../api/service-administration.backend-api'
@@ -36,7 +41,6 @@ import {
 } from '../screens/ServiceAdministrationScreens'
 import { WorkflowDesignerScreen } from '../screens/WorkflowDesignerScreen'
 import { getServiceAdministrationCapabilities } from '../permissions'
-import { mapBranchActivationDto } from '../mappers/branch-activation.mapper'
 import type {
   ConfigureServiceInput,
   CreateServiceWizardInput,
@@ -154,6 +158,10 @@ export function ServiceAdministrationSectionPage({
       capabilities.canListBranches &&
       capabilities.canListBranchActivations,
   })
+  const rolesQuery = useQuery({
+    ...serviceAdministrationQueries.roles(),
+    enabled: section === 'workflow-designer' && capabilities.canListRoles,
+  })
   const branchMatrixQuery = useQuery({
     ...serviceAdministrationQueries.branchActivationMatrix(),
     enabled: section === 'branch-activation' && capabilities.canListBranchActivations,
@@ -248,9 +256,7 @@ export function ServiceAdministrationSectionPage({
     onError: (error) => {
       const presented = presentError(error, 'background-action')
       const description =
-        error instanceof Error && !(error instanceof ApiError)
-          ? error.message
-          : presented.message
+        error instanceof Error && !(error instanceof ApiError) ? error.message : presented.message
       toast.error('Calculator could not be saved', { description })
     },
   })
@@ -311,8 +317,9 @@ export function ServiceAdministrationSectionPage({
             updates.map((update) => ({
               branch_id: Number(update.branchId),
               status: update.active ? 'active' : 'inactive',
-              client_visible: update.active,
-              capacity: null,
+              client_visible: update.clientVisible,
+              capacity: update.capacity,
+              activated_at: update.activatedAt,
             })),
           ),
         ),
@@ -479,177 +486,159 @@ export function ServiceAdministrationSectionPage({
           />
         }
       >
-      {section === 'service-catalogue' ? (
-        <ServiceCatalogueScreen
-          services={catalogue?.items ?? []}
-          totalCount={catalogue?.count ?? 0}
-          query={catalogueSearch}
-          division={catalogueDivision}
-          status={catalogueStatus}
-          page={cataloguePage}
-          pageSize={cataloguePageSize}
-          onFiltersChange={(filters) => {
-            void navigate({
-              to: '/app/$section',
-              params: { section: 'service-catalogue' },
-              search: (previous) => {
-                const next = { ...previous }
-                delete next.search
-                delete next.division
-                delete next.status
-                delete next.page
+        {section === 'service-catalogue' ? (
+          <ServiceCatalogueScreen
+            services={catalogue?.items ?? []}
+            totalCount={catalogue?.count ?? 0}
+            query={catalogueSearch}
+            division={catalogueDivision}
+            status={catalogueStatus}
+            page={cataloguePage}
+            pageSize={cataloguePageSize}
+            onFiltersChange={(filters) => {
+              void navigate({
+                to: '/app/$section',
+                params: { section: 'service-catalogue' },
+                search: (previous) => {
+                  const next = { ...previous }
+                  delete next.search
+                  delete next.division
+                  delete next.status
+                  delete next.page
 
-                return {
-                  ...next,
-                  ...(filters.query ? { search: filters.query } : {}),
-                  ...(filters.division ? { division: filters.division } : {}),
-                  ...(filters.status ? { status: filters.status } : {}),
-                }
-              },
-              replace: true,
-            })
-          }}
-          onPageChange={(nextPage) => {
-            void navigate({
-              to: '/app/$section',
-              params: { section: 'service-catalogue' },
-              search: (previous) => {
-                const next = { ...previous }
-                delete next.page
-
-                return {
-                  ...next,
-                  ...(nextPage > 1 ? { page: nextPage } : {}),
-                }
-              },
-              replace: true,
-            })
-          }}
-          onConfigure={
-            capabilities.canViewService
-              ? (service) => void openLiveServiceDetail(service)
-              : undefined
-          }
-          configureLabel="View"
-          onCreate={
-            capabilities.canCreateInitialServiceSetup ? () => setNewServiceOpen(true) : undefined
-          }
-          createDisabled={!capabilities.canCreateInitialServiceSetup}
-          onBranchAvailability={
-            capabilities.canListBranchActivations
-              ? () =>
-                  void navigate({
-                    to: '/app/$section',
-                    params: { section: 'branch-activation' },
-                  })
-              : undefined
-          }
-          branchAvailabilityDisabled={!capabilities.canListBranchActivations}
-        />
-      ) : null}
-
-      {section === 'calculator-library' ? (
-        <CalculatorLibraryScreen
-          calculators={pricingQuery.data ?? []}
-          hasServices={(catalogue?.items.length ?? 0) > 0}
-          onCreate={
-            capabilities.canCreatePricingConfig ? () => setCalculatorEditor('new') : undefined
-          }
-          createDisabled={
-            !capabilities.canCreatePricingConfig || (catalogue?.items.length ?? 0) === 0
-          }
-        />
-      ) : null}
-
-      {section === 'request-form-builder' ? (
-        <RequestFormBuilderScreen
-          services={catalogue?.items ?? []}
-          selectedServiceId={requestFormService?.id ?? ''}
-          onSelectedServiceChange={setSelectedRequestFormServiceId}
-          form={requestFormsQuery.data?.[0] ?? null}
-          fieldTypes={fieldTypesQuery.data ?? []}
-          saving={saveRequestForm.isPending}
-          {...(capabilities.canCreateRequestForm || capabilities.canUpdateRequestForm
-            ? { onSave: (input: SaveRequestFormInput) => saveRequestForm.mutate(input) }
-            : {})}
-        />
-      ) : null}
-
-      {section === 'workflow-designer' ? (
-        <WorkflowDesignerScreen
-          services={catalogue?.items ?? []}
-          workflows={workflowsQuery.data ?? []}
-          selectedServiceId={workflowService?.id ?? ''}
-          onSelectedServiceChange={setSelectedWorkflowServiceId}
-          saving={saveWorkflow.isPending}
-          {...(capabilities.canUpdateWorkflow
-            ? { onSave: (input: SaveWorkflowInput) => saveWorkflow.mutate(input) }
-            : {})}
-        />
-      ) : null}
-
-      {section === 'branch-activation' ? (
-        <BranchActivationScreen
-          services={branchMatrixQuery.data ?? []}
-          branches={branchesQuery.data ?? []}
-          activations={(branchMatrixQuery.data ?? []).flatMap((service) =>
-            service.branchNames.map((branchName, index) =>
-              mapBranchActivationDto(
-                {
-                  id: index + 1,
-                  service_id: Number(service.id),
-                  branch_id:
-                    branchesQuery.data?.find((branch) => branch.name === branchName)?.id ?? 0,
-                  branch_name: branchName,
-                  status: 'active',
-                  client_visible: true,
-                  capacity: null,
-                  activated_at: null,
-                  created_at: '',
-                  updated_at: '',
+                  return {
+                    ...next,
+                    ...(filters.query ? { search: filters.query } : {}),
+                    ...(filters.division ? { division: filters.division } : {}),
+                    ...(filters.status ? { status: filters.status } : {}),
+                  }
                 },
-                service,
-              ),
-            ),
-          )}
-          saving={saveBranchActivationMatrix.isPending}
-          {...(capabilities.canUpdateBranchActivations
-            ? {
-                onSave: (input: SaveBranchActivationMatrixInput) =>
-                  saveBranchActivationMatrix.mutate(input),
-              }
-            : {})}
-        />
-      ) : null}
+                replace: true,
+              })
+            }}
+            onPageChange={(nextPage) => {
+              void navigate({
+                to: '/app/$section',
+                params: { section: 'service-catalogue' },
+                search: (previous) => {
+                  const next = { ...previous }
+                  delete next.page
 
-      {selectedService &&
-      section === 'service-catalogue' &&
-      capabilities.canPublishService &&
-      selectedService.status !== 'active' ? (
-        <div className="service-admin-page service-admin-content">
-          <div className="service-admin-card">
-            <div className="service-admin-card-header">
-              <div>
-                <div className="service-admin-card-title">Publish readiness</div>
-                <div className="service-admin-card-subtitle">
-                  Backend readiness: request form + pricing config + active branch.
+                  return {
+                    ...next,
+                    ...(nextPage > 1 ? { page: nextPage } : {}),
+                  }
+                },
+                replace: true,
+              })
+            }}
+            onConfigure={
+              capabilities.canViewService
+                ? (service) => void openLiveServiceDetail(service)
+                : undefined
+            }
+            configureLabel="View"
+            onCreate={
+              capabilities.canCreateInitialServiceSetup ? () => setNewServiceOpen(true) : undefined
+            }
+            createDisabled={!capabilities.canCreateInitialServiceSetup}
+            onBranchAvailability={
+              capabilities.canListBranchActivations
+                ? () =>
+                    void navigate({
+                      to: '/app/$section',
+                      params: { section: 'branch-activation' },
+                    })
+                : undefined
+            }
+            branchAvailabilityDisabled={!capabilities.canListBranchActivations}
+          />
+        ) : null}
+
+        {section === 'calculator-library' ? (
+          <CalculatorLibraryScreen
+            calculators={pricingQuery.data ?? []}
+            hasServices={(catalogue?.items.length ?? 0) > 0}
+            onCreate={
+              capabilities.canCreatePricingConfig ? () => setCalculatorEditor('new') : undefined
+            }
+            createDisabled={
+              !capabilities.canCreatePricingConfig || (catalogue?.items.length ?? 0) === 0
+            }
+          />
+        ) : null}
+
+        {section === 'request-form-builder' ? (
+          <RequestFormBuilderScreen
+            services={catalogue?.items ?? []}
+            selectedServiceId={requestFormService?.id ?? ''}
+            onSelectedServiceChange={setSelectedRequestFormServiceId}
+            form={requestFormsQuery.data?.[0] ?? null}
+            fieldTypes={fieldTypesQuery.data ?? []}
+            saving={saveRequestForm.isPending}
+            {...(capabilities.canCreateRequestForm || capabilities.canUpdateRequestForm
+              ? { onSave: (input: SaveRequestFormInput) => saveRequestForm.mutate(input) }
+              : {})}
+          />
+        ) : null}
+
+        {section === 'workflow-designer' ? (
+          <WorkflowDesignerScreen
+            services={catalogue?.items ?? []}
+            workflows={workflowsQuery.data ?? []}
+            selectedServiceId={workflowService?.id ?? ''}
+            onSelectedServiceChange={setSelectedWorkflowServiceId}
+            ownerRoles={rolesQuery.data ?? []}
+            saving={saveWorkflow.isPending}
+            {...(capabilities.canUpdateWorkflow
+              ? { onSave: (input: SaveWorkflowInput) => saveWorkflow.mutate(input) }
+              : {})}
+          />
+        ) : null}
+
+        {section === 'branch-activation' ? (
+          <BranchActivationScreen
+            services={branchMatrixQuery.data?.services ?? []}
+            branches={branchesQuery.data ?? []}
+            activations={branchMatrixQuery.data?.activations ?? []}
+            saving={saveBranchActivationMatrix.isPending}
+            {...(capabilities.canUpdateBranchActivations
+              ? {
+                  onSave: (input: SaveBranchActivationMatrixInput) =>
+                    saveBranchActivationMatrix.mutate(input),
+                }
+              : {})}
+          />
+        ) : null}
+
+        {selectedService &&
+        section === 'service-catalogue' &&
+        capabilities.canPublishService &&
+        selectedService.status !== 'active' ? (
+          <div className="service-admin-page service-admin-content">
+            <div className="service-admin-card">
+              <div className="service-admin-card-header">
+                <div>
+                  <div className="service-admin-card-title">Publish readiness</div>
+                  <div className="service-admin-card-subtitle">
+                    Backend readiness: request form + pricing config + active branch.
+                  </div>
                 </div>
+                <button
+                  type="button"
+                  className="service-admin-button service-admin-button-primary"
+                  disabled={selectedService.readiness < 100 || publishService.isPending}
+                  onClick={() => publishService.mutate(Number(selectedService.id))}
+                >
+                  {publishService.isPending ? 'Publishing…' : 'Publish Service'}
+                </button>
               </div>
-              <button
-                type="button"
-                className="service-admin-button service-admin-button-primary"
-                disabled={selectedService.readiness < 100 || publishService.isPending}
-                onClick={() => publishService.mutate(Number(selectedService.id))}
-              >
-                {publishService.isPending ? 'Publishing…' : 'Publish Service'}
-              </button>
-            </div>
-            <div className="service-admin-notice service-admin-notice-blue">
-              Readiness: {selectedService.readiness}%
+              <div className="service-admin-notice service-admin-notice-blue">
+                Readiness: {selectedService.readiness}%
+              </div>
             </div>
           </div>
-        </div>
-      ) : null}
+        ) : null}
       </ModulePageFrame>
 
       {selectedService

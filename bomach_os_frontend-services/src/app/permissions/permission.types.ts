@@ -19,6 +19,8 @@ export const VERIFIED_APP_PERMISSION_VALUES = [
 
   'branches.list',
 
+  'roles.list',
+
   'service_subservices.list',
   'service_subservices.view',
   'service_subservices.create',

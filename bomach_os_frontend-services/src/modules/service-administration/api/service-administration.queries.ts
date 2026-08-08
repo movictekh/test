@@ -3,7 +3,7 @@ import { queryOptions } from '@tanstack/react-query'
 import { mapFieldTypeDto, mapRequestFormDto } from '../mappers/request-form.mapper'
 import { mapPricingConfigDto } from '../mappers/pricing-config.mapper'
 import { mapWorkflowDto } from '../mappers/workflow.mapper'
-import { mapBranchDto } from '../mappers/branch-activation.mapper'
+import { mapBranchActivationDto, mapBranchDto } from '../mappers/branch-activation.mapper'
 import {
   mapServiceCatalogueCard,
   mapServiceCatalogueDetail,
@@ -100,13 +100,36 @@ export const serviceAdministrationQueries = {
       staleTime: 5 * 60_000,
     }),
 
+  roles: () =>
+    queryOptions({
+      queryKey: serviceAdministrationKeys.roles(),
+      queryFn: async () =>
+        (await serviceAdministrationBackendApi.listRoles()).items.map((role) => ({
+          id: role.id,
+          name: role.name,
+        })),
+      staleTime: 5 * 60_000,
+    }),
+
   branchActivationMatrix: () =>
     queryOptions({
       queryKey: serviceAdministrationKeys.branchActivationMatrix({}),
-      queryFn: async () =>
-        (await serviceAdministrationBackendApi.getBranchActivationMatrix()).map(
+      queryFn: async () => {
+        const services = (await serviceAdministrationBackendApi.getBranchActivationMatrix()).map(
           mapServiceCatalogueCard,
-        ),
+        )
+        const activations = (
+          await Promise.all(
+            services.map(async (service) => {
+              const serviceId = Number(service.id)
+              if (!Number.isFinite(serviceId) || serviceId <= 0) return []
+              const rows = await serviceAdministrationBackendApi.listBranchActivations(serviceId)
+              return rows.map((row) => mapBranchActivationDto(row, service))
+            }),
+          )
+        ).flat()
+        return { services, activations }
+      },
       staleTime: 30_000,
     }),
 }
