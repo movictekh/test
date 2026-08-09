@@ -45,4 +45,18 @@ describe('notification transport mapper', () => {
       ],
     })
   })
+
+  it('accepts empty notification pages returned as items', () => {
+    expect(
+      mapNotificationList({
+        count: 0,
+        items: [],
+      }),
+    ).toEqual({
+      count: 0,
+      next: null,
+      previous: null,
+      notifications: [],
+    })
+  })
 })

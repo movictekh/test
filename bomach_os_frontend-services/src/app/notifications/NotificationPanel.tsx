@@ -5,6 +5,7 @@ import { useState } from 'react'
 
 import { useAuth } from '@/app/auth'
 import { hasPermission, PERMISSIONS } from '@/app/permissions'
+import { ApiError } from '@/shared/api/api-error'
 import { getRecordDestination } from '@/shared/navigation'
 import { Button } from '@/shared/ui/button'
 import { Drawer } from '@/shared/ui/drawer'
@@ -62,6 +63,36 @@ function parseBackendLink(link: string | undefined) {
   return getRecordDestination(entityType, id)
 }
 
+function notificationErrorCopy(error: unknown): { title: string; description: string } {
+  if (error instanceof ApiError) {
+    if (error.status === 0) {
+      return {
+        title: 'Notifications unavailable',
+        description: 'The notification service could not be reached right now.',
+      }
+    }
+
+    if (error.status === 404) {
+      return {
+        title: 'Notifications not configured',
+        description: 'This environment does not currently expose the notification endpoint.',
+      }
+    }
+
+    if (error.status >= 500) {
+      return {
+        title: 'Notifications unavailable',
+        description: 'The notification service returned a server error. Please try again shortly.',
+      }
+    }
+  }
+
+  return {
+    title: 'Notifications unavailable',
+    description: 'Notifications could not be loaded right now.',
+  }
+}
+
 export function NotificationPanel() {
   const [open, setOpen] = useState(false)
   const navigate = useNavigate()
@@ -100,6 +131,7 @@ export function NotificationPanel() {
 
   const notifications = listQuery.data?.notifications ?? []
   const unreadCount = statsQuery.data?.unreadCount ?? 0
+  const listErrorCopy = notificationErrorCopy(listQuery.error)
 
   const openNotification = async (notification: AppNotification) => {
     if (!notification.read && canMarkRead) {
@@ -169,8 +201,8 @@ export function NotificationPanel() {
           </div>
         ) : listQuery.isError ? (
           <EmptyState
-            title="Notifications unavailable"
-            description="The notification service could not be reached."
+            title={listErrorCopy.title}
+            description={listErrorCopy.description}
             action={
               <Button variant="outline" size="sm" onClick={() => void listQuery.refetch()}>
                 Retry
@@ -183,7 +215,10 @@ export function NotificationPanel() {
             description="Your role can see notification status but cannot list notifications."
           />
         ) : notifications.length === 0 ? (
-          <EmptyState title="No notifications" description="You are all caught up." />
+          <EmptyState
+            title="All caught up"
+            description="No new notifications right now. New approvals, tasks, and service updates will appear here."
+          />
         ) : (
           <div className="space-y-2">
             {notifications.map((notification) => {

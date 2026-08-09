@@ -1,6 +1,9 @@
 import { APP_PERMISSION_VALUES, type AppPermission } from '@/app/permissions/permission.types'
 
 const appPermissions = new Set<string>(APP_PERMISSION_VALUES)
+const deferredPermissionSources = {
+  'deliverable.read': ['documents.view', 'documents.list', 'orders.view', 'orders.list'],
+} as const satisfies Partial<Record<AppPermission, readonly string[]>>
 
 export interface BackendPermissionMapping {
   permissions: AppPermission[]
@@ -28,6 +31,7 @@ export function mapBackendPermissions(
   permissions: Record<string, string[]>,
 ): BackendPermissionMapping {
   const backendPermissions = flattenBackendPermissions(permissions)
+  const backendPermissionSet = new Set(backendPermissions)
   const granted = new Set<AppPermission>()
   const unmappedBackendPermissions: string[] = []
 
@@ -36,6 +40,12 @@ export function mapBackendPermissions(
       granted.add(backendPermission as AppPermission)
     } else {
       unmappedBackendPermissions.push(backendPermission)
+    }
+  }
+
+  for (const [deferredPermission, sources] of Object.entries(deferredPermissionSources)) {
+    if (sources.some((permission) => backendPermissionSet.has(permission))) {
+      granted.add(deferredPermission as AppPermission)
     }
   }
 

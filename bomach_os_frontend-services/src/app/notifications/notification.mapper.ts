@@ -17,10 +17,11 @@ export interface NotificationDto {
 }
 
 export interface NotificationListDto {
-  count: number
-  next: string | null
-  previous: string | null
-  results: NotificationDto[]
+  count?: number
+  next?: string | null
+  previous?: string | null
+  results?: NotificationDto[]
+  items?: NotificationDto[]
 }
 
 export interface NotificationStatsDto {
@@ -54,11 +55,13 @@ export function mapNotification(dto: NotificationDto): AppNotification {
 }
 
 export function mapNotificationList(dto: NotificationListDto): NotificationListResult {
+  const rows = Array.isArray(dto.results) ? dto.results : Array.isArray(dto.items) ? dto.items : []
+
   return {
-    count: dto.count,
-    next: dto.next,
-    previous: dto.previous,
-    notifications: dto.results.map(mapNotification),
+    count: typeof dto.count === 'number' ? dto.count : rows.length,
+    next: dto.next ?? null,
+    previous: dto.previous ?? null,
+    notifications: rows.map(mapNotification),
   }
 }
 

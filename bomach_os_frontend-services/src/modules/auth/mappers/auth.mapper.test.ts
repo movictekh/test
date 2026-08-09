@@ -50,6 +50,7 @@ describe('mapAuthenticatedUser', () => {
       PERMISSIONS.serviceRequestsView,
       PERMISSIONS.serviceRequestsList,
       PERMISSIONS.serviceRequestsCreate,
+      PERMISSIONS.deliverableRead,
     ])
 
     expect(mapped.backendPermissions).toContain('unsupported_resource.read')
@@ -65,6 +66,17 @@ describe('mapAuthenticatedUser', () => {
 
     expect(mapped.role).toBe('UNKNOWN')
     expect(mapped.roleLabel).toBe('Regional Operations Supervisor')
-    expect(mapped.permissions).toEqual([PERMISSIONS.ordersList])
+    expect(mapped.permissions).toEqual([PERMISSIONS.ordersList, PERMISSIONS.deliverableRead])
+  })
+
+  it('derives deferred deliverable access from real backend document permissions', () => {
+    const mapped = mapAuthenticatedUser(
+      user,
+      role('Service Administrator', {
+        documents: ['view'],
+      }),
+    )
+
+    expect(mapped.permissions).toEqual([PERMISSIONS.deliverableRead])
   })
 })
