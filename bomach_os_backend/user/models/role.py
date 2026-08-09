@@ -162,6 +162,15 @@ PERMISSIONS_MAP = {
     "work_location_approvals": ["create", "list_pending", "approve", "reject",
                                  "manage", "override", "force_delete"],
     "attendance": ["view", "list", "view_own", "list_own"],
+
+    # ── Notifications ──
+    "notifications": ["view", "list", "mark_read", "mark_all_read"],
+
+    # ── Command Center ──
+    "command_center": ["view"],
+
+    # ── Workflow Rules ──
+    "workflow_rules": ["create", "view", "list", "update", "delete"],
 }
 
 

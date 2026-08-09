@@ -227,9 +227,9 @@ def create_client(request: HttpRequest, payload: CreateClientRequest):
                 res = send_client_welcome_email(
                     password=password,
                     recipient=payload.email,
-                    login_url=f"bomach-os-client.web.app/api/v1/auth/login",
+                    login_url=f"https://bomach-os-client.web.app/#/login",
                     client_name=f"{user.first_name} {user.last_name}",
-                    password_setup_url=f"{DOMAIN}/client/setup-password?email={payload.email}"
+                    password_setup_url=f"https://bomach-os-client.web.app/client/setup-password?email={payload.email}"
                 )
 
                 if res.status_code not in [200, 201]:

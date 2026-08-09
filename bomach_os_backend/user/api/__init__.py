@@ -33,6 +33,9 @@ from user.api.v1.drawing_bank import drawing_bank_api as drawing_bank_router
 from user.api.v1.client_service import client_service_api as client_service_router
 from user.api.v1.partner import partner_api as partner_router
 from user.api.v1.target_report import target_report_api as target_report_router
+from user.api.v1.notification import notification_router
+from user.api.v1.command_center import command_center_router
+from user.api.v1.workflow_rule import workflow_rule_router
 from user.utils.auth import JWTAuthenticator
 
 from user.api.v1.sops import dept_router, unit_router, resp_router, sop_dashboard_router
@@ -131,6 +134,9 @@ api.add_router("/client-services/", client_service_router)
 api.add_router("/service-requests/", svc_service_requests.router)
 api.add_router("/partners/", partner_router)
 api.add_router("/target-reports", target_report_router)
+api.add_router("/notifications", notification_router)
+api.add_router("/command-center", command_center_router)
+api.add_router("/workflow-rules", workflow_rule_router)
 
 # === HR routers ===
 

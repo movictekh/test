@@ -41,7 +41,8 @@ jobs:
             fi
 
             echo "Pulling latest code..."
-            git pull origin test-main
+            git fetch origin test-main
+            git reset --hard origin/test-main
 
             echo "Activating existing virtual environment..."
             source venv/bin/activate

@@ -39,3 +39,5 @@ from .client_service import ClientService, ServiceRequest, PaymentSubmission
 from .partner import Partner, PartnerAgreement
 from .sops import SOP, Responsibility
 from .work_location import WorkLocation
+from .notification import Notification
+from .workflow_rule import WorkflowRule, WorkflowRuleLog
