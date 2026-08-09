@@ -107,6 +107,10 @@ function percentageCharge(
   return typeof value === 'number' ? value : fallback
 }
 
+function isValidPercentage(value: number) {
+  return Number.isFinite(value) && value >= 0 && value <= 100
+}
+
 function serializeVariables(variables: CalculatorVariable[]) {
   return variables.map((item) => `${item.key}|${item.label}|${item.unit ?? ''}`).join('\n')
 }
@@ -163,7 +167,9 @@ export function CalculatorEditor({
 
   const service = services.find((item) => item.id === serviceId)
   const hasValidService = Boolean(serviceId && Number(serviceId) > 0 && service)
-  const canSave = Boolean(name.trim() && hasValidService)
+  const canSave = Boolean(
+    name.trim() && hasValidService && isValidPercentage(Number(deposit)) && isValidPercentage(Number(tax)),
+  )
 
   return (
     <EditorModal
@@ -280,6 +286,8 @@ export function CalculatorEditor({
         <EditorField label="Deposit (%)">
           <input
             type="number"
+            min={0}
+            max={100}
             value={formatNumberFieldValue(deposit)}
             onChange={(event) => setDeposit(parseNumberFieldValue(event.target.value))}
           />
@@ -287,10 +295,19 @@ export function CalculatorEditor({
         <EditorField label="Tax (%)">
           <input
             type="number"
+            min={0}
+            max={100}
             value={formatNumberFieldValue(tax)}
             onChange={(event) => setTax(parseNumberFieldValue(event.target.value))}
           />
         </EditorField>
+        {!isValidPercentage(Number(deposit)) || !isValidPercentage(Number(tax)) ? (
+          <EditorField label="Validation" full>
+            <div className="service-admin-notice service-admin-notice-yellow">
+              Deposit and Tax must both be between 0 and 100.
+            </div>
+          </EditorField>
+        ) : null}
         <EditorField label="Fields — variable|Label|default, one per line" full>
           <textarea value={fieldsText} onChange={(event) => setFieldsText(event.target.value)} />
         </EditorField>

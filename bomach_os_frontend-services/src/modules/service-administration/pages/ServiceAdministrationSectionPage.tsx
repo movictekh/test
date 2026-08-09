@@ -301,7 +301,17 @@ export function ServiceAdministrationSectionPage({
   })
 
   const saveCalculator = useMutation({
-    mutationFn: (input: SaveCalculatorInput) => saveLivePricingConfig(input),
+    mutationFn: (input: SaveCalculatorInput) => {
+      const existingCalculator =
+        input.id
+          ? null
+          : pricingQuery.data?.find((calculator) => calculator.serviceId === input.serviceId) ??
+            null
+
+      return saveLivePricingConfig(
+        existingCalculator ? { ...input, id: existingCalculator.id } : input,
+      )
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: serviceAdministrationKeys.pricingConfigs({}),
