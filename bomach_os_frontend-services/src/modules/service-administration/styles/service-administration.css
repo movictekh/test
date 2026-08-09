@@ -1974,6 +1974,51 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
   background: #f7f9fc;
 }
 
+.service-admin-calculator-table th:first-child,
+.service-admin-calculator-table td:first-child {
+  background: linear-gradient(90deg, #f7faff 0%, #fbfcfe 100%);
+  border-right: 2px solid #d6deea;
+  box-shadow: 1px 0 0 #f5f7fb;
+}
+
+.service-admin-calculator-table th,
+.service-admin-calculator-table td {
+  border-right: 1px solid #e8edf4;
+}
+
+.service-admin-calculator-table th:last-child,
+.service-admin-calculator-table td:last-child {
+  border-right: 0;
+}
+
+.service-admin-calculator-table thead th {
+  background: #f7f9fc;
+}
+
+.service-admin-calculator-table tbody tr.service-admin-table-row--active td {
+  background: #edf2ff;
+  color: #234b9e;
+}
+
+.service-admin-calculator-table tbody tr.service-admin-table-row--active td:first-child {
+  background: linear-gradient(90deg, #dfe9ff 0%, #edf2ff 100%);
+}
+
+.service-admin-calculator-table tbody tr.service-admin-table-row--active {
+  box-shadow: inset 3px 0 0 var(--service-admin-brand);
+}
+
+.service-admin-calculator-test-button--active {
+  border-color: #a9c0f6;
+  background: #edf2ff;
+  color: #234b9e;
+  box-shadow: inset 0 0 0 1px #dbe7ff;
+}
+
+.service-admin-calculator-test-button--active:hover:not(:disabled) {
+  background: #e3ecff;
+}
+
 @media (max-width: 600px) {
   .service-admin-branch-card {
     padding: 12px;

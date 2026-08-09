@@ -318,6 +318,17 @@ function calculatorNumericFields(calculator: PricingCalculator) {
     }))
 }
 
+function calculatorPreviewBase(calculator: PricingCalculator): number {
+  if (calculator.sampleTotal > 0) return calculator.sampleTotal
+
+  const fixedCharge = calculator.charges.find(
+    (charge) => charge.kind === 'fixed' && typeof charge.value === 'number' && charge.value > 0,
+  )
+  if (fixedCharge && typeof fixedCharge.value === 'number') return fixedCharge.value
+
+  return 0
+}
+
 export function CalculatorLibraryScreen({
   calculators,
   onCreate,
@@ -333,19 +344,33 @@ export function CalculatorLibraryScreen({
   hasServices?: boolean
 }) {
   const [activeId, setActiveId] = useState(calculators[0]?.id ?? '')
+  useEffect(() => {
+    if (calculators.length === 0) {
+      setActiveId('')
+      return
+    }
+
+    if (!calculators.some((calculator) => calculator.id === activeId)) {
+      setActiveId(calculators[0]?.id ?? '')
+    }
+  }, [activeId, calculators])
+
   const active = calculators.find((calculator) => calculator.id === activeId) ?? calculators[0]
   const [inputs, setInputs] = useState<Record<string, number>>({})
 
   const fields = active ? calculatorNumericFields(active) : []
+  const previewBase = active ? calculatorPreviewBase(active) : 0
   const estimated = active
     ? Object.keys(inputs).length === 0
-      ? active.sampleTotal
+      ? previewBase
       : Object.values(inputs).reduce((total, value) => total + Number(value || 0), 0)
     : 0
 
   const formula = active
     ? (active.charges.find((charge) => charge.kind === 'formula')?.value ??
-      active.charges.map((charge) => charge.label).join(' + '))
+      (active.pricingType === 'fixed'
+        ? 'Base amount + Deposit + Tax + Discount approval'
+        : active.charges.map((charge) => charge.label).join(' + ')))
     : 'No calculator selected'
 
   const showCreateLock = createLocked && (createDisabled || !onCreate)
@@ -380,7 +405,7 @@ export function CalculatorLibraryScreen({
           </div>
 
           <div className="service-admin-table-wrap">
-            <table className="service-admin-table">
+            <table className="service-admin-table service-admin-calculator-table">
               <thead>
                 <tr>
                   <th>Calculator</th>
@@ -438,7 +463,7 @@ export function CalculatorLibraryScreen({
                         <button
                           type="button"
                           className={`service-admin-button service-admin-button-small${
-                            isActive ? 'service-admin-button-primary' : ''
+                            isActive ? ' service-admin-calculator-test-button--active' : ''
                           }`}
                           aria-pressed={isActive}
                           onClick={() => {
@@ -475,6 +500,8 @@ export function CalculatorLibraryScreen({
               approval thresholds. This panel will then become the live test workspace.
             </div>
           ) : null}
+
+   
 
           {fields.map((field) => (
             <div className="service-admin-field" key={field.key}>
