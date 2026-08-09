@@ -2164,6 +2164,7 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
 .service-admin-rule-chip {
   display: inline-flex;
   align-items: center;
+  gap: 6px;
   min-height: 26px;
   border: 1px solid #d7e3fb;
   border-radius: 999px;
@@ -2172,6 +2173,65 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
   color: #234b9e;
   font-size: 9px;
   font-weight: 700;
+}
+
+.service-admin-rule-chip-remove {
+  border: 0;
+  background: transparent;
+  color: currentColor;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.service-admin-rule-recipient-list {
+  display: grid;
+  gap: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid #e6ebf3;
+  border-radius: 10px;
+  background: #fff;
+  padding: 8px;
+}
+
+.service-admin-rule-recipient-option {
+  display: grid;
+  gap: 2px;
+  border: 1px solid #e6ebf3;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 9px 10px;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    background 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.service-admin-rule-recipient-option:hover {
+  border-color: #cdd8eb;
+  background: #f3f7fd;
+}
+
+.service-admin-rule-recipient-option--active {
+  border-color: #a9c0f6;
+  background: #edf2ff;
+  box-shadow: inset 3px 0 0 var(--service-admin-brand);
+}
+
+.service-admin-rule-recipient-name {
+  color: #1f2937;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.service-admin-rule-recipient-meta,
+.service-admin-rule-recipient-email {
+  color: var(--service-admin-foreground-subtle, #8c95a8);
+  font-size: 8.75px;
+  line-height: 1.35;
 }
 
 @media (max-width: 600px) {

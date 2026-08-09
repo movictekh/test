@@ -1,6 +1,6 @@
 import { IconBolt } from '@tabler/icons-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 
 import { useAuth } from '@/app/auth'
 import { hasPermission, PERMISSIONS } from '@/app/permissions'
@@ -11,7 +11,11 @@ import { useToast } from '@/shared/ui'
 
 import { workflowRulesApi } from '../api/workflow-rules.api'
 import { workflowRuleKeys, workflowRuleQueries } from '../api/workflow-rules.queries'
-import type { SaveWorkflowRuleInput, WorkflowAutomationRule } from '../api/workflow-rules.types'
+import type {
+  SaveWorkflowRuleInput,
+  WorkflowAutomationRule,
+  WorkflowRuleRecipient,
+} from '../api/workflow-rules.types'
 
 const operators = [
   ['eq', 'Equals'],
@@ -22,15 +26,23 @@ const operators = [
   ['lte', 'Less than or equal'],
   ['contains', 'Contains'],
 ] as const
+const EMPTY_RECIPIENTS: WorkflowRuleRecipient[] = []
 
 function configText(rule: WorkflowAutomationRule, key: string): string {
   const value = rule.actionConfig[key]
   return typeof value === 'string' ? value : ''
 }
 
-function configRecipientIds(rule: WorkflowAutomationRule): string {
-  const value = rule.actionConfig.recipient_ids
-  return Array.isArray(value) ? value.map(String).join(', ') : ''
+function recipientIds(rule: WorkflowAutomationRule | null): number[] {
+  const value = rule?.actionConfig.recipient_ids
+  return Array.isArray(value)
+    ? value.map((item) => Number(item)).filter((item) => Number.isInteger(item) && item > 0)
+    : []
+}
+
+function recipientLabel(recipient: WorkflowRuleRecipient): string {
+  const secondary = [recipient.designation, recipient.roleName].filter(Boolean).join(' · ')
+  return secondary ? `${recipient.name} · ${secondary}` : recipient.name
 }
 
 export function AutomationRulesPanel() {
@@ -227,16 +239,31 @@ function RuleEditor({
   const [action, setAction] = useState(
     rule?.actionType ?? actionChoices[0]?.value ?? 'send_notification',
   )
-  const [recipientIds, setRecipientIds] = useState(rule ? configRecipientIds(rule) : '')
+  const [selectedRecipientIds, setSelectedRecipientIds] = useState<number[]>(recipientIds(rule))
+  const [recipientSearch, setRecipientSearch] = useState('')
   const [title, setTitle] = useState(rule ? configText(rule, 'title') : '')
   const [message, setMessage] = useState(rule ? configText(rule, 'message') : '')
   const [link, setLink] = useState(rule ? configText(rule, 'link') : '')
   const [active, setActive] = useState(rule?.active ?? true)
   const [error, setError] = useState('')
-  const parsedRecipientIds = recipientIds
-    .split(',')
-    .map((value) => Number(value.trim()))
-    .filter((value) => Number.isInteger(value) && value > 0)
+  const recipientsQuery = useQuery({
+    ...workflowRuleQueries.recipients(recipientSearch),
+    enabled: action === 'send_notification',
+  })
+  const availableRecipients = recipientsQuery.data ?? EMPTY_RECIPIENTS
+  const selectedRecipients = useMemo(
+    () => selectedRecipientIds.map((id) => availableRecipients.find((item) => item.userId === id)).filter(Boolean),
+    [availableRecipients, selectedRecipientIds],
+  )
+  const unknownSelectedRecipientIds = selectedRecipientIds.filter(
+    (id) => !availableRecipients.some((item) => item.userId === id),
+  )
+
+  const toggleRecipient = (userId: number) => {
+    setSelectedRecipientIds((current) =>
+      current.includes(userId) ? current.filter((id) => id !== userId) : [...current, userId],
+    )
+  }
 
   const submit = () => {
     if (!name.trim()) return setError('Rule name is required.')
@@ -244,8 +271,8 @@ function RuleEditor({
     if (!field.trim()) return setError('Condition field is required.')
     if (!conditionValue.trim()) return setError('Condition value is required.')
     if (!action) return setError('Action is required.')
-    if (parsedRecipientIds.length === 0) {
-      return setError('Enter at least one valid backend User ID.')
+    if (selectedRecipientIds.length === 0) {
+      return setError('Select at least one recipient.')
     }
     if (!title.trim()) return setError('Notification title is required.')
     if (!message.trim()) return setError('Notification message is required.')
@@ -265,7 +292,7 @@ function RuleEditor({
       ],
       actionType: action,
       actionConfig: {
-        recipient_ids: parsedRecipientIds,
+        recipient_ids: selectedRecipientIds,
         title: title.trim(),
         message: message.trim(),
         ...(link.trim() ? { link: link.trim() } : {}),
@@ -394,22 +421,83 @@ function RuleEditor({
                 <label className="service-admin-config-field service-admin-config-field--full">
                   <span>Recipients</span>
                   <input
-                    value={recipientIds}
-                    onChange={(event) => setRecipientIds(event.target.value)}
-                    placeholder="12, 18, 29"
+                    value={recipientSearch}
+                    onChange={(event) => setRecipientSearch(event.target.value)}
+                    placeholder="Search by name, employee ID, or email"
                   />
-                  <small>Enter one or more user IDs, separated by commas.</small>
+                  <small>Select one or more people to receive this notification.</small>
                 </label>
 
-                {parsedRecipientIds.length > 0 ? (
+                {selectedRecipientIds.length > 0 ? (
                   <div className="service-admin-rule-chip-row service-admin-config-field--full">
-                    {parsedRecipientIds.map((value) => (
+                    {selectedRecipients.map((recipient) => (
+                      <span key={recipient!.userId} className="service-admin-rule-chip">
+                        {recipientLabel(recipient!)}
+                        <button
+                          type="button"
+                          className="service-admin-rule-chip-remove"
+                          aria-label={`Remove ${recipient!.name}`}
+                          onClick={() => toggleRecipient(recipient!.userId)}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                    {unknownSelectedRecipientIds.map((value) => (
                       <span key={value} className="service-admin-rule-chip">
                         User ID {value}
+                        <button
+                          type="button"
+                          className="service-admin-rule-chip-remove"
+                          aria-label={`Remove user ID ${value}`}
+                          onClick={() => toggleRecipient(value)}
+                        >
+                          ×
+                        </button>
                       </span>
                     ))}
                   </div>
                 ) : null}
+
+                <div className="service-admin-rule-recipient-list service-admin-config-field--full">
+                  {recipientsQuery.isPending ? (
+                    <div className="service-admin-card-subtitle">Loading recipients...</div>
+                  ) : recipientsQuery.isError ? (
+                    <div className="service-admin-card-subtitle">
+                      Recipient directory is not available for this account.
+                    </div>
+                  ) : availableRecipients.length === 0 ? (
+                    <div className="service-admin-card-subtitle">
+                      No matching team members found.
+                    </div>
+                  ) : (
+                    availableRecipients.map((recipient) => {
+                      const checked = selectedRecipientIds.includes(recipient.userId)
+                      return (
+                        <button
+                          key={recipient.userId}
+                          type="button"
+                          className={`service-admin-rule-recipient-option${
+                            checked ? ' service-admin-rule-recipient-option--active' : ''
+                          }`}
+                          onClick={() => toggleRecipient(recipient.userId)}
+                        >
+                          <span className="service-admin-rule-recipient-name">
+                            {recipient.name}
+                          </span>
+                          <span className="service-admin-rule-recipient-meta">
+                            {recipient.employeeId}
+                            {recipient.designation ? ` · ${recipient.designation}` : ''}
+                            {recipient.roleName ? ` · ${recipient.roleName}` : ''}
+                          </span>
+                          <span className="service-admin-rule-recipient-email">
+                            {recipient.email}
+                          </span>
+                        </button>
+                      )
+                    })
+                  )}
+                </div>
 
                 <label className="service-admin-config-field service-admin-config-field--full">
                   <span>Notification title</span>

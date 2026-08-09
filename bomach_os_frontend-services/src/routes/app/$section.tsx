@@ -8,7 +8,11 @@ import {
   type ServiceAdministrationSection,
 } from '@/modules/service-administration'
 import { ModuleShellPage } from '@/modules/foundation/pages/ModuleShellPage'
-import { CommercialSectionPage, type CommercialSection } from '@/modules/commercial'
+import {
+  CommercialSectionPage,
+  ServiceRequestsLivePage,
+  type CommercialSection,
+} from '@/modules/commercial'
 import { FulfillmentSectionPage, type FulfillmentSection } from '@/modules/fulfillment'
 import {
   ExperienceIntelligenceSectionPage,
@@ -55,6 +59,9 @@ export type AppSectionSearch = AppRecordSearch & {
   search?: string
   status?: string
   division?: string
+  priority?: string
+  branch?: string
+  service?: string
   page?: number
 }
 
@@ -75,6 +82,9 @@ export function parseRecordSearch(search: Record<string, unknown>): AppSectionSe
   const catalogueSearch = stringValue(search.search)
   const catalogueStatus = stringValue(search.status)
   const catalogueDivision = stringValue(search.division)
+  const requestPriority = stringValue(search.priority)
+  const requestBranch = stringValue(search.branch)
+  const requestService = stringValue(search.service)
   const rawPage =
     typeof search.page === 'number'
       ? search.page
@@ -96,6 +106,9 @@ export function parseRecordSearch(search: Record<string, unknown>): AppSectionSe
   if (catalogueSearch) result.search = catalogueSearch
   if (catalogueStatus) result.status = catalogueStatus
   if (catalogueDivision) result.division = catalogueDivision
+  if (requestPriority) result.priority = requestPriority
+  if (requestBranch) result.branch = requestBranch
+  if (requestService) result.service = requestService
   if (cataloguePage) result.page = cataloguePage
 
   return result
@@ -125,6 +138,10 @@ export const Route = createFileRoute('/app/$section')({
 function AppShellRoute() {
   const { section } = Route.useParams()
   const recordSearch = Route.useSearch()
+
+  if (section === 'service-requests') {
+    return <ServiceRequestsLivePage recordSearch={recordSearch} />
+  }
 
   if (commercialSections.has(section as CommercialSection)) {
     return (

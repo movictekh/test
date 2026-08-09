@@ -23,6 +23,16 @@ export interface WorkflowAutomationRule {
   createdAt: string
 }
 
+export interface WorkflowRuleRecipient {
+  userId: number
+  employeeId: string
+  name: string
+  email: string
+  designation: string
+  roleName: string
+  branchName: string
+}
+
 export interface SaveWorkflowRuleInput {
   id?: number
   name: string

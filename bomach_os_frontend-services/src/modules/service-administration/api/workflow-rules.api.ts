@@ -1,10 +1,16 @@
 import { apiClient } from '@/shared/api/api-client'
 
-import { mapWorkflowRule, mapWorkflowRuleChoice, mapWorkflowRules } from './workflow-rules.mapper'
+import {
+  mapWorkflowRule,
+  mapWorkflowRuleChoice,
+  mapWorkflowRuleRecipients,
+  mapWorkflowRules,
+} from './workflow-rules.mapper'
 import type {
   SaveWorkflowRuleInput,
   WorkflowAutomationRule,
   WorkflowRuleChoice,
+  WorkflowRuleRecipient,
 } from './workflow-rules.types'
 
 function payload(input: SaveWorkflowRuleInput) {
@@ -32,6 +38,19 @@ export const workflowRulesApi = {
   async actionChoices(): Promise<WorkflowRuleChoice[]> {
     const response = await apiClient.get<unknown[]>('/workflow-rules/choices/actions')
     return response.map(mapWorkflowRuleChoice)
+  },
+
+  async recipients(search = ''): Promise<WorkflowRuleRecipient[]> {
+    const query = new URLSearchParams({
+      is_active: 'true',
+      limit: '100',
+      offset: '0',
+    })
+    if (search.trim()) query.set('search', search.trim())
+
+    return mapWorkflowRuleRecipients(
+      await apiClient.get<unknown>(`/employees/employees?${query.toString()}`),
+    )
   },
 
   async create(input: SaveWorkflowRuleInput): Promise<WorkflowAutomationRule> {

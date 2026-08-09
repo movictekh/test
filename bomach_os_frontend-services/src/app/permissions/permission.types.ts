@@ -19,6 +19,8 @@ export const VERIFIED_APP_PERMISSION_VALUES = [
   'workflow_rules.list',
   'workflow_rules.update',
   'workflow_rules.delete',
+  'employees.list',
+  'clients.list',
   'services.list',
   'services.view',
   'services.create',

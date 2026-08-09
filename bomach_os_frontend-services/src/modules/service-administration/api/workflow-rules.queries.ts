@@ -7,6 +7,7 @@ export const workflowRuleKeys = {
   list: () => [...workflowRuleKeys.all, 'list'] as const,
   triggers: () => [...workflowRuleKeys.all, 'choices', 'triggers'] as const,
   actions: () => [...workflowRuleKeys.all, 'choices', 'actions'] as const,
+  recipients: (search: string) => [...workflowRuleKeys.all, 'recipients', { search }] as const,
 }
 
 export const workflowRuleQueries = {
@@ -29,5 +30,12 @@ export const workflowRuleQueries = {
       queryKey: workflowRuleKeys.actions(),
       queryFn: () => workflowRulesApi.actionChoices(),
       staleTime: 5 * 60_000,
+    }),
+
+  recipients: (search = '') =>
+    queryOptions({
+      queryKey: workflowRuleKeys.recipients(search),
+      queryFn: () => workflowRulesApi.recipients(search),
+      staleTime: 60_000,
     }),
 }

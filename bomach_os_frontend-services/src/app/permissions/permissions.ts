@@ -17,6 +17,9 @@ export const PERMISSIONS = {
   workflowRulesUpdate: 'workflow_rules.update',
   workflowRulesDelete: 'workflow_rules.delete',
 
+  employeesList: 'employees.list',
+  clientsList: 'clients.list',
+
   servicesList: 'services.list',
   servicesView: 'services.view',
   servicesCreate: 'services.create',

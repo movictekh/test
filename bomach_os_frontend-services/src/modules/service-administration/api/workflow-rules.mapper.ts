@@ -1,5 +1,6 @@
 import type {
   WorkflowAutomationRule,
+  WorkflowRuleRecipient,
   WorkflowRuleChoice,
   WorkflowRuleCondition,
 } from './workflow-rules.types'
@@ -77,4 +78,23 @@ export function mapWorkflowRule(payload: unknown): WorkflowAutomationRule {
     executionCount: number(value.execution_count),
     createdAt: text(value.created_at),
   }
+}
+
+export function mapWorkflowRuleRecipients(payload: unknown): WorkflowRuleRecipient[] {
+  return rows(payload).map((item) => {
+    const value = record(item)
+    const firstName = text(value.first_name)
+    const lastName = text(value.last_name)
+    const fullName = `${firstName} ${lastName}`.trim()
+
+    return {
+      userId: number(value.user_id),
+      employeeId: text(value.employee_id),
+      name: fullName || text(value.email),
+      email: text(value.email),
+      designation: text(value.designation),
+      roleName: text(value.role_name),
+      branchName: text(value.branch_name),
+    }
+  })
 }
