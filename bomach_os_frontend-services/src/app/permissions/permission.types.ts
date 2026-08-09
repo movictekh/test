@@ -9,6 +9,11 @@
 export const VERIFIED_APP_PERMISSION_VALUES = [
   'dashboard.view',
 
+  'command_center.view',
+  'notifications.view',
+  'notifications.list',
+  'notifications.mark_read',
+  'notifications.mark_all_read',
   'services.list',
   'services.view',
   'services.create',

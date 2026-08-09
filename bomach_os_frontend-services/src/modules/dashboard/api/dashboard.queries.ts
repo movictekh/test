@@ -4,17 +4,38 @@ import { dashboardApi } from './dashboard.api'
 import { dashboardKeys } from './dashboard.keys'
 
 export const dashboardQueries = {
-  summary: (userId: string) =>
+  financials: () =>
     queryOptions({
-      queryKey: dashboardKeys.summary(userId),
-      queryFn: () => dashboardApi.getSummary(userId),
-      staleTime: 45_000,
+      queryKey: dashboardKeys.financials(),
+      queryFn: () => dashboardApi.financials(),
+      staleTime: 30_000,
     }),
 
-  recentActivity: () =>
+  pendingApprovals: () =>
     queryOptions({
-      queryKey: dashboardKeys.recentActivity(),
-      queryFn: () => dashboardApi.getRecentActivity(),
-      staleTime: 25_000,
+      queryKey: dashboardKeys.pendingApprovals(),
+      queryFn: () => dashboardApi.pendingApprovals(),
+      staleTime: 30_000,
+    }),
+
+  pipeline: () =>
+    queryOptions({
+      queryKey: dashboardKeys.pipeline(),
+      queryFn: () => dashboardApi.pipeline(),
+      staleTime: 30_000,
+    }),
+
+  actionItems: () =>
+    queryOptions({
+      queryKey: dashboardKeys.actionItems(),
+      queryFn: () => dashboardApi.actionItems(),
+      staleTime: 20_000,
+    }),
+
+  activity: () =>
+    queryOptions({
+      queryKey: dashboardKeys.activity(),
+      queryFn: () => dashboardApi.activity(),
+      staleTime: 20_000,
     }),
 }

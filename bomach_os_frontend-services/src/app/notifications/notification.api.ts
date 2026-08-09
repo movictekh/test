@@ -1,38 +1,54 @@
 import { apiClient } from '@/shared/api/api-client'
-import { env } from '@/shared/config/env'
 
-import { mapNotificationPayload } from './notification.mapper'
-import type { NotificationListResult } from './notification.types'
-
-function configuredPath(path: string): string | null {
-  const trimmed = path.trim()
-  return trimmed ? trimmed : null
-}
+import {
+  mapNotification,
+  mapNotificationList,
+  mapNotificationStats,
+  type NotificationDto,
+  type NotificationListDto,
+  type NotificationStatsDto,
+} from './notification.mapper'
+import type {
+  AppNotification,
+  NotificationListResult,
+  NotificationStats,
+} from './notification.types'
 
 export const notificationApi = {
-  async list(): Promise<NotificationListResult> {
-    const path = configuredPath(env.notificationListPath)
-    if (!path) return { configured: false, notifications: [] }
+  async list(
+    params: { isRead?: boolean; limit?: number; offset?: number } = {},
+  ): Promise<NotificationListResult> {
+    const search = new URLSearchParams()
 
-    const payload = await apiClient.get<unknown>(path)
-    return {
-      configured: true,
-      notifications: mapNotificationPayload(payload),
-    }
+    if (params.isRead !== undefined) search.set('is_read', String(params.isRead))
+    search.set('limit', String(params.limit ?? 20))
+    search.set('offset', String(params.offset ?? 0))
+
+    const payload = await apiClient.get<NotificationListDto>(`/notifications/?${search.toString()}`)
+
+    return mapNotificationList(payload)
   },
 
-  async markRead(notificationId: string): Promise<void> {
-    const template = configuredPath(env.notificationMarkReadPath)
-    if (!template) return
+  async stats(): Promise<NotificationStats> {
+    const payload = await apiClient.get<NotificationStatsDto>('/notifications/stats')
+    return mapNotificationStats(payload)
+  },
 
-    const path = template.replace('{id}', encodeURIComponent(notificationId))
-    await apiClient.patch<unknown>(path, { read: true })
+  async get(notificationId: string): Promise<AppNotification> {
+    const payload = await apiClient.get<NotificationDto>(
+      `/notifications/${encodeURIComponent(notificationId)}`,
+    )
+    return mapNotification(payload)
+  },
+
+  async markRead(notificationId: string): Promise<AppNotification> {
+    const payload = await apiClient.patch<NotificationDto>(
+      `/notifications/${encodeURIComponent(notificationId)}/read`,
+    )
+    return mapNotification(payload)
   },
 
   async markAllRead(): Promise<void> {
-    const path = configuredPath(env.notificationMarkAllReadPath)
-    if (!path) return
-
-    await apiClient.patch<unknown>(path, { read: true })
+    await apiClient.post('/notifications/read-all')
   },
 }

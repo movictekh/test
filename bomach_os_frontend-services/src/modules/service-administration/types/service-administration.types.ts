@@ -288,6 +288,7 @@ export interface ConfigureServiceInput {
   code: string
   division: string
   owner: string
+  ownerRoleId?: number | null
   description: string
   slaDays: number
   fulfilmentMode: string

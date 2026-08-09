@@ -2,11 +2,10 @@ import { IconFilePlus } from '@tabler/icons-react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
 
-import { useAuth } from '@/app/auth'
 import { presentError } from '@/shared/errors'
 import { formatCurrency } from '@/shared/lib/formatters'
 import { cn } from '@/shared/lib/cn'
-import { DashboardSkeleton, ErrorState } from '@/shared/ui'
+import { DashboardSkeleton, ErrorState, EmptyState } from '@/shared/ui'
 import '@/modules/service-administration/styles/service-administration.css'
 
 import { dashboardQueries } from '../api/dashboard.queries'
@@ -295,32 +294,43 @@ function RecentActivityCard({ items }: { items: DashboardActivityItem[] }) {
 }
 
 export function OperationsDashboardPage() {
-  const { user } = useAuth()
-  const userId = user?.id ?? ''
+  const financialsQuery = useQuery(dashboardQueries.financials())
+  const approvalsQuery = useQuery(dashboardQueries.pendingApprovals())
+  const pipelineQuery = useQuery(dashboardQueries.pipeline())
+  const actionItemsQuery = useQuery(dashboardQueries.actionItems())
+  const activityQuery = useQuery(dashboardQueries.activity())
 
-  const summaryQuery = useQuery({ ...dashboardQueries.summary(userId), enabled: Boolean(userId) })
-  const activityQuery = useQuery(dashboardQueries.recentActivity())
+  const allPending =
+    financialsQuery.isPending &&
+    approvalsQuery.isPending &&
+    pipelineQuery.isPending &&
+    actionItemsQuery.isPending &&
+    activityQuery.isPending
 
-  if (summaryQuery.isPending) return (
+  if (allPending) {
+    return (
       <div className="min-h-0 flex-1 overflow-y-auto">
         <DashboardSkeleton />
       </div>
     )
-  if (summaryQuery.isError) {
-    const error = presentError(summaryQuery.error, 'page-load')
-    return (
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        <ErrorState
-          title={error.title}
-          description={error.message}
-          onRetry={() => void summaryQuery.refetch()}
-        />
-      </div>
-    )
   }
 
-  const summary = summaryQuery.data
-  const activity = activityQuery.data ?? []
+  const metrics = [
+    ...(financialsQuery.data ?? []),
+    {
+      key: 'awaiting_approval' as const,
+      label: 'Pending approvals',
+      value: approvalsQuery.data?.total ?? 0,
+      description: 'Backend-reported pending approvals',
+    },
+    {
+      key: 'pending_quotations' as const,
+      label: 'Quote conversion',
+      value: pipelineQuery.data?.conversionRate ?? 0,
+      valueFormat: 'percent' as const,
+      description: 'Backend-reported quote-to-order conversion',
+    },
+  ]
 
   return (
     <div className="command-center">
@@ -340,37 +350,196 @@ export function OperationsDashboardPage() {
       </section>
 
       <main className="command-center-content">
-        <KpiGrid metrics={summary.metrics} />
+        {financialsQuery.isError && approvalsQuery.isError && pipelineQuery.isError ? (
+          <ErrorState
+            title="Command Center unavailable"
+            description={presentError(financialsQuery.error, 'page-load').message}
+            onRetry={() => {
+              void financialsQuery.refetch()
+              void approvalsQuery.refetch()
+              void pipelineQuery.refetch()
+            }}
+          />
+        ) : (
+          <KpiGrid metrics={metrics} />
+        )}
 
         <div className="command-center-g21">
           <div className="command-center-g21-main">
-            <LifecycleCard stages={summary.pipeline} />
-            <RequestsTable items={summary.attentionItems} />
+            {pipelineQuery.isPending ? (
+              <section className="command-center-card">
+                <div className="command-center-card-title">Service pipeline</div>
+                <div className="command-center-card-subtitle">Loading...</div>
+              </section>
+            ) : pipelineQuery.isError ? (
+              <section className="command-center-card">
+                <EmptyState
+                  title="Pipeline unavailable"
+                  description={presentError(pipelineQuery.error, 'section-load').message}
+                  action={
+                    <button
+                      type="button"
+                      className="command-center-btn command-center-btn-small"
+                      onClick={() => void pipelineQuery.refetch()}
+                    >
+                      Retry
+                    </button>
+                  }
+                />
+              </section>
+            ) : pipelineQuery.data.stages.length === 0 ? (
+              <section className="command-center-card">
+                <EmptyState
+                  title="No pipeline data"
+                  description="The backend returned no pipeline stages."
+                />
+              </section>
+            ) : (
+              <LifecycleCard stages={pipelineQuery.data.stages} />
+            )}
+
+            {actionItemsQuery.isPending ? (
+              <section className="command-center-card">
+                <div className="command-center-card-title">My action items</div>
+                <div className="command-center-card-subtitle">Loading...</div>
+              </section>
+            ) : actionItemsQuery.isError ? (
+              <section className="command-center-card">
+                <EmptyState
+                  title="Action items unavailable"
+                  description={presentError(actionItemsQuery.error, 'section-load').message}
+                  action={
+                    <button
+                      type="button"
+                      className="command-center-btn command-center-btn-small"
+                      onClick={() => void actionItemsQuery.refetch()}
+                    >
+                      Retry
+                    </button>
+                  }
+                />
+              </section>
+            ) : actionItemsQuery.data.length === 0 ? (
+              <section className="command-center-card">
+                <EmptyState
+                  title="No action items"
+                  description="There is currently nothing requiring your attention."
+                />
+              </section>
+            ) : (
+              <RequestsTable items={actionItemsQuery.data} />
+            )}
           </div>
+
           <div className="command-center-g21-side">
-            <ExecutiveAlertsCard alerts={summary.executiveAlerts} />
-            <OperationsHealthCard metrics={summary.operationsHealth} />
+            {approvalsQuery.isPending ? (
+              <section className="command-center-card">
+                <div className="command-center-card-title">Pending approvals</div>
+                <div className="command-center-card-subtitle">Loading...</div>
+              </section>
+            ) : approvalsQuery.isError ? (
+              <section className="command-center-card">
+                <EmptyState
+                  title="Approvals unavailable"
+                  description={presentError(approvalsQuery.error, 'section-load').message}
+                  action={
+                    <button
+                      type="button"
+                      className="command-center-btn command-center-btn-small"
+                      onClick={() => void approvalsQuery.refetch()}
+                    >
+                      Retry
+                    </button>
+                  }
+                />
+              </section>
+            ) : approvalsQuery.data.alerts.length === 0 ? (
+              <section className="command-center-card">
+                <EmptyState
+                  title="No pending approvals"
+                  description="The backend returned no approval domains."
+                />
+              </section>
+            ) : (
+              <ExecutiveAlertsCard alerts={approvalsQuery.data.alerts} />
+            )}
+
+            <section className="command-center-card">
+              <div className="command-center-card-header">
+                <div>
+                  <div className="command-center-card-title">Financial summary</div>
+                  <div className="command-center-card-subtitle">
+                    Values shown exactly as reported by Command Center.
+                  </div>
+                </div>
+              </div>
+
+              {financialsQuery.isPending ? (
+                <div className="command-center-card-subtitle">Loading...</div>
+              ) : financialsQuery.isError ? (
+                <EmptyState
+                  title="Financials unavailable"
+                  description={presentError(financialsQuery.error, 'section-load').message}
+                  action={
+                    <button
+                      type="button"
+                      className="command-center-btn command-center-btn-small"
+                      onClick={() => void financialsQuery.refetch()}
+                    >
+                      Retry
+                    </button>
+                  }
+                />
+              ) : financialsQuery.data.length === 0 ? (
+                <EmptyState
+                  title="No financial data"
+                  description="No financial metrics were returned."
+                />
+              ) : (
+                <div className="space-y-2">
+                  {financialsQuery.data.map((metric) => (
+                    <div key={metric.label} className="command-center-metric">
+                      <label>{metric.label}</label>
+                      <strong>{formatMetricValue(metric)}</strong>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
           </div>
         </div>
 
-        <div className="command-center-g2">
-          <RevenueByDivisionCard rows={summary.revenueByDivision} />
-          {activityQuery.isPending ? (
-            <section className="command-center-card">
-              <div className="command-center-card-title">Recent system activity</div>
-              <div className="command-center-card-subtitle">Loading audit history…</div>
-            </section>
-          ) : activityQuery.isError ? (
-            <section className="command-center-card">
-              <div className="command-center-card-title">Recent system activity</div>
-              <div className="command-center-card-subtitle">
-                {presentError(activityQuery.error, 'section-load').message}
-              </div>
-            </section>
-          ) : (
-            <RecentActivityCard items={activity} />
-          )}
-        </div>
+        {activityQuery.isPending ? (
+          <section className="command-center-card">
+            <div className="command-center-card-title">Recent system activity</div>
+            <div className="command-center-card-subtitle">Loading...</div>
+          </section>
+        ) : activityQuery.isError ? (
+          <section className="command-center-card">
+            <EmptyState
+              title="Activity unavailable"
+              description={presentError(activityQuery.error, 'section-load').message}
+              action={
+                <button
+                  type="button"
+                  className="command-center-btn command-center-btn-small"
+                  onClick={() => void activityQuery.refetch()}
+                >
+                  Retry
+                </button>
+              }
+            />
+          </section>
+        ) : activityQuery.data.length === 0 ? (
+          <section className="command-center-card">
+            <EmptyState
+              title="No recent activity"
+              description="No recent Command Center activity was returned."
+            />
+          </section>
+        ) : (
+          <RecentActivityCard items={activityQuery.data} />
+        )}
       </main>
     </div>
   )

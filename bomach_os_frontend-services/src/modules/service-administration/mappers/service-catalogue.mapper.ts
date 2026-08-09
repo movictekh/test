@@ -53,14 +53,18 @@ export function mapServiceCatalogueCard(dto: ServiceCatalogueCardDto): ServiceCa
 export function mapServiceCatalogueDetail(dto: ServiceCatalogueDetailDto): ServiceCatalogueItem {
   const activeRequestForm =
     dto.request_forms.find((form) => form.id === dto.active_request_form_id) ??
-    dto.active_request_form
+    dto.active_request_form ??
+    dto.request_forms[0]
 
   const activeWorkflow =
-    dto.workflows.find((workflow) => workflow.id === dto.active_workflow_id) ?? dto.active_workflow
+    dto.workflows.find((workflow) => workflow.id === dto.active_workflow_id) ??
+    dto.active_workflow ??
+    dto.workflows[0]
 
   const activePricingConfig =
     dto.pricing_configs.find((config) => config.id === dto.active_pricing_config_id) ??
-    dto.active_pricing_config
+    dto.active_pricing_config ??
+    dto.pricing_configs[0]
 
   return {
     ...mapServiceCatalogueCard(dto),

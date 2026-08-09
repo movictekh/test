@@ -1,5 +1,11 @@
 export type NotificationTone = 'info' | 'success' | 'warning' | 'danger'
 
+export interface NotificationMetadata {
+  entity_type?: string
+  entity_id?: string | number
+  [key: string]: unknown
+}
+
 export interface AppNotification {
   id: string
   title: string
@@ -7,11 +13,17 @@ export interface AppNotification {
   timestamp: string
   tone: NotificationTone
   read: boolean
-  entityType?: string
-  entityId?: string
+  link?: string
+  metadata: NotificationMetadata
 }
 
 export interface NotificationListResult {
-  configured: boolean
+  count: number
+  next: string | null
+  previous: string | null
   notifications: AppNotification[]
+}
+
+export interface NotificationStats {
+  unreadCount: number
 }

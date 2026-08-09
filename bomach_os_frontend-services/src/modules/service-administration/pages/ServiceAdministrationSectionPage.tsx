@@ -25,10 +25,10 @@ import {
 import { serviceAdministrationBackendApi } from '../api/service-administration.backend-api'
 import { serviceAdministrationKeys } from '../api/service-administration.keys'
 import {
-  publishLiveService,
   saveLivePricingConfig,
   saveLiveRequestForm,
   saveLiveWorkflow,
+  publishLiveService,
 } from '../api/service-administration.live-mutations'
 import { serviceAdministrationQueries } from '../api/service-administration.queries'
 import { runLiveServiceSetup } from '../api/service-setup.orchestrator'
@@ -50,6 +50,7 @@ import type {
   ServiceCatalogueItem,
   ServiceRequestForm,
   ServiceWorkflow,
+  WorkflowOwnerRoleOption,
   SaveBranchActivationMatrixInput,
   SaveCalculatorInput,
   SaveRequestFormInput,
@@ -169,8 +170,7 @@ export function ServiceAdministrationSectionPage({
     ...serviceAdministrationQueries.branches(),
     enabled:
       capabilities.canCreateInitialServiceSetup &&
-      capabilities.canListBranches &&
-      capabilities.canUpdateBranchActivations,
+      capabilities.canListBranches,
   })
   const branchMatrixQuery = useQuery({
     ...serviceAdministrationQueries.branchActivationMatrix(),
@@ -395,6 +395,199 @@ export function ServiceAdministrationSectionPage({
     },
   })
 
+  const saveConfiguredService = useMutation({
+    mutationFn: async (input: ConfigureServiceInput) => {
+      const serviceId = Number(input.id)
+      if (!Number.isFinite(serviceId) || serviceId <= 0) {
+        throw new Error('The selected service has an invalid backend identifier.')
+      }
+
+      const ownerRole =
+        rolesQuery.data?.find((role) => role.id === input.ownerRoleId) ??
+        rolesQuery.data?.find((role) => role.name === input.owner) ??
+        null
+      const branchOptions = createWizardBranchesQuery.data ?? []
+      const selectedBranchNames = new Set(input.branchNames)
+
+      const fulfillmentModeMap: Record<string, string> = {
+        'quick service order': 'quick_order',
+        'managed service case': 'managed_case',
+        'project & worksite': 'project_worksite',
+        'transaction & allocation': 'transaction_allocation',
+        'supply order': 'supply_order',
+      }
+
+      const pricingTypeMap: Record<string, 'fixed' | 'unit_rate' | 'area_rate' | 'percentage' | 'formula'> = {
+        fixed: 'fixed',
+        'unit rate': 'unit_rate',
+        'area rate': 'area_rate',
+        percentage: 'percentage',
+        'custom formula': 'formula',
+      }
+
+      const requestFieldType = (label: string) => {
+        const normalized = label.toLowerCase()
+        if (normalized.includes('budget')) return 'money' as const
+        if (normalized.includes('date')) return 'date' as const
+        if (normalized.includes('scope') || normalized.includes('message')) return 'textarea' as const
+        if (
+          normalized.includes('upload') ||
+          normalized.includes('document') ||
+          normalized.includes('image')
+        ) {
+          return 'file' as const
+        }
+        if (normalized.includes('location') || normalized.includes('site')) return 'location' as const
+        if (normalized.includes('consent')) return 'checkbox' as const
+        if (normalized.includes('phone')) return 'phone' as const
+        if (normalized.includes('email')) return 'email' as const
+        return 'text' as const
+      }
+
+      await serviceAdministrationBackendApi.updateService(serviceId, {
+        name: input.name,
+        code: input.code || null,
+        division: input.division,
+        description: input.description,
+        status: input.status,
+        ...(ownerRole ? { owner_role_id: ownerRole.id } : {}),
+        default_sla_days: input.slaDays,
+        fulfillment_mode:
+          fulfillmentModeMap[input.fulfilmentMode.trim().toLowerCase()] ?? input.fulfilmentMode,
+        client_visibility: 'visible',
+      })
+
+      await serviceAdministrationBackendApi.replaceSubservices(
+        serviceId,
+        input.subservices.map((name, index) => ({
+          name,
+          status: input.status === 'inactive' ? 'archived' : 'draft',
+          default_sla_days: input.slaDays,
+          sort_order: index,
+        })),
+      )
+
+      await saveLivePricingConfig({
+        ...(selectedCalculator ? { id: selectedCalculator.id } : {}),
+        name: selectedCalculator?.name ?? `${input.name} Pricing`,
+        code: selectedCalculator?.code ?? `${input.code || input.name}-pricing`,
+        serviceId: input.id,
+        description: selectedCalculator?.description ?? `Pricing for ${input.name}`,
+        pricingType: pricingTypeMap[input.pricing.method.trim().toLowerCase()] ?? 'fixed',
+        status: input.status === 'inactive' ? 'inactive' : 'draft',
+        variables: selectedCalculator?.variables ?? [],
+        charges: [
+          {
+            id: selectedCalculator?.charges.find((charge) => charge.label === 'Formula')?.id ?? 'formula',
+            label: 'Formula',
+            kind:
+              (pricingTypeMap[input.pricing.method.trim().toLowerCase()] ?? 'fixed') === 'formula'
+                ? 'formula'
+                : 'fixed',
+            value:
+              (pricingTypeMap[input.pricing.method.trim().toLowerCase()] ?? 'fixed') === 'formula'
+                ? 'quantity * unit_rate + logistics'
+                : input.pricing.rate,
+          },
+          {
+            id:
+              selectedCalculator?.charges.find((charge) =>
+                charge.label.toLowerCase().includes('deposit'),
+              )?.id ?? 'deposit',
+            label: 'Deposit',
+            kind: 'percentage',
+            value: input.pricing.depositPercent,
+          },
+          {
+            id:
+              selectedCalculator?.charges.find((charge) => charge.label.toLowerCase().includes('tax'))
+                ?.id ?? 'tax',
+            label: 'Tax',
+            kind: 'percentage',
+            value: input.pricing.taxPercent,
+          },
+          {
+            id:
+              selectedCalculator?.charges.find((charge) =>
+                charge.label.toLowerCase().includes('approval'),
+              )?.id ?? 'approval',
+            label: 'Discount approval',
+            kind: 'percentage',
+            value: input.pricing.discountApprovalPercent,
+          },
+        ],
+        sampleTotal: input.pricing.rate,
+      })
+
+      await saveLiveRequestForm(
+        {
+          ...(selectedRequestForm ? { id: selectedRequestForm.id } : {}),
+          name: selectedRequestForm?.name ?? `${input.name} Request Form`,
+          serviceId: input.id,
+          status: input.status === 'inactive' ? 'inactive' : 'draft',
+          fields: input.requestFields.map((label, index) => ({
+            id: selectedRequestForm?.fields[index]?.id ?? `field-${index + 1}`,
+            label,
+            key: label
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, '_')
+              .replace(/^_|_$/g, ''),
+            type: selectedRequestForm?.fields[index]?.type ?? requestFieldType(label),
+            required: selectedRequestForm?.fields[index]?.required ?? true,
+          })),
+        },
+        input.name,
+      )
+
+      await saveLiveWorkflow(
+        {
+          ...(selectedWorkflow ? { id: selectedWorkflow.id } : {}),
+          name: selectedWorkflow?.name ?? `${input.name} Workflow`,
+          serviceId: input.id,
+          status: input.status === 'inactive' ? 'inactive' : 'draft',
+          stages: input.workflowStages.map((name, index) => ({
+            id: selectedWorkflow?.stages[index]?.id ?? `stage-${index + 1}`,
+            name,
+            order: index + 1,
+            ownerRole: selectedWorkflow?.stages[index]?.ownerRole ?? input.owner,
+            ownerRoleId: selectedWorkflow?.stages[index]?.ownerRoleId ?? ownerRole?.id ?? null,
+            slaHours: selectedWorkflow?.stages[index]?.slaHours ?? 24,
+            requiresEvidence: selectedWorkflow?.stages[index]?.requiresEvidence ?? index > 0,
+            requiresApproval: selectedWorkflow?.stages[index]?.requiresApproval ?? false,
+            clientVisible: selectedWorkflow?.stages[index]?.clientVisible ?? true,
+          })),
+        },
+        input.name,
+      )
+
+      await serviceAdministrationBackendApi.upsertBranchActivations(
+        serviceId,
+        branchOptions.map((branch) => ({
+          branch_id: branch.id,
+          status: selectedBranchNames.has(branch.name) ? 'active' : 'inactive',
+          client_visible: true,
+          capacity: 80,
+          activated_at: selectedBranchNames.has(branch.name)
+            ? new Date().toISOString()
+            : null,
+        })),
+      )
+
+      return queryClient.fetchQuery(serviceAdministrationQueries.catalogueDetail(serviceId))
+    },
+    onSuccess: async (service) => {
+      await queryClient.invalidateQueries({ queryKey: serviceAdministrationKeys.catalogue() })
+      setSelectedService(service)
+      toast.success('Service configuration saved')
+    },
+    onError: (error) => {
+      const presented = presentError(error, 'background-action')
+      toast.error('Service configuration could not be saved', {
+        description: presented.message,
+      })
+    },
+  })
+
   const publishService = useMutation({
     mutationFn: (serviceId: number) => publishLiveService(serviceId),
     onSuccess: async (service) => {
@@ -585,7 +778,7 @@ export function ServiceAdministrationSectionPage({
                 ? (service) => void openLiveServiceDetail(service)
                 : undefined
             }
-            configureLabel="View"
+            configureLabel={capabilities.canUpdateService ? 'Configure' : 'View'}
             onCreate={
               capabilities.canCreateInitialServiceSetup ? () => setNewServiceOpen(true) : undefined
             }
@@ -717,14 +910,21 @@ export function ServiceAdministrationSectionPage({
               onClose: () => void
               onSave?: (input: ConfigureServiceInput) => void
               readOnly?: boolean
+              branches?: Array<{ id: number; name: string; code: string }>
+              ownerRoles?: WorkflowOwnerRoleOption[]
               calculator?: PricingCalculator
               requestForm?: ServiceRequestForm
               workflow?: ServiceWorkflow
             } = {
               service: selectedService,
-              pending: false,
+              pending: saveConfiguredService.isPending,
               onClose: () => setSelectedService(null),
-              readOnly: true,
+              readOnly: !capabilities.canUpdateService,
+            }
+
+            if (capabilities.canUpdateService) {
+              configureWorkspaceProps.onSave = (input: ConfigureServiceInput) =>
+                saveConfiguredService.mutate(input)
             }
 
             if (selectedCalculator) {
@@ -738,6 +938,9 @@ export function ServiceAdministrationSectionPage({
             if (selectedWorkflow) {
               configureWorkspaceProps.workflow = selectedWorkflow
             }
+
+            configureWorkspaceProps.branches = createWizardBranchesQuery.data ?? []
+            configureWorkspaceProps.ownerRoles = rolesQuery.data ?? []
 
             return <ConfigureServiceWorkspace {...configureWorkspaceProps} />
           })()

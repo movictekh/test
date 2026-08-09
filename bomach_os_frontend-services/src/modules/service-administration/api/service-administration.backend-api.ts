@@ -77,7 +77,7 @@ export const serviceAdministrationBackendApi = {
 
   listBranches(limit = 100, offset = 0) {
     return apiClient.get<LimitOffsetPageDto<BranchDto>>(
-      withQuery('/branches', { is_active: true, limit, offset }),
+      withQuery('/branch/branches', { is_active: true, limit, offset }),
     )
   },
 

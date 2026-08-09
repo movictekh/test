@@ -29,4 +29,14 @@ describe('Service Administration backend paths', () => {
       }),
     ).toBe('/services/pricing-configs?limit=10')
   })
+
+  it('uses the branch API namespace for active branch lookups', () => {
+    expect(
+      serviceAdministrationBackendPaths.withQuery('/branch/branches', {
+        is_active: true,
+        limit: 100,
+        offset: 0,
+      }),
+    ).toBe('/branch/branches?is_active=true&limit=100&offset=0')
+  })
 })

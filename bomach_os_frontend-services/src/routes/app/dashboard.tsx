@@ -7,7 +7,7 @@ export const Route = createFileRoute('/app/dashboard')({
   beforeLoad: ({ context }) => {
     return requireRoutePermission({
       auth: context.auth,
-      permissions: [PERMISSIONS.dashboardView],
+      permissions: [PERMISSIONS.commandCenterView],
     })
   },
   component: OperationsDashboardPage,

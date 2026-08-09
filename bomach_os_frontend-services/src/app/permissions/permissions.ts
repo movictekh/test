@@ -4,6 +4,12 @@ import type { AppPermission, PermissionMode } from './permission.types'
 
 export const PERMISSIONS = {
   dashboardView: 'dashboard.view',
+  commandCenterView: 'command_center.view',
+
+  notificationsView: 'notifications.view',
+  notificationsList: 'notifications.list',
+  notificationsMarkRead: 'notifications.mark_read',
+  notificationsMarkAllRead: 'notifications.mark_all_read',
 
   servicesList: 'services.list',
   servicesView: 'services.view',

@@ -27,8 +27,6 @@ const divisions = [
   'Hospitality Services',
 ]
 
-const branches = ['Enugu', 'Port Harcourt', 'Lagos', 'Abuja']
-
 const requestFieldOptions = [
   'Client identity',
   'Phone & email',
@@ -613,8 +611,8 @@ export function CreateServiceWizard({
             </div>
           ) : (
             <div className="service-admin-notice service-admin-notice-blue">
-              No active backend branches are available. You can continue and save this Service as
-              Draft. At least one active branch is required before publishing.
+              No active branches are available yet. You can save this service as a draft and add
+              branches before publishing. Publishing requires at least one active branch.
             </div>
           )}
 
@@ -710,6 +708,8 @@ export function ConfigureServiceWorkspace({
   calculator,
   requestForm,
   workflow,
+  branches: branchOptions = [],
+  ownerRoles = [],
   pending,
   onClose,
   onSave,
@@ -719,6 +719,8 @@ export function ConfigureServiceWorkspace({
   calculator?: PricingCalculator
   requestForm?: ServiceRequestForm
   workflow?: ServiceWorkflow
+  branches?: Array<{ id: number; name: string; code: string }>
+  ownerRoles?: WorkflowOwnerRoleOption[]
   pending: boolean
   onClose: () => void
   onSave?: (input: ConfigureServiceInput) => void
@@ -729,6 +731,10 @@ export function ConfigureServiceWorkspace({
   const [code, setCode] = useState(service.code)
   const [division, setDivision] = useState(service.division)
   const [owner, setOwner] = useState(service.owner)
+  const [ownerRoleId, setOwnerRoleId] = useState<number | null>(() => {
+    const matchedRole = ownerRoles.find((role) => role.name === service.owner)
+    return matchedRole?.id ?? null
+  })
   const [description, setDescription] = useState(service.description)
   const [slaDays, setSlaDays] = useState(service.slaDays ?? 5)
   const [fulfilmentMode, setFulfilmentMode] = useState(
@@ -789,7 +795,7 @@ export function ConfigureServiceWorkspace({
     ).join('\n'),
   )
   const [selectedBranches, setSelectedBranches] = useState<string[]>(
-    service.branchNames.length ? [...service.branchNames] : [...branches],
+    service.branchNames.length ? [...service.branchNames] : branchOptions.map((branch) => branch.name),
   )
   const [status, setStatus] = useState(service.status)
   const [clientVisibility, setClientVisibility] = useState('Visible in catalogue')
@@ -801,6 +807,7 @@ export function ConfigureServiceWorkspace({
     code: code.trim(),
     division,
     owner: owner.trim(),
+    ownerRoleId,
     description: description.trim(),
     slaDays,
     fulfilmentMode,
@@ -892,7 +899,7 @@ export function ConfigureServiceWorkspace({
 
   return (
     <ModalShell
-      title={`Configure ${service.name}`}
+      title={readOnly ? service.name : `Configure ${service.name}`}
       wide
       variant="wizard"
       onClose={onClose}
@@ -976,7 +983,8 @@ export function ConfigureServiceWorkspace({
 
       {readOnly ? (
         <div className="service-admin-notice service-admin-notice-blue">
-          View-only access. Your role can inspect this service but cannot change its configuration.
+          This service view is currently read-only. Use the dedicated setup screens to update its
+          configuration, pricing, workflow, request form, or branch activation.
         </div>
       ) : null}
 
@@ -1001,7 +1009,25 @@ export function ConfigureServiceWorkspace({
               </select>
             </Field>
             <Field label="Owner role" required>
-              <input value={owner} required onChange={(event) => setOwner(event.target.value)} />
+              <select
+                value={ownerRoleId ?? ''}
+                required
+                onChange={(event) => {
+                  const nextOwnerRoleId = event.target.value ? Number(event.target.value) : null
+                  const selectedOwnerRole = ownerRoles.find((role) => role.id === nextOwnerRoleId)
+                  setOwnerRoleId(nextOwnerRoleId)
+                  setOwner(selectedOwnerRole?.name ?? '')
+                }}
+              >
+                <option value="" disabled>
+                  Select an owner role
+                </option>
+                {ownerRoles.map((role) => (
+                  <option key={role.id} value={role.id}>
+                    {role.name}
+                  </option>
+                ))}
+              </select>
             </Field>
             <Field label="Description" full required>
               <textarea
@@ -1150,20 +1176,20 @@ export function ConfigureServiceWorkspace({
           <>
             <Field label="Active branches" full required>
               <div className="service-admin-check-grid service-admin-check-grid--branches">
-                {branches.map((branch) => (
-                  <label key={branch} className="service-admin-check-option">
+                {branchOptions.map((branch) => (
+                  <label key={branch.id} className="service-admin-check-option">
                     <input
                       type="checkbox"
-                      checked={selectedBranches.includes(branch)}
+                      checked={selectedBranches.includes(branch.name)}
                       onChange={(event) =>
                         setSelectedBranches((current) =>
                           event.target.checked
-                            ? [...current, branch]
-                            : current.filter((item) => item !== branch),
+                            ? [...current, branch.name]
+                            : current.filter((item) => item !== branch.name),
                         )
                       }
                     />
-                    {branch}
+                    {branch.name}
                   </label>
                 ))}
               </div>
