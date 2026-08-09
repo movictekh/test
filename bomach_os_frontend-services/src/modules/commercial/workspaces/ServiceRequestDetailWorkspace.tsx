@@ -1,15 +1,4 @@
-import {
-  IconExternalLink,
-  IconFile,
-  IconFileDescription,
-  IconFileTypeDoc,
-  IconFileTypePdf,
-  IconPhoto,
-  IconRefresh,
-  IconTrash,
-  IconUpload,
-  IconX,
-} from '@tabler/icons-react'
+import { IconExternalLink, IconRefresh, IconTrash, IconUpload, IconX } from '@tabler/icons-react'
 import { useForm } from '@tanstack/react-form'
 import { useRef, useState } from 'react'
 
@@ -26,6 +15,9 @@ import type {
   ServiceRequestDetail,
   UpdateServiceRequestInput,
 } from '../api/service-requests.types'
+
+import { FileTypeIcon } from '../request-intake/file-presentation'
+import { formatBytes } from '../request-intake/file-presentation.utils'
 
 function statusClass(status: string) {
   if (status === 'rejected') return 'commercial-pill-gray'
@@ -54,31 +46,6 @@ function renderAnswerValue(value: unknown) {
   if (typeof value === 'string') return value || '—'
   if (typeof value === 'number') return String(value)
   return '—'
-}
-
-function formatBytes(size: number) {
-  if (size < 1024) return `${size} B`
-  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`
-  return `${(size / (1024 * 1024)).toFixed(1)} MB`
-}
-
-function fileIcon(contentType: string, fileName: string) {
-  const name = fileName.toLowerCase()
-  const type = contentType.toLowerCase()
-
-  if (type.startsWith('image/') || /\.(png|jpg|jpeg|gif|webp|svg)$/.test(name)) {
-    return <IconPhoto size={16} />
-  }
-  if (type.includes('pdf') || name.endsWith('.pdf')) {
-    return <IconFileTypePdf size={16} />
-  }
-  if (type.includes('word') || /\.(doc|docx)$/.test(name)) {
-    return <IconFileTypeDoc size={16} />
-  }
-  if (type.includes('text') || /\.(txt|csv|rtf)$/.test(name)) {
-    return <IconFileDescription size={16} />
-  }
-  return <IconFile size={16} />
 }
 
 export function ServiceRequestDetailWorkspace({
@@ -430,10 +397,10 @@ export function ServiceRequestDetailWorkspace({
                         className="service-admin-list-row"
                       >
                         <div className="commercial-upload-item-icon">
-                          {fileIcon(
-                            attachment.contentType,
-                            attachment.fileName || attachment.label || attachment.fileUrl,
-                          )}
+                          <FileTypeIcon
+                            fileName={attachment.fileName || attachment.label || attachment.fileUrl}
+                            contentType={attachment.contentType}
+                          />
                         </div>
                         <div className="service-admin-list-meta">
                           <div className="service-admin-list-name">
@@ -817,7 +784,10 @@ export function ServiceRequestDetailWorkspace({
                         className={`commercial-upload-item commercial-upload-item--${pendingAttachment.status}`}
                       >
                         <div className="commercial-upload-item-icon">
-                          {fileIcon(pendingAttachment.contentType, pendingAttachment.fileName)}
+                          <FileTypeIcon
+                            fileName={pendingAttachment.fileName}
+                            contentType={pendingAttachment.contentType}
+                          />
                         </div>
                         <div className="commercial-upload-item-body">
                           <div className="commercial-upload-item-top">
@@ -868,7 +838,6 @@ export function ServiceRequestDetailWorkspace({
                     <small className="commercial-field-error">{attachmentError}</small>
                   ) : null}
                 </div>
-
               </div>
             </div>
             <footer className="commercial-modal-footer">

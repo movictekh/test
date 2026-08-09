@@ -469,7 +469,15 @@ export function ServiceRequestsLivePage({ recordSearch }: { recordSearch: AppSec
             </div>
           )}
 
-          <div className="service-admin-pagination">
+          <div className="commercial-table-pagination">
+            <div className="commercial-table-pagination-summary">
+              <span className="commercial-table-pagination-count">{recordCountLabel}</span>
+              <span className="commercial-table-pagination-divider" aria-hidden="true" />
+              <span>
+                Page <b>{page}</b> of <b>{totalPages}</b>
+              </span>
+            </div>
+            <div className="commercial-table-pagination-actions">
             <button
               type="button"
               className="commercial-btn commercial-btn-small"
@@ -478,9 +486,6 @@ export function ServiceRequestsLivePage({ recordSearch }: { recordSearch: AppSec
             >
               Previous
             </button>
-            <span>
-              Page {page} of {totalPages}
-            </span>
             <button
               type="button"
               className="commercial-btn commercial-btn-small"
@@ -489,6 +494,7 @@ export function ServiceRequestsLivePage({ recordSearch }: { recordSearch: AppSec
             >
               Next
             </button>
+            </div>
           </div>
         </section>
       </main>

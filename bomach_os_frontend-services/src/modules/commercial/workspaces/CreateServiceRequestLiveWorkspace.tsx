@@ -2,15 +2,7 @@ import {
   IconAlertCircle,
   IconCalculator,
   IconChevronDown,
-  IconFile,
-  IconFileDescription,
-  IconFileTypeDoc,
-  IconFileTypePdf,
   IconLoader2,
-  IconPhoto,
-  IconRefresh,
-  IconTrash,
-  IconUpload,
   IconX,
 } from '@tabler/icons-react'
 import { useForm } from '@tanstack/react-form'
@@ -30,377 +22,26 @@ import type {
   CreateServiceRequestAttachmentInput,
   CreateServiceRequestInput,
   IntakeField,
-  ServicePricingConfig,
   ServiceOption,
-  ServiceRequestPriority,
   ServiceRequestChoices,
 } from '../api/service-requests.types'
 
-type UploadStatus = 'uploading' | 'uploaded' | 'error'
-
-interface PendingUpload {
-  id: string
-  fieldKey: string
-  label: string
-  file: File
-  fileName: string
-  fileSizeBytes: number
-  contentType: string
-  fileUrl: string
-  status: UploadStatus
-  error: string
-}
-
-function missing(value: unknown) {
-  return value == null || value === '' || (Array.isArray(value) && value.length === 0)
-}
-
-function normalizeToken(value: string) {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
-}
-
-function fieldToken(field: IntakeField) {
-  return normalizeToken(`${field.key} ${field.label}`)
-}
-
-function isClientIdentityField(field: IntakeField) {
-  const token = fieldToken(field)
-  return token.includes('client identity') || token.includes('client name')
-}
-
-function isPhoneEmailField(field: IntakeField) {
-  const token = fieldToken(field)
-  return token.includes('phone') && token.includes('email')
-}
-
-function isPhoneField(field: IntakeField) {
-  const token = fieldToken(field)
-  return field.fieldType === 'phone' || (token.includes('phone') && !token.includes('email'))
-}
-
-function isEmailField(field: IntakeField) {
-  const token = fieldToken(field)
-  return field.fieldType === 'email' || token === 'email' || token.includes('contact email')
-}
-
-function isCustomerTypeField(field: IntakeField) {
-  return fieldToken(field).includes('customer type')
-}
-
-function isBudgetField(field: IntakeField) {
-  return fieldToken(field) === 'budget' || fieldToken(field).endsWith(' budget')
-}
-
-function isPreferredDateField(field: IntakeField) {
-  return fieldToken(field).includes('preferred date')
-}
-
-function isScopeField(field: IntakeField) {
-  const token = fieldToken(field)
-  return (
-    token.includes('scope message') ||
-    token.includes('scope details') ||
-    token.includes('scope summary') ||
-    token.includes('scope') ||
-    token.includes('request details') ||
-    token.includes('message')
-  )
-}
-
-function isAutoFilledField(field: IntakeField) {
-  return (
-    isClientIdentityField(field) ||
-    isPhoneEmailField(field) ||
-    isPhoneField(field) ||
-    isEmailField(field) ||
-    isCustomerTypeField(field) ||
-    isBudgetField(field) ||
-    isPreferredDateField(field)
-  )
-}
-
-function formatBytes(size: number) {
-  if (size < 1024) return `${size} B`
-  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`
-  return `${(size / (1024 * 1024)).toFixed(1)} MB`
-}
-
-function fieldTextValue(value: unknown) {
-  return typeof value === 'string' || typeof value === 'number' ? String(value) : ''
-}
-
-function isPriorityValue(value: string): value is ServiceRequestPriority {
-  return value === 'normal' || value === 'high' || value === 'critical'
-}
-
-function fileIcon(upload: PendingUpload) {
-  const name = upload.fileName.toLowerCase()
-  const contentType = upload.contentType.toLowerCase()
-
-  if (contentType.startsWith('image/') || /\.(png|jpg|jpeg|gif|webp|svg)$/.test(name)) {
-    return <IconPhoto size={16} />
-  }
-  if (contentType.includes('pdf') || name.endsWith('.pdf')) {
-    return <IconFileTypePdf size={16} />
-  }
-  if (contentType.includes('word') || /\.(doc|docx)$/.test(name)) {
-    return <IconFileTypeDoc size={16} />
-  }
-  if (contentType.includes('text') || /\.(txt|csv|rtf)$/.test(name)) {
-    return <IconFileDescription size={16} />
-  }
-  return <IconFile size={16} />
-}
-
-function resolveAutoAnswer(
-  field: IntakeField,
-  context: {
-    contactName: string
-    contactPhone: string
-    contactEmail: string
-    customerType: string
-    budget: number
-    preferredDate: string
-    uploads: PendingUpload[]
-  },
-) {
-  if (field.fieldType === 'file') {
-    return context.uploads
-      .filter((upload) => upload.fieldKey === field.key && upload.status === 'uploaded')
-      .map((upload) => upload.fileUrl)
-  }
-  if (isClientIdentityField(field)) return context.contactName
-  if (isPhoneEmailField(field)) {
-    return [context.contactPhone, context.contactEmail].filter(Boolean).join(' · ')
-  }
-  if (isPhoneField(field)) return context.contactPhone
-  if (isEmailField(field)) return context.contactEmail
-  if (isCustomerTypeField(field)) return context.customerType
-  if (isBudgetField(field)) return context.budget > 0 ? context.budget : ''
-  if (isPreferredDateField(field)) return context.preferredDate
-  return undefined
-}
-
-function shouldHideAutoField(
-  field: IntakeField,
-  context: Parameters<typeof resolveAutoAnswer>[1],
-) {
-  if (!isAutoFilledField(field)) return false
-  const resolved = resolveAutoAnswer(field, context)
-  if (field.required && missing(resolved)) return false
-  return true
-}
-
-function nonNegativeNumber(value: string) {
-  const parsed = Number(value)
-  if (!Number.isFinite(parsed)) return 0
-  return Math.max(0, parsed)
-}
-
-function toNumericValue(value: unknown) {
-  if (typeof value === 'number' && Number.isFinite(value)) return value
-  if (typeof value === 'string') {
-    const cleaned = value.trim().replace(/,/g, '')
-    if (cleaned === '') return null
-    const parsed = Number(cleaned)
-    return Number.isFinite(parsed) ? parsed : null
-  }
-  return null
-}
-
-function normalizeMatchToken(value: string) {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, '')
-}
-
-function resolvePricingValue(
-  pricingField: ServicePricingConfig['fields'][number],
-  intakeFields: IntakeField[],
-  answers: Record<string, unknown>,
-  topLevel: {
-    budget: number
-    preferredDate: string
-    contactName: string
-    contactPhone: string
-    contactEmail: string
-    customerType: string
-    uploads: PendingUpload[]
-  },
-) {
-  const direct = toNumericValue(answers[pricingField.key])
-  if (direct != null) return direct
-
-  const pricingTokens = new Set([
-    normalizeMatchToken(pricingField.key),
-    normalizeMatchToken(pricingField.label),
-  ])
-
-  for (const field of intakeFields) {
-    const intakeTokens = [normalizeMatchToken(field.key), normalizeMatchToken(field.label)]
-    if (!intakeTokens.some((token) => token && pricingTokens.has(token))) continue
-    const resolved = shouldHideAutoField(field, topLevel)
-      ? resolveAutoAnswer(field, topLevel)
-      : answers[field.key]
-    const numeric = toNumericValue(resolved)
-    if (numeric != null) return numeric
-  }
-
-  return toNumericValue(pricingField.defaultValue)
-}
-
-function conventionalEstimate(
-  pricingConfig: ServicePricingConfig,
-  variables: Record<string, number>,
-) {
-  const findValue = (...keys: string[]) => {
-    for (const key of keys) {
-      const value = variables[key]
-      if (Number.isFinite(value)) return value
-    }
-    return null
-  }
-
-  if (pricingConfig.pricingType === 'fixed') {
-    const fixed =
-      findValue('amount', 'fixed_price', 'fixedprice', 'price', 'rate') ??
-      Object.values(variables)[0] ??
-      null
-    return fixed
-  }
-
-  if (pricingConfig.pricingType === 'percentage') {
-    const baseAmount = findValue('base_amount', 'baseamount', 'amount', 'budget')
-    const rate = findValue('rate', 'percentage', 'percent')
-    return baseAmount != null && rate != null ? (baseAmount * rate) / 100 : null
-  }
-
-  if (pricingConfig.pricingType === 'unit_rate') {
-    const quantity = findValue('quantity', 'units', 'count')
-    const rate = findValue('rate', 'unit_rate', 'unitrate', 'price')
-    return quantity != null && rate != null ? quantity * rate : null
-  }
-
-  if (pricingConfig.pricingType === 'area_rate') {
-    const area = findValue('area', 'size', 'plot_size', 'plotsize', 'quantity')
-    const rate = findValue('rate', 'area_rate', 'arearate', 'price')
-    return area != null && rate != null ? area * rate : null
-  }
-
-  return null
-}
-
-function pricingNeedsFormula(pricingConfig: ServicePricingConfig) {
-  return pricingConfig.pricingType === 'formula' || pricingConfig.formula.trim().length > 0
-}
-
-function calculateEstimateTotal(
-  pricingConfig: ServicePricingConfig,
-  intakeFields: IntakeField[],
-  answers: Record<string, unknown>,
-  topLevel: Parameters<typeof resolvePricingValue>[3],
-) {
-  const numericVariables: Record<string, number> = {}
-
-  for (const field of pricingConfig.fields) {
-    const value = resolvePricingValue(field, intakeFields, answers, topLevel)
-    if (value == null) {
-      if (field.required) {
-        return { supported: false as const, reason: `Missing ${field.label.toLowerCase()}.` }
-      }
-      continue
-    }
-    numericVariables[field.key] = value
-  }
-
-  if (pricingNeedsFormula(pricingConfig)) {
-    return {
-      supported: false as const,
-      reason: 'This service uses an advanced calculator formula that cannot be resolved safely here yet.',
-    }
-  }
-
-  const subtotal = conventionalEstimate(pricingConfig, numericVariables)
-
-  if (subtotal == null || !Number.isFinite(subtotal)) {
-    return {
-      supported: false as const,
-      reason: 'This calculator needs pricing rules that are not available in this request form.',
-    }
-  }
-
-  const total = subtotal + subtotal * (pricingConfig.taxRate / 100)
-  return {
-    supported: true as const,
-    total: Math.max(0, Number(total.toFixed(2))),
-    subtotal: Math.max(0, Number(subtotal.toFixed(2))),
-  }
-}
-
-function validateAnswers(fields: IntakeField[], answers: Record<string, unknown>) {
-  for (const field of fields) {
-    const value = answers[field.key]
-    if (field.required && missing(value)) return `${field.label} is required.`
-    if (missing(value)) continue
-
-    if (
-      (field.fieldType === 'number' || field.fieldType === 'money') &&
-      !Number.isFinite(Number(value))
-    ) {
-      return `${field.label} must be numeric.`
-    }
-  }
-  return null
-}
-
-function validateAnswerFields(fields: IntakeField[], answers: Record<string, unknown>) {
-  const errors: Record<string, string> = {}
-
-  for (const field of fields) {
-    const value = answers[field.key]
-    if (field.required && missing(value)) {
-      errors[field.key] = `${field.label} is required.`
-      continue
-    }
-    if (missing(value)) continue
-
-    if (
-      (field.fieldType === 'number' || field.fieldType === 'money') &&
-      !Number.isFinite(Number(value))
-    ) {
-      errors[field.key] = `${field.label} must be numeric.`
-    }
-  }
-
-  return errors
-}
-
-function normalizeAnswers(fields: IntakeField[], answers: Record<string, unknown>) {
-  return Object.fromEntries(
-    fields.map((field) => {
-      const value = answers[field.key]
-
-      if (field.fieldType === 'number' || field.fieldType === 'money') {
-        return [field.key, missing(value) ? null : Number(value)]
-      }
-      if (field.fieldType === 'checkbox') {
-        return [field.key, Boolean(value)]
-      }
-      if (field.fieldType === 'multiselect') {
-        return [field.key, Array.isArray(value) ? value : []]
-      }
-      if (field.fieldType === 'file') {
-        return [field.key, Array.isArray(value) ? value : missing(value) ? [] : [value]]
-      }
-
-      return [field.key, value]
-    }),
-  )
-}
-
-function firstScopeValue(fields: IntakeField[], answers: Record<string, unknown>) {
-  const match = fields.find(isScopeField)
-  const value = match ? answers[match.key] : null
-  return typeof value === 'string' ? value.trim() : ''
-}
+import { RequestIntakeFields } from '../request-intake/RequestIntakeFields'
+import type { PendingUpload } from '../request-intake/request-intake.types'
+import {
+  calculateEstimateTotal,
+  firstScopeValue,
+  isBudgetField,
+  isPreferredDateField,
+  isPriorityValue,
+  isScopeField,
+  normalizeAnswers,
+  nonNegativeNumber,
+  resolveAutoAnswer,
+  shouldHideAutoField,
+  validateAnswerFields,
+  validateAnswers,
+} from '../request-intake/request-intake.utils'
 
 export function CreateServiceRequestLiveWorkspace({
   clients,
@@ -468,7 +109,7 @@ export function CreateServiceRequestLiveWorkspace({
         choices.sources[0]?.value ??
         'sales_crm',
       sourceReference: '',
-      priority: (choices.priorities[0]?.value ?? 'normal') as ServiceRequestPriority,
+      priority: (choices.priorities[0]?.value ?? 'normal') as 'normal' | 'high' | 'critical',
       subserviceId: 0,
       branchId: initialService?.activeBranches[0]?.id ?? 0,
       budget: 0,
@@ -747,6 +388,23 @@ export function CreateServiceRequestLiveWorkspace({
     }
   }
 
+  const setAnswerValue = (fieldKey: string, next: unknown) => {
+    const nextAnswers = {
+      ...answerValues,
+      [fieldKey]: next,
+    }
+    setAnswerValues(nextAnswers)
+    form.setFieldValue('answers', {
+      ...nextAnswers,
+    })
+    setFieldErrors((current) => {
+      if (!current[fieldKey]) return current
+      const nextErrors = { ...current }
+      delete nextErrors[fieldKey]
+      return nextErrors
+    })
+  }
+
   const ready = activeClients.length > 0 && services.length > 0
   const autoAnswerContext = {
     contactName: form.state.values.contactName.trim(),
@@ -774,7 +432,12 @@ export function CreateServiceRequestLiveWorkspace({
       return
     }
 
-    const result = calculateEstimateTotal(activePricingConfig, fields, answerValues, autoAnswerContext)
+    const result = calculateEstimateTotal(
+      activePricingConfig,
+      fields,
+      answerValues,
+      autoAnswerContext,
+    )
     if (!result.supported) {
       toast.error('Estimate cannot be calculated yet.', {
         description: result.reason,
@@ -948,274 +611,24 @@ export function CreateServiceRequestLiveWorkspace({
                 <div className="commercial-form-section-heading">
                   <div>
                     <h3>{intakeQuery.data?.form.name ?? 'Request details'}</h3>
-                    <p>These questions are specific to this service and become part of the request record.</p>
+                    <p>
+                      These questions are specific to this service and become part of the request
+                      record.
+                    </p>
                   </div>
                 </div>
                 <div className="commercial-form-grid">
-                  <>
-                    {visibleFields.map((field) => {
-                      const value = answerValues[field.key]
-                      const setValue = (next: unknown) => {
-                        const nextAnswers = {
-                          ...answerValues,
-                          [field.key]: next,
-                        }
-                        setAnswerValues(nextAnswers)
-                        form.setFieldValue('answers', {
-                          ...nextAnswers,
-                        })
-                        setFieldErrors((current) => {
-                          if (!current[field.key]) return current
-                          const nextErrors = { ...current }
-                          delete nextErrors[field.key]
-                          return nextErrors
-                        })
-                      }
-
-                      if (field.fieldType === 'textarea') {
-                        return (
-                          <label
-                            key={field.id}
-                            className="commercial-field commercial-field--full"
-                          >
-                            <span>
-                              {field.label}
-                              {field.required ? ' *' : ''}
-                            </span>
-                            <textarea
-                              ref={(node) => {
-                                fieldRefs.current[field.key] = node
-                              }}
-                              rows={4}
-                              placeholder={field.placeholder}
-                              value={fieldTextValue(value)}
-                              onChange={(event) => setValue(event.target.value)}
-                            />
-                            {fieldErrors[field.key] ? (
-                              <small className="commercial-field-error">{fieldErrors[field.key]}</small>
-                            ) : null}
-                          </label>
-                        )
-                      }
-
-                      if (field.fieldType === 'select') {
-                        return (
-                          <label key={field.id} className="commercial-field">
-                            <span>
-                              {field.label}
-                              {field.required ? ' *' : ''}
-                            </span>
-                            <select
-                              ref={(node) => {
-                                fieldRefs.current[field.key] = node
-                              }}
-                              value={fieldTextValue(value)}
-                              onChange={(event) => setValue(event.target.value)}
-                            >
-                              <option value="">Select</option>
-                              {field.options.map((option) => (
-                                <option key={option.value} value={option.value}>
-                                  {option.label}
-                                </option>
-                              ))}
-                            </select>
-                            {fieldErrors[field.key] ? (
-                              <small className="commercial-field-error">{fieldErrors[field.key]}</small>
-                            ) : null}
-                          </label>
-                        )
-                      }
-
-                      if (field.fieldType === 'multiselect') {
-                        const selected = Array.isArray(value) ? value.map(String) : []
-                        return (
-                          <label key={field.id} className="commercial-field">
-                            <span>
-                              {field.label}
-                              {field.required ? ' *' : ''}
-                            </span>
-                            <select
-                              ref={(node) => {
-                                fieldRefs.current[field.key] = node
-                              }}
-                              multiple
-                              value={selected}
-                              onChange={(event) =>
-                                setValue(
-                                  Array.from(event.target.selectedOptions).map(
-                                    (option) => option.value,
-                                  ),
-                                )
-                              }
-                            >
-                              {field.options.map((option) => (
-                                <option key={option.value} value={option.value}>
-                                  {option.label}
-                                </option>
-                              ))}
-                            </select>
-                            {fieldErrors[field.key] ? (
-                              <small className="commercial-field-error">{fieldErrors[field.key]}</small>
-                            ) : null}
-                          </label>
-                        )
-                      }
-
-                      if (field.fieldType === 'checkbox') {
-                        return (
-                          <label
-                            key={field.id}
-                            className="commercial-check commercial-field--full"
-                            ref={(node) => {
-                              fieldRefs.current[field.key] = node
-                            }}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={Boolean(value)}
-                              onChange={(event) => setValue(event.target.checked)}
-                            />
-                            <span>
-                              {field.label}
-                              {field.required ? ' *' : ''}
-                            </span>
-                            {fieldErrors[field.key] ? (
-                              <small className="commercial-field-error">{fieldErrors[field.key]}</small>
-                            ) : null}
-                          </label>
-                        )
-                      }
-
-                      if (field.fieldType === 'file') {
-                        const uploads = uploadsByField[field.key] ?? []
-                        return (
-                          <div
-                            key={field.id}
-                            className="commercial-field commercial-field--full commercial-upload-field"
-                            ref={(node) => {
-                              fieldRefs.current[field.key] = node
-                            }}
-                          >
-                            <span>
-                              {field.label}
-                              {field.required ? ' *' : ''}
-                            </span>
-                            <label className="commercial-upload-dropzone">
-                              <div className="commercial-upload-dropzone-icon">
-                                <IconUpload size={18} />
-                              </div>
-                              <div>
-                                <strong>Add documents</strong>
-                                <small>
-                                  Upload one or more files now. They will be attached when the request is created.
-                                </small>
-                              </div>
-                              <input
-                                type="file"
-                                multiple
-                                onChange={(event) => {
-                                  void handleFileSelection(field, event.target.files)
-                                  event.target.value = ''
-                                }}
-                              />
-                            </label>
-                            {uploads.length > 0 ? (
-                              <div className="commercial-upload-list">
-                                {uploads.map((upload) => (
-                                  <article
-                                    key={upload.id}
-                                    className={`commercial-upload-item commercial-upload-item--${upload.status}`}
-                                  >
-                                    <div className="commercial-upload-item-icon">
-                                      {fileIcon(upload)}
-                                    </div>
-                                    <div className="commercial-upload-item-body">
-                                      <div className="commercial-upload-item-top">
-                                        <strong>{upload.fileName}</strong>
-                                        <span>{formatBytes(upload.fileSizeBytes)}</span>
-                                      </div>
-                                      {upload.status === 'uploading' ? (
-                                        <div className="commercial-upload-progress">
-                                          <div className="commercial-upload-progress-bar" />
-                                        </div>
-                                      ) : null}
-                                      {upload.status === 'uploaded' ? (
-                                        <small>Ready to attach to this request</small>
-                                      ) : null}
-                                      {upload.status === 'error' ? <small>{upload.error}</small> : null}
-                                    </div>
-                                    <div className="commercial-upload-actions">
-                                      {upload.status === 'error' ? (
-                                        <button
-                                          type="button"
-                                          className="commercial-upload-remove"
-                                          onClick={() => retryUpload(upload)}
-                                          aria-label={`Retry ${upload.fileName}`}
-                                        >
-                                          <IconRefresh size={14} />
-                                        </button>
-                                      ) : null}
-                                      <button
-                                        type="button"
-                                        className="commercial-upload-remove"
-                                        onClick={() => removeUpload(field.key, upload.id)}
-                                        aria-label={`Remove ${upload.fileName}`}
-                                      >
-                                        {upload.status === 'uploading' ? (
-                                          <IconX size={14} />
-                                        ) : (
-                                          <IconTrash size={14} />
-                                        )}
-                                      </button>
-                                    </div>
-                                  </article>
-                                ))}
-                              </div>
-                            ) : null}
-                            {fieldErrors[field.key] ? (
-                              <small className="commercial-field-error">{fieldErrors[field.key]}</small>
-                            ) : null}
-                          </div>
-                        )
-                      }
-
-                      return (
-                        <label key={field.id} className="commercial-field">
-                          <span>
-                            {field.label}
-                            {field.required ? ' *' : ''}
-                          </span>
-                          <input
-                            ref={(node) => {
-                              fieldRefs.current[field.key] = node
-                            }}
-                            type={
-                              field.fieldType === 'date'
-                                ? 'date'
-                                : field.fieldType === 'number' || field.fieldType === 'money'
-                                  ? 'number'
-                                  : field.fieldType === 'email'
-                                    ? 'email'
-                                    : 'text'
-                            }
-                            placeholder={field.placeholder}
-                            value={fieldTextValue(value)}
-                            onChange={(event) =>
-                              setValue(
-                                field.fieldType === 'number' || field.fieldType === 'money'
-                                  ? nonNegativeNumber(event.target.value)
-                                  : event.target.value,
-                              )
-                            }
-                          />
-                          {fieldErrors[field.key] ? (
-                            <small className="commercial-field-error">{fieldErrors[field.key]}</small>
-                          ) : null}
-                          {field.helpText ? <small>{field.helpText}</small> : null}
-                        </label>
-                      )
-                    })}
-                  </>
+                  <RequestIntakeFields
+                    fields={visibleFields}
+                    answerValues={answerValues}
+                    fieldErrors={fieldErrors}
+                    uploadsByField={uploadsByField}
+                    fieldRefs={fieldRefs}
+                    onValueChange={setAnswerValue}
+                    onFileSelection={handleFileSelection}
+                    onRetryUpload={retryUpload}
+                    onRemoveUpload={removeUpload}
+                  />
                 </div>
               </section>
 
@@ -1306,7 +719,9 @@ export function CreateServiceRequestLiveWorkspace({
                               disabled={pricingConfigQuery.isPending}
                             >
                               <IconCalculator size={14} />
-                              {pricingConfigQuery.isPending ? 'Loading pricing...' : 'Calculate estimate'}
+                              {pricingConfigQuery.isPending
+                                ? 'Loading pricing...'
+                                : 'Calculate estimate'}
                             </Button>
                           </div>
                           {estimatePreview?.supported ? (
@@ -1383,14 +798,19 @@ export function CreateServiceRequestLiveWorkspace({
               {hasUploadingFiles ? (
                 <div className="commercial-form-alert">
                   <IconLoader2 size={16} className="commercial-spin" />
-                  <span>Document uploads are still in progress. Submit will unlock when they finish.</span>
+                  <span>
+                    Document uploads are still in progress. Submit will unlock when they finish.
+                  </span>
                 </div>
               ) : null}
 
               {hasUploadErrors ? (
                 <div className="commercial-form-alert commercial-form-alert-danger">
                   <IconAlertCircle size={16} />
-                  <span>One or more documents failed to upload. Remove or upload them again before submitting.</span>
+                  <span>
+                    One or more documents failed to upload. Remove or upload them again before
+                    submitting.
+                  </span>
                 </div>
               ) : null}
             </>
@@ -1405,11 +825,7 @@ export function CreateServiceRequestLiveWorkspace({
             type="submit"
             className="commercial-btn commercial-btn-primary"
             disabled={
-              saving ||
-              !ready ||
-              intakeQuery.isPending ||
-              intakeQuery.isError ||
-              hasUploadingFiles
+              saving || !ready || intakeQuery.isPending || intakeQuery.isError || hasUploadingFiles
             }
           >
             {saving ? 'Creating...' : 'Create Request'}

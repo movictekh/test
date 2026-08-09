@@ -104,11 +104,7 @@ export function ServiceCatalogueScreen({
     return () => window.clearTimeout(timeoutId)
   }, [searchDraft, query])
 
-  const pageSummary = (
-    <span>
-      Page {page} of {pageCount} · {totalCount} service{totalCount === 1 ? '' : 's'}
-    </span>
-  )
+  const recordCountLabel = `${totalCount} service${totalCount === 1 ? '' : 's'}`
 
   return (
     <div className="service-admin-page service-admin-content">
@@ -268,25 +264,32 @@ export function ServiceCatalogueScreen({
           })}
         </div>
 
-        <div className="service-admin-filter-group service-admin-catalog-filter">
-          {pageSummary}
-          <span className="service-admin-grow" />
-          <button
-            type="button"
-            className="service-admin-button"
-            disabled={page <= 1}
-            onClick={() => onPageChange(page - 1)}
-          >
-            Previous
-          </button>
-          <button
-            type="button"
-            className="service-admin-button"
-            disabled={page >= pageCount}
-            onClick={() => onPageChange(page + 1)}
-          >
-            Next
-          </button>
+        <div className="service-admin-table-pagination">
+          <div className="service-admin-table-pagination-summary">
+            <span className="service-admin-table-pagination-count">{recordCountLabel}</span>
+            <span className="service-admin-table-pagination-divider" aria-hidden="true" />
+            <span>
+              Page <b>{page}</b> of <b>{pageCount}</b>
+            </span>
+          </div>
+          <div className="service-admin-table-pagination-actions">
+            <button
+              type="button"
+              className="service-admin-button"
+              disabled={page <= 1}
+              onClick={() => onPageChange(page - 1)}
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              className="service-admin-button"
+              disabled={page >= pageCount}
+              onClick={() => onPageChange(page + 1)}
+            >
+              Next
+            </button>
+          </div>
         </div>
       </div>
     </div>
