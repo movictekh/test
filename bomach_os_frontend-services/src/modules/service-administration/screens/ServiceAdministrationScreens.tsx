@@ -343,17 +343,10 @@ export function CalculatorLibraryScreen({
   createLocked?: boolean
   hasServices?: boolean
 }) {
-  const [activeId, setActiveId] = useState(calculators[0]?.id ?? '')
-  useEffect(() => {
-    if (calculators.length === 0) {
-      setActiveId('')
-      return
-    }
-
-    if (!calculators.some((calculator) => calculator.id === activeId)) {
-      setActiveId(calculators[0]?.id ?? '')
-    }
-  }, [activeId, calculators])
+  const [selectedActiveId, setActiveId] = useState(calculators[0]?.id ?? '')
+  const activeId = calculators.some((calculator) => calculator.id === selectedActiveId)
+    ? selectedActiveId
+    : (calculators[0]?.id ?? '')
 
   const active = calculators.find((calculator) => calculator.id === activeId) ?? calculators[0]
   const [inputs, setInputs] = useState<Record<string, number>>({})

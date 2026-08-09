@@ -60,19 +60,6 @@ function alertNoticeClass(severity: DashboardExecutiveAlert['severity']) {
   return 'command-center-notice-blue'
 }
 
-function defaultLifecycle(): DashboardPipelineStage[] {
-  return [
-    { key: 'request', label: 'Request', count: 0, state: 'done' },
-    { key: 'assessment', label: 'Assessment', count: 0, state: 'done' },
-    { key: 'quotation', label: 'Quotation', count: 0, state: 'done' },
-    { key: 'approval', label: 'Approval', count: 0, state: 'active' },
-    { key: 'invoice-payment', label: 'Invoice & Payment', count: 0, state: 'pending' },
-    { key: 'service-order', label: 'Service Order', count: 0, state: 'pending' },
-    { key: 'fulfillment', label: 'Fulfillment', count: 0, state: 'pending' },
-    { key: 'acceptance', label: 'Acceptance', count: 0, state: 'pending' },
-  ]
-}
-
 function KpiGrid({ metrics }: { metrics: DashboardMetric[] }) {
   return (
     <div className="command-center-kpis">
@@ -96,7 +83,7 @@ function KpiGrid({ metrics }: { metrics: DashboardMetric[] }) {
 }
 
 function LifecycleCard({ stages }: { stages: DashboardPipelineStage[] }) {
-  const items = stages.length >= 8 ? stages : defaultLifecycle()
+  const items = stages
 
   return (
     <section className="command-center-card">
@@ -132,38 +119,33 @@ function LifecycleCard({ stages }: { stages: DashboardPipelineStage[] }) {
   )
 }
 
-function RequestsTable({ items }: { items: DashboardAttentionItem[] }) {
+function ActionItemsCard({ items }: { items: DashboardAttentionItem[] }) {
   const navigate = useNavigate()
 
   return (
     <section className="command-center-card">
       <div className="command-center-card-header">
         <div>
-          <div className="command-center-card-title">Requests requiring action</div>
-          <div className="command-center-card-subtitle">Prioritized by SLA, value and urgency</div>
+          <div className="command-center-card-title">My action items</div>
+          <div className="command-center-card-subtitle">
+            Work the backend says currently requires your attention
+          </div>
         </div>
-        <Link
-          to="/app/$section"
-          params={{ section: 'service-requests' }}
-          className="command-center-btn command-center-btn-small"
-        >
-          View all
-        </Link>
       </div>
+
       <div className="command-center-table-wrap">
         <table className="command-center-table">
           <thead>
             <tr>
-              <th>Request</th>
-              <th>Client</th>
-              <th>Service</th>
-              <th>Status</th>
-              <th>Owner</th>
-              <th>Next action</th>
+              <th>Item</th>
+              <th>Type</th>
+              <th>Priority</th>
+              <th>Due</th>
+              <th>Details</th>
             </tr>
           </thead>
           <tbody>
-            {items.slice(0, 5).map((item) => (
+            {items.slice(0, 8).map((item) => (
               <tr
                 key={item.id}
                 onClick={() => {
@@ -171,22 +153,21 @@ function RequestsTable({ items }: { items: DashboardAttentionItem[] }) {
                   void navigate({
                     to: '/app/$section',
                     params: { section: item.destination.section },
+                    search: item.destination.search ?? {},
                   })
                 }}
               >
                 <td>
-                  <b>{item.requestNumber ?? item.recordNumber ?? item.id}</b>
-                  <div className="command-center-row-sub">{item.createdLabel ?? '—'}</div>
+                  <b>{item.title}</b>
                 </td>
-                <td>{item.client ?? '—'}</td>
-                <td>{item.service ?? '—'}</td>
+                <td>{item.recordType}</td>
                 <td>
-                  <span className={`command-center-pill ${statusPillClass(item.statusLabel)}`}>
-                    {item.statusLabel ?? item.severity}
+                  <span className={`command-center-pill ${statusPillClass(item.priority)}`}>
+                    {item.priority ?? item.severity}
                   </span>
                 </td>
-                <td>{item.owner ?? '—'}</td>
-                <td>{item.nextAction ?? item.description ?? '—'}</td>
+                <td>{item.dueLabel ?? '—'}</td>
+                <td>{item.description || '—'}</td>
               </tr>
             ))}
           </tbody>
@@ -214,6 +195,8 @@ function ExecutiveAlertsCard({ alerts }: { alerts: DashboardExecutiveAlert[] }) 
 }
 
 function RecentActivityCard({ items }: { items: DashboardActivityItem[] }) {
+  const navigate = useNavigate()
+
   return (
     <section className="command-center-card">
       <div className="command-center-card-header">
@@ -231,7 +214,29 @@ function RecentActivityCard({ items }: { items: DashboardActivityItem[] }) {
       </div>
       <div className="command-center-timeline">
         {items.slice(0, 5).map((item) => (
-          <div key={item.id} className="command-center-tl">
+          <div
+            key={item.id}
+            className="command-center-tl"
+            role={item.destination ? 'button' : undefined}
+            tabIndex={item.destination ? 0 : undefined}
+            onClick={() => {
+              if (!item.destination) return
+              void navigate({
+                to: '/app/$section',
+                params: { section: item.destination.section },
+                search: item.destination.search ?? {},
+              })
+            }}
+            onKeyDown={(event) => {
+              if (!item.destination || (event.key !== 'Enter' && event.key !== ' ')) return
+              event.preventDefault()
+              void navigate({
+                to: '/app/$section',
+                params: { section: item.destination.section },
+                search: item.destination.search ?? {},
+              })
+            }}
+          >
             <b>{item.title}</b>
             <p>{item.actor ?? 'System'}</p>
             <time>{new Date(item.occurredAt).toLocaleString('en-NG')}</time>
@@ -376,7 +381,7 @@ export function OperationsDashboardPage() {
                 />
               </section>
             ) : (
-              <RequestsTable items={actionItemsQuery.data} />
+              <ActionItemsCard items={actionItemsQuery.data} />
             )}
           </div>
 

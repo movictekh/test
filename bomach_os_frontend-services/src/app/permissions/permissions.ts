@@ -11,6 +11,12 @@ export const PERMISSIONS = {
   notificationsMarkRead: 'notifications.mark_read',
   notificationsMarkAllRead: 'notifications.mark_all_read',
 
+  workflowRulesCreate: 'workflow_rules.create',
+  workflowRulesView: 'workflow_rules.view',
+  workflowRulesList: 'workflow_rules.list',
+  workflowRulesUpdate: 'workflow_rules.update',
+  workflowRulesDelete: 'workflow_rules.delete',
+
   servicesList: 'services.list',
   servicesView: 'services.view',
   servicesCreate: 'services.create',

@@ -1,3 +1,5 @@
+import type { AppRecordSearch } from '@/shared/navigation'
+
 export type DashboardMetricKey =
   | 'open_requests'
   | 'pending_quotations'
@@ -13,6 +15,7 @@ export type DashboardProgressTone = 'brand' | 'success' | 'warning' | 'danger'
 
 export interface DashboardDestination {
   section: string
+  search?: AppRecordSearch
 }
 
 export interface DashboardMetric {
@@ -40,6 +43,7 @@ export interface DashboardAttentionItem {
   statusTone?: Exclude<DashboardSeverity, 'success'>
   owner?: string
   nextAction?: string
+  priority?: string
   destination?: DashboardDestination
 }
 

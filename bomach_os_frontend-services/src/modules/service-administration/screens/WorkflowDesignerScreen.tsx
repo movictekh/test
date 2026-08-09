@@ -1,9 +1,11 @@
-import { IconBolt, IconSubtask } from '@tabler/icons-react'
+import { IconSubtask } from '@tabler/icons-react'
 import { useMemo, useState } from 'react'
 
 import { AccessLockIcon } from '@/shared/ui/module-controls'
 import { useToast } from '@/shared/ui'
 import { formatNumberFieldValue, parseNumberFieldValue } from '@/shared/lib/number-input'
+
+import { AutomationRulesPanel } from '../components/AutomationRulesPanel'
 
 import type {
   SaveWorkflowInput,
@@ -13,33 +15,10 @@ import type {
   WorkflowStage,
 } from '../types/service-administration.types'
 
-const defaultAutomationRules = [
-  'Payment threshold met → create order and notify Operations',
-  'Stage overdue → escalate to supervisor',
-  'Deliverable approved → notify client and unlock next stage',
-  'Client requests revision → reopen task and retain version',
-]
-
 const fulfillmentModes = [
   ['Quick Service Order', 'Short work without a full project'],
   ['Managed Service Case', 'Recurring or retained service'],
   ['Project & Worksite', 'Engineering and multi-milestone work'],
-] as const
-
-const ruleTriggers = [
-  'Request submitted',
-  'Quote accepted',
-  'Payment confirmed',
-  'Stage overdue',
-  'Deliverable approved',
-] as const
-
-const ruleActions = [
-  'Assign role',
-  'Create task',
-  'Send notification',
-  'Move stage',
-  'Create order',
 ] as const
 
 function hoursToDays(hours: number) {
@@ -146,11 +125,6 @@ export function WorkflowDesignerScreen({
   )
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
   const [stageDraft, setStageDraft] = useState<StageDraft | null>(null)
-  const [ruleOpen, setRuleOpen] = useState(false)
-  const [rules, setRules] = useState(defaultAutomationRules)
-  const [ruleTrigger, setRuleTrigger] = useState<string>(ruleTriggers[0])
-  const [ruleAction, setRuleAction] = useState<string>(ruleActions[0])
-  const [ruleDescription, setRuleDescription] = useState('')
 
   if (sourceKey !== draftKey && selectedService) {
     setDraftKey(sourceKey)
@@ -234,16 +208,6 @@ export function WorkflowDesignerScreen({
       status: linkedWorkflow?.status ?? 'active',
       stages: stages.map((stage, index) => ({ ...stage, order: index + 1 })),
     })
-  }
-
-  const createRule = () => {
-    const detail = ruleDescription.trim() || `${ruleTrigger} → ${ruleAction.toLowerCase()}`
-    setRules((current) => [...current, detail])
-    setRuleOpen(false)
-    setRuleDescription('')
-    setRuleTrigger(ruleTriggers[0])
-    setRuleAction(ruleActions[0])
-    toast.success('Automation rule created')
   }
 
   if (!selectedService) {
@@ -474,35 +438,7 @@ export function WorkflowDesignerScreen({
       </div>
 
       <div className="service-admin-g2">
-        <div className="service-admin-card">
-          <div className="service-admin-card-header">
-            <div className="service-admin-card-title">Automation Rules</div>
-            <button
-              type="button"
-              className="service-admin-button service-admin-button-small"
-              disabled={!canEdit}
-              title={
-                !canEdit ? 'You do not have permission to edit workflows' : undefined
-              }
-              onClick={() => setRuleOpen(true)}
-            >
-              <AccessLockIcon show={!canEdit} size={11} />
-              Add Rule
-            </button>
-          </div>
-          {rules.map((rule, index) => (
-            <div key={`${rule}-${index}`} className="service-admin-list-row">
-              <div className="service-admin-list-ico service-admin-list-ico--bolt">
-                <IconBolt size={16} aria-hidden="true" />
-              </div>
-              <div className="service-admin-list-meta">
-                <div className="service-admin-list-name">Rule {index + 1}</div>
-                <div className="service-admin-list-sub">{rule}</div>
-              </div>
-              <span className="service-admin-pill service-admin-pill-green">Active</span>
-            </div>
-          ))}
-        </div>
+        <AutomationRulesPanel />
 
         <div className="service-admin-card">
           <div className="service-admin-card-header">
@@ -666,79 +602,6 @@ export function WorkflowDesignerScreen({
                 onClick={applyStageEdit}
               >
                 Save Stage
-              </button>
-            </footer>
-          </section>
-        </div>
-      ) : null}
-
-      {canEdit && ruleOpen ? (
-        <div
-          className="service-admin-editor-backdrop"
-          role="presentation"
-          onMouseDown={() => setRuleOpen(false)}
-        >
-          <section
-            className="service-admin-field-editor-modal service-admin-rule-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Create Automation Rule"
-            onMouseDown={(event) => event.stopPropagation()}
-          >
-            <header>
-              <h2>Create Automation Rule</h2>
-              <button type="button" aria-label="Close" onClick={() => setRuleOpen(false)}>
-                ×
-              </button>
-            </header>
-            <div className="service-admin-field-editor-body">
-              <div className="service-admin-form-grid">
-                <label className="service-admin-config-field">
-                  <span>Trigger</span>
-                  <select
-                    value={ruleTrigger}
-                    onChange={(event) => setRuleTrigger(event.target.value)}
-                  >
-                    {ruleTriggers.map((trigger) => (
-                      <option key={trigger}>{trigger}</option>
-                    ))}
-                  </select>
-                </label>
-                <label className="service-admin-config-field">
-                  <span>Action</span>
-                  <select
-                    value={ruleAction}
-                    onChange={(event) => setRuleAction(event.target.value)}
-                  >
-                    {ruleActions.map((action) => (
-                      <option key={action}>{action}</option>
-                    ))}
-                  </select>
-                </label>
-                <label className="service-admin-config-field service-admin-config-field--full">
-                  <span>Condition / description</span>
-                  <textarea
-                    value={ruleDescription}
-                    onChange={(event) => setRuleDescription(event.target.value)}
-                    placeholder="Optional rule detail"
-                  />
-                </label>
-              </div>
-            </div>
-            <footer>
-              <button
-                type="button"
-                className="service-admin-button"
-                onClick={() => setRuleOpen(false)}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="service-admin-button service-admin-button-primary"
-                onClick={createRule}
-              >
-                Create Rule
               </button>
             </footer>
           </section>

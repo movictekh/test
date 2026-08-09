@@ -1,5 +1,5 @@
 import { IconAlertTriangle, IconBell, IconCircleCheck, IconInfoCircle } from '@tabler/icons-react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 
@@ -10,6 +10,7 @@ import { getRecordDestination } from '@/shared/navigation'
 import { Button } from '@/shared/ui/button'
 import { Drawer } from '@/shared/ui/drawer'
 import { EmptyState } from '@/shared/ui/empty-state'
+import { useToast } from '@/shared/ui'
 
 import { notificationApi } from './notification.api'
 import { notificationKeys, notificationQueries } from './notification.queries'
@@ -97,6 +98,7 @@ export function NotificationPanel() {
   const [open, setOpen] = useState(false)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const toast = useToast()
   const { user } = useAuth()
 
   const canList = hasPermission(user, PERMISSIONS.notificationsList)
@@ -104,7 +106,7 @@ export function NotificationPanel() {
   const canMarkRead = hasPermission(user, PERMISSIONS.notificationsMarkRead)
   const canMarkAllRead = hasPermission(user, PERMISSIONS.notificationsMarkAllRead)
 
-  const listQuery = useQuery({
+  const listQuery = useInfiniteQuery({
     ...notificationQueries.list(),
     enabled: canList,
   })
@@ -118,6 +120,9 @@ export function NotificationPanel() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: notificationKeys.all })
     },
+    onError: () => {
+      toast.error('Notification could not be marked as read')
+    },
   })
 
   const markAllRead = useMutation({
@@ -125,17 +130,24 @@ export function NotificationPanel() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: notificationKeys.all })
     },
+    onError: () => {
+      toast.error('Notifications could not be marked as read')
+    },
   })
 
   if (!canList && !canView) return null
 
-  const notifications = listQuery.data?.notifications ?? []
+  const notifications = listQuery.data?.pages.flatMap((page) => page.notifications) ?? []
   const unreadCount = statsQuery.data?.unreadCount ?? 0
   const listErrorCopy = notificationErrorCopy(listQuery.error)
 
   const openNotification = async (notification: AppNotification) => {
     if (!notification.read && canMarkRead) {
-      await markRead.mutateAsync(notification.id)
+      try {
+        await markRead.mutateAsync(notification.id)
+      } catch {
+        // A read-state failure should not block the notification destination.
+      }
     }
 
     const destination =
@@ -258,6 +270,19 @@ export function NotificationPanel() {
             })}
           </div>
         )}
+
+        {canList && listQuery.hasNextPage ? (
+          <div className="mt-3 flex justify-center">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={listQuery.isFetchingNextPage}
+              onClick={() => void listQuery.fetchNextPage()}
+            >
+              {listQuery.isFetchingNextPage ? 'Loading...' : 'Load more'}
+            </Button>
+          </div>
+        ) : null}
       </Drawer>
     </>
   )

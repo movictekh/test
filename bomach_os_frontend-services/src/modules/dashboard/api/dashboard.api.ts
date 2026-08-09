@@ -1,4 +1,5 @@
 import { apiClient } from '@/shared/api/api-client'
+import { getRecordDestination } from '@/shared/navigation'
 
 import type {
   DashboardActivityItem,
@@ -58,17 +59,32 @@ function number(value: string | number): number {
   return Number.isFinite(parsed) ? parsed : 0
 }
 
-function sectionFromType(type: string): string | undefined {
-  switch (type) {
-    case 'approval':
-      return 'approvals'
-    case 'order':
-      return 'service-orders'
-    case 'invoice':
-      return 'invoices-payments'
-    default:
-      return undefined
+function destinationFromBackend(type: string, link: string) {
+  const match = link.match(
+    /^\/(orders|quotes|invoices|approvals|requests|tasks|deliverables|feedback)\/(.+)$/,
+  )
+
+  if (match) {
+    const [, resource, id] = match
+    if (resource && id) {
+      const entityType =
+        resource === 'quotes'
+          ? 'quote'
+          : resource === 'invoices'
+            ? 'invoice'
+            : resource === 'approvals'
+              ? 'approval'
+              : resource === 'requests'
+                ? 'request'
+                : resource === 'orders'
+                  ? 'order'
+                  : resource.slice(0, -1)
+
+      return getRecordDestination(entityType, id) ?? undefined
+    }
   }
+
+  return getRecordDestination(type, undefined) ?? undefined
 }
 
 export const dashboardApi = {
@@ -149,7 +165,7 @@ export const dashboardApi = {
     const dto = await apiClient.get<ActionItemDto[]>('/command-center/action-items')
 
     return dto.map((item) => {
-      const section = sectionFromType(item.type)
+      const destination = destinationFromBackend(item.type, item.link)
 
       return {
         id: String(item.id),
@@ -158,7 +174,8 @@ export const dashboardApi = {
         description: item.description,
         recordType: item.type,
         ...(item.due_date ? { dueLabel: item.due_date } : {}),
-        ...(section ? { destination: { section } } : {}),
+        priority: item.priority,
+        ...(destination ? { destination } : {}),
       }
     })
   },
@@ -167,7 +184,7 @@ export const dashboardApi = {
     const dto = await apiClient.get<ActivityDto[]>('/command-center/activity')
 
     return dto.map((item) => {
-      const section = sectionFromType(item.type)
+      const destination = destinationFromBackend(item.type, item.link)
 
       return {
         id: `${item.type}-${item.id}`,
@@ -176,7 +193,7 @@ export const dashboardApi = {
         ...(item.actor_name ? { actor: item.actor_name } : {}),
         occurredAt: item.timestamp,
         recordType: item.type,
-        ...(section ? { destination: { section } } : {}),
+        ...(destination ? { destination } : {}),
       }
     })
   },
