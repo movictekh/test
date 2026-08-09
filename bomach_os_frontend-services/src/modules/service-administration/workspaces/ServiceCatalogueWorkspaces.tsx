@@ -217,7 +217,6 @@ export function CreateServiceWizard({
 
   if (!open) return null
 
-  const canPublishActive = access.publish && access.pricing && access.requestForm && access.branches
   type WizardStage =
     'basic' | 'subservices' | 'pricing' | 'request-form' | 'workflow' | 'branches' | 'review'
   const steps: Array<{ id: WizardStage; label: string }> = [
@@ -230,8 +229,13 @@ export function CreateServiceWizard({
     { id: 'review', label: access.publish ? 'Review & Publish' : 'Review' },
   ]
   const currentStage = steps[Math.min(step, steps.length - 1)]?.id ?? 'basic'
-  const effectiveSelectedBranchIds =
-    selectedBranchIds ?? branchOptions.map((branch) => branch.id)
+  const effectiveSelectedBranchIds = selectedBranchIds ?? branchOptions.map((branch) => branch.id)
+  const canPublishActive =
+    access.publish &&
+    access.pricing &&
+    access.requestForm &&
+    access.branches &&
+    effectiveSelectedBranchIds.length > 0
 
   const validateStage = (stage: WizardStage): string | null => {
     if (stage === 'basic') {
@@ -263,8 +267,9 @@ export function CreateServiceWizard({
       return 'Select at least one request form field.'
     if (stage === 'workflow' && splitLines(workflow).length === 0)
       return 'Add at least one workflow stage.'
-    if (stage === 'branches' && effectiveSelectedBranchIds.length === 0)
-      return 'Select at least one active branch.'
+    if (stage === 'branches' && status === 'active' && effectiveSelectedBranchIds.length === 0) {
+      return 'Select at least one active branch before publishing.'
+    }
     return null
   }
 
@@ -284,7 +289,7 @@ export function CreateServiceWizard({
       ...(access.pricing ? ['pricing' as const] : []),
       ...(access.requestForm ? ['request-form' as const] : []),
       ...(access.workflow ? ['workflow' as const] : []),
-      ...(access.branches ? ['branches' as const] : []),
+      ...(access.branches && effectiveSelectedBranchIds.length > 0 ? ['branches' as const] : []),
       ...(status !== 'draft' && access.publish ? ['publish' as const] : []),
     ]
     const selectedOwner = ownerRoles.find((role) => role.id === ownerRoleId)
@@ -584,7 +589,7 @@ export function CreateServiceWizard({
       ) : null}
 
       {currentStage === 'branches' ? (
-        <Field label="Active branches" full required>
+        <Field label="Active branches" full required={status === 'active'}>
           {branchOptions.length > 0 ? (
             <div className="service-admin-check-grid service-admin-check-grid--branches">
               {branchOptions.map((branch) => (
@@ -607,10 +612,18 @@ export function CreateServiceWizard({
               ))}
             </div>
           ) : (
-            <div className="service-admin-notice service-admin-notice-red">
-              No active backend branches are available.
+            <div className="service-admin-notice service-admin-notice-blue">
+              No active backend branches are available. You can continue and save this Service as
+              Draft. At least one active branch is required before publishing.
             </div>
           )}
+
+          {branchOptions.length > 0 && effectiveSelectedBranchIds.length === 0 ? (
+            <div className="service-admin-notice service-admin-notice-blue">
+              No branch selected. This is allowed for Draft or Paused services. Select at least one
+              branch before choosing Active / Publish.
+            </div>
+          ) : null}
         </Field>
       ) : null}
 

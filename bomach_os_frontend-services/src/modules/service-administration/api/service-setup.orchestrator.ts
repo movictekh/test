@@ -209,7 +209,16 @@ export async function runLiveServiceSetup(
         })
       } else if (stage === 'branches') {
         const branchIds = input.branchIds ?? []
-        if (branchIds.length === 0) throw new Error('Select at least one backend branch.')
+
+        if (branchIds.length === 0) {
+          if (input.status === 'active') {
+            throw new Error('Select at least one backend branch before publishing.')
+          }
+
+          emit('branches', 'skipped')
+          continue
+        }
+
         await serviceAdministrationBackendApi.upsertBranchActivations(
           serviceId,
           branchIds.map((branchId) => ({
@@ -230,9 +239,14 @@ export async function runLiveServiceSetup(
   }
 
   if (runnable.includes('publish')) {
-    const blockers = (['pricing', 'request-form', 'branches'] as ServiceSetupStageId[]).filter(
-      (stage) => failed.has(stage),
-    )
+    const requiredPublishStages = ['pricing', 'request-form', 'branches'] as ServiceSetupStageId[]
+    const blockers = requiredPublishStages.filter((stage) => {
+      if (failed.has(stage)) return true
+      if (stage === 'branches' && input.status === 'active') {
+        return (input.branchIds ?? []).length === 0
+      }
+      return false
+    })
 
     if (blockers.length > 0) {
       emit(
