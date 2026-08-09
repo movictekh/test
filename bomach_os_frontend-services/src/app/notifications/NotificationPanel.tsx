@@ -44,6 +44,8 @@ function parseBackendLink(link: string | undefined) {
   if (!match) return null
 
   const [, type, id] = match
+  if (!type || !id) return null
+
   const entityType =
     type === 'quotes'
       ? 'quote'

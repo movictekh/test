@@ -417,79 +417,84 @@ export function CreateServiceWizard({
       {error ? <div className="service-admin-notice service-admin-notice-red">{error}</div> : null}
 
       {currentStage === 'basic' ? (
-        <div className="service-admin-form-grid">
-          <Field label="Service name" required>
-            <input value={name} onChange={(event) => setName(event.target.value)} />
-          </Field>
-          <Field label="Service code" required>
-            <input value={code} onChange={(event) => setCode(event.target.value)} />
-          </Field>
-          <Field label="Category" required>
-            <select
-              value={categoryId || ''}
-              onChange={(event) => setCategoryId(Number(event.target.value))}
-            >
-              <option value="">Select a category</option>
-              {categories.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {categoryLabel(item.name)}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Division" required>
-            <select value={division} onChange={(event) => setDivision(event.target.value)}>
-              {divisions.map((item) => (
-                <option key={item}>{item}</option>
-              ))}
-            </select>
-          </Field>
-          {access.ownerRoles ? (
-            <Field label="Owner role">
+        <>
+          <div className="service-admin-form-grid">
+            <Field label="Service name" required>
+              <input value={name} onChange={(event) => setName(event.target.value)} />
+            </Field>
+            <Field label="Service code" required>
+              <input value={code} onChange={(event) => setCode(event.target.value)} />
+            </Field>
+            <Field label="Category" required>
               <select
-                value={ownerRoleId ?? ''}
-                onChange={(event) =>
-                  setOwnerRoleId(event.target.value ? Number(event.target.value) : null)
-                }
+                value={categoryId || ''}
+                onChange={(event) => setCategoryId(Number(event.target.value))}
               >
-                <option value="">Unassigned</option>
-                {ownerRoles.map((role) => (
-                  <option key={role.id} value={role.id}>
-                    {role.name}
+                <option value="">Select a category</option>
+                {categories.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {categoryLabel(item.name)}
                   </option>
                 ))}
               </select>
             </Field>
-          ) : null}
-          <Field label="Description" full required>
+            <Field label="Division" required>
+              <select value={division} onChange={(event) => setDivision(event.target.value)}>
+                {divisions.map((item) => (
+                  <option key={item}>{item}</option>
+                ))}
+              </select>
+            </Field>
+            {access.ownerRoles ? (
+              <Field label="Owner role">
+                <select
+                  value={ownerRoleId ?? ''}
+                  onChange={(event) =>
+                    setOwnerRoleId(event.target.value ? Number(event.target.value) : null)
+                  }
+                >
+                  <option value="">Unassigned</option>
+                  {ownerRoles.map((role) => (
+                    <option key={role.id} value={role.id}>
+                      {role.name}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            ) : null}
+          </div>
+          <Field label="Description" required>
             <textarea
               className="service-admin-description-textarea"
               value={description}
               rows={4}
+              placeholder="Describe what this service covers, who it is for, the expected delivery outcome, and any important scope notes."
               onChange={(event) => setDescription(event.target.value)}
             />
           </Field>
-          <Field label="SLA (days)" required>
-            <input
-              type="number"
-              min={1}
-              value={formatNumberFieldValue(slaDays)}
-              onChange={(event) => setSlaDays(parseNumberFieldValue(event.target.value))}
-            />
-          </Field>
-          <Field label="Fulfillment mode" required>
-            <select
-              value={fulfilmentMode}
-              onChange={(event) => setFulfilmentMode(event.target.value)}
-            >
-              <option>Quick service order</option>
-              <option>Managed service case</option>
-              <option>Project & worksite</option>
-              <option>Transaction & allocation</option>
-              <option>Supply order</option>
-            </select>
-          </Field>
-        </div>
+          <div className="service-admin-form-grid">
+            <Field label="SLA (days)" required>
+              <input
+                type="number"
+                min={1}
+                value={formatNumberFieldValue(slaDays)}
+                onChange={(event) => setSlaDays(parseNumberFieldValue(event.target.value))}
+              />
+            </Field>
+            <Field label="Fulfillment mode" required>
+              <select
+                value={fulfilmentMode}
+                onChange={(event) => setFulfilmentMode(event.target.value)}
+              >
+                <option>Quick service order</option>
+                <option>Managed service case</option>
+                <option>Project & worksite</option>
+                <option>Transaction & allocation</option>
+                <option>Supply order</option>
+              </select>
+            </Field>
+          </div>
+        </>
       ) : null}
 
       {currentStage === 'subservices' ? (
@@ -497,6 +502,7 @@ export function CreateServiceWizard({
           <textarea
             className="service-admin-wizard-textarea"
             value={subservices}
+            placeholder={'Standard Package\nPremium Package\nEnterprise Package'}
             onChange={(event) => setSubservices(event.target.value)}
           />
         </Field>
@@ -581,6 +587,9 @@ export function CreateServiceWizard({
           <textarea
             className="service-admin-wizard-textarea"
             value={workflow}
+            placeholder={
+              'Request Review\nTechnical Assessment\nQuotation\nApproval\nExecution\nQuality Review\nCompletion'
+            }
             onChange={(event) => setWorkflow(event.target.value)}
           />
         </Field>
@@ -990,78 +999,82 @@ export function ConfigureServiceWorkspace({
 
       <fieldset disabled={readOnly} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
         {step === 0 ? (
-          <div className="service-admin-form-grid">
-            <Field label="Service name" required>
-              <input value={name} required onChange={(event) => setName(event.target.value)} />
-            </Field>
-            <Field label="Service code" required>
-              <input value={code} required onChange={(event) => setCode(event.target.value)} />
-            </Field>
-            <Field label="Division" required>
-              <select
-                value={division}
-                required
-                onChange={(event) => setDivision(event.target.value)}
-              >
-                {divisions.map((item) => (
-                  <option key={item}>{item}</option>
-                ))}
-              </select>
-            </Field>
-            <Field label="Owner role" required>
-              <select
-                value={ownerRoleId ?? ''}
-                required
-                onChange={(event) => {
-                  const nextOwnerRoleId = event.target.value ? Number(event.target.value) : null
-                  const selectedOwnerRole = ownerRoles.find((role) => role.id === nextOwnerRoleId)
-                  setOwnerRoleId(nextOwnerRoleId)
-                  setOwner(selectedOwnerRole?.name ?? '')
-                }}
-              >
-                <option value="" disabled>
-                  Select an owner role
-                </option>
-                {ownerRoles.map((role) => (
-                  <option key={role.id} value={role.id}>
-                    {role.name}
+          <>
+            <div className="service-admin-form-grid">
+              <Field label="Service name" required>
+                <input value={name} required onChange={(event) => setName(event.target.value)} />
+              </Field>
+              <Field label="Service code" required>
+                <input value={code} required onChange={(event) => setCode(event.target.value)} />
+              </Field>
+              <Field label="Division" required>
+                <select
+                  value={division}
+                  required
+                  onChange={(event) => setDivision(event.target.value)}
+                >
+                  {divisions.map((item) => (
+                    <option key={item}>{item}</option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Owner role" required>
+                <select
+                  value={ownerRoleId ?? ''}
+                  required
+                  onChange={(event) => {
+                    const nextOwnerRoleId = event.target.value ? Number(event.target.value) : null
+                    const selectedOwnerRole = ownerRoles.find((role) => role.id === nextOwnerRoleId)
+                    setOwnerRoleId(nextOwnerRoleId)
+                    setOwner(selectedOwnerRole?.name ?? '')
+                  }}
+                >
+                  <option value="" disabled>
+                    Select an owner role
                   </option>
-                ))}
-              </select>
-            </Field>
-            <Field label="Description" full required>
+                  {ownerRoles.map((role) => (
+                    <option key={role.id} value={role.id}>
+                      {role.name}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            </div>
+            <Field label="Description" required>
               <textarea
                 className="service-admin-description-textarea"
                 value={description}
                 required
                 rows={4}
-                placeholder="Describe what this service covers, who it is for, and typical delivery outcomes"
+                placeholder="Describe what this service covers, who it is for, the expected delivery outcome, and any important scope notes."
                 onChange={(event) => setDescription(event.target.value)}
               />
             </Field>
-            <Field label="SLA (days)" required>
-              <input
-                type="number"
-                min={1}
-                required
-                value={formatNumberFieldValue(slaDays)}
-                onChange={(event) => setSlaDays(parseNumberFieldValue(event.target.value))}
-              />
-            </Field>
-            <Field label="Fulfillment mode" required>
-              <select
-                value={fulfilmentMode}
-                required
-                onChange={(event) => setFulfilmentMode(event.target.value)}
-              >
-                <option>Quick service order</option>
-                <option>Managed service case</option>
-                <option>Project & worksite</option>
-                <option>Transaction & allocation</option>
-                <option>Supply order</option>
-              </select>
-            </Field>
-          </div>
+            <div className="service-admin-form-grid">
+              <Field label="SLA (days)" required>
+                <input
+                  type="number"
+                  min={1}
+                  required
+                  value={formatNumberFieldValue(slaDays)}
+                  onChange={(event) => setSlaDays(parseNumberFieldValue(event.target.value))}
+                />
+              </Field>
+              <Field label="Fulfillment mode" required>
+                <select
+                  value={fulfilmentMode}
+                  required
+                  onChange={(event) => setFulfilmentMode(event.target.value)}
+                >
+                  <option>Quick service order</option>
+                  <option>Managed service case</option>
+                  <option>Project & worksite</option>
+                  <option>Transaction & allocation</option>
+                  <option>Supply order</option>
+                </select>
+              </Field>
+            </div>
+          </>
         ) : null}
 
         {step === 1 ? (
@@ -1070,6 +1083,7 @@ export function ConfigureServiceWorkspace({
               className="service-admin-wizard-textarea"
               value={subservices}
               required
+              placeholder={'Standard Package\nPremium Package\nEnterprise Package'}
               onChange={(event) => setSubservices(event.target.value)}
             />
           </Field>
@@ -1167,6 +1181,9 @@ export function ConfigureServiceWorkspace({
               className="service-admin-wizard-textarea"
               value={workflowText}
               required
+              placeholder={
+                'Request Review\nTechnical Assessment\nQuotation\nApproval\nExecution\nQuality Review\nCompletion'
+              }
               onChange={(event) => setWorkflowText(event.target.value)}
             />
           </Field>

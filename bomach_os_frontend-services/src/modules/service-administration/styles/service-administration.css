@@ -776,17 +776,20 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
 .service-admin-description-textarea {
   display: block;
   width: 100%;
-  min-height: 82px;
+  min-height: 136px;
   box-sizing: border-box;
-  border: 1.5px solid var(--service-admin-border);
-  border-radius: 8px;
-  background: var(--service-admin-surface-muted);
-  padding: 9px 10px;
+  border: 1.5px solid #d5deea;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  padding: 14px 15px;
   color: var(--service-admin-foreground);
   font: inherit;
   font-size: 11px;
   line-height: 1.45;
   resize: vertical;
+  box-shadow:
+    inset 0 1px 0 #ffffff,
+    0 1px 2px #14204008;
 }
 
 .service-admin-description-textarea::placeholder {
@@ -796,7 +799,9 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
 .service-admin-description-textarea:focus {
   border-color: #93acd9;
   background: #fff;
-  box-shadow: 0 0 0 2px #dbe7ff;
+  box-shadow:
+    inset 0 1px 0 #ffffff,
+    0 0 0 3px #dbe7ff;
   outline: 0;
 }
 
@@ -809,8 +814,33 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
 }
 
 .service-admin-wizard-textarea {
-  min-height: 190px !important;
+  min-height: 210px !important;
   width: 100%;
+  box-sizing: border-box;
+  border: 1.5px solid #d5deea !important;
+  border-radius: 12px !important;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%) !important;
+  padding: 14px 15px !important;
+  font: inherit;
+  font-size: 11px;
+  line-height: 1.6;
+  resize: vertical;
+  box-shadow:
+    inset 0 1px 0 #ffffff,
+    0 1px 2px #14204008;
+}
+
+.service-admin-wizard-textarea::placeholder {
+  color: var(--service-admin-foreground-subtle, #8c95a8);
+}
+
+.service-admin-wizard-textarea:focus {
+  border-color: #93acd9 !important;
+  background: #fff !important;
+  box-shadow:
+    inset 0 1px 0 #ffffff,
+    0 0 0 3px #dbe7ff !important;
+  outline: 0;
 }
 
 .service-admin-check-grid {

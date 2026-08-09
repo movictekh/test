@@ -12,10 +12,8 @@ import { dashboardQueries } from '../api/dashboard.queries'
 import type {
   DashboardAttentionItem,
   DashboardExecutiveAlert,
-  DashboardHealthMetric,
   DashboardMetric,
   DashboardPipelineStage,
-  DashboardRevenueByDivision,
   DashboardActivityItem,
 } from '../types/dashboard.types'
 import '../styles/command-center.css'
@@ -60,12 +58,6 @@ function alertNoticeClass(severity: DashboardExecutiveAlert['severity']) {
   if (severity === 'warning') return 'command-center-notice-yellow'
   if (severity === 'success') return 'command-center-notice-green'
   return 'command-center-notice-blue'
-}
-
-function healthBarColor(value: number) {
-  if (value < 80) return 'var(--cc-r)'
-  if (value < 90) return 'var(--cc-y)'
-  return 'var(--cc-g)'
 }
 
 function defaultLifecycle(): DashboardPipelineStage[] {
@@ -215,49 +207,6 @@ function ExecutiveAlertsCard({ alerts }: { alerts: DashboardExecutiveAlert[] }) 
           <b>{alertTitle(alert)}</b>
           <br />
           {alert.description}
-        </div>
-      ))}
-    </section>
-  )
-}
-
-function OperationsHealthCard({ metrics }: { metrics: DashboardHealthMetric[] }) {
-  return (
-    <section className="command-center-card">
-      <div className="command-center-card-header">
-        <div className="command-center-card-title">Operations health</div>
-      </div>
-      {metrics.map((metric) => (
-        <div key={metric.key} className="command-center-metric">
-          <label>{metric.label}</label>
-          <div className="command-center-progress" style={{ width: 90 }}>
-            <i style={{ width: `${metric.value}%`, background: healthBarColor(metric.value) }} />
-          </div>
-          <strong>{metric.value}%</strong>
-        </div>
-      ))}
-    </section>
-  )
-}
-
-function RevenueByDivisionCard({ rows }: { rows: DashboardRevenueByDivision[] }) {
-  const max = Math.max(...rows.map((row) => row.verifiedRevenue), 1)
-
-  return (
-    <section className="command-center-card">
-      <div className="command-center-card-header">
-        <div>
-          <div className="command-center-card-title">Revenue by division</div>
-          <div className="command-center-card-subtitle">Based on verified payments</div>
-        </div>
-      </div>
-      {rows.map((row) => (
-        <div key={row.id} className="command-center-metric">
-          <label>{row.division}</label>
-          <div className="command-center-progress" style={{ flex: 1 }}>
-            <i style={{ width: `${Math.max(8, (row.verifiedRevenue / max) * 100)}%` }} />
-          </div>
-          <strong>{formatCurrency(row.verifiedRevenue)}</strong>
         </div>
       ))}
     </section>
