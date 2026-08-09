@@ -1880,6 +1880,8 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
 
 .service-admin-branch-table {
   min-width: 980px;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
 .service-admin-branch-table th:not(:first-child),
@@ -1887,14 +1889,40 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
   text-align: center;
 }
 
+.service-admin-branch-table th,
+.service-admin-branch-table td {
+  border-right: 1px solid #e8edf4;
+}
+
+.service-admin-branch-table th:last-child,
+.service-admin-branch-table td:last-child {
+  border-right: 0;
+}
+
+.service-admin-branch-table thead th {
+  background: #f7f9fc;
+}
+
+.service-admin-branch-table tbody tr:nth-child(odd) {
+  background: #fcfdff;
+}
+
+.service-admin-branch-table tbody tr:nth-child(even) {
+  background: #f7faff;
+}
+
 .service-admin-branch-table td:first-child {
   min-width: 220px;
+  border-right: 2px solid #d6deea;
+  box-shadow: 1px 0 0 #f5f7fb;
 }
 
 .service-admin-branch-check {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
+  min-width: 78px;
   border: 1px solid var(--service-admin-border);
   border-radius: 7px;
   background: var(--service-admin-surface-muted);
@@ -1904,6 +1932,12 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
   font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
+}
+
+.service-admin-branch-check-label {
+  display: inline-block;
+  min-width: 34px;
+  text-align: center;
 }
 
 .service-admin-branch-check input {
@@ -1917,6 +1951,27 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
   border-color: #a9c0f6;
   background: #edf2ff;
   color: var(--service-admin-brand);
+}
+
+.service-admin-workflow-table th:first-child,
+.service-admin-workflow-table td:first-child {
+  background: linear-gradient(90deg, #f7faff 0%, #fbfcfe 100%);
+  border-right: 2px solid #d6deea;
+  box-shadow: 1px 0 0 #f5f7fb;
+}
+
+.service-admin-workflow-table th,
+.service-admin-workflow-table td {
+  border-right: 1px solid #e8edf4;
+}
+
+.service-admin-workflow-table th:last-child,
+.service-admin-workflow-table td:last-child {
+  border-right: 0;
+}
+
+.service-admin-workflow-table thead th {
+  background: #f7f9fc;
 }
 
 @media (max-width: 600px) {

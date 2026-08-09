@@ -164,7 +164,9 @@ export function BranchActivationScreen({
                             disabled={!canEdit}
                             onChange={() => toggle(service.id, branch.id)}
                           />
-                          <span>{active ? 'Active' : 'Off'}</span>
+                          <span className="service-admin-branch-check-label">
+                            {active ? 'Active' : 'Off'}
+                          </span>
                         </label>
                       </td>
                     )

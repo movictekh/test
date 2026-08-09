@@ -287,7 +287,7 @@ export function WorkflowDesignerScreen({
           </div>
 
           <div className="service-admin-table-wrap" style={{ marginTop: 12 }}>
-            <table className="service-admin-table">
+            <table className="service-admin-table service-admin-workflow-table">
               <thead>
                 <tr>
                   <th>Stage</th>
@@ -425,7 +425,7 @@ export function WorkflowDesignerScreen({
         </div>
 
         <div className="service-admin-table-wrap" style={{ marginTop: 12 }}>
-          <table className="service-admin-table">
+          <table className="service-admin-table service-admin-workflow-table">
             <thead>
               <tr>
                 <th>Stage</th>
