@@ -540,7 +540,7 @@ export function QuotationBuilderLiveWorkspace({
                   <span>Required approver role *</span>
                   <EmptyState
                     title="Approver roles unavailable"
-                    description="The quote can be reviewed, but submission is blocked until roles load."
+                    description="Quotation submission is unavailable until approver roles are loaded."
                     action={
                       <Button variant="outline" size="sm" onClick={() => void rolesQuery.refetch()}>
                         Retry

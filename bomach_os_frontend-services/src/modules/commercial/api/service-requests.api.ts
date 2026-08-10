@@ -175,6 +175,7 @@ export const serviceRequestsApi = {
         ...(input.priority !== undefined ? { priority: input.priority } : {}),
         ...(input.branchId !== undefined ? { branch_id: input.branchId } : {}),
         ...(input.ownerId !== undefined ? { owner_id: input.ownerId } : {}),
+        ...(input.budget !== undefined ? { budget: input.budget } : {}),
         ...(input.dueDate !== undefined ? { due_date: input.dueDate } : {}),
         ...(input.nextAction !== undefined ? { next_action: input.nextAction } : {}),
         ...(input.estimatedValue !== undefined ? { estimated_value: input.estimatedValue } : {}),

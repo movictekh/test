@@ -9,6 +9,7 @@ export const serviceRequestQueries = {
     queryOptions({
       queryKey: serviceRequestKeys.list(filters),
       queryFn: () => serviceRequestsApi.list(filters),
+      placeholderData: (previousData) => previousData,
       staleTime: 20_000,
     }),
   detail: (id: number) =>

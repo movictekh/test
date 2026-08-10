@@ -139,8 +139,8 @@ export function BranchActivationScreen({
                         No services available for branch activation
                       </div>
                       <div className="service-admin-card-subtitle mt-1">
-                        Create the first Service to populate this matrix. Branch availability,
-                        default SLA and capacity will stay in this same table layout.
+                        Create the first service to populate this matrix. Branch availability,
+                        default SLAs, and capacity will then appear here in the same layout.
                       </div>
                     </div>
                   </td>

@@ -4,6 +4,7 @@ import { useRef, useState } from 'react'
 
 import { presentError } from '@/shared/errors'
 import { formatCurrency } from '@/shared/lib/formatters'
+import { formatNumberFieldValue, parseNumberFieldValue } from '@/shared/lib/number-input'
 import { useToast } from '@/shared/ui/toast/useToast'
 
 import { serviceRequestsApi } from '../api/service-requests.api'
@@ -85,6 +86,7 @@ export function ServiceRequestDetailWorkspace({
       status: request.status,
       priority: request.priority,
       ownerId: request.ownerId ?? 0,
+      budget: request.budget ?? 0,
       dueDate: request.dueDate ?? '',
       nextAction: request.nextAction,
       estimatedValue: request.estimatedValue,
@@ -95,6 +97,7 @@ export function ServiceRequestDetailWorkspace({
         status: value.status,
         priority: value.priority,
         ownerId: value.ownerId || null,
+        budget: Number(value.budget || 0),
         dueDate: value.dueDate || null,
         nextAction: value.nextAction.trim(),
         estimatedValue: Number(value.estimatedValue || 0),
@@ -511,6 +514,22 @@ export function ServiceRequestDetailWorkspace({
                     )}
                   </controlForm.Field>
 
+                  <controlForm.Field name="budget">
+                    {(field) => (
+                      <label className="commercial-field">
+                        <span>Budget</span>
+                        <input
+                          type="number"
+                          min="0"
+                          value={formatNumberFieldValue(field.state.value)}
+                          onChange={(event) =>
+                            field.handleChange(parseNumberFieldValue(event.target.value))
+                          }
+                        />
+                      </label>
+                    )}
+                  </controlForm.Field>
+
                   <controlForm.Field name="estimatedValue">
                     {(field) => (
                       <label className="commercial-field">
@@ -518,8 +537,10 @@ export function ServiceRequestDetailWorkspace({
                         <input
                           type="number"
                           min="0"
-                          value={field.state.value}
-                          onChange={(event) => field.handleChange(Number(event.target.value))}
+                          value={formatNumberFieldValue(field.state.value)}
+                          onChange={(event) =>
+                            field.handleChange(parseNumberFieldValue(event.target.value))
+                          }
                         />
                       </label>
                     )}

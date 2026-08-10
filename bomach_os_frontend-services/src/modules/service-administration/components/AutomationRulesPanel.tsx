@@ -146,7 +146,7 @@ export function AutomationRulesPanel() {
       ) : (rulesQuery.data ?? []).length === 0 ? (
         <EmptyState
           title="No automation rules"
-          description="No automation rules have been configured yet."
+          description="Automation rules will appear here once the first rule is created."
         />
       ) : (
         (rulesQuery.data ?? []).map((rule) => (

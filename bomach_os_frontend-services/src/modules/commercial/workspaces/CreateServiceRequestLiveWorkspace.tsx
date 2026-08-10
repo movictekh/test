@@ -11,6 +11,7 @@ import { useRef, useState } from 'react'
 
 import { presentError } from '@/shared/errors'
 import { formatCurrency } from '@/shared/lib/formatters'
+import { parseNumberFieldValue } from '@/shared/lib/number-input'
 import { Button } from '@/shared/ui/button'
 import { EmptyState } from '@/shared/ui/empty-state'
 import { useToast } from '@/shared/ui/toast/useToast'
@@ -209,6 +210,19 @@ export function CreateServiceRequestLiveWorkspace({
       }
 
       const normalizedAnswers = normalizeAnswers(fields, resolvedAnswers)
+      const derivedBudget =
+        value.budget > 0
+          ? value.budget
+          : (() => {
+              const budgetField = fields.find(isBudgetField)
+              if (!budgetField) return 0
+              const rawBudget = normalizedAnswers[budgetField.key]
+              return parseNumberFieldValue(
+                typeof rawBudget === 'string' || typeof rawBudget === 'number'
+                  ? String(rawBudget)
+                  : '',
+              )
+            })()
       const derivedScopeSummary =
         value.scopeSummary.trim() || firstScopeValue(fields, normalizedAnswers) || ''
       const attachments = flattenedUploads
@@ -239,8 +253,8 @@ export function CreateServiceRequestLiveWorkspace({
             source: value.source,
             sourceReference: value.sourceReference.trim(),
             priority: value.priority,
-            ...(value.budget > 0 ? { budget: value.budget } : {}),
-            estimatedValue: Number(value.estimatedValue || value.budget || 0),
+            ...(derivedBudget > 0 ? { budget: derivedBudget } : {}),
+            estimatedValue: Number(value.estimatedValue || derivedBudget || 0),
             ...(value.preferredDate ? { preferredDate: value.preferredDate } : {}),
             ...(value.dueDate ? { dueDate: value.dueDate } : {}),
             nextAction: value.nextAction.trim(),
@@ -483,7 +497,7 @@ export function CreateServiceRequestLiveWorkspace({
               description={
                 activeClients.length === 0
                   ? 'Add at least one active client before creating a service request.'
-                  : 'No active client-facing services are currently available for requests.'
+                  : 'There are no active services available for request intake right now.'
               }
             />
           ) : intakeQuery.isPending ? (
@@ -491,7 +505,7 @@ export function CreateServiceRequestLiveWorkspace({
           ) : intakeQuery.isError ? (
             <EmptyState
               title="Request form unavailable"
-              description="The selected service is not ready for request intake yet. Publish its request form and try again."
+              description="This service is not ready for request intake yet. Publish its request form and try again."
               action={
                 <Button variant="outline" size="sm" onClick={() => void intakeQuery.refetch()}>
                   Retry

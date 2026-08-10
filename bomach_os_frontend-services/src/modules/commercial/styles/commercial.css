@@ -80,6 +80,57 @@
   font-weight: 800;
   white-space: nowrap;
 }
+
+.commercial-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 15px 12px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.commercial-tab {
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 8px 14px;
+  background: var(--color-surface);
+  color: var(--color-foreground);
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 5%);
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.commercial-tab:hover:not(:disabled) {
+  background: var(--color-surface-muted);
+  color: var(--color-foreground);
+}
+
+.commercial-tab.is-active {
+  border-color: #1f3d7a;
+  background: #1f3d7a;
+  color: #fff;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 8%);
+}
+
+.commercial-tab.is-active:hover:not(:disabled) {
+  background: #132b59;
+  color: #fff;
+}
+
+.commercial-tab:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
 .commercial-filters {
   display: flex;
   align-items: center;
@@ -116,6 +167,10 @@
 }
 .commercial-table-wrap {
   overflow: auto;
+}
+
+.commercial-table-wrap--fit {
+  overflow: visible;
 }
 
 .commercial-table-pagination {
@@ -164,6 +219,26 @@
   min-width: 1180px;
   border-collapse: collapse;
 }
+
+.commercial-table--fit {
+  min-width: 0;
+  table-layout: fixed;
+}
+
+.commercial-table--fit th:first-child,
+.commercial-table--fit td:first-child {
+  width: 52%;
+}
+
+.commercial-table--fit th:not(:first-child),
+.commercial-table--fit td:not(:first-child) {
+  width: 16%;
+  white-space: nowrap;
+}
+
+.commercial-table--fit td:first-child {
+  word-break: break-word;
+}
 .commercial-table th {
   border-bottom: 1.5px solid var(--color-border);
   padding: 8px 9px;
@@ -192,6 +267,19 @@
   margin-top: 3px;
   color: var(--color-foreground-subtle);
   font-size: 8px;
+}
+
+.commercial-table-truncate {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.commercial-table-truncate--next {
+  width: 180px;
 }
 .commercial-pill,
 .commercial-priority {
@@ -258,6 +346,13 @@
   }
   .commercial-search {
     min-width: 100%;
+  }
+  .commercial-table-wrap--fit {
+    overflow: auto;
+  }
+  .commercial-table--fit {
+    min-width: 680px;
+    table-layout: auto;
   }
   .commercial-table-pagination {
     flex-direction: column;

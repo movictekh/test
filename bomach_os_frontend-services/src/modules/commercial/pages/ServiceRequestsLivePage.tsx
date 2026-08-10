@@ -1,13 +1,14 @@
 import { IconFilePlus, IconPlus, IconSearch } from '@tabler/icons-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { useAuth } from '@/app/auth'
 import { hasPermission, PERMISSIONS } from '@/app/permissions'
 import { presentError } from '@/shared/errors'
 import { formatCurrency } from '@/shared/lib/formatters'
 import type { AppSectionSearch } from '@/routes/app/$section'
+import { withOptionalSearchValue, withoutSearchKeys } from '@/shared/navigation/search-state'
 import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
 import { EmptyState } from '@/shared/ui/empty-state'
 import {
@@ -46,13 +47,6 @@ const REQUEST_SUMMARY_CARDS = [
   ['Total Requests', 'total'],
 ] as const
 
-function withOptionalSearchValue<Key extends keyof AppSectionSearch>(
-  key: Key,
-  value: AppSectionSearch[Key] | '',
-): Partial<AppSectionSearch> {
-  return value ? { [key]: value } : {}
-}
-
 function withoutRequestSearch(previous: AppSectionSearch) {
   const next = { ...previous }
   delete next.request
@@ -65,6 +59,8 @@ export function ServiceRequestsLivePage({ recordSearch }: { recordSearch: AppSec
   const queryClient = useQueryClient()
   const toast = useToast()
   const [createOpen, setCreateOpen] = useState(false)
+  const [searchDraft, setSearchDraft] = useState(recordSearch.search ?? '')
+  const [syncedSearch, setSyncedSearch] = useState(recordSearch.search ?? '')
 
   const selectedRequestId = recordSearch.request ? Number(recordSearch.request) : null
   const page = recordSearch.page ?? 1
@@ -218,18 +214,58 @@ export function ServiceRequestsLivePage({ recordSearch }: { recordSearch: AppSec
     },
   })
 
-  const setSearch = (patch: Partial<AppSectionSearch>) => {
+  const setSearch = useCallback((patch: Partial<AppSectionSearch>) => {
     void navigate({
       to: '/app/$section',
       params: { section: 'service-requests' },
       search: (previous) => ({
-        ...previous,
+        ...withoutSearchKeys(previous, Object.keys(patch) as Array<keyof AppSectionSearch>),
         ...patch,
         page: patch.page ?? (Object.keys(patch).some((key) => key !== 'page') ? 1 : (previous.page ?? 1)),
       }),
       replace: true,
     })
+  }, [navigate])
+
+  const setSearchValue = useCallback(function <Key extends keyof AppSectionSearch>(
+    key: Key,
+    value: AppSectionSearch[Key] | '' | null,
+  ) {
+    void navigate({
+      to: '/app/$section',
+      params: { section: 'service-requests' },
+      search: (previous) => ({
+        ...withoutSearchKeys(previous, [key]),
+        ...withOptionalSearchValue<AppSectionSearch, Key>(key, value),
+        page: 1,
+      }),
+      replace: true,
+    })
+  }, [navigate])
+
+  const clearFilters = useCallback(() => {
+    setSearchDraft('')
+    void navigate({
+      to: '/app/$section',
+      params: { section: 'service-requests' },
+      search: (previous) =>
+        withoutSearchKeys(previous, ['search', 'status', 'priority', 'branch', 'service', 'page']),
+      replace: true,
+    })
+  }, [navigate])
+
+  if ((recordSearch.search ?? '') !== syncedSearch) {
+    setSyncedSearch(recordSearch.search ?? '')
+    setSearchDraft(recordSearch.search ?? '')
   }
+
+  useEffect(() => {
+    if (searchDraft === (recordSearch.search ?? '')) return
+    const timeoutId = window.setTimeout(() => {
+      setSearchValue('search', searchDraft)
+    }, 350)
+    return () => window.clearTimeout(timeoutId)
+  }, [recordSearch.search, searchDraft, setSearchValue])
 
   if (
     listQuery.isPending ||
@@ -267,6 +303,12 @@ export function ServiceRequestsLivePage({ recordSearch }: { recordSearch: AppSec
   const requests = listQuery.data.items
   const choices = choicesQuery.data
   const services = servicesQuery.data
+  const hasActiveFilters =
+    Boolean(recordSearch.search) ||
+    Boolean(recordSearch.status) ||
+    Boolean(recordSearch.priority) ||
+    Boolean(recordSearch.branch) ||
+    Boolean(recordSearch.service)
   const totalPages = Math.max(1, Math.ceil(listQuery.data.count / 10))
   const recordCountLabel = `${listQuery.data.count} ${listQuery.data.count === 1 ? 'request' : 'requests'}`
   const branches = Array.from(
@@ -339,6 +381,7 @@ export function ServiceRequestsLivePage({ recordSearch }: { recordSearch: AppSec
             </div>
             <div className="commercial-card-header-actions">
               <span className="commercial-count">{recordCountLabel}</span>
+              {listQuery.isFetching ? <span className="commercial-count">Refreshing…</span> : null}
               <CompactActionButton
                 tone="primary"
                 disabled={!hasPermission(user, PERMISSIONS.serviceRequestsCreate)}
@@ -355,15 +398,21 @@ export function ServiceRequestsLivePage({ recordSearch }: { recordSearch: AppSec
             <label className="commercial-search">
               <IconSearch size={14} aria-hidden="true" />
               <input
-                value={recordSearch.search ?? ''}
-                onChange={(event) => setSearch(withOptionalSearchValue('search', event.target.value))}
+                value={searchDraft}
+                onChange={(event) => setSearchDraft(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key !== 'Enter') return
+                  event.preventDefault()
+                  if (searchDraft === (recordSearch.search ?? '')) return
+                  setSearchValue('search', searchDraft)
+                }}
                 placeholder="Search request, client, service or contact"
               />
             </label>
 
             <select
               value={recordSearch.status ?? ''}
-              onChange={(event) => setSearch(withOptionalSearchValue('status', event.target.value))}
+              onChange={(event) => setSearchValue('status', event.target.value)}
             >
               <option value="">All statuses</option>
               {choices.statuses.map((item) => (
@@ -375,9 +424,7 @@ export function ServiceRequestsLivePage({ recordSearch }: { recordSearch: AppSec
 
             <select
               value={recordSearch.priority ?? ''}
-              onChange={(event) =>
-                setSearch(withOptionalSearchValue('priority', event.target.value))
-              }
+              onChange={(event) => setSearchValue('priority', event.target.value)}
             >
               <option value="">All priorities</option>
               {choices.priorities.map((item) => (
@@ -389,7 +436,7 @@ export function ServiceRequestsLivePage({ recordSearch }: { recordSearch: AppSec
 
             <select
               value={recordSearch.branch ?? ''}
-              onChange={(event) => setSearch(withOptionalSearchValue('branch', event.target.value))}
+              onChange={(event) => setSearchValue('branch', event.target.value)}
             >
               <option value="">All branches</option>
               {branches.map((branch) => (
@@ -401,9 +448,7 @@ export function ServiceRequestsLivePage({ recordSearch }: { recordSearch: AppSec
 
             <select
               value={recordSearch.service ?? ''}
-              onChange={(event) =>
-                setSearch(withOptionalSearchValue('service', event.target.value))
-              }
+              onChange={(event) => setSearchValue('service', event.target.value)}
             >
               <option value="">All services</option>
               {services.map((service) => (
@@ -416,8 +461,23 @@ export function ServiceRequestsLivePage({ recordSearch }: { recordSearch: AppSec
 
           {requests.length === 0 ? (
             <EmptyState
-              title="No service requests found"
-              description="No requests match the selected filters yet. Adjust the filters or create a new request."
+              title={hasActiveFilters ? 'No service requests match the current filters' : 'No service requests yet'}
+              description={
+                hasActiveFilters
+                  ? 'Try adjusting or clearing the search and filter settings to bring matching requests back into view.'
+                  : 'Service requests will appear here after the first request is created.'
+              }
+              action={
+                hasActiveFilters ? (
+                  <button
+                    type="button"
+                    className="commercial-btn"
+                    onClick={clearFilters}
+                  >
+                    Clear filters
+                  </button>
+                ) : undefined
+              }
             />
           ) : (
             <div className="commercial-table-wrap">
@@ -463,7 +523,14 @@ export function ServiceRequestsLivePage({ recordSearch }: { recordSearch: AppSec
                         </span>
                       </td>
                       <td>{request.ownerName || 'Unassigned'}</td>
-                      <td>{request.nextAction || '—'}</td>
+                      <td>
+                        <span
+                          className="commercial-table-truncate commercial-table-truncate--next"
+                          title={request.nextAction || '—'}
+                        >
+                          {request.nextAction || '—'}
+                        </span>
+                      </td>
                       <td>
                         <button
                           type="button"

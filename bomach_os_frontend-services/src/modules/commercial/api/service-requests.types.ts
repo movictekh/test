@@ -267,6 +267,7 @@ export interface UpdateServiceRequestInput {
   priority?: ServiceRequestPriority
   branchId?: number | null
   ownerId?: number | null
+  budget?: number | null
   dueDate?: string | null
   nextAction?: string
   estimatedValue?: number

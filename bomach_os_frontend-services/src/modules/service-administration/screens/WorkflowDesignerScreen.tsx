@@ -268,8 +268,8 @@ export function WorkflowDesignerScreen({
                     <div className="py-8 text-center" role="status">
                       <div className="service-admin-card-title">No workflow to configure yet</div>
                       <div className="service-admin-card-subtitle mt-1">
-                        Create a Service first. Its workflow stages will be configured here without
-                        changing the page layout.
+                        Create a service first. Its workflow stages will then be configured here in
+                        the same layout.
                       </div>
                     </div>
                   </td>

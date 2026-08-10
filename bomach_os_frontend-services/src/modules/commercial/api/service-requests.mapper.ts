@@ -42,6 +42,25 @@ function paginatedRows(payload: unknown) {
   return { count: num(root.count, rows.length), rows }
 }
 
+function snapshotBudget(value: JsonRecord) {
+  const snapshot = record(value.answers_snapshot)
+  const direct = nullableNumber(snapshot.budget)
+  if (direct != null) return direct
+
+  const answers = array(value.answers)
+  for (const item of answers) {
+    const row = record(item)
+    const fieldKey = text(row.field_key).trim().toLowerCase()
+    const label = text(row.label).trim().toLowerCase()
+    if (fieldKey === 'budget' || label === 'budget') {
+      const resolved = nullableNumber(row.value)
+      if (resolved != null) return resolved
+    }
+  }
+
+  return null
+}
+
 export function mapServiceRequestListItem(payload: unknown): ServiceRequestListItem {
   const value = record(payload)
   return {
@@ -81,8 +100,11 @@ export function mapServiceRequestListItem(payload: unknown): ServiceRequestListI
 
 export function mapServiceRequestDetail(payload: unknown): ServiceRequestDetail {
   const value = record(payload)
+  const detail = mapServiceRequestListItem(payload)
+  const resolvedBudget = detail.budget ?? snapshotBudget(value)
   return {
-    ...mapServiceRequestListItem(payload),
+    ...detail,
+    budget: resolvedBudget,
     serviceLeadId: nullableNumber(value.service_lead_id),
     crmLeadId: nullableNumber(value.crm_lead_id),
     requestFormId: num(value.request_form_id),

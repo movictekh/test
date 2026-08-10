@@ -12,6 +12,7 @@ import {
   CommercialSectionPage,
   ServiceRequestsLivePage,
   QuotationsLivePage,
+  InvoicesPaymentsLivePage,
   type CommercialSection,
 } from '@/modules/commercial'
 import { FulfillmentSectionPage, type FulfillmentSection } from '@/modules/fulfillment'
@@ -146,6 +147,10 @@ function AppShellRoute() {
 
   if (section === 'quotations') {
     return <QuotationsLivePage recordSearch={recordSearch} />
+  }
+
+  if (section === 'invoices-payments') {
+    return <InvoicesPaymentsLivePage recordSearch={recordSearch} />
   }
 
   if (commercialSections.has(section as CommercialSection)) {

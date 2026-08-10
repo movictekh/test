@@ -1,13 +1,14 @@
 import { IconFilePlus, IconPlus, IconSearch } from '@tabler/icons-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { useAuth } from '@/app/auth'
 import { hasPermission, PERMISSIONS } from '@/app/permissions'
 import type { AppSectionSearch } from '@/routes/app/$section'
 import { presentError } from '@/shared/errors'
 import { formatCurrency } from '@/shared/lib/formatters'
+import { withOptionalSearchValue, withoutSearchKeys } from '@/shared/navigation/search-state'
 import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
 import { EmptyState } from '@/shared/ui/empty-state'
 import {
@@ -41,27 +42,6 @@ function statusClass(status: string) {
   return 'commercial-pill-blue'
 }
 
-function withOptionalSearchValue<Key extends keyof AppSectionSearch>(
-  key: Key,
-  value: AppSectionSearch[Key] | '' | null | undefined,
-): Partial<AppSectionSearch> {
-  const next: Partial<AppSectionSearch> = {}
-  if (value === '' || value == null) return next
-  next[key] = value
-  return next
-}
-
-function withoutSearchKeys(
-  previous: AppSectionSearch,
-  keys: Array<keyof AppSectionSearch>,
-): AppSectionSearch {
-  const next = { ...previous }
-  for (const key of keys) {
-    delete next[key]
-  }
-  return next
-}
-
 export function QuotationsLivePage({ recordSearch }: { recordSearch: AppSectionSearch }) {
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -78,6 +58,8 @@ export function QuotationsLivePage({ recordSearch }: { recordSearch: AppSectionS
   const [builderRequest, setBuilderRequest] = useState<ServiceRequestDetail | null>(null)
   const [builderQuote, setBuilderQuote] = useState<Quotation | null>(null)
   const [builderRequestLoading, setBuilderRequestLoading] = useState(false)
+  const [searchDraft, setSearchDraft] = useState(recordSearch.search ?? '')
+  const [syncedSearch, setSyncedSearch] = useState(recordSearch.search ?? '')
 
   const filters = useMemo(
     () => ({
@@ -90,6 +72,14 @@ export function QuotationsLivePage({ recordSearch }: { recordSearch: AppSectionS
   )
 
   const listQuery = useQuery(quotationQueries.list(filters))
+  const searchListQuery = useQuery({
+    ...quotationQueries.list({
+      ...(recordSearch.status ? { status: recordSearch.status } : {}),
+      page: 1,
+      limit: 200,
+    }),
+    enabled: Boolean(recordSearch.search),
+  })
   const summaryQuery = useQuery(quotationQueries.summary())
   const detailQuery = useQuery({
     ...quotationQueries.detail(selectedQuoteId ?? 0),
@@ -217,7 +207,7 @@ export function QuotationsLivePage({ recordSearch }: { recordSearch: AppSectionS
     },
   })
 
-  const setSearch = (patch: Partial<AppSectionSearch>) => {
+  const setSearch = useCallback((patch: Partial<AppSectionSearch>) => {
     void navigate({
       to: '/app/$section',
       params: { section: 'quotations' },
@@ -236,7 +226,46 @@ export function QuotationsLivePage({ recordSearch }: { recordSearch: AppSectionS
       }),
       replace: true,
     })
+  }, [navigate])
+
+  const setSearchValue = useCallback(function <Key extends keyof AppSectionSearch>(
+    key: Key,
+    value: AppSectionSearch[Key] | '' | null,
+  ) {
+    void navigate({
+      to: '/app/$section',
+      params: { section: 'quotations' },
+      search: (previous) => ({
+        ...withoutSearchKeys(previous, [key]),
+        ...withOptionalSearchValue<AppSectionSearch, Key>(key, value),
+        page: 1,
+      }),
+      replace: true,
+    })
+  }, [navigate])
+
+  const clearFilters = useCallback(() => {
+    setSearchDraft('')
+    void navigate({
+      to: '/app/$section',
+      params: { section: 'quotations' },
+      search: (previous) => withoutSearchKeys(previous, ['search', 'status', 'page']),
+      replace: true,
+    })
+  }, [navigate])
+
+  if ((recordSearch.search ?? '') !== syncedSearch) {
+    setSyncedSearch(recordSearch.search ?? '')
+    setSearchDraft(recordSearch.search ?? '')
   }
+
+  useEffect(() => {
+    if (searchDraft === (recordSearch.search ?? '')) return
+    const timeoutId = window.setTimeout(() => {
+      setSearchValue('search', searchDraft)
+    }, 350)
+    return () => window.clearTimeout(timeoutId)
+  }, [recordSearch.search, searchDraft, setSearchValue])
 
   const beginDirectCreate = async () => {
     setBuilderMode('create')
@@ -273,7 +302,7 @@ export function QuotationsLivePage({ recordSearch }: { recordSearch: AppSectionS
     }
   }
 
-  if (listQuery.isPending) {
+  if (listQuery.isPending || (recordSearch.search && searchListQuery.isPending)) {
     return (
       <ModulePageStatus title="Quotations & Proposals" breadcrumb="Commercial flow / Offers">
         <DashboardSkeleton />
@@ -294,9 +323,39 @@ export function QuotationsLivePage({ recordSearch }: { recordSearch: AppSectionS
     )
   }
 
+  if (searchListQuery.isError) {
+    const error = presentError(searchListQuery.error, 'page-load')
+    return (
+      <ModulePageStatus title="Quotations & Proposals" breadcrumb="Commercial flow / Offers">
+        <ErrorState
+          title={error.title}
+          description={error.message}
+          onRetry={() => void searchListQuery.refetch()}
+        />
+      </ModulePageStatus>
+    )
+  }
+
   const sourceRequest = handoffRequestQuery.data ?? null
   const activeBuilderRequest = builderRequest ?? sourceRequest
-  const totalPages = Math.max(1, Math.ceil(listQuery.data.count / 10))
+  const hasActiveFilters = Boolean(recordSearch.search) || Boolean(recordSearch.status)
+  const normalizedSearch = (recordSearch.search ?? '').trim().toLowerCase()
+  const searchSourceItems = searchListQuery.data?.items ?? []
+  const filteredQuotes = normalizedSearch
+    ? searchSourceItems.filter((quote) =>
+        [
+          quote.quoteNumber,
+          quote.clientName,
+          quote.serviceName,
+          quote.statusDisplay,
+          quote.requiredApproverRoleName,
+          quote.validUntil,
+        ].some((value) => value.toLowerCase().includes(normalizedSearch)),
+      )
+    : listQuery.data.items
+  const displayedCount = normalizedSearch ? filteredQuotes.length : listQuery.data.count
+  const displayedQuotes = normalizedSearch ? filteredQuotes : listQuery.data.items
+  const totalPages = Math.max(1, Math.ceil(displayedCount / 10))
 
   return (
     <ModulePageFrame
@@ -368,7 +427,10 @@ export function QuotationsLivePage({ recordSearch }: { recordSearch: AppSectionS
               <p>Live version-controlled scope, pricing, terms and approvals</p>
             </div>
             <div className="commercial-card-header-actions">
-              <span className="commercial-count">{listQuery.data.count} records</span>
+              <span className="commercial-count">{displayedCount} records</span>
+              {listQuery.isFetching || searchListQuery.isFetching ? (
+                <span className="commercial-count">Refreshing…</span>
+              ) : null}
               <CompactActionButton
                 tone="primary"
                 disabled={!hasPermission(user, PERMISSIONS.quotesCreate)}
@@ -385,16 +447,20 @@ export function QuotationsLivePage({ recordSearch }: { recordSearch: AppSectionS
             <label className="commercial-search">
               <IconSearch size={14} />
               <input
-                value={recordSearch.search ?? ''}
-                onChange={(event) =>
-                  setSearch(withOptionalSearchValue('search', event.target.value))
-                }
+                value={searchDraft}
+                onChange={(event) => setSearchDraft(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key !== 'Enter') return
+                  event.preventDefault()
+                  if (searchDraft === (recordSearch.search ?? '')) return
+                  setSearchValue('search', searchDraft)
+                }}
                 placeholder="Search quote, client or service"
               />
             </label>
             <select
               value={recordSearch.status ?? ''}
-              onChange={(event) => setSearch(withOptionalSearchValue('status', event.target.value))}
+              onChange={(event) => setSearchValue('status', event.target.value)}
             >
               <option value="">All statuses</option>
               <option value="awaiting_approval">Awaiting Approval</option>
@@ -405,13 +471,24 @@ export function QuotationsLivePage({ recordSearch }: { recordSearch: AppSectionS
             </select>
           </div>
 
-          {listQuery.data.items.length === 0 ? (
+          {displayedQuotes.length === 0 ? (
             <EmptyState
-              title="No quotations"
+              title={hasActiveFilters ? 'No quotations match the current filters' : 'No quotations yet'}
               description={
-                recordSearch.search || recordSearch.status
-                  ? 'No quotations match the current filters.'
+                hasActiveFilters
+                  ? 'Try adjusting or clearing the search and status filters to see matching quotations.'
                   : 'Build a quotation from an eligible Service Request.'
+              }
+              action={
+                hasActiveFilters ? (
+                  <button
+                    type="button"
+                    className="commercial-btn"
+                    onClick={clearFilters}
+                  >
+                    Clear filters
+                  </button>
+                ) : undefined
               }
             />
           ) : (
@@ -431,7 +508,7 @@ export function QuotationsLivePage({ recordSearch }: { recordSearch: AppSectionS
                   </tr>
                 </thead>
                 <tbody>
-                  {listQuery.data.items.map((quote) => (
+                  {displayedQuotes.map((quote) => (
                     <tr key={quote.id}>
                       <td>
                         <b>{quote.quoteNumber}</b>
@@ -523,8 +600,8 @@ export function QuotationsLivePage({ recordSearch }: { recordSearch: AppSectionS
         <div className="commercial-modal-backdrop">
           <section className="commercial-modal">
             <EmptyState
-              title="No eligible Service Requests"
-              description="Converted, rejected and already-quoted requests are excluded."
+              title="No service requests are ready for quotation"
+              description="Requests that are already quoted, converted, or closed are excluded from this list."
             />
             <footer className="commercial-modal-footer">
               <button type="button" className="commercial-btn" onClick={closeBuilder}>

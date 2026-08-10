@@ -275,7 +275,7 @@ export function OperationsDashboardPage() {
       key: 'awaiting_approval' as const,
       label: 'Pending approvals',
       value: approvalsQuery.data?.total ?? 0,
-      description: 'Backend-reported pending approvals',
+      description: 'Items waiting for approval',
     },
     {
       key: 'pending_quotations' as const,
