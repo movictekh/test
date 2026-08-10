@@ -87,6 +87,8 @@ export const VERIFIED_APP_PERMISSION_VALUES = [
   'payments.create',
   'payments.delete',
 
+  'approval_flows.list',
+  'approval_flows.view',
   'approval_requests.list',
   'approval_requests.view',
   'approval_requests.create',

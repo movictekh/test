@@ -86,6 +86,8 @@ export const PERMISSIONS = {
   paymentsCreate: 'payments.create',
   paymentsDelete: 'payments.delete',
 
+  approvalFlowsList: 'approval_flows.list',
+  approvalFlowsView: 'approval_flows.view',
   approvalRequestsList: 'approval_requests.list',
   approvalRequestsView: 'approval_requests.view',
   approvalRequestsCreate: 'approval_requests.create',

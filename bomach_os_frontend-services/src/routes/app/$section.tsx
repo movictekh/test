@@ -13,6 +13,7 @@ import {
   ServiceRequestsLivePage,
   QuotationsLivePage,
   InvoicesPaymentsLivePage,
+  ApprovalsLivePage,
   type CommercialSection,
 } from '@/modules/commercial'
 import { FulfillmentSectionPage, type FulfillmentSection } from '@/modules/fulfillment'
@@ -60,6 +61,7 @@ const experienceIntelligenceSections = new Set<ExperienceIntelligenceSection>([
 export type AppSectionSearch = AppRecordSearch & {
   search?: string
   status?: string
+  actionType?: string
   division?: string
   priority?: string
   branch?: string
@@ -83,6 +85,7 @@ export function parseRecordSearch(search: Record<string, unknown>): AppSectionSe
 
   const catalogueSearch = stringValue(search.search)
   const catalogueStatus = stringValue(search.status)
+  const approvalActionType = stringValue(search.actionType)
   const catalogueDivision = stringValue(search.division)
   const requestPriority = stringValue(search.priority)
   const requestBranch = stringValue(search.branch)
@@ -107,6 +110,7 @@ export function parseRecordSearch(search: Record<string, unknown>): AppSectionSe
 
   if (catalogueSearch) result.search = catalogueSearch
   if (catalogueStatus) result.status = catalogueStatus
+  if (approvalActionType) result.actionType = approvalActionType
   if (catalogueDivision) result.division = catalogueDivision
   if (requestPriority) result.priority = requestPriority
   if (requestBranch) result.branch = requestBranch
@@ -151,6 +155,10 @@ function AppShellRoute() {
 
   if (section === 'invoices-payments') {
     return <InvoicesPaymentsLivePage recordSearch={recordSearch} />
+  }
+
+  if (section === 'approvals') {
+    return <ApprovalsLivePage recordSearch={recordSearch} />
   }
 
   if (commercialSections.has(section as CommercialSection)) {

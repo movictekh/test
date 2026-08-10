@@ -1,3 +1,4 @@
+export { ApprovalsLivePage } from './pages/ApprovalsLivePage'
 export { InvoicesPaymentsLivePage } from './pages/InvoicesPaymentsLivePage'
 export { QuotationsLivePage } from './pages/QuotationsLivePage'
 export { ServiceRequestsLivePage } from './pages/ServiceRequestsLivePage'

@@ -132,8 +132,7 @@ export function QuotationDetailLiveWorkspace({
                 <section className="commercial-form-section">
                   <h3>Client response</h3>
                   <div className="commercial-notice commercial-notice-blue">
-                    Client acceptance or rejection is recorded from the client-facing quote link
-                    after the quotation has been shared.
+                    Waiting for the customer to accept or reject this quotation.
                   </div>
                 </section>
               ) : null}
