@@ -1,5 +1,4 @@
 import { IconX } from '@tabler/icons-react'
-import { useRef, useState } from 'react'
 
 import { formatCurrency } from '@/shared/lib/formatters'
 
@@ -10,7 +9,8 @@ export function QuotationDetailLiveWorkspace({
   quotation,
   saving,
   canApprove,
-  canRecordClientDecision,
+  canEdit,
+  canRevise,
   onClose,
   onEdit,
   onApprove,
@@ -20,16 +20,14 @@ export function QuotationDetailLiveWorkspace({
   quotation: Quotation
   saving: boolean
   canApprove: boolean
-  canRecordClientDecision: boolean
+  canEdit: boolean
+  canRevise: boolean
   onClose: () => void
   onEdit: () => void
   onApprove: () => void
   onRevise: () => void
   onCreateInvoice: () => void
 }) {
-  const [reason, setReason] = useState('')
-  const [reasonError, setReasonError] = useState('')
-  const reasonRef = useRef<HTMLTextAreaElement | null>(null)
   const capabilities = getQuotationCapabilities(quotation.status)
   const lifecycle = [
     quotation.createdAt
@@ -43,22 +41,6 @@ export function QuotationDetailLiveWorkspace({
       ? { label: 'Client responded', at: quotation.clientRespondedAt, actor: '' }
       : null,
   ].filter(Boolean) as Array<{ label: string; at: string; actor: string }>
-
-  const handleReject = () => {
-    const trimmedReason = reason.trim()
-
-    if (!trimmedReason) {
-      setReasonError('Enter a rejection reason before submitting this response.')
-      window.requestAnimationFrame(() => {
-        reasonRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-        reasonRef.current?.focus()
-      })
-      return
-    }
-
-    setReasonError('')
-    return trimmedReason
-  }
 
   return (
     <div className="commercial-modal-backdrop" role="presentation" onMouseDown={onClose}>
@@ -149,30 +131,10 @@ export function QuotationDetailLiveWorkspace({
               {capabilities.clientRespond ? (
                 <section className="commercial-form-section">
                   <h3>Client response</h3>
-                  {!canRecordClientDecision ? (
-                    <div className="commercial-notice commercial-notice-blue">
-                      Client acceptance or rejection is recorded from the client-facing quote link
-                      after the quotation has been shared.
-                    </div>
-                  ) : null}
-                  <label className="commercial-field commercial-field--full">
-                    <span>Rejection reason</span>
-                    <textarea
-                      ref={reasonRef}
-                      rows={3}
-                      value={reason}
-                      onChange={(event) => {
-                        if (reasonError) {
-                          setReasonError('')
-                        }
-                        setReason(event.target.value)
-                      }}
-                      placeholder="Required only when the client rejects the quotation"
-                    />
-                    {reasonError ? (
-                      <small className="commercial-field-error">{reasonError}</small>
-                    ) : null}
-                  </label>
+                  <div className="commercial-notice commercial-notice-blue">
+                    Client acceptance or rejection is recorded from the client-facing quote link
+                    after the quotation has been shared.
+                  </div>
                 </section>
               ) : null}
             </div>
@@ -267,7 +229,7 @@ export function QuotationDetailLiveWorkspace({
             Close
           </button>
           <div className="commercial-modal-footer-actions">
-            {capabilities.edit ? (
+            {capabilities.edit && canEdit ? (
               <button type="button" className="commercial-btn" disabled={saving} onClick={onEdit}>
                 Edit Quote
               </button>
@@ -282,22 +244,7 @@ export function QuotationDetailLiveWorkspace({
                 {saving ? 'Approving...' : 'Approve Quote'}
               </button>
             ) : null}
-            {capabilities.clientRespond && canRecordClientDecision ? (
-              <>
-                <button
-                  type="button"
-                  className="commercial-btn"
-                  disabled={saving}
-                  onClick={() => {
-                    const trimmedReason = handleReject()
-                    if (!trimmedReason) return
-                  }}
-                >
-                  Mark Rejected
-                </button>
-              </>
-            ) : null}
-            {capabilities.revise ? (
+            {capabilities.revise && canRevise ? (
               <button
                 type="button"
                 className="commercial-btn commercial-btn-primary"

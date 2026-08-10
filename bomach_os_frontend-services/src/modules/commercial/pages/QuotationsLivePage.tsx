@@ -217,38 +217,6 @@ export function QuotationsLivePage({ recordSearch }: { recordSearch: AppSectionS
     },
   })
 
-  const decisionMutation = useMutation({
-    mutationFn: ({
-      quoteId,
-      decision,
-      reason,
-    }: {
-      quoteId: number
-      decision: 'accepted' | 'rejected'
-      reason?: string
-    }) =>
-      quotationsApi.clientDecision(
-        quoteId,
-        decision === 'accepted' ? { decision } : { decision, reason: reason ?? '' },
-      ),
-    onSuccess: async (quote) => {
-      await invalidate(quote.id, quote.serviceRequestId ?? undefined)
-      toast.success(
-        quote.status === 'accepted' ? 'Client acceptance recorded' : 'Client rejection recorded',
-      )
-    },
-    onError: async (error) => {
-      toast.error('Client response could not be recorded', {
-        description: presentError(error, 'background-action').message,
-      })
-      if (selectedQuoteId) {
-        await queryClient.invalidateQueries({
-          queryKey: quotationKeys.detail(selectedQuoteId),
-        })
-      }
-    },
-  })
-
   const setSearch = (patch: Partial<AppSectionSearch>) => {
     void navigate({
       to: '/app/$section',
@@ -426,9 +394,7 @@ export function QuotationsLivePage({ recordSearch }: { recordSearch: AppSectionS
             </label>
             <select
               value={recordSearch.status ?? ''}
-              onChange={(event) =>
-                setSearch(withOptionalSearchValue('status', event.target.value))
-              }
+              onChange={(event) => setSearch(withOptionalSearchValue('status', event.target.value))}
             >
               <option value="">All statuses</option>
               <option value="awaiting_approval">Awaiting Approval</option>
@@ -521,22 +487,22 @@ export function QuotationsLivePage({ recordSearch }: { recordSearch: AppSectionS
               </span>
             </div>
             <div className="commercial-table-pagination-actions">
-            <button
-              type="button"
-              className="commercial-btn commercial-btn-small"
-              disabled={page <= 1}
-              onClick={() => setSearch({ page: page - 1 })}
-            >
-              Previous
-            </button>
-            <button
-              type="button"
-              className="commercial-btn commercial-btn-small"
-              disabled={page >= totalPages}
-              onClick={() => setSearch({ page: page + 1 })}
-            >
-              Next
-            </button>
+              <button
+                type="button"
+                className="commercial-btn commercial-btn-small"
+                disabled={page <= 1}
+                onClick={() => setSearch({ page: page - 1 })}
+              >
+                Previous
+              </button>
+              <button
+                type="button"
+                className="commercial-btn commercial-btn-small"
+                disabled={page >= totalPages}
+                onClick={() => setSearch({ page: page + 1 })}
+              >
+                Next
+              </button>
             </div>
           </div>
         </section>
@@ -588,14 +554,54 @@ export function QuotationsLivePage({ recordSearch }: { recordSearch: AppSectionS
         />
       ) : null}
 
+      {selectedQuoteId && detailQuery.isPending && !builderMode ? (
+        <div className="commercial-modal-backdrop">
+          <section className="commercial-modal">
+            <div className="commercial-empty">Loading quotation...</div>
+          </section>
+        </div>
+      ) : null}
+
+      {selectedQuoteId && detailQuery.isError && !builderMode ? (
+        <div className="commercial-modal-backdrop">
+          <section className="commercial-modal">
+            <EmptyState
+              title="Quotation could not be opened"
+              description={presentError(detailQuery.error, 'section-load').message}
+            />
+            <footer className="commercial-modal-footer">
+              <button
+                type="button"
+                className="commercial-btn"
+                onClick={() =>
+                  void navigate({
+                    to: '/app/$section',
+                    params: { section: 'quotations' },
+                    search: (previous) => withoutSearchKeys(previous, ['quotation']),
+                  })
+                }
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                className="commercial-btn commercial-btn-primary"
+                onClick={() => void detailQuery.refetch()}
+              >
+                Retry
+              </button>
+            </footer>
+          </section>
+        </div>
+      ) : null}
+
       {detailQuery.data && !builderMode ? (
         <QuotationDetailLiveWorkspace
           quotation={detailQuery.data}
-          saving={
-            approveMutation.isPending || decisionMutation.isPending || updateMutation.isPending
-          }
+          saving={approveMutation.isPending || updateMutation.isPending}
           canApprove={hasPermission(user, PERMISSIONS.quotesApprove)}
-          canRecordClientDecision={false}
+          canEdit={hasPermission(user, PERMISSIONS.quotesUpdate)}
+          canRevise={hasPermission(user, PERMISSIONS.quotesCreate)}
           onClose={() =>
             void navigate({
               to: '/app/$section',
