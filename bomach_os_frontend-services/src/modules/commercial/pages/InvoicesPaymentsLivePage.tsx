@@ -818,6 +818,23 @@ export function InvoicesPaymentsLivePage({ recordSearch }: { recordSearch: AppSe
           }
           canUpdate={hasPermission(user, PERMISSIONS.serviceInvoicesUpdate)}
           canRecordPayment={hasPermission(user, PERMISSIONS.paymentsCreate)}
+          canCreateServiceOrder={hasPermission(user, PERMISSIONS.ordersCreate)}
+          canViewServiceOrder={hasPermission(user, PERMISSIONS.ordersView)}
+          onCreateServiceOrder={() =>
+            void navigate({
+              to: '/app/$section',
+              params: { section: 'service-orders' },
+              search: { invoice: String(detailInvoice.id) },
+            })
+          }
+          onOpenServiceOrder={() => {
+            if (!detailInvoice.orderId) return
+            void navigate({
+              to: '/app/$section',
+              params: { section: 'service-orders' },
+              search: { order: String(detailInvoice.orderId) },
+            })
+          }}
           onClose={() =>
             void navigate({
               to: '/app/$section',

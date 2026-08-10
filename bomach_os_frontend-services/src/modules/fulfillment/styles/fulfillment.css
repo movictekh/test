@@ -306,6 +306,125 @@
   overflow: auto;
 }
 
+.fulfillment-order-summary-card {
+  padding: 13px 15px;
+  background: #fff;
+  border: 1px solid #dbe4f2;
+  border-radius: 13px;
+  box-shadow: 0 2px 9px #14204012;
+}
+
+.fulfillment-order-summary-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.fulfillment-order-summary-header h3 {
+  color: #15172d;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.fulfillment-order-summary-header p {
+  margin-top: 4px;
+  color: #8c95a8;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.fulfillment-order-summary-note {
+  margin-top: 7px;
+  color: #8c95a8;
+  font-size: 8.5px;
+  font-weight: 600;
+}
+
+.fulfillment-order-room-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.fulfillment-order-room-main,
+.fulfillment-order-room-aside {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fulfillment-order-room-table {
+  min-width: 0;
+}
+
+.fulfillment-order-activity-list {
+  max-height: 260px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.fulfillment-order-key-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.fulfillment-order-key-card {
+  padding: 10px 11px;
+  background: #f9fbff;
+  border: 1px solid #dbe4f2;
+  border-radius: 11px;
+}
+
+.fulfillment-order-key-card b {
+  display: block;
+  margin-top: 4px;
+  color: #17213d;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.fulfillment-order-detail-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.fulfillment-order-detail-row {
+  padding: 10px 11px;
+  background: #f9fbff;
+  border: 1px solid #dbe4f2;
+  border-radius: 11px;
+}
+
+.fulfillment-order-detail-row b {
+  display: block;
+  margin-top: 4px;
+  color: #17213d;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.fulfillment-order-detail-row p {
+  margin-top: 4px;
+  color: #4f5b74;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.fulfillment-order-primary-action {
+  width: 100%;
+  margin-top: 12px;
+}
+
+.fulfillment-order-controls-actions {
+  margin-top: 12px;
+}
+
 .fulfillment-modal-footer {
   display: flex;
   justify-content: flex-end;
@@ -441,6 +560,15 @@
 
 .fulfillment-table tbody tr:hover {
   background: #f8fafc;
+}
+
+.fulfillment-table.fulfillment-order-room-table {
+  min-width: 0;
+}
+
+.fulfillment-order-room-table th,
+.fulfillment-order-room-table td {
+  padding: 8px 10px;
 }
 
 .fulfillment-timeline {
@@ -641,5 +769,28 @@
 @media (max-width: 680px) {
   .fulfillment-grid-2 {
     grid-template-columns: 1fr;
+  }
+}
+
+/* API-3.01 live Service Order board/control room refinements */
+.fulfillment-content .commercial-card + .commercial-card {
+  margin-top: 12px;
+}
+
+.fulfillment-lifecycle .commercial-btn {
+  margin-top: 7px;
+}
+
+@media (max-width: 680px) {
+  .fulfillment-kanban {
+    grid-auto-columns: minmax(240px, 82vw);
+  }
+
+  .fulfillment-order-room-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .fulfillment-order-summary-header {
+    flex-direction: column;
   }
 }

@@ -30,8 +30,6 @@ import { quotationKeys } from '../quotation/quotation.keys'
 import { ApprovalQueueDetailLiveWorkspace } from '../workspaces/ApprovalQueueDetailLiveWorkspace'
 import '../styles/commercial.css'
 
-type ApprovalStatusFilter = ApprovalQueueStatus | 'all'
-
 function statusClass(status: ApprovalQueueItem['status']) {
   if (status === 'approved') return 'commercial-pill-green'
   if (status === 'rejected') return 'commercial-pill-gray'
@@ -49,16 +47,13 @@ export function ApprovalsLivePage({ recordSearch }: { recordSearch: AppSectionSe
   const toast = useToast()
 
   const page = recordSearch.page ?? 1
-  const status: ApprovalStatusFilter =
-    recordSearch.status === 'all'
-      ? 'all'
-      : recordSearch.status === 'approved' || recordSearch.status === 'rejected'
-        ? recordSearch.status
-        : 'pending'
+  const status: ApprovalQueueStatus =
+    recordSearch.status === 'approved' || recordSearch.status === 'rejected'
+      ? recordSearch.status
+      : 'pending'
 
   const statusChoices = useMemo(
     () => [
-      { value: 'all', label: 'All statuses' },
       { value: 'pending', label: 'Pending' },
       { value: 'approved', label: 'Approved' },
       { value: 'rejected', label: 'Rejected' },
@@ -72,7 +67,7 @@ export function ApprovalsLivePage({ recordSearch }: { recordSearch: AppSectionSe
 
   const filters = useMemo(
     () => ({
-      ...(status !== 'all' ? { status } : {}),
+      status,
       ...(recordSearch.search ? { search: recordSearch.search } : {}),
       ...(recordSearch.source ? { source: recordSearch.source } : {}),
       ...(recordSearch.highValue ? { highValue: true } : {}),
@@ -85,23 +80,6 @@ export function ApprovalsLivePage({ recordSearch }: { recordSearch: AppSectionSe
   const listQuery = useQuery(approvalQueueQueries.list(filters))
   const statsQuery = useQuery(approvalQueueQueries.stats())
   const choicesQuery = useQuery(approvalQueueQueries.choices())
-
-  const orderedItems = useMemo(() => {
-    const items = [...(listQuery.data?.items ?? [])]
-    if (status !== 'all') return items
-
-    const rank: Record<ApprovalQueueStatus, number> = {
-      pending: 0,
-      approved: 1,
-      rejected: 2,
-    }
-
-    return items.sort((left, right) => {
-      const byStatus = rank[left.status] - rank[right.status]
-      if (byStatus !== 0) return byStatus
-      return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()
-    })
-  }, [listQuery.data?.items, status])
 
   const setSearch = useCallback(
     (patch: Partial<AppSectionSearch>) => {
@@ -434,7 +412,7 @@ export function ApprovalsLivePage({ recordSearch }: { recordSearch: AppSectionSe
                   </tr>
                 </thead>
                 <tbody>
-                  {orderedItems.map((item) => (
+                  {listQuery.data.items.map((item) => (
                     <tr key={item.id}>
                       <td>
                         <b>{item.refNumber}</b>

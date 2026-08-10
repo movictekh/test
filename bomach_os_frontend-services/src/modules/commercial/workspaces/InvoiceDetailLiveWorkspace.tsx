@@ -47,7 +47,11 @@ export function InvoiceDetailLiveWorkspace({
   saving,
   canUpdate,
   canRecordPayment,
+  canCreateServiceOrder,
+  canViewServiceOrder,
   onClose,
+  onCreateServiceOrder,
+  onOpenServiceOrder,
   onUpdate,
   onSend,
   onCancel,
@@ -62,7 +66,11 @@ export function InvoiceDetailLiveWorkspace({
   saving: boolean
   canUpdate: boolean
   canRecordPayment: boolean
+  canCreateServiceOrder: boolean
+  canViewServiceOrder: boolean
   onClose: () => void
+  onCreateServiceOrder: () => void
+  onOpenServiceOrder: () => void
   onUpdate: (input: UpdateInvoiceInput) => void
   onSend: () => void
   onCancel: () => void
@@ -507,6 +515,28 @@ export function InvoiceDetailLiveWorkspace({
             Close
           </button>
           <div className="commercial-modal-footer-actions">
+            {invoice.activationThresholdMetAt && !invoice.orderId && canCreateServiceOrder ? (
+              <button
+                type="button"
+                className="commercial-btn commercial-btn-green"
+                disabled={saving}
+                onClick={onCreateServiceOrder}
+              >
+                Create Service Order
+              </button>
+            ) : null}
+
+            {invoice.orderId && canViewServiceOrder ? (
+              <button
+                type="button"
+                className="commercial-btn commercial-btn-primary"
+                disabled={saving}
+                onClick={onOpenServiceOrder}
+              >
+                Open Service Order
+              </button>
+            ) : null}
+
             {capabilities.edit && canUpdate && !editing ? (
               <button
                 type="button"

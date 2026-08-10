@@ -16,7 +16,11 @@ import {
   ApprovalsLivePage,
   type CommercialSection,
 } from '@/modules/commercial'
-import { FulfillmentSectionPage, type FulfillmentSection } from '@/modules/fulfillment'
+import {
+  FulfillmentSectionPage,
+  ServiceOrdersLivePage,
+  type FulfillmentSection,
+} from '@/modules/fulfillment'
 import {
   ExperienceIntelligenceSectionPage,
   type ExperienceIntelligenceSection,
@@ -61,6 +65,7 @@ const experienceIntelligenceSections = new Set<ExperienceIntelligenceSection>([
 export type AppSectionSearch = AppRecordSearch & {
   search?: string
   status?: string
+  paymentStatus?: string
   source?: string
   highValue?: boolean
   division?: string
@@ -86,6 +91,7 @@ export function parseRecordSearch(search: Record<string, unknown>): AppSectionSe
 
   const catalogueSearch = stringValue(search.search)
   const catalogueStatus = stringValue(search.status)
+  const orderPaymentStatus = stringValue(search.paymentStatus)
   const approvalSource = stringValue(search.source)
   const approvalHighValue =
     search.highValue === true ||
@@ -114,6 +120,7 @@ export function parseRecordSearch(search: Record<string, unknown>): AppSectionSe
 
   if (catalogueSearch) result.search = catalogueSearch
   if (catalogueStatus) result.status = catalogueStatus
+  if (orderPaymentStatus) result.paymentStatus = orderPaymentStatus
   if (approvalSource) result.source = approvalSource
   if (approvalHighValue) result.highValue = true
   if (catalogueDivision) result.division = catalogueDivision
@@ -164,6 +171,10 @@ function AppShellRoute() {
 
   if (section === 'approvals') {
     return <ApprovalsLivePage recordSearch={recordSearch} />
+  }
+
+  if (section === 'service-orders') {
+    return <ServiceOrdersLivePage recordSearch={recordSearch} />
   }
 
   if (commercialSections.has(section as CommercialSection)) {
