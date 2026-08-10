@@ -41,6 +41,9 @@ export function InvoiceDetailLiveWorkspace({
   invoice,
   payments,
   paymentsLoading,
+  paymentsError,
+  canViewPayments,
+  onRetryPayments,
   saving,
   canUpdate,
   canRecordPayment,
@@ -53,6 +56,9 @@ export function InvoiceDetailLiveWorkspace({
   invoice: Invoice
   payments: Payment[]
   paymentsLoading: boolean
+  paymentsError: string
+  canViewPayments: boolean
+  onRetryPayments: () => void
   saving: boolean
   canUpdate: boolean
   canRecordPayment: boolean
@@ -428,8 +434,23 @@ export function InvoiceDetailLiveWorkspace({
 
           <section className="commercial-form-section">
             <h3>Payment history</h3>
-            {paymentsLoading ? (
+            {!canViewPayments ? (
+              <div className="commercial-empty">
+                You do not have permission to view payment history.
+              </div>
+            ) : paymentsLoading ? (
               <div className="commercial-empty">Loading payments...</div>
+            ) : paymentsError ? (
+              <div className="commercial-empty">
+                <p>{paymentsError}</p>
+                <button
+                  type="button"
+                  className="commercial-btn commercial-btn-small"
+                  onClick={onRetryPayments}
+                >
+                  Retry
+                </button>
+              </div>
             ) : payments.length === 0 ? (
               <div className="commercial-empty">No confirmed payment has been recorded.</div>
             ) : (

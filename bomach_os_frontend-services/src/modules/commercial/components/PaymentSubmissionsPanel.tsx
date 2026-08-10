@@ -18,6 +18,8 @@ export function PaymentSubmissionsPanel({
   submissions,
   status,
   loading,
+  error,
+  onRetry,
   saving,
   canReview,
   onStatusChange,
@@ -26,6 +28,8 @@ export function PaymentSubmissionsPanel({
   submissions: PaymentSubmission[]
   status: PaymentSubmissionStatus | ''
   loading: boolean
+  error: string
+  onRetry: () => void
   saving: boolean
   canReview: boolean
   onStatusChange: (status: PaymentSubmissionStatus | '') => void
@@ -36,6 +40,17 @@ export function PaymentSubmissionsPanel({
 
   if (loading) {
     return <div className="commercial-empty">Loading payment submissions...</div>
+  }
+
+  if (error) {
+    return (
+      <div className="commercial-empty">
+        <p>{error}</p>
+        <button type="button" className="commercial-btn commercial-btn-small" onClick={onRetry}>
+          Retry
+        </button>
+      </div>
+    )
   }
 
   return (
@@ -54,7 +69,11 @@ export function PaymentSubmissionsPanel({
 
       {submissions.length === 0 ? (
         <EmptyState
-          title={status ? 'No payment submissions match the current filter' : 'No payment submissions yet'}
+          title={
+            status
+              ? 'No payment submissions match the current filter'
+              : 'No payment submissions yet'
+          }
           description={
             status
               ? 'Try changing or clearing the submission status filter to review other payment updates.'

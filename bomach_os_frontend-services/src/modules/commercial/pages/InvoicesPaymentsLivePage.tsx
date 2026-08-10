@@ -298,42 +298,48 @@ export function InvoicesPaymentsLivePage({ recordSearch }: { recordSearch: AppSe
     },
   })
 
-  const setSearch = useCallback((patch: Partial<AppSectionSearch>) => {
-    void navigate({
-      to: '/app/$section',
-      params: { section: 'invoices-payments' },
-      search: (previous) => ({
-        ...withoutSearchKeys(previous, Object.keys(patch) as Array<keyof AppSectionSearch>),
-        ...patch,
-        ...(Object.prototype.hasOwnProperty.call(patch, 'page')
-          ? patch.page
-            ? { page: patch.page }
-            : {}
-          : Object.keys(patch).some((key) => key !== 'page')
-            ? { page: 1 }
-            : previous.page
-              ? { page: previous.page }
-              : {}),
-      }),
-      replace: true,
-    })
-  }, [navigate])
+  const setSearch = useCallback(
+    (patch: Partial<AppSectionSearch>) => {
+      void navigate({
+        to: '/app/$section',
+        params: { section: 'invoices-payments' },
+        search: (previous) => ({
+          ...withoutSearchKeys(previous, Object.keys(patch) as Array<keyof AppSectionSearch>),
+          ...patch,
+          ...(Object.prototype.hasOwnProperty.call(patch, 'page')
+            ? patch.page
+              ? { page: patch.page }
+              : {}
+            : Object.keys(patch).some((key) => key !== 'page')
+              ? { page: 1 }
+              : previous.page
+                ? { page: previous.page }
+                : {}),
+        }),
+        replace: true,
+      })
+    },
+    [navigate],
+  )
 
-  const setSearchValue = useCallback(function <Key extends keyof AppSectionSearch>(
-    key: Key,
-    value: AppSectionSearch[Key] | '' | null,
-  ) {
-    void navigate({
-      to: '/app/$section',
-      params: { section: 'invoices-payments' },
-      search: (previous) => ({
-        ...withoutSearchKeys(previous, [key]),
-        ...withOptionalSearchValue<AppSectionSearch, Key>(key, value),
-        page: 1,
-      }),
-      replace: true,
-    })
-  }, [navigate])
+  const setSearchValue = useCallback(
+    function <Key extends keyof AppSectionSearch>(
+      key: Key,
+      value: AppSectionSearch[Key] | '' | null,
+    ) {
+      void navigate({
+        to: '/app/$section',
+        params: { section: 'invoices-payments' },
+        search: (previous) => ({
+          ...withoutSearchKeys(previous, [key]),
+          ...withOptionalSearchValue<AppSectionSearch, Key>(key, value),
+          page: 1,
+        }),
+        replace: true,
+      })
+    },
+    [navigate],
+  )
 
   const clearFilters = useCallback(() => {
     setSearchDraft('')
@@ -528,7 +534,7 @@ export function InvoicesPaymentsLivePage({ recordSearch }: { recordSearch: AppSe
                       if (searchDraft === (recordSearch.search ?? '')) return
                       setSearchValue('search', searchDraft)
                     }}
-                    placeholder="Search invoice number, client or service"
+                    placeholder="Search invoice number"
                   />
                 </label>
 
@@ -549,7 +555,9 @@ export function InvoicesPaymentsLivePage({ recordSearch }: { recordSearch: AppSe
 
               {enrichedInvoices.length === 0 ? (
                 <EmptyState
-                  title={hasActiveFilters ? 'No invoices match the current filters' : 'No invoices yet'}
+                  title={
+                    hasActiveFilters ? 'No invoices match the current filters' : 'No invoices yet'
+                  }
                   description={
                     hasActiveFilters
                       ? 'Try adjusting or clearing the search and status filters to see matching invoices.'
@@ -557,11 +565,7 @@ export function InvoicesPaymentsLivePage({ recordSearch }: { recordSearch: AppSe
                   }
                   action={
                     hasActiveFilters ? (
-                      <button
-                        type="button"
-                        className="commercial-btn"
-                        onClick={clearFilters}
-                      >
+                      <button type="button" className="commercial-btn" onClick={clearFilters}>
                         Clear filters
                       </button>
                     ) : undefined
@@ -668,6 +672,12 @@ export function InvoicesPaymentsLivePage({ recordSearch }: { recordSearch: AppSe
               submissions={submissionsQuery.data?.items ?? []}
               status={submissionStatus}
               loading={submissionsQuery.isPending}
+              error={
+                submissionsQuery.isError
+                  ? presentError(submissionsQuery.error, 'section-load').message
+                  : ''
+              }
+              onRetry={() => void submissionsQuery.refetch()}
               saving={reviewSubmissionMutation.isPending}
               canReview={hasPermission(user, PERMISSIONS.paymentsCreate)}
               onStatusChange={setSubmissionStatus}
@@ -731,6 +741,7 @@ export function InvoicesPaymentsLivePage({ recordSearch }: { recordSearch: AppSe
 
       {builderOpen && activeBuilderQuotation ? (
         <InvoiceBuilderLiveWorkspace
+          key={activeBuilderQuotation.id}
           quotation={activeBuilderQuotation}
           eligibleQuotations={
             sourceQuotationId
@@ -794,6 +805,11 @@ export function InvoicesPaymentsLivePage({ recordSearch }: { recordSearch: AppSe
           invoice={detailInvoice}
           payments={paymentsQuery.data?.items ?? []}
           paymentsLoading={paymentsQuery.isPending}
+          paymentsError={
+            paymentsQuery.isError ? presentError(paymentsQuery.error, 'section-load').message : ''
+          }
+          canViewPayments={hasPermission(user, PERMISSIONS.paymentsList)}
+          onRetryPayments={() => void paymentsQuery.refetch()}
           saving={
             updateInvoiceMutation.isPending ||
             sendInvoiceMutation.isPending ||
