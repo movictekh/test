@@ -61,7 +61,8 @@ const experienceIntelligenceSections = new Set<ExperienceIntelligenceSection>([
 export type AppSectionSearch = AppRecordSearch & {
   search?: string
   status?: string
-  actionType?: string
+  source?: string
+  highValue?: boolean
   division?: string
   priority?: string
   branch?: string
@@ -85,7 +86,10 @@ export function parseRecordSearch(search: Record<string, unknown>): AppSectionSe
 
   const catalogueSearch = stringValue(search.search)
   const catalogueStatus = stringValue(search.status)
-  const approvalActionType = stringValue(search.actionType)
+  const approvalSource = stringValue(search.source)
+  const approvalHighValue =
+    search.highValue === true ||
+    (typeof search.highValue === 'string' && search.highValue.toLowerCase() === 'true')
   const catalogueDivision = stringValue(search.division)
   const requestPriority = stringValue(search.priority)
   const requestBranch = stringValue(search.branch)
@@ -110,7 +114,8 @@ export function parseRecordSearch(search: Record<string, unknown>): AppSectionSe
 
   if (catalogueSearch) result.search = catalogueSearch
   if (catalogueStatus) result.status = catalogueStatus
-  if (approvalActionType) result.actionType = approvalActionType
+  if (approvalSource) result.source = approvalSource
+  if (approvalHighValue) result.highValue = true
   if (catalogueDivision) result.division = catalogueDivision
   if (requestPriority) result.priority = requestPriority
   if (requestBranch) result.branch = requestBranch

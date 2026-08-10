@@ -98,7 +98,7 @@ export const operationsNavigation = [
         icon: 'approvals',
         to: appSectionRoute,
         params: { section: 'approvals' },
-        permissions: [PERMISSIONS.approvalRequestsList],
+        permissions: [PERMISSIONS.dashboardView],
       },
     ],
   },

@@ -1,4 +1,4 @@
-import { IconFilePlus, IconPlus, IconSearch } from '@tabler/icons-react'
+import { IconFilePlus, IconPlus, IconRefresh, IconSearch } from '@tabler/icons-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -7,6 +7,7 @@ import { useAuth } from '@/app/auth'
 import { hasPermission, PERMISSIONS } from '@/app/permissions'
 import type { AppSectionSearch } from '@/routes/app/$section'
 import { presentError } from '@/shared/errors'
+import { formatCurrency } from '@/shared/lib/formatters'
 import { withOptionalSearchValue, withoutSearchKeys } from '@/shared/navigation/search-state'
 import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
 import { EmptyState } from '@/shared/ui/empty-state'
@@ -17,20 +18,28 @@ import {
   ModulePageStatus,
 } from '@/shared/ui/module-controls'
 
-import { approvalApi } from '../approvals/approval.api'
-import { approvalKeys } from '../approvals/approval.keys'
-import { approvalQueries } from '../approvals/approval.queries'
-import type { ApprovalRequest, CreateApprovalRequestInput } from '../approvals/approval.types'
-import { ApprovalDetailLiveWorkspace } from '../workspaces/ApprovalDetailLiveWorkspace'
-import { ApprovalRequestBuilderLiveWorkspace } from '../workspaces/ApprovalRequestBuilderLiveWorkspace'
+import {
+  canApproveQueueItem,
+  canRejectQueueItem,
+} from '../approval-queue/approval-queue-capabilities'
+import { approvalQueueApi } from '../approval-queue/approval-queue.api'
+import { approvalQueueKeys } from '../approval-queue/approval-queue.keys'
+import { approvalQueueQueries } from '../approval-queue/approval-queue.queries'
+import type { ApprovalQueueItem, ApprovalQueueStatus } from '../approval-queue/approval-queue.types'
+import { quotationKeys } from '../quotation/quotation.keys'
+import { ApprovalQueueDetailLiveWorkspace } from '../workspaces/ApprovalQueueDetailLiveWorkspace'
 import '../styles/commercial.css'
 
-function statusClass(status: ApprovalRequest['status']) {
+type ApprovalStatusFilter = ApprovalQueueStatus | 'all'
+
+function statusClass(status: ApprovalQueueItem['status']) {
   if (status === 'approved') return 'commercial-pill-green'
-  if (status === 'rejected' || status === 'cancelled') {
-    return 'commercial-pill-gray'
-  }
+  if (status === 'rejected') return 'commercial-pill-gray'
   return 'commercial-pill-yellow'
+}
+
+function oldestWaiting(days: number) {
+  return `${days}d`
 }
 
 export function ApprovalsLivePage({ recordSearch }: { recordSearch: AppSectionSearch }) {
@@ -40,135 +49,59 @@ export function ApprovalsLivePage({ recordSearch }: { recordSearch: AppSectionSe
   const toast = useToast()
 
   const page = recordSearch.page ?? 1
-  const selectedApprovalId = recordSearch.approval ? Number(recordSearch.approval) : null
+  const status: ApprovalStatusFilter =
+    recordSearch.status === 'all'
+      ? 'all'
+      : recordSearch.status === 'approved' || recordSearch.status === 'rejected'
+        ? recordSearch.status
+        : 'pending'
 
-  const [builderOpen, setBuilderOpen] = useState(false)
+  const statusChoices = useMemo(
+    () => [
+      { value: 'all', label: 'All statuses' },
+      { value: 'pending', label: 'Pending' },
+      { value: 'approved', label: 'Approved' },
+      { value: 'rejected', label: 'Rejected' },
+    ],
+    [],
+  )
+
+  const [selectedItem, setSelectedItem] = useState<ApprovalQueueItem | null>(null)
   const [searchDraft, setSearchDraft] = useState(recordSearch.search ?? '')
   const [syncedSearch, setSyncedSearch] = useState(recordSearch.search ?? '')
 
   const filters = useMemo(
     () => ({
+      ...(status !== 'all' ? { status } : {}),
       ...(recordSearch.search ? { search: recordSearch.search } : {}),
-      ...(recordSearch.status ? { status: recordSearch.status } : {}),
-      ...(recordSearch.actionType ? { actionType: recordSearch.actionType } : {}),
+      ...(recordSearch.source ? { source: recordSearch.source } : {}),
+      ...(recordSearch.highValue ? { highValue: true } : {}),
       page,
       limit: 10,
     }),
-    [page, recordSearch.actionType, recordSearch.search, recordSearch.status],
+    [page, recordSearch.highValue, recordSearch.search, recordSearch.source, status],
   )
 
-  const listQuery = useQuery(approvalQueries.requestList(filters))
-  const summaryQuery = useQuery(approvalQueries.summary())
-  const actionTypesQuery = useQuery(approvalQueries.actionTypes())
+  const listQuery = useQuery(approvalQueueQueries.list(filters))
+  const statsQuery = useQuery(approvalQueueQueries.stats())
+  const choicesQuery = useQuery(approvalQueueQueries.choices())
 
-  const detailQuery = useQuery({
-    ...approvalQueries.requestDetail(selectedApprovalId ?? 0),
-    enabled: Boolean(selectedApprovalId) && hasPermission(user, PERMISSIONS.approvalRequestsView),
-  })
+  const orderedItems = useMemo(() => {
+    const items = [...(listQuery.data?.items ?? [])]
+    if (status !== 'all') return items
 
-  const flowDetailQuery = useQuery({
-    ...approvalQueries.flowDetail(detailQuery.data?.flowId ?? 0),
-    enabled:
-      Boolean(detailQuery.data?.flowId) && hasPermission(user, PERMISSIONS.approvalFlowsView),
-  })
+    const rank: Record<ApprovalQueueStatus, number> = {
+      pending: 0,
+      approved: 1,
+      rejected: 2,
+    }
 
-  const activeFlowsQuery = useQuery({
-    ...approvalQueries.activeFlows(),
-    enabled: builderOpen && hasPermission(user, PERMISSIONS.approvalFlowsList),
-  })
-
-  const invalidateRequests = async (requestId?: number) => {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: approvalKeys.requestLists() }),
-      queryClient.invalidateQueries({ queryKey: approvalKeys.summary() }),
-      ...(requestId
-        ? [
-            queryClient.invalidateQueries({
-              queryKey: approvalKeys.requestDetail(requestId),
-            }),
-          ]
-        : []),
-    ])
-  }
-
-  const createMutation = useMutation({
-    mutationFn: (input: CreateApprovalRequestInput) => approvalApi.createRequest(input),
-    onSuccess: async (request) => {
-      await invalidateRequests(request.id)
-      setBuilderOpen(false)
-      toast.success(`Approval request ${request.approvalRequestId} created`)
-      await navigate({
-        to: '/app/$section',
-        params: { section: 'approvals' },
-        search: { approval: String(request.id) },
-      })
-    },
-    onError: (error) => {
-      toast.error('Approval request could not be created', {
-        description: presentError(error, 'form-submit').message,
-      })
-    },
-  })
-
-  const approveMutation = useMutation({
-    mutationFn: ({ requestId, comment }: { requestId: number; comment: string }) =>
-      approvalApi.approve(requestId, comment),
-    onSuccess: async (request) => {
-      await invalidateRequests(request.id)
-      toast.success(
-        request.status === 'approved'
-          ? 'Approval request completed'
-          : `Step approved · Now on step ${request.currentStep} of ${request.totalSteps}`,
-      )
-    },
-    onError: async (error) => {
-      toast.error('Approval could not be recorded', {
-        description: presentError(error, 'background-action').message,
-      })
-      if (selectedApprovalId) {
-        await queryClient.invalidateQueries({
-          queryKey: approvalKeys.requestDetail(selectedApprovalId),
-        })
-      }
-    },
-  })
-
-  const rejectMutation = useMutation({
-    mutationFn: ({ requestId, comment }: { requestId: number; comment: string }) =>
-      approvalApi.reject(requestId, comment),
-    onSuccess: async (request) => {
-      await invalidateRequests(request.id)
-      toast.success('Approval request rejected')
-    },
-    onError: async (error) => {
-      toast.error('Rejection could not be recorded', {
-        description: presentError(error, 'background-action').message,
-      })
-      if (selectedApprovalId) {
-        await queryClient.invalidateQueries({
-          queryKey: approvalKeys.requestDetail(selectedApprovalId),
-        })
-      }
-    },
-  })
-
-  const cancelMutation = useMutation({
-    mutationFn: (requestId: number) => approvalApi.cancel(requestId),
-    onSuccess: async (_data, requestId) => {
-      await invalidateRequests(requestId)
-      toast.success('Approval request cancelled')
-    },
-    onError: async (error) => {
-      toast.error('Approval request could not be cancelled', {
-        description: presentError(error, 'background-action').message,
-      })
-      if (selectedApprovalId) {
-        await queryClient.invalidateQueries({
-          queryKey: approvalKeys.requestDetail(selectedApprovalId),
-        })
-      }
-    },
-  })
+    return items.sort((left, right) => {
+      const byStatus = rank[left.status] - rank[right.status]
+      if (byStatus !== 0) return byStatus
+      return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()
+    })
+  }, [listQuery.data?.items, status])
 
   const setSearch = useCallback(
     (patch: Partial<AppSectionSearch>) => {
@@ -213,13 +146,29 @@ export function ApprovalsLivePage({ recordSearch }: { recordSearch: AppSectionSe
     [navigate],
   )
 
+  const setHighValue = useCallback(
+    (checked: boolean) => {
+      void navigate({
+        to: '/app/$section',
+        params: { section: 'approvals' },
+        search: (previous) => ({
+          ...withoutSearchKeys(previous, ['highValue']),
+          ...(checked ? { highValue: true } : {}),
+          page: 1,
+        }),
+        replace: true,
+      })
+    },
+    [navigate],
+  )
+
   const clearFilters = useCallback(() => {
     setSearchDraft('')
     void navigate({
       to: '/app/$section',
       params: { section: 'approvals' },
       search: (previous) =>
-        withoutSearchKeys(previous, ['search', 'status', 'actionType', 'page']),
+        withoutSearchKeys(previous, ['search', 'status', 'source', 'highValue', 'page']),
       replace: true,
     })
   }, [navigate])
@@ -237,9 +186,63 @@ export function ApprovalsLivePage({ recordSearch }: { recordSearch: AppSectionSe
     return () => window.clearTimeout(timeoutId)
   }, [recordSearch.search, searchDraft, setSearchValue])
 
+  const invalidateQueue = async (item?: ApprovalQueueItem) => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: approvalQueueKeys.lists() }),
+      queryClient.invalidateQueries({ queryKey: approvalQueueKeys.stats() }),
+      ...(item?.source === 'quotation'
+        ? [
+            queryClient.invalidateQueries({
+              queryKey: quotationKeys.lists(),
+            }),
+          ]
+        : []),
+    ])
+  }
+
+  const approveMutation = useMutation({
+    mutationFn: (item: ApprovalQueueItem) => approvalQueueApi.approve(item),
+    onSuccess: async (_result, item) => {
+      await invalidateQueue(item)
+      setSelectedItem(null)
+      toast.success(
+        item.source === 'quotation'
+          ? 'Quotation approved and sent'
+          : `${item.sourceDisplay} approved`,
+      )
+    },
+    onError: async (error) => {
+      toast.error('Approval could not be completed', {
+        description: presentError(error, 'background-action').message,
+      })
+      await invalidateQueue(selectedItem ?? undefined)
+    },
+  })
+
+  const rejectMutation = useMutation({
+    mutationFn: ({ item, reason }: { item: ApprovalQueueItem; reason: string }) =>
+      approvalQueueApi.reject(item, reason),
+    onSuccess: async (_result, { item }) => {
+      await invalidateQueue(item)
+      setSelectedItem(null)
+      toast.success(`${item.sourceDisplay} rejected`)
+    },
+    onError: async (error) => {
+      toast.error('Rejection could not be completed', {
+        description: presentError(error, 'background-action').message,
+      })
+      await invalidateQueue(selectedItem ?? undefined)
+    },
+  })
+
+  const refresh = async () => {
+    await Promise.all([listQuery.refetch(), statsQuery.refetch(), choicesQuery.refetch()])
+    toast.success('Approval queue refreshed')
+  }
+
   if (listQuery.isPending) {
     return (
-      <ModulePageStatus title="Approvals" breadcrumb="Commercial flow / Approvals">
+      <ModulePageStatus title="Approvals" breadcrumb="Governance / Approvals">
         <DashboardSkeleton />
       </ModulePageStatus>
     )
@@ -248,7 +251,7 @@ export function ApprovalsLivePage({ recordSearch }: { recordSearch: AppSectionSe
   if (listQuery.isError) {
     const error = presentError(listQuery.error, 'page-load')
     return (
-      <ModulePageStatus title="Approvals" breadcrumb="Commercial flow / Approvals">
+      <ModulePageStatus title="Approvals" breadcrumb="Governance / Approvals">
         <ErrorState
           title={error.title}
           description={error.message}
@@ -258,23 +261,18 @@ export function ApprovalsLivePage({ recordSearch }: { recordSearch: AppSectionSe
     )
   }
 
-  const canCreate =
-    hasPermission(user, PERMISSIONS.approvalRequestsCreate) &&
-    hasPermission(user, PERMISSIONS.approvalFlowsList)
-  const hasActiveFilters = Boolean(
-    recordSearch.search || recordSearch.status || recordSearch.actionType,
-  )
   const totalPages = Math.max(1, Math.ceil(listQuery.data.count / 10))
-  const currentUserId =
-    Number.isFinite(Number(user?.id)) && Number(user?.id) > 0 ? Number(user?.id) : null
-  const busy = approveMutation.isPending || rejectMutation.isPending || cancelMutation.isPending
+  const hasActiveFilters = Boolean(
+    recordSearch.search || recordSearch.source || recordSearch.highValue || recordSearch.status,
+  )
+  const saving = approveMutation.isPending || rejectMutation.isPending
 
   return (
     <ModulePageFrame
       header={
         <CompactPageToolbar
           title="Approvals"
-          breadcrumb="Commercial flow / Approvals"
+          breadcrumb="Governance / Approvals"
           secondaryAction={
             <CompactActionButton
               disabled={!hasPermission(user, PERMISSIONS.serviceRequestsCreate)}
@@ -309,20 +307,20 @@ export function ApprovalsLivePage({ recordSearch }: { recordSearch: AppSectionSe
     >
       <main className="commercial-content">
         <section className="commercial-kgrid commercial-kgrid-4" aria-label="Approval summary">
-          {summaryQuery.isPending ? (
+          {statsQuery.isPending ? (
             <article className="commercial-kpi">
               <div className="commercial-kpi-label">Loading summary...</div>
             </article>
-          ) : summaryQuery.isError ? (
+          ) : statsQuery.isError ? (
             <article className="commercial-kpi">
               <div className="commercial-kpi-label">Summary unavailable</div>
             </article>
           ) : (
             [
-              ['Pending', summaryQuery.data.pending],
-              ['Approved', summaryQuery.data.approved],
-              ['Rejected', summaryQuery.data.rejected],
-              ['Cancelled', summaryQuery.data.cancelled],
+              ['Pending approvals', statsQuery.data.pendingCount],
+              ['High-value approvals', statsQuery.data.highValueCount],
+              ['Oldest waiting', oldestWaiting(statsQuery.data.oldestWaitingDays)],
+              ['Approval SLA', `${statsQuery.data.slaPercent}%`],
             ].map(([label, value]) => (
               <article className="commercial-kpi" key={label}>
                 <div className="commercial-kpi-label">{label}</div>
@@ -335,20 +333,23 @@ export function ApprovalsLivePage({ recordSearch }: { recordSearch: AppSectionSe
         <section className="commercial-card">
           <header className="commercial-card-header">
             <div>
-              <h2>Approval Request Queue</h2>
-              <p>Multi-step operational and business approval requests</p>
+              <h2>Approval & Escalation Queue</h2>
+              <p>Review operational approvals across quotations, deliverables, and expenses.</p>
             </div>
             <div className="commercial-card-header-actions">
-              <span className="commercial-count">{listQuery.data.count} records</span>
-              {listQuery.isFetching ? <span className="commercial-count">Refreshing…</span> : null}
+              <span className="commercial-count">
+                {listQuery.data.count} record
+                {listQuery.data.count === 1 ? '' : 's'}
+              </span>
+              {listQuery.isFetching || statsQuery.isFetching ? (
+                <span className="commercial-count">Refreshing…</span>
+              ) : null}
               <CompactActionButton
-                tone="primary"
-                disabled={!canCreate}
-                locked={!canCreate}
-                onClick={() => setBuilderOpen(true)}
+                onClick={() => void refresh()}
+                disabled={listQuery.isFetching || statsQuery.isFetching}
               >
-                <IconPlus size={14} />
-                New Approval Request
+                <IconRefresh size={14} />
+                Refresh
               </CompactActionButton>
             </div>
           </header>
@@ -359,32 +360,39 @@ export function ApprovalsLivePage({ recordSearch }: { recordSearch: AppSectionSe
               <input
                 value={searchDraft}
                 onChange={(event) => setSearchDraft(event.target.value)}
-                placeholder="Search request ID, title or description"
+                placeholder="Search reference, subject, requester or approver"
               />
             </label>
 
             <select
-              value={recordSearch.status ?? ''}
+              value={status}
               onChange={(event) => setSearchValue('status', event.target.value)}
             >
-              <option value="">All statuses</option>
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-
-            <select
-              value={recordSearch.actionType ?? ''}
-              disabled={actionTypesQuery.isPending}
-              onChange={(event) => setSearchValue('actionType', event.target.value)}
-            >
-              <option value="">All approval types</option>
-              {(actionTypesQuery.data ?? []).map((option) => (
+              {statusChoices.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
               ))}
+            </select>
+
+            <select
+              value={recordSearch.source ?? ''}
+              onChange={(event) => setSearchValue('source', event.target.value)}
+            >
+              <option value="">All approval types</option>
+              {(choicesQuery.data?.sources ?? []).map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={recordSearch.highValue ? 'high' : ''}
+              onChange={(event) => setHighValue(event.target.value === 'high')}
+            >
+              <option value="">All values</option>
+              <option value="high">High value only</option>
             </select>
 
             {hasActiveFilters ? (
@@ -401,14 +409,12 @@ export function ApprovalsLivePage({ recordSearch }: { recordSearch: AppSectionSe
           {listQuery.data.items.length === 0 ? (
             <EmptyState
               title={
-                hasActiveFilters
-                  ? 'No approval requests match these filters'
-                  : 'No approval requests yet'
+                hasActiveFilters ? 'No approvals match these filters' : 'No approvals are waiting'
               }
               description={
                 hasActiveFilters
-                  ? 'Change or clear the filters to review other approval requests.'
-                  : 'Approval requests will appear here when they are created.'
+                  ? 'Change or clear the filters to review other approvals.'
+                  : 'Operational approvals will appear here when action is required.'
               }
             />
           ) : (
@@ -416,60 +422,44 @@ export function ApprovalsLivePage({ recordSearch }: { recordSearch: AppSectionSe
               <table className="commercial-table">
                 <thead>
                   <tr>
-                    <th>Request</th>
+                    <th>Approval</th>
                     <th>Type</th>
-                    <th>Title</th>
-                    <th>Requested By</th>
-                    <th>Current Step</th>
-                    <th>Progress</th>
+                    <th>Subject</th>
+                    <th>Requester</th>
+                    <th>Approver</th>
+                    <th>Amount</th>
                     <th>Created</th>
                     <th>Status</th>
                     <th aria-label="Actions" />
                   </tr>
                 </thead>
                 <tbody>
-                  {listQuery.data.items.map((request) => (
-                    <tr key={request.id}>
+                  {orderedItems.map((item) => (
+                    <tr key={item.id}>
                       <td>
-                        <b>{request.approvalRequestId}</b>
-                        <small>{request.flowName}</small>
+                        <b>{item.refNumber}</b>
+                        <small>{item.id}</small>
                       </td>
-                      <td>{request.actionTypeDisplay}</td>
-                      <td>{request.title}</td>
-                      <td>{request.createdByName || '—'}</td>
+                      <td>{item.sourceDisplay}</td>
+                      <td>{item.subject}</td>
+                      <td>{item.requesterName || '—'}</td>
+                      <td>{item.approverName || '—'}</td>
                       <td>
-                        {request.status === 'pending'
-                          ? request.pendingStepName || `Step ${request.currentStep}`
-                          : '—'}
+                        <b>{item.amount == null ? '—' : formatCurrency(item.amount)}</b>
                       </td>
+                      <td>{new Date(item.createdAt).toLocaleDateString('en-GB')}</td>
                       <td>
-                        {request.status === 'pending'
-                          ? `${request.currentStep} / ${request.totalSteps}`
-                          : `${request.totalSteps} / ${request.totalSteps}`}
-                      </td>
-                      <td>{new Date(request.createdAt).toLocaleDateString('en-GB')}</td>
-                      <td>
-                        <span className={`commercial-pill ${statusClass(request.status)}`}>
-                          {request.statusDisplay}
+                        <span className={`commercial-pill ${statusClass(item.status)}`}>
+                          {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
                         </span>
                       </td>
                       <td>
                         <button
                           type="button"
                           className="commercial-btn commercial-btn-small"
-                          disabled={!hasPermission(user, PERMISSIONS.approvalRequestsView)}
-                          onClick={() =>
-                            void navigate({
-                              to: '/app/$section',
-                              params: { section: 'approvals' },
-                              search: (previous) => ({
-                                ...previous,
-                                approval: String(request.id),
-                              }),
-                            })
-                          }
+                          onClick={() => setSelectedItem(item)}
                         >
-                          {request.status === 'pending' ? 'Review' : 'Open'}
+                          {item.status === 'pending' ? 'Review' : 'Open'}
                         </button>
                       </td>
                     </tr>
@@ -511,141 +501,16 @@ export function ApprovalsLivePage({ recordSearch }: { recordSearch: AppSectionSe
         </section>
       </main>
 
-      {builderOpen && activeFlowsQuery.isPending ? (
-        <div className="commercial-modal-backdrop">
-          <section className="commercial-modal">
-            <div className="commercial-empty">Loading approval flows...</div>
-          </section>
-        </div>
-      ) : null}
-
-      {builderOpen && activeFlowsQuery.isError ? (
-        <div className="commercial-modal-backdrop">
-          <section className="commercial-modal">
-            <EmptyState
-              title="Approval flows could not be loaded"
-              description={presentError(activeFlowsQuery.error, 'section-load').message}
-            />
-            <footer className="commercial-modal-footer">
-              <button
-                type="button"
-                className="commercial-btn"
-                onClick={() => setBuilderOpen(false)}
-              >
-                Close
-              </button>
-              <button
-                type="button"
-                className="commercial-btn commercial-btn-primary"
-                onClick={() => void activeFlowsQuery.refetch()}
-              >
-                Retry
-              </button>
-            </footer>
-          </section>
-        </div>
-      ) : null}
-
-      {builderOpen && activeFlowsQuery.data && activeFlowsQuery.data.items.length === 0 ? (
-        <div className="commercial-modal-backdrop">
-          <section className="commercial-modal">
-            <EmptyState
-              title="No active approval flows"
-              description="There are currently no active approval flows available for a new request."
-            />
-            <footer className="commercial-modal-footer">
-              <button
-                type="button"
-                className="commercial-btn"
-                onClick={() => setBuilderOpen(false)}
-              >
-                Close
-              </button>
-            </footer>
-          </section>
-        </div>
-      ) : null}
-
-      {builderOpen && activeFlowsQuery.data && activeFlowsQuery.data.items.length > 0 ? (
-        <ApprovalRequestBuilderLiveWorkspace
-          flows={activeFlowsQuery.data.items}
-          saving={createMutation.isPending}
-          onClose={() => setBuilderOpen(false)}
-          onSubmit={(input) => createMutation.mutate(input)}
-        />
-      ) : null}
-
-      {selectedApprovalId && detailQuery.isPending ? (
-        <div className="commercial-modal-backdrop">
-          <section className="commercial-modal">
-            <div className="commercial-empty">Loading approval request...</div>
-          </section>
-        </div>
-      ) : null}
-
-      {selectedApprovalId && detailQuery.isError ? (
-        <div className="commercial-modal-backdrop">
-          <section className="commercial-modal">
-            <EmptyState
-              title="Approval request could not be opened"
-              description={presentError(detailQuery.error, 'section-load').message}
-            />
-            <footer className="commercial-modal-footer">
-              <button
-                type="button"
-                className="commercial-btn"
-                onClick={() =>
-                  void navigate({
-                    to: '/app/$section',
-                    params: { section: 'approvals' },
-                    search: (previous) => withoutSearchKeys(previous, ['approval']),
-                  })
-                }
-              >
-                Close
-              </button>
-              <button
-                type="button"
-                className="commercial-btn commercial-btn-primary"
-                onClick={() => void detailQuery.refetch()}
-              >
-                Retry
-              </button>
-            </footer>
-          </section>
-        </div>
-      ) : null}
-
-      {detailQuery.data ? (
-        <ApprovalDetailLiveWorkspace
-          key={`${detailQuery.data.id}-${detailQuery.data.currentStep}-${detailQuery.data.status}`}
-          request={detailQuery.data}
-          flow={flowDetailQuery.data ?? null}
-          currentUserId={currentUserId}
-          canApprove={hasPermission(user, PERMISSIONS.approvalRequestsApprove)}
-          canReject={hasPermission(user, PERMISSIONS.approvalRequestsReject)}
-          canCancel={hasPermission(user, PERMISSIONS.approvalRequestsCancel)}
-          saving={busy}
-          onClose={() =>
-            void navigate({
-              to: '/app/$section',
-              params: { section: 'approvals' },
-              search: (previous) => withoutSearchKeys(previous, ['approval']),
-            })
-          }
-          onApprove={(comment) =>
-            approveMutation.mutate({
-              requestId: detailQuery.data.id,
-              comment,
-            })
-          }
-          onReject={(comment) =>
-            rejectMutation.mutate({
-              requestId: detailQuery.data.id,
-              comment,
-            })
-          }
-          onCancel={() => cancelMutation.mutate(detailQuery.data.id)}
+      {selectedItem ? (
+        <ApprovalQueueDetailLiveWorkspace
+          key={selectedItem.id}
+          item={selectedItem}
+          canApprove={canApproveQueueItem(user, selectedItem)}
+          canReject={canRejectQueueItem(user, selectedItem)}
+          saving={saving}
+          onClose={() => setSelectedItem(null)}
+          onApprove={() => approveMutation.mutate(selectedItem)}
+          onReject={(reason) => rejectMutation.mutate({ item: selectedItem, reason })}
         />
       ) : null}
     </ModulePageFrame>
