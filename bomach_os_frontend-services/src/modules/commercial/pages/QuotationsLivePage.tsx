@@ -1,0 +1,636 @@
+import { IconFilePlus, IconPlus, IconSearch } from '@tabler/icons-react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
+import { useMemo, useState } from 'react'
+
+import { useAuth } from '@/app/auth'
+import { hasPermission, PERMISSIONS } from '@/app/permissions'
+import type { AppSectionSearch } from '@/routes/app/$section'
+import { presentError } from '@/shared/errors'
+import { formatCurrency } from '@/shared/lib/formatters'
+import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
+import { EmptyState } from '@/shared/ui/empty-state'
+import {
+  CompactActionButton,
+  CompactPageToolbar,
+  ModulePageFrame,
+  ModulePageStatus,
+} from '@/shared/ui/module-controls'
+
+import { serviceRequestKeys } from '../api/service-requests.keys'
+import { serviceRequestQueries } from '../api/service-requests.queries'
+import type { ServiceRequestDetail } from '../api/service-requests.types'
+import { quotationsApi } from '../quotation/quotation.api'
+import { quotationKeys } from '../quotation/quotation.keys'
+import { quotationQueries } from '../quotation/quotation.queries'
+import type {
+  CreateQuotationInput,
+  Quotation,
+  UpdateQuotationInput,
+} from '../quotation/quotation.types'
+import { QuotationBuilderLiveWorkspace } from '../workspaces/QuotationBuilderLiveWorkspace'
+import { QuotationDetailLiveWorkspace } from '../workspaces/QuotationDetailLiveWorkspace'
+import '../styles/commercial.css'
+
+function statusClass(status: string) {
+  if (status === 'accepted') return 'commercial-pill-green'
+  if (status === 'rejected' || status === 'expired') {
+    return 'commercial-pill-gray'
+  }
+  if (status === 'awaiting_approval') return 'commercial-pill-yellow'
+  return 'commercial-pill-blue'
+}
+
+function withOptionalSearchValue<Key extends keyof AppSectionSearch>(
+  key: Key,
+  value: AppSectionSearch[Key] | '' | null | undefined,
+): Partial<AppSectionSearch> {
+  const next: Partial<AppSectionSearch> = {}
+  if (value === '' || value == null) return next
+  next[key] = value
+  return next
+}
+
+function withoutSearchKeys(
+  previous: AppSectionSearch,
+  keys: Array<keyof AppSectionSearch>,
+): AppSectionSearch {
+  const next = { ...previous }
+  for (const key of keys) {
+    delete next[key]
+  }
+  return next
+}
+
+export function QuotationsLivePage({ recordSearch }: { recordSearch: AppSectionSearch }) {
+  const { user } = useAuth()
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const toast = useToast()
+  const page = recordSearch.page ?? 1
+
+  const selectedQuoteId = recordSearch.quotation ? Number(recordSearch.quotation) : null
+  const sourceRequestId = recordSearch.request ? Number(recordSearch.request) : null
+
+  const [builderMode, setBuilderMode] = useState<'create' | 'edit' | 'revision' | null>(
+    sourceRequestId ? 'create' : null,
+  )
+  const [builderRequest, setBuilderRequest] = useState<ServiceRequestDetail | null>(null)
+  const [builderQuote, setBuilderQuote] = useState<Quotation | null>(null)
+  const [builderRequestLoading, setBuilderRequestLoading] = useState(false)
+
+  const filters = useMemo(
+    () => ({
+      ...(recordSearch.search ? { search: recordSearch.search } : {}),
+      ...(recordSearch.status ? { status: recordSearch.status } : {}),
+      page,
+      limit: 10,
+    }),
+    [page, recordSearch.search, recordSearch.status],
+  )
+
+  const listQuery = useQuery(quotationQueries.list(filters))
+  const summaryQuery = useQuery(quotationQueries.summary())
+  const detailQuery = useQuery({
+    ...quotationQueries.detail(selectedQuoteId ?? 0),
+    enabled: Boolean(selectedQuoteId) && hasPermission(user, PERMISSIONS.quotesView),
+  })
+
+  const handoffRequestQuery = useQuery({
+    ...serviceRequestQueries.detail(sourceRequestId ?? 0),
+    enabled: Boolean(sourceRequestId),
+  })
+
+  const eligibleRequestListQuery = useQuery({
+    ...serviceRequestQueries.list({ page: 1, limit: 100 }),
+    enabled: builderMode === 'create' && !sourceRequestId,
+  })
+
+  const eligibleRequests = useMemo(
+    () =>
+      eligibleRequestListQuery.data?.items.filter(
+        (request) =>
+          !request.quoteId && request.status !== 'converted' && request.status !== 'rejected',
+      ) ?? [],
+    [eligibleRequestListQuery.data?.items],
+  )
+
+  const invalidate = async (quoteId?: number, requestId?: number) => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: quotationKeys.lists() }),
+      queryClient.invalidateQueries({ queryKey: quotationKeys.summary() }),
+      ...(quoteId
+        ? [
+            queryClient.invalidateQueries({
+              queryKey: quotationKeys.detail(quoteId),
+            }),
+          ]
+        : []),
+      ...(requestId
+        ? [
+            queryClient.invalidateQueries({
+              queryKey: serviceRequestKeys.detail(requestId),
+            }),
+            queryClient.invalidateQueries({
+              queryKey: serviceRequestKeys.lists(),
+            }),
+          ]
+        : []),
+    ])
+  }
+
+  const closeBuilder = () => {
+    setBuilderMode(null)
+    setBuilderRequest(null)
+    setBuilderQuote(null)
+    if (sourceRequestId) {
+      void navigate({
+        to: '/app/$section',
+        params: { section: 'quotations' },
+        search: (previous) => withoutSearchKeys(previous, ['request']),
+        replace: true,
+      })
+    }
+  }
+
+  const createMutation = useMutation({
+    mutationFn: (input: CreateQuotationInput) => quotationsApi.create(input),
+    onSuccess: async (quote, input) => {
+      await invalidate(quote.id, input.serviceRequestId)
+      closeBuilder()
+      toast.success(
+        builderMode === 'revision'
+          ? `Revision ${quote.quoteNumber} submitted`
+          : `Quotation ${quote.quoteNumber} submitted for approval`,
+      )
+      await navigate({
+        to: '/app/$section',
+        params: { section: 'quotations' },
+        search: { quotation: String(quote.id) },
+      })
+    },
+    onError: async (error) => {
+      toast.error('Quotation could not be created', {
+        description: presentError(error, 'form-submit').message,
+      })
+      await queryClient.invalidateQueries({
+        queryKey: serviceRequestKeys.lists(),
+      })
+    },
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: ({ quoteId, input }: { quoteId: number; input: UpdateQuotationInput }) =>
+      quotationsApi.update(quoteId, input),
+    onSuccess: async (quote) => {
+      await invalidate(quote.id, quote.serviceRequestId ?? undefined)
+      closeBuilder()
+      toast.success('Quotation updated')
+    },
+    onError: async (error) => {
+      toast.error('Quotation could not be updated', {
+        description: presentError(error, 'background-action').message,
+      })
+      if (selectedQuoteId) {
+        await queryClient.invalidateQueries({
+          queryKey: quotationKeys.detail(selectedQuoteId),
+        })
+      }
+    },
+  })
+
+  const approveMutation = useMutation({
+    mutationFn: (quoteId: number) => quotationsApi.approve(quoteId),
+    onSuccess: async (quote) => {
+      await invalidate(quote.id, quote.serviceRequestId ?? undefined)
+      toast.success('Quotation approved')
+    },
+    onError: async (error) => {
+      toast.error('Quotation could not be approved', {
+        description: presentError(error, 'background-action').message,
+      })
+      if (selectedQuoteId) {
+        await queryClient.invalidateQueries({
+          queryKey: quotationKeys.detail(selectedQuoteId),
+        })
+      }
+    },
+  })
+
+  const decisionMutation = useMutation({
+    mutationFn: ({
+      quoteId,
+      decision,
+      reason,
+    }: {
+      quoteId: number
+      decision: 'accepted' | 'rejected'
+      reason?: string
+    }) =>
+      quotationsApi.clientDecision(
+        quoteId,
+        decision === 'accepted' ? { decision } : { decision, reason: reason ?? '' },
+      ),
+    onSuccess: async (quote) => {
+      await invalidate(quote.id, quote.serviceRequestId ?? undefined)
+      toast.success(
+        quote.status === 'accepted' ? 'Client acceptance recorded' : 'Client rejection recorded',
+      )
+    },
+    onError: async (error) => {
+      toast.error('Client response could not be recorded', {
+        description: presentError(error, 'background-action').message,
+      })
+      if (selectedQuoteId) {
+        await queryClient.invalidateQueries({
+          queryKey: quotationKeys.detail(selectedQuoteId),
+        })
+      }
+    },
+  })
+
+  const setSearch = (patch: Partial<AppSectionSearch>) => {
+    void navigate({
+      to: '/app/$section',
+      params: { section: 'quotations' },
+      search: (previous) => ({
+        ...withoutSearchKeys(previous, Object.keys(patch) as Array<keyof AppSectionSearch>),
+        ...patch,
+        ...(Object.prototype.hasOwnProperty.call(patch, 'page')
+          ? patch.page
+            ? { page: patch.page }
+            : {}
+          : Object.keys(patch).some((key) => key !== 'page')
+            ? { page: 1 }
+            : previous.page
+              ? { page: previous.page }
+              : {}),
+      }),
+      replace: true,
+    })
+  }
+
+  const beginDirectCreate = async () => {
+    setBuilderMode('create')
+    setBuilderQuote(null)
+    setBuilderRequestLoading(true)
+    const result = await eligibleRequestListQuery.refetch()
+    const eligible =
+      result.data?.items.filter(
+        (request) =>
+          !request.quoteId && request.status !== 'converted' && request.status !== 'rejected',
+      ) ?? []
+    const first = eligible[0]
+    if (!first) {
+      setBuilderRequest(null)
+      setBuilderRequestLoading(false)
+      return
+    }
+    try {
+      const detail = await queryClient.fetchQuery(serviceRequestQueries.detail(first.id))
+      setBuilderRequest(detail)
+    } finally {
+      setBuilderRequestLoading(false)
+    }
+  }
+
+  const selectBuilderRequest = async (requestId: number) => {
+    if (!requestId || builderRequest?.id === requestId) return
+    setBuilderRequestLoading(true)
+    try {
+      const detail = await queryClient.fetchQuery(serviceRequestQueries.detail(requestId))
+      setBuilderRequest(detail)
+    } finally {
+      setBuilderRequestLoading(false)
+    }
+  }
+
+  if (listQuery.isPending) {
+    return (
+      <ModulePageStatus title="Quotations & Proposals" breadcrumb="Commercial flow / Offers">
+        <DashboardSkeleton />
+      </ModulePageStatus>
+    )
+  }
+
+  if (listQuery.isError) {
+    const error = presentError(listQuery.error, 'page-load')
+    return (
+      <ModulePageStatus title="Quotations & Proposals" breadcrumb="Commercial flow / Offers">
+        <ErrorState
+          title={error.title}
+          description={error.message}
+          onRetry={() => void listQuery.refetch()}
+        />
+      </ModulePageStatus>
+    )
+  }
+
+  const sourceRequest = handoffRequestQuery.data ?? null
+  const activeBuilderRequest = builderRequest ?? sourceRequest
+  const totalPages = Math.max(1, Math.ceil(listQuery.data.count / 10))
+
+  return (
+    <ModulePageFrame
+      header={
+        <CompactPageToolbar
+          title="Quotations & Proposals"
+          breadcrumb="Commercial flow / Offers"
+          secondaryAction={
+            <CompactActionButton
+              disabled={!hasPermission(user, PERMISSIONS.serviceRequestsCreate)}
+              locked={!hasPermission(user, PERMISSIONS.serviceRequestsCreate)}
+              onClick={() =>
+                void navigate({
+                  to: '/app/$section',
+                  params: { section: 'service-requests' },
+                })
+              }
+            >
+              <IconFilePlus size={14} />
+              New Request
+            </CompactActionButton>
+          }
+          primaryAction={
+            <CompactActionButton
+              tone="primary"
+              onClick={() =>
+                void navigate({
+                  to: '/app/$section',
+                  params: { section: 'service-catalogue' },
+                })
+              }
+            >
+              <IconPlus size={14} />
+              Create Service
+            </CompactActionButton>
+          }
+        />
+      }
+    >
+      <main className="commercial-content">
+        <section className="commercial-kgrid commercial-kgrid-4" aria-label="Quotation summary">
+          {summaryQuery.isPending ? (
+            <article className="commercial-kpi">
+              <div className="commercial-kpi-label">Loading summary...</div>
+            </article>
+          ) : summaryQuery.isError ? (
+            <article className="commercial-kpi">
+              <div className="commercial-kpi-label">Summary unavailable</div>
+            </article>
+          ) : (
+            [
+              ['Awaiting approval', summaryQuery.data.awaitingApproval],
+              ['Sent to clients', summaryQuery.data.sent],
+              ['Accepted', summaryQuery.data.accepted],
+              ['Acceptance rate', `${summaryQuery.data.acceptanceRate}%`],
+            ].map(([label, value]) => (
+              <article className="commercial-kpi" key={label}>
+                <div className="commercial-kpi-label">{label}</div>
+                <div className="commercial-kpi-value">{value}</div>
+              </article>
+            ))
+          )}
+        </section>
+
+        <section className="commercial-card">
+          <header className="commercial-card-header">
+            <div>
+              <h2>Quotations & Proposals</h2>
+              <p>Live version-controlled scope, pricing, terms and approvals</p>
+            </div>
+            <div className="commercial-card-header-actions">
+              <span className="commercial-count">{listQuery.data.count} records</span>
+              <CompactActionButton
+                tone="primary"
+                disabled={!hasPermission(user, PERMISSIONS.quotesCreate)}
+                locked={!hasPermission(user, PERMISSIONS.quotesCreate)}
+                onClick={() => void beginDirectCreate()}
+              >
+                <IconPlus size={14} />
+                Build Quote
+              </CompactActionButton>
+            </div>
+          </header>
+
+          <div className="commercial-filters">
+            <label className="commercial-search">
+              <IconSearch size={14} />
+              <input
+                value={recordSearch.search ?? ''}
+                onChange={(event) =>
+                  setSearch(withOptionalSearchValue('search', event.target.value))
+                }
+                placeholder="Search quote, client or service"
+              />
+            </label>
+            <select
+              value={recordSearch.status ?? ''}
+              onChange={(event) =>
+                setSearch(withOptionalSearchValue('status', event.target.value))
+              }
+            >
+              <option value="">All statuses</option>
+              <option value="awaiting_approval">Awaiting Approval</option>
+              <option value="sent">Sent</option>
+              <option value="accepted">Accepted</option>
+              <option value="rejected">Rejected</option>
+              <option value="expired">Expired</option>
+            </select>
+          </div>
+
+          {listQuery.data.items.length === 0 ? (
+            <EmptyState
+              title="No quotations"
+              description={
+                recordSearch.search || recordSearch.status
+                  ? 'No quotations match the current filters.'
+                  : 'Build a quotation from an eligible Service Request.'
+              }
+            />
+          ) : (
+            <div className="commercial-table-wrap">
+              <table className="commercial-table">
+                <thead>
+                  <tr>
+                    <th>Quote</th>
+                    <th>Client</th>
+                    <th>Service</th>
+                    <th>Version</th>
+                    <th>Total</th>
+                    <th>Valid Until</th>
+                    <th>Status</th>
+                    <th>Approver</th>
+                    <th aria-label="Actions" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {listQuery.data.items.map((quote) => (
+                    <tr key={quote.id}>
+                      <td>
+                        <b>{quote.quoteNumber}</b>
+                        <small>{new Date(quote.createdAt).toLocaleDateString('en-GB')}</small>
+                      </td>
+                      <td>{quote.clientName}</td>
+                      <td>{quote.serviceName}</td>
+                      <td>v{quote.version}</td>
+                      <td>
+                        <b>{formatCurrency(quote.amount)}</b>
+                      </td>
+                      <td>{quote.validUntil}</td>
+                      <td>
+                        <span className={`commercial-pill ${statusClass(quote.status)}`}>
+                          {quote.statusDisplay}
+                        </span>
+                      </td>
+                      <td>{quote.requiredApproverRoleName || '—'}</td>
+                      <td>
+                        <button
+                          type="button"
+                          className="commercial-btn commercial-btn-small"
+                          disabled={!hasPermission(user, PERMISSIONS.quotesView)}
+                          onClick={() =>
+                            void navigate({
+                              to: '/app/$section',
+                              params: { section: 'quotations' },
+                              search: (previous) => ({
+                                ...previous,
+                                quotation: String(quote.id),
+                              }),
+                            })
+                          }
+                        >
+                          Open
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          <div className="commercial-table-pagination">
+            <div className="commercial-table-pagination-summary">
+              <span className="commercial-table-pagination-count">
+                {listQuery.data.count} record{listQuery.data.count === 1 ? '' : 's'}
+              </span>
+              <span className="commercial-table-pagination-divider" aria-hidden="true" />
+              <span>
+                Page <b>{page}</b> of <b>{totalPages}</b>
+              </span>
+            </div>
+            <div className="commercial-table-pagination-actions">
+            <button
+              type="button"
+              className="commercial-btn commercial-btn-small"
+              disabled={page <= 1}
+              onClick={() => setSearch({ page: page - 1 })}
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              className="commercial-btn commercial-btn-small"
+              disabled={page >= totalPages}
+              onClick={() => setSearch({ page: page + 1 })}
+            >
+              Next
+            </button>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      {sourceRequestId && handoffRequestQuery.isPending ? (
+        <div className="commercial-modal-backdrop">
+          <section className="commercial-modal">
+            <div className="commercial-empty">Loading source request...</div>
+          </section>
+        </div>
+      ) : null}
+
+      {builderMode === 'create' &&
+      !activeBuilderRequest &&
+      !sourceRequestId &&
+      !eligibleRequestListQuery.isFetching ? (
+        <div className="commercial-modal-backdrop">
+          <section className="commercial-modal">
+            <EmptyState
+              title="No eligible Service Requests"
+              description="Converted, rejected and already-quoted requests are excluded."
+            />
+            <footer className="commercial-modal-footer">
+              <button type="button" className="commercial-btn" onClick={closeBuilder}>
+                Close
+              </button>
+            </footer>
+          </section>
+        </div>
+      ) : null}
+
+      {builderMode && activeBuilderRequest ? (
+        <QuotationBuilderLiveWorkspace
+          mode={builderMode}
+          request={activeBuilderRequest}
+          {...(builderQuote ? { quote: builderQuote } : {})}
+          {...(builderMode === 'create' && !sourceRequestId ? { eligibleRequests } : {})}
+          requestSelectionLocked={Boolean(sourceRequestId) || builderMode !== 'create'}
+          requestSelectionLoading={builderRequestLoading}
+          saving={createMutation.isPending || updateMutation.isPending}
+          onClose={closeBuilder}
+          onRequestChange={(requestId) => void selectBuilderRequest(requestId)}
+          onCreate={(input) => createMutation.mutate(input)}
+          onUpdate={(input) => {
+            if (!builderQuote) return
+            updateMutation.mutate({ quoteId: builderQuote.id, input })
+          }}
+        />
+      ) : null}
+
+      {detailQuery.data && !builderMode ? (
+        <QuotationDetailLiveWorkspace
+          quotation={detailQuery.data}
+          saving={
+            approveMutation.isPending || decisionMutation.isPending || updateMutation.isPending
+          }
+          canApprove={hasPermission(user, PERMISSIONS.quotesApprove)}
+          canRecordClientDecision={false}
+          onClose={() =>
+            void navigate({
+              to: '/app/$section',
+              params: { section: 'quotations' },
+              search: (previous) => withoutSearchKeys(previous, ['quotation']),
+            })
+          }
+          onEdit={() => {
+            const requestId = detailQuery.data.serviceRequestId
+            if (!requestId) return
+            void queryClient.fetchQuery(serviceRequestQueries.detail(requestId)).then((request) => {
+              setBuilderRequest(request)
+              setBuilderQuote(detailQuery.data)
+              setBuilderMode('edit')
+            })
+          }}
+          onApprove={() => approveMutation.mutate(detailQuery.data.id)}
+          onRevise={() => {
+            const requestId = detailQuery.data.serviceRequestId
+            if (!requestId) return
+            void queryClient.fetchQuery(serviceRequestQueries.detail(requestId)).then((request) => {
+              setBuilderRequest(request)
+              setBuilderQuote(detailQuery.data)
+              setBuilderMode('revision')
+            })
+          }}
+          onCreateInvoice={() =>
+            void navigate({
+              to: '/app/$section',
+              params: { section: 'invoices-payments' },
+              search: { quotation: String(detailQuery.data.id) },
+            })
+          }
+        />
+      ) : null}
+    </ModulePageFrame>
+  )
+}

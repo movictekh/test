@@ -1,4 +1,4 @@
-import { IconFilePlus, IconSearch } from '@tabler/icons-react'
+import { IconFilePlus, IconPlus, IconSearch } from '@tabler/icons-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
@@ -40,12 +40,10 @@ function statusClass(status: string) {
 }
 
 const REQUEST_SUMMARY_CARDS = [
-  ['New requests', 'newCount', 'Recently submitted'],
-  ['In review', 'underReview', 'Under commercial review'],
-  ['Awaiting client', 'awaitingClient', 'Waiting for client response'],
-  ['Site assessment', 'siteAssessment', 'Assessment stage'],
-  ['High priority', 'highPriority', 'High and critical items'],
-  ['Total requests', 'total', 'Across the current register'],
+  ['New / unreviewed', 'newCount'],
+  ['Site assessment required', 'siteAssessment'],
+  ['Awaiting client information', 'awaitingClient'],
+  ['Total Requests', 'total'],
 ] as const
 
 function withOptionalSearchValue<Key extends keyof AppSectionSearch>(
@@ -285,9 +283,8 @@ export function ServiceRequestsLivePage({ recordSearch }: { recordSearch: AppSec
         <CompactPageToolbar
           title="Service Requests"
           breadcrumb="Commercial flow / Requests"
-          primaryAction={
+          secondaryAction={
             <CompactActionButton
-              tone="primary"
               disabled={!hasPermission(user, PERMISSIONS.serviceRequestsCreate)}
               locked={!hasPermission(user, PERMISSIONS.serviceRequestsCreate)}
               onClick={() => setCreateOpen(true)}
@@ -296,11 +293,25 @@ export function ServiceRequestsLivePage({ recordSearch }: { recordSearch: AppSec
               New Request
             </CompactActionButton>
           }
+          primaryAction={
+            <CompactActionButton
+              tone="primary"
+              onClick={() =>
+                void navigate({
+                  to: '/app/$section',
+                  params: { section: 'service-catalogue' },
+                })
+              }
+            >
+              <IconPlus size={14} />
+              Create Service
+            </CompactActionButton>
+          }
         />
       }
     >
       <main className="commercial-content">
-        <section className="commercial-kgrid" aria-label="Request summary">
+        <section className="commercial-kgrid commercial-kgrid-4" aria-label="Request summary">
           {summaryQuery.isPending ? (
             <article className="commercial-kpi">
               <div className="commercial-kpi-label">Loading summary...</div>
@@ -311,11 +322,10 @@ export function ServiceRequestsLivePage({ recordSearch }: { recordSearch: AppSec
               <div className="commercial-kpi-note">The request register is still available.</div>
             </article>
           ) : (
-            REQUEST_SUMMARY_CARDS.map(([label, key, note]) => (
+            REQUEST_SUMMARY_CARDS.map(([label, key]) => (
               <article className="commercial-kpi" key={label}>
                 <div className="commercial-kpi-label">{label}</div>
                 <div className="commercial-kpi-value">{summaryQuery.data[key]}</div>
-                <div className="commercial-kpi-note">{note}</div>
               </article>
             ))
           )}
@@ -327,7 +337,18 @@ export function ServiceRequestsLivePage({ recordSearch }: { recordSearch: AppSec
               <h2>Service Request Register</h2>
               <p>Live commercial requests across your current workspace</p>
             </div>
-            <span className="commercial-count">{recordCountLabel}</span>
+            <div className="commercial-card-header-actions">
+              <span className="commercial-count">{recordCountLabel}</span>
+              <CompactActionButton
+                tone="primary"
+                disabled={!hasPermission(user, PERMISSIONS.serviceRequestsCreate)}
+                locked={!hasPermission(user, PERMISSIONS.serviceRequestsCreate)}
+                onClick={() => setCreateOpen(true)}
+              >
+                <IconFilePlus size={14} />
+                New Request
+              </CompactActionButton>
+            </div>
           </header>
 
           <div className="commercial-filters">

@@ -250,7 +250,7 @@ export function ServiceRequestDetailWorkspace({
           <div className="commercial-modal-body">
             <div className="commercial-g21">
               <div className="commercial-g21-main">
-                <section className="commercial-card commercial-request360-card">
+                <section className="commercial-card commercial-request360-card commercial-request360-journal">
                   <div className="commercial-card-header">
                     <div>
                       <h2>{request.clientName}</h2>
@@ -356,7 +356,12 @@ export function ServiceRequestDetailWorkspace({
                     {request.activities.length === 0 ? (
                       <div className="commercial-empty">No activity recorded.</div>
                     ) : (
-                      [...request.activities].reverse().map((activity) => (
+                      [...request.activities]
+                        .sort(
+                          (left, right) =>
+                            new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
+                        )
+                        .map((activity) => (
                         <article key={activity.id} className="commercial-tl">
                           <b>{activity.activityTypeDisplay}</b>
                           <p>

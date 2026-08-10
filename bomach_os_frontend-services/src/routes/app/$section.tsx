@@ -11,6 +11,7 @@ import { ModuleShellPage } from '@/modules/foundation/pages/ModuleShellPage'
 import {
   CommercialSectionPage,
   ServiceRequestsLivePage,
+  QuotationsLivePage,
   type CommercialSection,
 } from '@/modules/commercial'
 import { FulfillmentSectionPage, type FulfillmentSection } from '@/modules/fulfillment'
@@ -141,6 +142,10 @@ function AppShellRoute() {
 
   if (section === 'service-requests') {
     return <ServiceRequestsLivePage recordSearch={recordSearch} />
+  }
+
+  if (section === 'quotations') {
+    return <QuotationsLivePage recordSearch={recordSearch} />
   }
 
   if (commercialSections.has(section as CommercialSection)) {
