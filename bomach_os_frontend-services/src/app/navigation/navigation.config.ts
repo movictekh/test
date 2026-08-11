@@ -142,11 +142,7 @@ export const operationsNavigation = [
         icon: 'services',
         to: appSectionRoute,
         params: { section: 'real-estate-inventory' },
-        permissions: [
-          PERMISSIONS.estatesList,
-          PERMISSIONS.propertiesList,
-          PERMISSIONS.brokerageList,
-        ],
+        permissions: [PERMISSIONS.estatesList],
       },
       {
         id: 'survey-engineering-others',

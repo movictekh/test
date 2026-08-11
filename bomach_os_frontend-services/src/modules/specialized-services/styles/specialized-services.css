@@ -349,3 +349,17 @@
     grid-template-columns: repeat(5, 1fr);
   }
 }
+
+/* API-4.02 Real Estate Management */
+.specialized-modal-xl{width:min(980px,96vw)}
+.specialized-check-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:14px}
+.specialized-check{display:flex;align-items:center;gap:8px;padding:9px;border:1px solid var(--b,#e1e7ef);border-radius:8px;background:#f8fafc;font-size:10px}
+.specialized-batch-banner{padding:12px;border:1px solid #bfdbfe;background:#eff6ff;border-radius:10px;margin-bottom:12px}
+.specialized-batch-banner div{display:flex;justify-content:space-between;gap:10px;margin-bottom:8px}.specialized-batch-banner span{font-size:9px;color:#566075}.specialized-batch-banner progress{width:100%}
+.specialized-batch-list{max-height:360px;overflow:auto;border:1px solid #e1e7ef;border-radius:10px}
+.specialized-batch-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 11px;border-bottom:1px solid #e1e7ef}.specialized-batch-row:last-child{border-bottom:0}
+.specialized-batch-row b{font-size:10px}.specialized-batch-row small{display:block;font-size:8px;color:#8c95a8;margin-top:2px}.specialized-batch-row p{font-size:8px;color:#991b1b;margin-top:3px}
+.specialized-batch-row--creating{background:#eff6ff}.specialized-batch-row--created{background:#ecfdf5}.specialized-batch-row--failed{background:#fef2f2}
+@media(max-width:800px){.specialized-check-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.specialized-check-grid{grid-template-columns:1fr}}
+
