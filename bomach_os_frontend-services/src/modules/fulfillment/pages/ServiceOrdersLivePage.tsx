@@ -258,28 +258,18 @@ export function ServiceOrdersLivePage({ recordSearch }: { recordSearch: AppSecti
       serviceOrderApi.completeMilestone(orderId, milestoneId),
     onSuccess: async (order) => {
       await invalidateOrders(order.id, order.invoiceId)
-      toast.success('Milestone completed')
+      toast.success(
+        order.orderStatus === 'completed'
+          ? 'Service Order completed'
+          : `Stage advanced to ${order.stage}`,
+      )
     },
     onError: async (error) => {
-      toast.error('Milestone could not be completed', {
+      toast.error('Stage could not be advanced', {
         description: presentError(error, 'background-action').message,
       })
       if (selectedOrderId)
         await queryClient.invalidateQueries({ queryKey: serviceOrderKeys.detail(selectedOrderId) })
-    },
-  })
-
-  const reopenMutation = useMutation({
-    mutationFn: ({ orderId, milestoneId }: { orderId: number; milestoneId: number }) =>
-      serviceOrderApi.reopenMilestone(orderId, milestoneId),
-    onSuccess: async (order) => {
-      await invalidateOrders(order.id, order.invoiceId)
-      toast.success('Milestone reopened')
-    },
-    onError: (error) => {
-      toast.error('Milestone could not be reopened', {
-        description: presentError(error, 'background-action').message,
-      })
     },
   })
 
@@ -371,7 +361,9 @@ export function ServiceOrdersLivePage({ recordSearch }: { recordSearch: AppSecti
 
   const sourceInvoice = handoffInvoiceQuery.data ?? null
   const activeBuilderInvoice =
-    builderInvoice ?? sourceInvoice ?? (builderOpen && !sourceInvoiceId ? eligibleInvoices[0] ?? null : null)
+    builderInvoice ??
+    sourceInvoice ??
+    (builderOpen && !sourceInvoiceId ? (eligibleInvoices[0] ?? null) : null)
   const builderInvoices = sourceInvoiceId
     ? activeBuilderInvoice
       ? [activeBuilderInvoice]
@@ -390,7 +382,6 @@ export function ServiceOrdersLivePage({ recordSearch }: { recordSearch: AppSecti
     createMutation.isPending ||
     updateMutation.isPending ||
     completeMutation.isPending ||
-    reopenMutation.isPending ||
     activityMutation.isPending ||
     milestoneMutation.isPending
 
@@ -806,9 +797,6 @@ export function ServiceOrdersLivePage({ recordSearch }: { recordSearch: AppSecti
           onUpdate={(input) => updateMutation.mutate({ orderId: detailQuery.data.id, input })}
           onCompleteMilestone={(milestoneId) =>
             completeMutation.mutate({ orderId: detailQuery.data.id, milestoneId })
-          }
-          onReopenMilestone={(milestoneId) =>
-            reopenMutation.mutate({ orderId: detailQuery.data.id, milestoneId })
           }
           onAddActivity={(input) =>
             activityMutation.mutate({ orderId: detailQuery.data.id, input })

@@ -80,8 +80,8 @@ export const serviceOrderApi = {
     return mapServiceOrderMilestone(
       await apiClient.post<unknown>(`/orders/${orderId}/milestones`, {
         name: input.name,
-        status: input.status ?? 'pending',
-        sort_order: input.sortOrder ?? 0,
+        status: 'pending',
+        sort_order: input.sortOrder,
         client_visible: input.clientVisible ?? true,
         ...(input.dueDate ? { due_date: input.dueDate } : {}),
       }),
@@ -91,12 +91,6 @@ export const serviceOrderApi = {
   async completeMilestone(orderId: number, milestoneId: number) {
     return mapServiceOrder(
       await apiClient.post<unknown>(`/orders/${orderId}/milestones/${milestoneId}/complete`, {}),
-    )
-  },
-
-  async reopenMilestone(orderId: number, milestoneId: number) {
-    return mapServiceOrder(
-      await apiClient.post<unknown>(`/orders/${orderId}/milestones/${milestoneId}/reopen`, {}),
     )
   },
 }

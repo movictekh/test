@@ -106,8 +106,7 @@ export interface AddOrderActivityInput {
 
 export interface AddOrderMilestoneInput {
   name: string
-  status?: ServiceOrderMilestoneStatus
-  sortOrder?: number
+  sortOrder: number
   clientVisible?: boolean
   dueDate?: string | null
 }

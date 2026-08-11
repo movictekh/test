@@ -16,6 +16,6 @@ describe('service order validation', () => {
     expect(
       validateOrderActivity({ activityType: 'progress_update', visibility: 'internal', note: '' }),
     ).toBeTruthy()
-    expect(validateOrderMilestone({ name: '' })).toBeTruthy()
+    expect(validateOrderMilestone({ name: '', sortOrder: 1 })).toBeTruthy()
   })
 })

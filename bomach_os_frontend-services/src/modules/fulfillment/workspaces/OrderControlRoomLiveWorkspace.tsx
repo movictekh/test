@@ -1,6 +1,6 @@
 import { IconX } from '@tabler/icons-react'
 import { useForm } from '@tanstack/react-form'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { formatCurrency } from '@/shared/lib/formatters'
 
@@ -52,7 +52,6 @@ export function OrderControlRoomLiveWorkspace({
   onClose,
   onUpdate,
   onCompleteMilestone,
-  onReopenMilestone,
   onAddActivity,
   onAddMilestone,
   onOpenTasks,
@@ -68,7 +67,6 @@ export function OrderControlRoomLiveWorkspace({
   onClose: () => void
   onUpdate: (input: UpdateServiceOrderInput) => void
   onCompleteMilestone: (milestoneId: number) => void
-  onReopenMilestone: (milestoneId: number) => void
   onAddActivity: (input: AddOrderActivityInput) => void
   onAddMilestone: (input: AddOrderMilestoneInput) => void
   onOpenTasks: () => void
@@ -79,6 +77,7 @@ export function OrderControlRoomLiveWorkspace({
   const [addingMilestone, setAddingMilestone] = useState(false)
   const [activityError, setActivityError] = useState('')
   const [milestoneError, setMilestoneError] = useState('')
+  const activeMilestoneRef = useRef<HTMLElement | null>(null)
 
   const editForm = useForm({
     defaultValues: {
@@ -127,8 +126,11 @@ export function OrderControlRoomLiveWorkspace({
       clientVisible: true,
     },
     onSubmit: ({ value }) => {
+      const nextSortOrder =
+        Math.max(0, ...order.milestones.map((milestone) => milestone.sortOrder)) + 1
       const input: AddOrderMilestoneInput = {
         name: value.name.trim(),
+        sortOrder: nextSortOrder,
         dueDate: value.dueDate || null,
         clientVisible: value.clientVisible,
       }
@@ -143,7 +145,14 @@ export function OrderControlRoomLiveWorkspace({
   const orderedMilestones = [...order.milestones].sort(
     (left, right) => left.sortOrder - right.sortOrder || left.id - right.id,
   )
-  const activeMilestone = orderedMilestones.find((milestone) => milestone.status === 'active')
+  const activeMilestones = orderedMilestones.filter((milestone) => milestone.status === 'active')
+  const activeMilestone = activeMilestones.length === 1 ? activeMilestones[0] : null
+  const canAddMilestone = canUpdate && !['completed', 'cancelled'].includes(order.orderStatus)
+  const canShowAdvanceStage = canUpdate && !['completed', 'cancelled'].includes(order.orderStatus)
+  const canAdvanceStage =
+    canShowAdvanceStage &&
+    activeMilestones.length === 1 &&
+    order.orderStatus !== 'on_hold'
   const taskTotal = Object.values(order.taskCounts).reduce((sum, count) => sum + count, 0)
   const deliverableTotal = Object.values(order.deliverableCounts).reduce(
     (sum, count) => sum + count,
@@ -153,6 +162,16 @@ export function OrderControlRoomLiveWorkspace({
   const subtitle = [clientName, order.serviceName, assignedEmployeeName]
     .filter((value) => value && value !== 'Unassigned')
     .join(' · ')
+
+  useEffect(() => {
+    if (!activeMilestoneRef.current) return
+
+    activeMilestoneRef.current.scrollIntoView({
+      block: 'center',
+      inline: 'nearest',
+    })
+    activeMilestoneRef.current.focus({ preventScroll: true })
+  }, [activeMilestone?.id, order.id, order.updatedAt])
 
   return (
     <div className="commercial-modal-backdrop" role="presentation" onMouseDown={onClose}>
@@ -214,125 +233,95 @@ export function OrderControlRoomLiveWorkspace({
                     <h3>Milestones & Client Checkpoints</h3>
                     <p>Evidence, review and acceptance are retained across the order lifecycle.</p>
                   </div>
-                  {canUpdate ? (
+                  {canAddMilestone ? (
                     <button
                       type="button"
                       className="commercial-btn commercial-btn-small"
-                      onClick={() => setAddingMilestone((value) => !value)}
+                      onClick={() => setAddingMilestone(true)}
                     >
                       Add Milestone
                     </button>
                   ) : null}
                 </div>
 
-                {addingMilestone ? (
-                  <form
-                    className="commercial-form-grid"
-                    onSubmit={(event) => {
-                      event.preventDefault()
-                      void milestoneForm.handleSubmit()
-                    }}
-                  >
-                    <milestoneForm.Field name="name">
-                      {(field) => (
-                        <label className="commercial-field">
-                          <span>Milestone name *</span>
-                          <input
-                            value={field.state.value}
-                            onChange={(event) => {
-                              setMilestoneError('')
-                              field.handleChange(event.target.value)
-                            }}
-                          />
-                          {milestoneError ? (
-                            <small className="commercial-field-error">{milestoneError}</small>
-                          ) : null}
-                        </label>
-                      )}
-                    </milestoneForm.Field>
-                    <milestoneForm.Field name="dueDate">
-                      {(field) => (
-                        <label className="commercial-field">
-                          <span>Due date</span>
-                          <input
-                            type="date"
-                            value={field.state.value}
-                            onChange={(event) => field.handleChange(event.target.value)}
-                          />
-                        </label>
-                      )}
-                    </milestoneForm.Field>
-                    <milestoneForm.Field name="clientVisible">
-                      {(field) => (
-                        <label className="commercial-field">
-                          <span>Visibility</span>
-                          <select
-                            value={field.state.value ? 'client' : 'internal'}
-                            onChange={(event) => field.handleChange(event.target.value === 'client')}
-                          >
-                            <option value="client">Internal and client</option>
-                            <option value="internal">Internal only</option>
-                          </select>
-                        </label>
-                      )}
-                    </milestoneForm.Field>
-                    <div className="commercial-modal-footer-actions">
-                      <button
-                        type="button"
-                        className="commercial-btn"
-                        onClick={() => setAddingMilestone(false)}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        className="commercial-btn commercial-btn-primary"
-                        disabled={saving}
-                      >
-                        Add Milestone
-                      </button>
-                    </div>
-                  </form>
-                ) : null}
-
                 <div className="fulfillment-lifecycle">
                   {orderedMilestones.map((milestone, index) => (
                     <article
                       key={milestone.id}
-                      className={`fulfillment-step ${milestone.status === 'done' ? 'fulfillment-step-done' : milestone.status === 'active' ? 'fulfillment-step-active' : ''}`}
+                      ref={milestone.status === 'active' ? activeMilestoneRef : null}
+                      tabIndex={milestone.status === 'active' ? -1 : undefined}
+                      aria-current={milestone.status === 'active' ? 'step' : undefined}
+                      className={`fulfillment-step ${
+                        milestone.status === 'done'
+                          ? 'fulfillment-step-done'
+                          : milestone.status === 'active'
+                            ? 'fulfillment-step-active'
+                            : ''
+                      }`}
                     >
-                      <small>{String(index + 1).padStart(2, '0')}</small>
-                      <b>{milestone.name}</b>
-                      <span>{statusLabel(milestone.status)}</span>
-                      {milestone.dueDate ? <span>Due {milestone.dueDate}</span> : null}
-                      {canUpdate && milestone.status === 'active' ? (
-                        <button
-                          type="button"
-                          className="commercial-btn commercial-btn-small"
-                          disabled={saving}
-                          onClick={() => onCompleteMilestone(milestone.id)}
-                        >
-                          Complete
-                        </button>
-                      ) : null}
-                      {canUpdate && milestone.status === 'done' ? (
-                        <button
-                          type="button"
-                          className="commercial-btn commercial-btn-small"
-                          disabled={saving}
-                          onClick={() => onReopenMilestone(milestone.id)}
-                        >
-                          Reopen
-                        </button>
-                      ) : null}
+                      <div className="fulfillment-step-head" aria-hidden="true">
+                        <span className="fulfillment-step-badge">
+                          {String(index + 1).padStart(2, '0')}
+                        </span>
+                      </div>
+                      <div className="fulfillment-step-content">
+                        <b>{milestone.name}</b>
+                        <div className="fulfillment-step-meta">
+                          <span>{statusLabel(milestone.status)}</span>
+                          {milestone.dueDate ? <span>Due {milestone.dueDate}</span> : null}
+                        </div>
+                      </div>
                     </article>
                   ))}
                 </div>
-                {activeMilestone ? (
-                  <p className="commercial-form-note">
-                    Current milestone: <b>{activeMilestone.name}</b>
-                  </p>
-                ) : null}
+                <div className="fulfillment-stage-controls">
+                  {activeMilestones.length > 1 ? (
+                    <div className="commercial-notice commercial-notice-blue">
+                      Multiple milestones are currently active. Review the workflow before
+                      continuing.
+                    </div>
+                  ) : activeMilestones.length === 0 &&
+                    !['completed', 'cancelled'].includes(order.orderStatus) ? (
+                    <div className="commercial-notice commercial-notice-blue">
+                      No active milestone is available for this order.
+                    </div>
+                  ) : activeMilestone ? (
+                    <div>
+                      <p className="commercial-form-note">
+                        Current milestone: <b>{activeMilestone.name}</b>
+                      </p>
+                      {order.orderStatus === 'on_hold' ? (
+                        <p className="commercial-form-note">
+                          Stage advancement is unavailable while this order is on hold.
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+                <div className="fulfillment-stage-advance">
+                  {canShowAdvanceStage ? (
+                    <button
+                      type="button"
+                      className="commercial-btn commercial-btn-primary"
+                      disabled={saving || !canAdvanceStage || !activeMilestone}
+                      onClick={() => {
+                        if (!activeMilestone || !canAdvanceStage) return
+                        onCompleteMilestone(activeMilestone.id)
+                      }}
+                      title={
+                        !activeMilestone
+                          ? 'No active milestone is available for this order.'
+                          : order.orderStatus === 'on_hold'
+                            ? 'Stage advancement is unavailable while this order is on hold.'
+                            : activeMilestones.length > 1
+                              ? 'Multiple milestones are currently active.'
+                              : undefined
+                      }
+                    >
+                      {saving ? 'Advancing...' : 'Advance Stage'}
+                    </button>
+                  ) : null}
+                </div>
               </section>
 
               <section className="commercial-form-section">
@@ -590,135 +579,52 @@ export function OrderControlRoomLiveWorkspace({
                     <p>Assignment, delivery notes and next-step ownership for this order.</p>
                   </div>
                 </div>
-
-                {editing ? (
-                  <form
-                    onSubmit={(event) => {
-                      event.preventDefault()
-                      void editForm.handleSubmit()
-                    }}
-                  >
-                    <div className="commercial-form-grid">
-                      <editForm.Field name="assignedToId">
-                        {(field) => (
-                          <label className="commercial-field">
-                            <span>Assigned employee</span>
-                            <select
-                              value={field.state.value}
-                              onChange={(event) => field.handleChange(Number(event.target.value))}
-                            >
-                              <option value={0}>Unassigned</option>
-                              {employees.map((employee) => (
-                                <option key={employee.id} value={employee.id}>
-                                  {employee.name}
-                                  {employee.designation ? ` — ${employee.designation}` : ''}
-                                </option>
-                              ))}
-                            </select>
-                          </label>
-                        )}
-                      </editForm.Field>
-                      <editForm.Field name="dueDate">
-                        {(field) => (
-                          <label className="commercial-field">
-                            <span>Due date</span>
-                            <input
-                              type="date"
-                              value={field.state.value}
-                              onChange={(event) => field.handleChange(event.target.value)}
-                            />
-                          </label>
-                        )}
-                      </editForm.Field>
-                      <editForm.Field name="description">
-                        {(field) => (
-                          <label className="commercial-field commercial-field--full">
-                            <span>Description</span>
-                            <textarea
-                              rows={4}
-                              value={field.state.value}
-                              onChange={(event) => field.handleChange(event.target.value)}
-                            />
-                          </label>
-                        )}
-                      </editForm.Field>
-                      <editForm.Field name="nextAction">
-                        {(field) => (
-                          <label className="commercial-field commercial-field--full">
-                            <span>Next action</span>
-                            <input
-                              value={field.state.value}
-                              onChange={(event) => field.handleChange(event.target.value)}
-                            />
-                          </label>
-                        )}
-                      </editForm.Field>
+                <div className="fulfillment-order-key-grid fulfillment-order-key-grid--compact">
+                  <div className="fulfillment-order-key-card">
+                    <div className="commercial-kl">Status</div>
+                    <b>{statusLabel(order.orderStatus)}</b>
+                  </div>
+                  <div className="fulfillment-order-key-card">
+                    <div className="commercial-kl">Progress</div>
+                    <b>{order.progress}%</b>
+                  </div>
+                  <div className="fulfillment-order-key-card">
+                    <div className="commercial-kl">Current stage</div>
+                    <b>{order.stage || '—'}</b>
+                  </div>
+                  <div className="fulfillment-order-key-card">
+                    <div className="commercial-kl">Due date</div>
+                    <b>{dueSummary}</b>
+                  </div>
+                </div>
+                <div className="fulfillment-order-detail-stack fulfillment-order-detail-stack--compact">
+                  <div className="fulfillment-order-detail-row">
+                    <span className="commercial-kl">Assigned to</span>
+                    <b>{assignedEmployeeName}</b>
+                  </div>
+                  <div className="fulfillment-order-detail-row">
+                    <span className="commercial-kl">Next action</span>
+                    <b>{order.nextAction || '—'}</b>
+                  </div>
+                  {order.description ? (
+                    <div className="fulfillment-order-detail-row">
+                      <span className="commercial-kl">Description</span>
+                      <p>{order.description}</p>
                     </div>
-                    <div className="commercial-modal-footer-actions fulfillment-order-controls-actions">
-                      <button
-                        type="button"
-                        className="commercial-btn"
-                        onClick={() => setEditing(false)}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        className="commercial-btn commercial-btn-primary"
-                        disabled={saving}
-                      >
-                        Save Update
-                      </button>
-                    </div>
-                  </form>
-                ) : (
-                  <>
-                    <div className="fulfillment-order-key-grid">
-                      <div className="fulfillment-order-key-card">
-                        <div className="commercial-kl">Status</div>
-                        <b>{statusLabel(order.orderStatus)}</b>
-                      </div>
-                      <div className="fulfillment-order-key-card">
-                        <div className="commercial-kl">Progress</div>
-                        <b>{order.progress}%</b>
-                      </div>
-                      <div className="fulfillment-order-key-card">
-                        <div className="commercial-kl">Current stage</div>
-                        <b>{order.stage || '—'}</b>
-                      </div>
-                      <div className="fulfillment-order-key-card">
-                        <div className="commercial-kl">Due date</div>
-                        <b>{dueSummary}</b>
-                      </div>
-                    </div>
-                    <div className="fulfillment-order-detail-stack">
-                      <div className="fulfillment-order-detail-row">
-                        <span className="commercial-kl">Assigned to</span>
-                        <b>{assignedEmployeeName}</b>
-                      </div>
-                      <div className="fulfillment-order-detail-row">
-                        <span className="commercial-kl">Next action</span>
-                        <b>{order.nextAction || '—'}</b>
-                      </div>
-                      {order.description ? (
-                        <div className="fulfillment-order-detail-row">
-                          <span className="commercial-kl">Description</span>
-                          <p>{order.description}</p>
-                        </div>
-                      ) : null}
-                    </div>
-                    {canUpdate ? (
-                      <button
-                        type="button"
-                        className="commercial-btn commercial-btn-primary fulfillment-order-primary-action"
-                        disabled={saving}
-                        onClick={() => setEditing(true)}
-                      >
-                        Edit Order Controls
-                      </button>
-                    ) : null}
-                  </>
-                )}
+                  ) : null}
+                </div>
+                {canUpdate ? (
+                  <div className="fulfillment-order-controls-actions">
+                    <button
+                      type="button"
+                      className="commercial-btn commercial-btn-primary fulfillment-order-primary-action"
+                      disabled={saving}
+                      onClick={() => setEditing(true)}
+                    >
+                      Edit Order Controls
+                    </button>
+                  </div>
+                ) : null}
               </section>
 
               <section className="commercial-form-section">
@@ -728,24 +634,24 @@ export function OrderControlRoomLiveWorkspace({
                     <p>Linked commercial references and delivery ownership.</p>
                   </div>
                 </div>
-                <div className="fulfillment-order-detail-stack">
-                  <div className="fulfillment-order-detail-row">
+                <div className="fulfillment-order-financial-grid">
+                  <div className="fulfillment-order-key-card">
                     <span className="commercial-kl">Order value</span>
                     <b>{formatCurrency(order.amount)}</b>
                   </div>
-                  <div className="fulfillment-order-detail-row">
+                  <div className="fulfillment-order-key-card">
                     <span className="commercial-kl">Payment status</span>
                     <b>{statusLabel(order.paymentStatus)}</b>
                   </div>
-                  <div className="fulfillment-order-detail-row">
+                  <div className="fulfillment-order-key-card">
                     <span className="commercial-kl">Invoice</span>
                     <b>{invoiceNumber || (order.invoiceId ? `#${order.invoiceId}` : '—')}</b>
                   </div>
-                  <div className="fulfillment-order-detail-row">
+                  <div className="fulfillment-order-key-card">
                     <span className="commercial-kl">Quote</span>
                     <b>{order.quoteNumber || (order.quoteId ? `#${order.quoteId}` : '—')}</b>
                   </div>
-                  <div className="fulfillment-order-detail-row">
+                  <div className="fulfillment-order-key-card">
                     <span className="commercial-kl">Service request</span>
                     <b>{order.serviceRequestId ? `#${order.serviceRequestId}` : '—'}</b>
                   </div>
@@ -754,6 +660,233 @@ export function OrderControlRoomLiveWorkspace({
             </aside>
           </div>
         </div>
+
+        {editing ? (
+          <div
+            className="commercial-modal-backdrop commercial-modal-backdrop--nested"
+            role="presentation"
+            onMouseDown={() => setEditing(false)}
+          >
+            <section
+              className="commercial-modal commercial-order-controls-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Edit Order Controls"
+              onMouseDown={(event) => event.stopPropagation()}
+            >
+              <header className="commercial-modal-header">
+                <div>
+                  <h2>Edit Order Controls</h2>
+                  <p>Assignment, delivery notes and next-step ownership for this order.</p>
+                </div>
+                <button
+                  type="button"
+                  className="commercial-modal-close"
+                  onClick={() => setEditing(false)}
+                  aria-label="Close"
+                >
+                  <IconX size={16} />
+                </button>
+              </header>
+
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  void editForm.handleSubmit()
+                }}
+              >
+                <div className="commercial-modal-body">
+                  <div className="commercial-form-grid commercial-form-grid--compact">
+                    <editForm.Field name="assignedToId">
+                      {(field) => (
+                        <label className="commercial-field">
+                          <span>Assigned employee</span>
+                          <select
+                            value={field.state.value}
+                            onChange={(event) => field.handleChange(Number(event.target.value))}
+                          >
+                            <option value={0}>Unassigned</option>
+                            {employees.map((employee) => (
+                              <option key={employee.id} value={employee.id}>
+                                {employee.name}
+                                {employee.designation ? ` — ${employee.designation}` : ''}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      )}
+                    </editForm.Field>
+                    <editForm.Field name="dueDate">
+                      {(field) => (
+                        <label className="commercial-field">
+                          <span>Due date</span>
+                          <input
+                            type="date"
+                            value={field.state.value}
+                            onChange={(event) => field.handleChange(event.target.value)}
+                          />
+                        </label>
+                      )}
+                    </editForm.Field>
+                    <editForm.Field name="description">
+                      {(field) => (
+                        <label className="commercial-field commercial-field--full">
+                          <span>Description</span>
+                          <textarea
+                            rows={3}
+                            value={field.state.value}
+                            onChange={(event) => field.handleChange(event.target.value)}
+                          />
+                        </label>
+                      )}
+                    </editForm.Field>
+                    <editForm.Field name="nextAction">
+                      {(field) => (
+                        <label className="commercial-field commercial-field--full">
+                          <span>Next action</span>
+                          <input
+                            value={field.state.value}
+                            onChange={(event) => field.handleChange(event.target.value)}
+                          />
+                        </label>
+                      )}
+                    </editForm.Field>
+                  </div>
+                </div>
+                <footer className="commercial-modal-footer">
+                  <div className="commercial-modal-footer-start">
+                    <span className="commercial-kl">Order controls update</span>
+                  </div>
+                  <div className="commercial-modal-footer-actions">
+                    <button
+                      type="button"
+                      className="commercial-btn"
+                      onClick={() => setEditing(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="commercial-btn commercial-btn-primary"
+                      disabled={saving}
+                    >
+                      Save Update
+                    </button>
+                  </div>
+                </footer>
+              </form>
+            </section>
+          </div>
+        ) : null}
+
+        {addingMilestone ? (
+          <div
+            className="commercial-modal-backdrop commercial-modal-backdrop--nested"
+            role="presentation"
+            onMouseDown={() => setAddingMilestone(false)}
+          >
+            <section
+              className="commercial-modal commercial-order-controls-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Add Milestone"
+              onMouseDown={(event) => event.stopPropagation()}
+            >
+              <header className="commercial-modal-header">
+                <div>
+                  <h2>Add Milestone</h2>
+                  <p>Keep the workflow clean by adding one checkpoint at a time.</p>
+                </div>
+                <button
+                  type="button"
+                  className="commercial-modal-close"
+                  onClick={() => setAddingMilestone(false)}
+                  aria-label="Close"
+                >
+                  <IconX size={16} />
+                </button>
+              </header>
+
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  void milestoneForm.handleSubmit()
+                }}
+              >
+                <div className="commercial-modal-body">
+                  <div className="commercial-form-grid commercial-form-grid--compact">
+                    <milestoneForm.Field name="name">
+                      {(field) => (
+                        <label className="commercial-field commercial-field--full">
+                          <span>Milestone name *</span>
+                          <input
+                            value={field.state.value}
+                            onChange={(event) => {
+                              setMilestoneError('')
+                              field.handleChange(event.target.value)
+                            }}
+                          />
+                          {milestoneError ? (
+                            <small className="commercial-field-error">{milestoneError}</small>
+                          ) : null}
+                        </label>
+                      )}
+                    </milestoneForm.Field>
+                    <milestoneForm.Field name="dueDate">
+                      {(field) => (
+                        <label className="commercial-field">
+                          <span>Due date</span>
+                          <input
+                            type="date"
+                            value={field.state.value}
+                            onChange={(event) => field.handleChange(event.target.value)}
+                          />
+                        </label>
+                      )}
+                    </milestoneForm.Field>
+                    <milestoneForm.Field name="clientVisible">
+                      {(field) => (
+                        <label className="commercial-field">
+                          <span>Visibility</span>
+                          <select
+                            value={field.state.value ? 'client' : 'internal'}
+                            onChange={(event) =>
+                              field.handleChange(event.target.value === 'client')
+                            }
+                          >
+                            <option value="client">Internal and client</option>
+                            <option value="internal">Internal only</option>
+                          </select>
+                        </label>
+                      )}
+                    </milestoneForm.Field>
+                  </div>
+                </div>
+                <footer className="commercial-modal-footer">
+                  <div className="commercial-modal-footer-start">
+                    <span className="commercial-kl">Milestone checkpoint</span>
+                  </div>
+                  <div className="commercial-modal-footer-actions">
+                    <button
+                      type="button"
+                      className="commercial-btn"
+                      onClick={() => setAddingMilestone(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="commercial-btn commercial-btn-primary"
+                      disabled={saving}
+                    >
+                      Add Milestone
+                    </button>
+                  </div>
+                </footer>
+              </form>
+            </section>
+          </div>
+        ) : null}
 
         <footer className="commercial-modal-footer">
           <button type="button" className="commercial-btn" onClick={onClose}>
