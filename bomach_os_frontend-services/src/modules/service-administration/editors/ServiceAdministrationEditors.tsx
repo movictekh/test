@@ -168,7 +168,10 @@ export function CalculatorEditor({
   const service = services.find((item) => item.id === serviceId)
   const hasValidService = Boolean(serviceId && Number(serviceId) > 0 && service)
   const canSave = Boolean(
-    name.trim() && hasValidService && isValidPercentage(Number(deposit)) && isValidPercentage(Number(tax)),
+    name.trim() &&
+    hasValidService &&
+    isValidPercentage(Number(deposit)) &&
+    isValidPercentage(Number(tax)),
   )
 
   return (

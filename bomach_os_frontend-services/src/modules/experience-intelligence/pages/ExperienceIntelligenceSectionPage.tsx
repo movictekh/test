@@ -4,7 +4,12 @@ import { useMemo, useState } from 'react'
 
 import { commercialQueries } from '@/modules/commercial/api/commercial.queries'
 import { fulfillmentQueries } from '@/modules/fulfillment/api/fulfillment.queries'
-import { CompactPageToolbar, CompactActionButton, ModulePageFrame, ModulePageStatus } from '@/shared/ui/module-controls'
+import {
+  CompactPageToolbar,
+  CompactActionButton,
+  ModulePageFrame,
+  ModulePageStatus,
+} from '@/shared/ui/module-controls'
 import { presentError } from '@/shared/errors'
 import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
 import { useDeepLinkedSelection, type AppRecordSearch } from '@/shared/navigation'
@@ -139,53 +144,52 @@ export function ExperienceIntelligenceSectionPage({
       <ModulePageFrame
         header={
           <CompactPageToolbar
-        title={page.title}
-        breadcrumb={page.breadcrumb}
-        primaryAction={
-          section === 'feedback-quality' ? (
-            <CompactActionButton tone="primary" onClick={() => setRecordFeedbackOpen(true)}>
-              <IconMessageStar size={14} /> Record Feedback
-            </CompactActionButton>
-          ) : undefined
-        }
+            title={page.title}
+            breadcrumb={page.breadcrumb}
+            primaryAction={
+              section === 'feedback-quality' ? (
+                <CompactActionButton tone="primary" onClick={() => setRecordFeedbackOpen(true)}>
+                  <IconMessageStar size={14} /> Record Feedback
+                </CompactActionButton>
+              ) : undefined
+            }
           />
         }
       >
+        {section === 'feedback-quality' ? (
+          <FeedbackQualityScreen
+            feedback={experienceQuery.data.feedback}
+            summary={feedbackSummary}
+            onOpen={(feedback) => setSelectedFeedbackId(feedback.id)}
+          />
+        ) : section === 'reports-analytics' ? (
+          <ReportsAnalyticsScreen report={report} />
+        ) : (
+          <AuditLogScreen events={experienceQuery.data.audit} />
+        )}
 
-      {section === 'feedback-quality' ? (
-        <FeedbackQualityScreen
-          feedback={experienceQuery.data.feedback}
-          summary={feedbackSummary}
-          onOpen={(feedback) => setSelectedFeedbackId(feedback.id)}
-        />
-      ) : section === 'reports-analytics' ? (
-        <ReportsAnalyticsScreen report={report} />
-      ) : (
-        <AuditLogScreen events={experienceQuery.data.audit} />
-      )}
+        {recordFeedbackOpen ? (
+          <RecordFeedbackWorkspace
+            orders={fulfillmentQuery.data.orders}
+            saving={createFeedback.isPending}
+            onClose={() => setRecordFeedbackOpen(false)}
+            onSubmit={(input) => createFeedback.mutate(input)}
+          />
+        ) : null}
 
-      {recordFeedbackOpen ? (
-        <RecordFeedbackWorkspace
-          orders={fulfillmentQuery.data.orders}
-          saving={createFeedback.isPending}
-          onClose={() => setRecordFeedbackOpen(false)}
-          onSubmit={(input) => createFeedback.mutate(input)}
-        />
-      ) : null}
-
-      {selectedFeedback ? (
-        <FeedbackDetailWorkspace
-          feedback={selectedFeedback}
-          saving={updateFeedback.isPending}
-          onClose={() => setSelectedFeedbackId(null)}
-          onSave={(input) =>
-            updateFeedback.mutate({
-              feedbackId: selectedFeedback.id,
-              input,
-            })
-          }
-        />
-      ) : null}
+        {selectedFeedback ? (
+          <FeedbackDetailWorkspace
+            feedback={selectedFeedback}
+            saving={updateFeedback.isPending}
+            onClose={() => setSelectedFeedbackId(null)}
+            onSave={(input) =>
+              updateFeedback.mutate({
+                feedbackId: selectedFeedback.id,
+                input,
+              })
+            }
+          />
+        ) : null}
       </ModulePageFrame>
     </>
   )

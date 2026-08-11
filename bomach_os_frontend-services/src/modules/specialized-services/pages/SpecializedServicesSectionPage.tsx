@@ -5,7 +5,12 @@ import { IconFilePlus, IconPlus } from '@tabler/icons-react'
 
 import { commercialQueries } from '@/modules/commercial/api/commercial.queries'
 import { fulfillmentQueries } from '@/modules/fulfillment/api/fulfillment.queries'
-import { CompactPageToolbar, CompactActionButton, ModulePageFrame, ModulePageStatus } from '@/shared/ui/module-controls'
+import {
+  CompactPageToolbar,
+  CompactActionButton,
+  ModulePageFrame,
+  ModulePageStatus,
+} from '@/shared/ui/module-controls'
 import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
 import { presentError } from '@/shared/errors'
 import { specializedServicesApi } from '../api/specialized-services.api'
@@ -102,89 +107,89 @@ export function SpecializedServicesSectionPage({
       <ModulePageFrame
         header={
           <CompactPageToolbar
-        title={meta[section].title}
-        breadcrumb={meta[section].breadcrumb}
-        {...(section === 'real-estate-inventory'
-          ? {
-              secondaryAction: (
-                <CompactActionButton onClick={() => setPropertyOpen(true)}>
-                  <IconPlus size={14} />
-                  Add Brokerage Property
-                </CompactActionButton>
-              ),
-              primaryAction: (
-                <CompactActionButton tone="primary" onClick={() => setEstateOpen(true)}>
-                  <IconPlus size={14} />
-                  Add Estate
-                </CompactActionButton>
-              ),
-            }
-          : {
-              primaryAction: (
-                <CompactActionButton
-                  tone="primary"
-                  onClick={() =>
-                    void navigate({
-                      to: '/app/$section',
-                      params: { section: 'service-requests' },
-                    })
-                  }
-                >
-                  <IconFilePlus size={14} />
-                  New Request
-                </CompactActionButton>
-              ),
-            })}
+            title={meta[section].title}
+            breadcrumb={meta[section].breadcrumb}
+            {...(section === 'real-estate-inventory'
+              ? {
+                  secondaryAction: (
+                    <CompactActionButton onClick={() => setPropertyOpen(true)}>
+                      <IconPlus size={14} />
+                      Add Brokerage Property
+                    </CompactActionButton>
+                  ),
+                  primaryAction: (
+                    <CompactActionButton tone="primary" onClick={() => setEstateOpen(true)}>
+                      <IconPlus size={14} />
+                      Add Estate
+                    </CompactActionButton>
+                  ),
+                }
+              : {
+                  primaryAction: (
+                    <CompactActionButton
+                      tone="primary"
+                      onClick={() =>
+                        void navigate({
+                          to: '/app/$section',
+                          params: { section: 'service-requests' },
+                        })
+                      }
+                    >
+                      <IconFilePlus size={14} />
+                      New Request
+                    </CompactActionButton>
+                  ),
+                })}
           />
         }
       >
-      {section === 'real-estate-inventory' ? (
-        <RealEstateInventoryScreen
-          estates={q.data.estates}
-          brokerage={q.data.brokerage}
-          selectedEstateId={estateId}
-          selectedPlotNo={selectedPlotNo}
-          onSelectEstate={(id) => {
-            setSelectedEstateId(id)
-            setSelectedPlotNo(null)
-          }}
-          onSelectPlot={setSelectedPlotNo}
-          onSavePlot={(p) =>
-            up.mutate({
-              estateId,
-              plotNo: p.no,
-              status: p.status,
-              client: p.client,
-              price: p.price,
-            })
-          }
-        />
-      ) : (
-        <SpecializedServiceControlScreen
-          profiles={q.data.profiles}
-          selectedId={profileId}
-          requests={cq.data.requests}
-          orders={fq.data.orders}
-          onSelect={setProfileId}
-          onOpenOrder={() =>
-            void navigate({ to: '/app/$section', params: { section: 'service-orders' } })
-          }
-        />
-      )}
-      {estateOpen ? (
-        <CreateEstateWorkspace
-          saving={ce.isPending}
-          onClose={() => setEstateOpen(false)}
-          onSubmit={(x) => ce.mutate(x)}
-        />
-      ) : null}
-      {propertyOpen ? (
-        <CreateBrokerageWorkspace
-          saving={cp.isPending}
-          onClose={() => setPropertyOpen(false)}
-          onSubmit={(x) => cp.mutate(x)}
-        />
-      ) : null}
+        {section === 'real-estate-inventory' ? (
+          <RealEstateInventoryScreen
+            estates={q.data.estates}
+            brokerage={q.data.brokerage}
+            selectedEstateId={estateId}
+            selectedPlotNo={selectedPlotNo}
+            onSelectEstate={(id) => {
+              setSelectedEstateId(id)
+              setSelectedPlotNo(null)
+            }}
+            onSelectPlot={setSelectedPlotNo}
+            onSavePlot={(p) =>
+              up.mutate({
+                estateId,
+                plotNo: p.no,
+                status: p.status,
+                client: p.client,
+                price: p.price,
+              })
+            }
+          />
+        ) : (
+          <SpecializedServiceControlScreen
+            profiles={q.data.profiles}
+            selectedId={profileId}
+            requests={cq.data.requests}
+            orders={fq.data.orders}
+            onSelect={setProfileId}
+            onOpenOrder={() =>
+              void navigate({ to: '/app/$section', params: { section: 'service-orders' } })
+            }
+          />
+        )}
+        {estateOpen ? (
+          <CreateEstateWorkspace
+            saving={ce.isPending}
+            onClose={() => setEstateOpen(false)}
+            onSubmit={(x) => ce.mutate(x)}
+          />
+        ) : null}
+        {propertyOpen ? (
+          <CreateBrokerageWorkspace
+            saving={cp.isPending}
+            onClose={() => setPropertyOpen(false)}
+            onSubmit={(x) => cp.mutate(x)}
+          />
+        ) : null}
       </ModulePageFrame>
     </>
   )

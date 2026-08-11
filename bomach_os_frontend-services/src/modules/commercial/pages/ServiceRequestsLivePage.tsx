@@ -214,34 +214,42 @@ export function ServiceRequestsLivePage({ recordSearch }: { recordSearch: AppSec
     },
   })
 
-  const setSearch = useCallback((patch: Partial<AppSectionSearch>) => {
-    void navigate({
-      to: '/app/$section',
-      params: { section: 'service-requests' },
-      search: (previous) => ({
-        ...withoutSearchKeys(previous, Object.keys(patch) as Array<keyof AppSectionSearch>),
-        ...patch,
-        page: patch.page ?? (Object.keys(patch).some((key) => key !== 'page') ? 1 : (previous.page ?? 1)),
-      }),
-      replace: true,
-    })
-  }, [navigate])
+  const setSearch = useCallback(
+    (patch: Partial<AppSectionSearch>) => {
+      void navigate({
+        to: '/app/$section',
+        params: { section: 'service-requests' },
+        search: (previous) => ({
+          ...withoutSearchKeys(previous, Object.keys(patch) as Array<keyof AppSectionSearch>),
+          ...patch,
+          page:
+            patch.page ??
+            (Object.keys(patch).some((key) => key !== 'page') ? 1 : (previous.page ?? 1)),
+        }),
+        replace: true,
+      })
+    },
+    [navigate],
+  )
 
-  const setSearchValue = useCallback(function <Key extends keyof AppSectionSearch>(
-    key: Key,
-    value: AppSectionSearch[Key] | '' | null,
-  ) {
-    void navigate({
-      to: '/app/$section',
-      params: { section: 'service-requests' },
-      search: (previous) => ({
-        ...withoutSearchKeys(previous, [key]),
-        ...withOptionalSearchValue<AppSectionSearch, Key>(key, value),
-        page: 1,
-      }),
-      replace: true,
-    })
-  }, [navigate])
+  const setSearchValue = useCallback(
+    function <Key extends keyof AppSectionSearch>(
+      key: Key,
+      value: AppSectionSearch[Key] | '' | null,
+    ) {
+      void navigate({
+        to: '/app/$section',
+        params: { section: 'service-requests' },
+        search: (previous) => ({
+          ...withoutSearchKeys(previous, [key]),
+          ...withOptionalSearchValue<AppSectionSearch, Key>(key, value),
+          page: 1,
+        }),
+        replace: true,
+      })
+    },
+    [navigate],
+  )
 
   const clearFilters = useCallback(() => {
     setSearchDraft('')
@@ -461,7 +469,11 @@ export function ServiceRequestsLivePage({ recordSearch }: { recordSearch: AppSec
 
           {requests.length === 0 ? (
             <EmptyState
-              title={hasActiveFilters ? 'No service requests match the current filters' : 'No service requests yet'}
+              title={
+                hasActiveFilters
+                  ? 'No service requests match the current filters'
+                  : 'No service requests yet'
+              }
               description={
                 hasActiveFilters
                   ? 'Try adjusting or clearing the search and filter settings to bring matching requests back into view.'
@@ -469,11 +481,7 @@ export function ServiceRequestsLivePage({ recordSearch }: { recordSearch: AppSec
               }
               action={
                 hasActiveFilters ? (
-                  <button
-                    type="button"
-                    className="commercial-btn"
-                    onClick={clearFilters}
-                  >
+                  <button type="button" className="commercial-btn" onClick={clearFilters}>
                     Clear filters
                   </button>
                 ) : undefined
@@ -566,22 +574,22 @@ export function ServiceRequestsLivePage({ recordSearch }: { recordSearch: AppSec
               </span>
             </div>
             <div className="commercial-table-pagination-actions">
-            <button
-              type="button"
-              className="commercial-btn commercial-btn-small"
-              disabled={page <= 1}
-              onClick={() => setSearch({ page: page - 1 })}
-            >
-              Previous
-            </button>
-            <button
-              type="button"
-              className="commercial-btn commercial-btn-small"
-              disabled={page >= totalPages}
-              onClick={() => setSearch({ page: page + 1 })}
-            >
-              Next
-            </button>
+              <button
+                type="button"
+                className="commercial-btn commercial-btn-small"
+                disabled={page <= 1}
+                onClick={() => setSearch({ page: page - 1 })}
+              >
+                Previous
+              </button>
+              <button
+                type="button"
+                className="commercial-btn commercial-btn-small"
+                disabled={page >= totalPages}
+                onClick={() => setSearch({ page: page + 1 })}
+              >
+                Next
+              </button>
             </div>
           </div>
         </section>

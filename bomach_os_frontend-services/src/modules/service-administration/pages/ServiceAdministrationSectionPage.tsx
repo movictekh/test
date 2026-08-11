@@ -168,9 +168,7 @@ export function ServiceAdministrationSectionPage({
   })
   const createWizardBranchesQuery = useQuery({
     ...serviceAdministrationQueries.branches(),
-    enabled:
-      capabilities.canCreateInitialServiceSetup &&
-      capabilities.canListBranches,
+    enabled: capabilities.canCreateInitialServiceSetup && capabilities.canListBranches,
   })
   const branchMatrixQuery = useQuery({
     ...serviceAdministrationQueries.branchActivationMatrix(),
@@ -302,11 +300,10 @@ export function ServiceAdministrationSectionPage({
 
   const saveCalculator = useMutation({
     mutationFn: (input: SaveCalculatorInput) => {
-      const existingCalculator =
-        input.id
-          ? null
-          : pricingQuery.data?.find((calculator) => calculator.serviceId === input.serviceId) ??
-            null
+      const existingCalculator = input.id
+        ? null
+        : (pricingQuery.data?.find((calculator) => calculator.serviceId === input.serviceId) ??
+          null)
 
       return saveLivePricingConfig(
         existingCalculator ? { ...input, id: existingCalculator.id } : input,
@@ -427,7 +424,10 @@ export function ServiceAdministrationSectionPage({
         'supply order': 'supply_order',
       }
 
-      const pricingTypeMap: Record<string, 'fixed' | 'unit_rate' | 'area_rate' | 'percentage' | 'formula'> = {
+      const pricingTypeMap: Record<
+        string,
+        'fixed' | 'unit_rate' | 'area_rate' | 'percentage' | 'formula'
+      > = {
         fixed: 'fixed',
         'unit rate': 'unit_rate',
         'area rate': 'area_rate',
@@ -439,7 +439,8 @@ export function ServiceAdministrationSectionPage({
         const normalized = label.toLowerCase()
         if (normalized.includes('budget')) return 'money' as const
         if (normalized.includes('date')) return 'date' as const
-        if (normalized.includes('scope') || normalized.includes('message')) return 'textarea' as const
+        if (normalized.includes('scope') || normalized.includes('message'))
+          return 'textarea' as const
         if (
           normalized.includes('upload') ||
           normalized.includes('document') ||
@@ -447,7 +448,8 @@ export function ServiceAdministrationSectionPage({
         ) {
           return 'file' as const
         }
-        if (normalized.includes('location') || normalized.includes('site')) return 'location' as const
+        if (normalized.includes('location') || normalized.includes('site'))
+          return 'location' as const
         if (normalized.includes('consent')) return 'checkbox' as const
         if (normalized.includes('phone')) return 'phone' as const
         if (normalized.includes('email')) return 'email' as const
@@ -488,7 +490,9 @@ export function ServiceAdministrationSectionPage({
         variables: selectedCalculator?.variables ?? [],
         charges: [
           {
-            id: selectedCalculator?.charges.find((charge) => charge.label === 'Formula')?.id ?? 'formula',
+            id:
+              selectedCalculator?.charges.find((charge) => charge.label === 'Formula')?.id ??
+              'formula',
             label: 'Formula',
             kind:
               (pricingTypeMap[input.pricing.method.trim().toLowerCase()] ?? 'fixed') === 'formula'
@@ -510,8 +514,9 @@ export function ServiceAdministrationSectionPage({
           },
           {
             id:
-              selectedCalculator?.charges.find((charge) => charge.label.toLowerCase().includes('tax'))
-                ?.id ?? 'tax',
+              selectedCalculator?.charges.find((charge) =>
+                charge.label.toLowerCase().includes('tax'),
+              )?.id ?? 'tax',
             label: 'Tax',
             kind: 'percentage',
             value: input.pricing.taxPercent,
@@ -577,9 +582,7 @@ export function ServiceAdministrationSectionPage({
           status: selectedBranchNames.has(branch.name) ? 'active' : 'inactive',
           client_visible: true,
           capacity: 80,
-          activated_at: selectedBranchNames.has(branch.name)
-            ? new Date().toISOString()
-            : null,
+          activated_at: selectedBranchNames.has(branch.name) ? new Date().toISOString() : null,
         })),
       )
 

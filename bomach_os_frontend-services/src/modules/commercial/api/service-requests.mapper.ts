@@ -245,8 +245,7 @@ function mapOptions(value: unknown) {
     }
     const row = record(item)
     const raw = row.value ?? row.key ?? row.id ?? row.label
-    const fallback =
-      typeof raw === 'string' || typeof raw === 'number' ? String(raw) : ''
+    const fallback = typeof raw === 'string' || typeof raw === 'number' ? String(raw) : ''
     return { value: fallback, label: text(row.label, fallback) }
   })
 }

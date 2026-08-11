@@ -2,7 +2,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { IconFilePlus, IconPlus } from '@tabler/icons-react'
 
-import { CompactPageToolbar, CompactActionButton, ModulePageFrame, ModulePageStatus } from '@/shared/ui/module-controls'
+import {
+  CompactPageToolbar,
+  CompactActionButton,
+  ModulePageFrame,
+  ModulePageStatus,
+} from '@/shared/ui/module-controls'
 import { serviceAdministrationQueries } from '@/modules/service-administration/api/service-administration.queries'
 import { presentError } from '@/shared/errors'
 import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
@@ -258,145 +263,144 @@ export function FulfillmentSectionPage({
       <ModulePageFrame
         header={
           <CompactPageToolbar
-        title={page.title}
-        breadcrumb={page.breadcrumb}
-        primaryAction={
-          <CompactActionButton
-            tone="primary"
-            disabled={!canCreatePrimary}
-            locked={!canCreatePrimary}
-            onClick={() => {
-              if (!canCreatePrimary) return
-              if (section === 'service-orders') setCreateOrderOpen(true)
-              if (section === 'execution-tasks') setCreateTaskOpen(true)
-              if (section === 'deliverables') setCreateDeliverableOrderId('')
-            }}
-          >
-            {section === 'deliverables' ? <IconFilePlus size={14} /> : <IconPlus size={14} />}{' '}
-            {primaryLabel}
-          </CompactActionButton>
-        }
+            title={page.title}
+            breadcrumb={page.breadcrumb}
+            primaryAction={
+              <CompactActionButton
+                tone="primary"
+                disabled={!canCreatePrimary}
+                locked={!canCreatePrimary}
+                onClick={() => {
+                  if (!canCreatePrimary) return
+                  if (section === 'service-orders') setCreateOrderOpen(true)
+                  if (section === 'execution-tasks') setCreateTaskOpen(true)
+                  if (section === 'deliverables') setCreateDeliverableOrderId('')
+                }}
+              >
+                {section === 'deliverables' ? <IconFilePlus size={14} /> : <IconPlus size={14} />}{' '}
+                {primaryLabel}
+              </CompactActionButton>
+            }
           />
         }
       >
+        {section === 'service-orders' ? (
+          <ServiceOrdersScreen
+            orders={query.data.orders}
+            onOpenOrder={(order) => setSelectedOrderId(order.id)}
+          />
+        ) : section === 'execution-tasks' ? (
+          <ExecutionTasksScreen
+            tasks={query.data.tasks}
+            onOpenTask={(task) => setSelectedTaskId(task.id)}
+          />
+        ) : (
+          <DeliverablesScreen
+            deliverables={query.data.deliverables}
+            onOpen={(item) => setSelectedDeliverableId(item.id)}
+          />
+        )}
 
-      {section === 'service-orders' ? (
-        <ServiceOrdersScreen
-          orders={query.data.orders}
-          onOpenOrder={(order) => setSelectedOrderId(order.id)}
-        />
-      ) : section === 'execution-tasks' ? (
-        <ExecutionTasksScreen
-          tasks={query.data.tasks}
-          onOpenTask={(task) => setSelectedTaskId(task.id)}
-        />
-      ) : (
-        <DeliverablesScreen
-          deliverables={query.data.deliverables}
-          onOpen={(item) => setSelectedDeliverableId(item.id)}
-        />
-      )}
+        {createOrderOpen ? (
+          <CreateOrderWorkspace
+            services={services}
+            saving={createOrder.isPending}
+            onClose={() => setCreateOrderOpen(false)}
+            onSubmit={(draft) => {
+              const selectedService = services.find((service) => service.name === draft.service)
 
-      {createOrderOpen ? (
-        <CreateOrderWorkspace
-          services={services}
-          saving={createOrder.isPending}
-          onClose={() => setCreateOrderOpen(false)}
-          onSubmit={(draft) => {
-            const selectedService = services.find((service) => service.name === draft.service)
+              createOrder.mutate({
+                ...draft,
+                division: selectedService?.division ?? 'Service Operations',
+                paymentReady: false,
+                workflowStages: selectedService?.workflowStages.length
+                  ? selectedService.workflowStages
+                  : ['Order Setup', 'Execution', 'Review', 'Handover'],
+              })
+            }}
+          />
+        ) : null}
 
-            createOrder.mutate({
-              ...draft,
-              division: selectedService?.division ?? 'Service Operations',
-              paymentReady: false,
-              workflowStages: selectedService?.workflowStages.length
-                ? selectedService.workflowStages
-                : ['Order Setup', 'Execution', 'Review', 'Handover'],
-            })
-          }}
-        />
-      ) : null}
+        {createTaskOpen ? (
+          <CreateTaskWorkspace
+            saving={createTask.isPending}
+            onClose={() => setCreateTaskOpen(false)}
+            onSubmit={(input) => createTask.mutate(input)}
+          />
+        ) : null}
 
-      {createTaskOpen ? (
-        <CreateTaskWorkspace
-          saving={createTask.isPending}
-          onClose={() => setCreateTaskOpen(false)}
-          onSubmit={(input) => createTask.mutate(input)}
-        />
-      ) : null}
+        {createDeliverableOrderId !== null ? (
+          <CreateDeliverableWorkspace
+            initialOrderId={createDeliverableOrderId}
+            saving={createDeliverable.isPending}
+            onClose={() => setCreateDeliverableOrderId(null)}
+            onSubmit={(input) => createDeliverable.mutate(input)}
+          />
+        ) : null}
+        {selectedDeliverable ? (
+          <DeliverableDetailWorkspace
+            deliverable={selectedDeliverable}
+            saving={decideDeliverable.isPending}
+            canApprove={canApproveDeliverable}
+            onClose={() => setSelectedDeliverableId(null)}
+            onApprove={() =>
+              decideDeliverable.mutate({ deliverableId: selectedDeliverable.id, action: 'approve' })
+            }
+            onReject={() =>
+              decideDeliverable.mutate({ deliverableId: selectedDeliverable.id, action: 'reject' })
+            }
+          />
+        ) : null}
 
-      {createDeliverableOrderId !== null ? (
-        <CreateDeliverableWorkspace
-          initialOrderId={createDeliverableOrderId}
-          saving={createDeliverable.isPending}
-          onClose={() => setCreateDeliverableOrderId(null)}
-          onSubmit={(input) => createDeliverable.mutate(input)}
-        />
-      ) : null}
-      {selectedDeliverable ? (
-        <DeliverableDetailWorkspace
-          deliverable={selectedDeliverable}
-          saving={decideDeliverable.isPending}
-          canApprove={canApproveDeliverable}
-          onClose={() => setSelectedDeliverableId(null)}
-          onApprove={() =>
-            decideDeliverable.mutate({ deliverableId: selectedDeliverable.id, action: 'approve' })
-          }
-          onReject={() =>
-            decideDeliverable.mutate({ deliverableId: selectedDeliverable.id, action: 'reject' })
-          }
-        />
-      ) : null}
+        {selectedTask ? (
+          <TaskDetailWorkspace
+            task={selectedTask}
+            {...(selectedTaskOrder ? { order: selectedTaskOrder } : {})}
+            saving={updateTask.isPending}
+            canEdit={canUpdateTask}
+            onClose={() => setSelectedTaskId(null)}
+            onUpdate={(input) =>
+              updateTask.mutate({
+                taskId: selectedTask.id,
+                input,
+              })
+            }
+          />
+        ) : null}
 
-      {selectedTask ? (
-        <TaskDetailWorkspace
-          task={selectedTask}
-          {...(selectedTaskOrder ? { order: selectedTaskOrder } : {})}
-          saving={updateTask.isPending}
-          canEdit={canUpdateTask}
-          onClose={() => setSelectedTaskId(null)}
-          onUpdate={(input) =>
-            updateTask.mutate({
-              taskId: selectedTask.id,
-              input,
-            })
-          }
-        />
-      ) : null}
-
-      {selectedOrder ? (
-        <OrderControlRoomWorkspace
-          key={selectedOrder.id}
-          order={selectedOrder}
-          relatedTasks={query.data.tasks.filter((task) => task.orderId === selectedOrder.id)}
-          saving={busy}
-          canEditOrder={canUpdateOrder}
-          canCreateTask={canUpdateTask}
-          canCreateDeliverable={canUpdateDeliverable}
-          onClose={() => setSelectedOrderId(null)}
-          onSave={(input) =>
-            updateOrder.mutate({
-              orderId: selectedOrder.id,
-              input,
-            })
-          }
-          onAdvance={() => advanceOrder.mutate(selectedOrder.id)}
-          onAddUpdate={(input) => addOrderUpdate.mutate(input)}
-          onAddMilestone={(input) => addMilestone.mutate(input)}
-          onCreateTask={(input) => createTask.mutate(input)}
-          onAddDeliverable={() => setCreateDeliverableOrderId(selectedOrder.id)}
-          onRequestClientApproval={() =>
-            toast.success('Request Client Approval', {
-              description: 'Client approval requests are not connected in this frontend yet.',
-            })
-          }
-          onRecordFeedback={() =>
-            toast.success('Record Feedback', {
-              description: 'Feedback recording from the Order Control Room is not connected yet.',
-            })
-          }
-        />
-      ) : null}
+        {selectedOrder ? (
+          <OrderControlRoomWorkspace
+            key={selectedOrder.id}
+            order={selectedOrder}
+            relatedTasks={query.data.tasks.filter((task) => task.orderId === selectedOrder.id)}
+            saving={busy}
+            canEditOrder={canUpdateOrder}
+            canCreateTask={canUpdateTask}
+            canCreateDeliverable={canUpdateDeliverable}
+            onClose={() => setSelectedOrderId(null)}
+            onSave={(input) =>
+              updateOrder.mutate({
+                orderId: selectedOrder.id,
+                input,
+              })
+            }
+            onAdvance={() => advanceOrder.mutate(selectedOrder.id)}
+            onAddUpdate={(input) => addOrderUpdate.mutate(input)}
+            onAddMilestone={(input) => addMilestone.mutate(input)}
+            onCreateTask={(input) => createTask.mutate(input)}
+            onAddDeliverable={() => setCreateDeliverableOrderId(selectedOrder.id)}
+            onRequestClientApproval={() =>
+              toast.success('Request Client Approval', {
+                description: 'Client approval requests are not connected in this frontend yet.',
+              })
+            }
+            onRecordFeedback={() =>
+              toast.success('Record Feedback', {
+                description: 'Feedback recording from the Order Control Room is not connected yet.',
+              })
+            }
+          />
+        ) : null}
       </ModulePageFrame>
     </>
   )

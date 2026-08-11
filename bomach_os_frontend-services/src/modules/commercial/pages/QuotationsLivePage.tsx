@@ -207,42 +207,48 @@ export function QuotationsLivePage({ recordSearch }: { recordSearch: AppSectionS
     },
   })
 
-  const setSearch = useCallback((patch: Partial<AppSectionSearch>) => {
-    void navigate({
-      to: '/app/$section',
-      params: { section: 'quotations' },
-      search: (previous) => ({
-        ...withoutSearchKeys(previous, Object.keys(patch) as Array<keyof AppSectionSearch>),
-        ...patch,
-        ...(Object.prototype.hasOwnProperty.call(patch, 'page')
-          ? patch.page
-            ? { page: patch.page }
-            : {}
-          : Object.keys(patch).some((key) => key !== 'page')
-            ? { page: 1 }
-            : previous.page
-              ? { page: previous.page }
-              : {}),
-      }),
-      replace: true,
-    })
-  }, [navigate])
+  const setSearch = useCallback(
+    (patch: Partial<AppSectionSearch>) => {
+      void navigate({
+        to: '/app/$section',
+        params: { section: 'quotations' },
+        search: (previous) => ({
+          ...withoutSearchKeys(previous, Object.keys(patch) as Array<keyof AppSectionSearch>),
+          ...patch,
+          ...(Object.prototype.hasOwnProperty.call(patch, 'page')
+            ? patch.page
+              ? { page: patch.page }
+              : {}
+            : Object.keys(patch).some((key) => key !== 'page')
+              ? { page: 1 }
+              : previous.page
+                ? { page: previous.page }
+                : {}),
+        }),
+        replace: true,
+      })
+    },
+    [navigate],
+  )
 
-  const setSearchValue = useCallback(function <Key extends keyof AppSectionSearch>(
-    key: Key,
-    value: AppSectionSearch[Key] | '' | null,
-  ) {
-    void navigate({
-      to: '/app/$section',
-      params: { section: 'quotations' },
-      search: (previous) => ({
-        ...withoutSearchKeys(previous, [key]),
-        ...withOptionalSearchValue<AppSectionSearch, Key>(key, value),
-        page: 1,
-      }),
-      replace: true,
-    })
-  }, [navigate])
+  const setSearchValue = useCallback(
+    function <Key extends keyof AppSectionSearch>(
+      key: Key,
+      value: AppSectionSearch[Key] | '' | null,
+    ) {
+      void navigate({
+        to: '/app/$section',
+        params: { section: 'quotations' },
+        search: (previous) => ({
+          ...withoutSearchKeys(previous, [key]),
+          ...withOptionalSearchValue<AppSectionSearch, Key>(key, value),
+          page: 1,
+        }),
+        replace: true,
+      })
+    },
+    [navigate],
+  )
 
   const clearFilters = useCallback(() => {
     setSearchDraft('')
@@ -473,7 +479,9 @@ export function QuotationsLivePage({ recordSearch }: { recordSearch: AppSectionS
 
           {displayedQuotes.length === 0 ? (
             <EmptyState
-              title={hasActiveFilters ? 'No quotations match the current filters' : 'No quotations yet'}
+              title={
+                hasActiveFilters ? 'No quotations match the current filters' : 'No quotations yet'
+              }
               description={
                 hasActiveFilters
                   ? 'Try adjusting or clearing the search and status filters to see matching quotations.'
@@ -481,11 +489,7 @@ export function QuotationsLivePage({ recordSearch }: { recordSearch: AppSectionS
               }
               action={
                 hasActiveFilters ? (
-                  <button
-                    type="button"
-                    className="commercial-btn"
-                    onClick={clearFilters}
-                  >
+                  <button type="button" className="commercial-btn" onClick={clearFilters}>
                     Clear filters
                   </button>
                 ) : undefined

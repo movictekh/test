@@ -362,19 +362,20 @@ export function ServiceRequestDetailWorkspace({
                       [...request.activities]
                         .sort(
                           (left, right) =>
-                            new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
+                            new Date(right.createdAt).getTime() -
+                            new Date(left.createdAt).getTime(),
                         )
                         .map((activity) => (
-                        <article key={activity.id} className="commercial-tl">
-                          <b>{activity.activityTypeDisplay}</b>
-                          <p>
-                            {activity.outcomeDisplay}: {activity.note}
-                            <br />
-                            <strong>{activity.createdByName || 'System'}</strong>
-                          </p>
-                          <time>{new Date(activity.createdAt).toLocaleString('en-GB')}</time>
-                        </article>
-                      ))
+                          <article key={activity.id} className="commercial-tl">
+                            <b>{activity.activityTypeDisplay}</b>
+                            <p>
+                              {activity.outcomeDisplay}: {activity.note}
+                              <br />
+                              <strong>{activity.createdByName || 'System'}</strong>
+                            </p>
+                            <time>{new Date(activity.createdAt).toLocaleString('en-GB')}</time>
+                          </article>
+                        ))
                     )}
                   </div>
                 </section>

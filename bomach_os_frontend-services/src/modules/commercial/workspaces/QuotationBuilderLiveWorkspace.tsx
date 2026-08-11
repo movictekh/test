@@ -82,9 +82,9 @@ export function QuotationBuilderLiveWorkspace({
   onUpdate: (input: UpdateQuotationInput) => void
 }) {
   const rolesQuery = useQuery(quotationQueries.roles())
-  const [fieldErrors, setFieldErrors] = useState<Partial<Record<QuotationBuilderFieldName, string>>>(
-    {},
-  )
+  const [fieldErrors, setFieldErrors] = useState<
+    Partial<Record<QuotationBuilderFieldName, string>>
+  >({})
   const fieldRefs = useRef<Record<string, HTMLElement | null>>({})
 
   const form = useForm({
@@ -191,7 +191,14 @@ export function QuotationBuilderLiveWorkspace({
     form.setFieldValue('taxRate', 0)
     form.setFieldValue('depositPercent', 30)
     form.setFieldValue('requiredApproverRoleId', 0)
-  }, [form, mode, request.budget, request.estimatedValue, request.scopeSummary, request.serviceName])
+  }, [
+    form,
+    mode,
+    request.budget,
+    request.estimatedValue,
+    request.scopeSummary,
+    request.serviceName,
+  ])
 
   const canSelectRequest =
     mode === 'create' &&
@@ -522,9 +529,7 @@ export function QuotationBuilderLiveWorkspace({
                       }}
                     />
                     {fieldErrors.depositPercent ? (
-                      <small className="commercial-field-error">
-                        {fieldErrors.depositPercent}
-                      </small>
+                      <small className="commercial-field-error">{fieldErrors.depositPercent}</small>
                     ) : null}
                   </label>
                 )}

@@ -252,7 +252,10 @@ function RuleEditor({
   })
   const availableRecipients = recipientsQuery.data ?? EMPTY_RECIPIENTS
   const selectedRecipients = useMemo(
-    () => selectedRecipientIds.map((id) => availableRecipients.find((item) => item.userId === id)).filter(Boolean),
+    () =>
+      selectedRecipientIds
+        .map((id) => availableRecipients.find((item) => item.userId === id))
+        .filter(Boolean),
     [availableRecipients, selectedRecipientIds],
   )
   const unknownSelectedRecipientIds = selectedRecipientIds.filter(
@@ -478,7 +481,7 @@ function RuleEditor({
                           key={recipient.userId}
                           type="button"
                           className={`service-admin-rule-recipient-option${
-                            checked ? ' service-admin-rule-recipient-option--active' : ''
+                            checked ? 'service-admin-rule-recipient-option--active' : ''
                           }`}
                           onClick={() => toggleRecipient(recipient.userId)}
                         >

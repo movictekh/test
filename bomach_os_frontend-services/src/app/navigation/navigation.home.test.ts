@@ -23,11 +23,11 @@ function user(permissions: AuthUser['permissions']): AuthUser {
 }
 
 describe('authenticated workspace landing', () => {
-  it('uses Command Center when dashboard.view is actually granted', () => {
+  it('uses Command Center when command_center.view is actually granted', () => {
     expect(
       getAuthenticatedNavigationPath(
         operationsNavigation,
-        user([PERMISSIONS.dashboardView, PERMISSIONS.servicesList]),
+        user([PERMISSIONS.commandCenterView, PERMISSIONS.servicesList]),
       ),
     ).toBe('/app/dashboard')
   })

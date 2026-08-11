@@ -3,7 +3,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
 
-import { CompactPageToolbar, CompactActionButton, ModulePageFrame, ModulePageStatus } from '@/shared/ui/module-controls'
+import {
+  CompactPageToolbar,
+  CompactActionButton,
+  ModulePageFrame,
+  ModulePageStatus,
+} from '@/shared/ui/module-controls'
 import { presentError } from '@/shared/errors'
 import { serviceAdministrationQueries } from '@/modules/service-administration/api/service-administration.queries'
 import { fulfillmentKeys } from '@/modules/fulfillment/api/fulfillment.keys'
@@ -238,169 +243,168 @@ export function CommercialSectionPage({
       <ModulePageFrame
         header={
           <CompactPageToolbar
-        title={page.title}
-        breadcrumb={page.breadcrumb}
-        primaryAction={
-          <CompactActionButton
-            tone="primary"
-            disabled={!canCreatePrimary}
-            locked={!canCreatePrimary}
-            onClick={() => {
-              if (!canCreatePrimary) return
-              if (section === 'service-requests' || section === 'approvals') {
-                if (section === 'approvals') {
-                  void navigate({
-                    to: '/app/$section',
-                    params: { section: 'service-requests' },
-                  })
-                }
-                setCreateOpen(true)
-                return
-              }
-              if (section === 'quotations') setQuotationBuilderOpen(true)
-              if (section === 'invoices-payments') setInvoiceBuilderOpen(true)
-            }}
-          >
-            {section === 'service-requests' || section === 'approvals' ? (
-              <IconFilePlus size={14} />
-            ) : (
-              <IconPlus size={14} />
-            )}{' '}
-            {section === 'service-requests' || section === 'approvals'
-              ? 'New Request'
-              : section === 'quotations'
-                ? 'Build Quote'
-                : section === 'invoices-payments'
-                  ? 'New Invoice'
-                  : 'Create'}
-          </CompactActionButton>
-        }
+            title={page.title}
+            breadcrumb={page.breadcrumb}
+            primaryAction={
+              <CompactActionButton
+                tone="primary"
+                disabled={!canCreatePrimary}
+                locked={!canCreatePrimary}
+                onClick={() => {
+                  if (!canCreatePrimary) return
+                  if (section === 'service-requests' || section === 'approvals') {
+                    if (section === 'approvals') {
+                      void navigate({
+                        to: '/app/$section',
+                        params: { section: 'service-requests' },
+                      })
+                    }
+                    setCreateOpen(true)
+                    return
+                  }
+                  if (section === 'quotations') setQuotationBuilderOpen(true)
+                  if (section === 'invoices-payments') setInvoiceBuilderOpen(true)
+                }}
+              >
+                {section === 'service-requests' || section === 'approvals' ? (
+                  <IconFilePlus size={14} />
+                ) : (
+                  <IconPlus size={14} />
+                )}{' '}
+                {section === 'service-requests' || section === 'approvals'
+                  ? 'New Request'
+                  : section === 'quotations'
+                    ? 'Build Quote'
+                    : section === 'invoices-payments'
+                      ? 'New Invoice'
+                      : 'Create'}
+              </CompactActionButton>
+            }
           />
         }
       >
+        {section === 'service-requests' ? (
+          <ServiceRequestsScreen
+            summary={query.data.summary}
+            requests={query.data.requests}
+            onOpenRequest={(request: CommercialServiceRequest) => setSelectedRequestId(request.id)}
+          />
+        ) : section === 'quotations' ? (
+          <QuotationsScreen
+            summary={query.data.quotationSummary}
+            quotations={query.data.quotations}
+            onOpen={(quotation) => setSelectedQuotationId(quotation.id)}
+          />
+        ) : section === 'invoices-payments' ? (
+          <InvoicesPaymentsScreen
+            summary={query.data.invoiceSummary}
+            invoices={query.data.invoices}
+            onOpen={(invoice) => setSelectedInvoiceId(invoice.id)}
+          />
+        ) : section === 'approvals' ? (
+          <ApprovalsScreen
+            summary={query.data.approvalSummary}
+            approvals={query.data.approvals}
+            onOpen={(approval) => setSelectedApprovalId(approval.id)}
+          />
+        ) : null}
 
-      {section === 'service-requests' ? (
-        <ServiceRequestsScreen
-          summary={query.data.summary}
-          requests={query.data.requests}
-          onOpenRequest={(request: CommercialServiceRequest) => setSelectedRequestId(request.id)}
-        />
-      ) : section === 'quotations' ? (
-        <QuotationsScreen
-          summary={query.data.quotationSummary}
-          quotations={query.data.quotations}
-          onOpen={(quotation) => setSelectedQuotationId(quotation.id)}
-        />
-      ) : section === 'invoices-payments' ? (
-        <InvoicesPaymentsScreen
-          summary={query.data.invoiceSummary}
-          invoices={query.data.invoices}
-          onOpen={(invoice) => setSelectedInvoiceId(invoice.id)}
-        />
-      ) : section === 'approvals' ? (
-        <ApprovalsScreen
-          summary={query.data.approvalSummary}
-          approvals={query.data.approvals}
-          onOpen={(approval) => setSelectedApprovalId(approval.id)}
-        />
-      ) : null}
+        {createOpen ? (
+          <CreateRequestWorkspace
+            saving={createRequest.isPending}
+            serviceWorkspace={serviceAdministrationQuery.data}
+            onClose={() => setCreateOpen(false)}
+            onSubmit={(input) => createRequest.mutate(input)}
+          />
+        ) : null}
 
-      {createOpen ? (
-        <CreateRequestWorkspace
-          saving={createRequest.isPending}
-          serviceWorkspace={serviceAdministrationQuery.data}
-          onClose={() => setCreateOpen(false)}
-          onSubmit={(input) => createRequest.mutate(input)}
-        />
-      ) : null}
+        {selectedRequest ? (
+          <Request360Workspace
+            key={selectedRequest.id}
+            request={selectedRequest}
+            saving={updateRequest.isPending}
+            onClose={() => setSelectedRequestId(null)}
+            onUpdate={(requestId, input) => updateRequest.mutate({ requestId, input })}
+            onPrepareQuotation={(requestId) => {
+              setSelectedRequestId(null)
+              setQuotationSourceRequestId(requestId)
+              setQuotationBuilderOpen(true)
+              void navigate({
+                to: '/app/$section',
+                params: { section: 'quotations' },
+              })
+            }}
+          />
+        ) : null}
 
-      {selectedRequest ? (
-        <Request360Workspace
-          key={selectedRequest.id}
-          request={selectedRequest}
-          saving={updateRequest.isPending}
-          onClose={() => setSelectedRequestId(null)}
-          onUpdate={(requestId, input) => updateRequest.mutate({ requestId, input })}
-          onPrepareQuotation={(requestId) => {
-            setSelectedRequestId(null)
-            setQuotationSourceRequestId(requestId)
-            setQuotationBuilderOpen(true)
-            void navigate({
-              to: '/app/$section',
-              params: { section: 'quotations' },
-            })
-          }}
-        />
-      ) : null}
+        {quotationBuilderOpen ? (
+          <QuotationBuilderWorkspace
+            requests={query.data.requests}
+            {...(quotationSourceRequestId ? { initialRequestId: quotationSourceRequestId } : {})}
+            saving={createQuotation.isPending}
+            onClose={() => {
+              setQuotationBuilderOpen(false)
+              setQuotationSourceRequestId(undefined)
+            }}
+            onSubmit={(input) => createQuotation.mutate(input)}
+          />
+        ) : null}
 
-      {quotationBuilderOpen ? (
-        <QuotationBuilderWorkspace
-          requests={query.data.requests}
-          {...(quotationSourceRequestId ? { initialRequestId: quotationSourceRequestId } : {})}
-          saving={createQuotation.isPending}
-          onClose={() => {
-            setQuotationBuilderOpen(false)
-            setQuotationSourceRequestId(undefined)
-          }}
-          onSubmit={(input) => createQuotation.mutate(input)}
-        />
-      ) : null}
+        {selectedQuotation ? (
+          <QuotationDetailWorkspace
+            key={selectedQuotation.id}
+            quotation={selectedQuotation}
+            saving={updateQuotation.isPending}
+            onClose={() => setSelectedQuotationId(null)}
+            onUpdate={(quotationId, input) => updateQuotation.mutate({ quotationId, input })}
+            onCreateInvoice={(quotationId) => {
+              setSelectedQuotationId(null)
+              setInvoiceSourceQuotationId(quotationId)
+              setInvoiceBuilderOpen(true)
+              void navigate({
+                to: '/app/$section',
+                params: { section: 'invoices-payments' },
+              })
+            }}
+          />
+        ) : null}
 
-      {selectedQuotation ? (
-        <QuotationDetailWorkspace
-          key={selectedQuotation.id}
-          quotation={selectedQuotation}
-          saving={updateQuotation.isPending}
-          onClose={() => setSelectedQuotationId(null)}
-          onUpdate={(quotationId, input) => updateQuotation.mutate({ quotationId, input })}
-          onCreateInvoice={(quotationId) => {
-            setSelectedQuotationId(null)
-            setInvoiceSourceQuotationId(quotationId)
-            setInvoiceBuilderOpen(true)
-            void navigate({
-              to: '/app/$section',
-              params: { section: 'invoices-payments' },
-            })
-          }}
-        />
-      ) : null}
+        {invoiceBuilderOpen ? (
+          <InvoiceBuilderWorkspace
+            quotations={query.data.quotations}
+            invoices={query.data.invoices}
+            {...(invoiceSourceQuotationId ? { initialQuotationId: invoiceSourceQuotationId } : {})}
+            saving={createInvoice.isPending}
+            onClose={() => {
+              setInvoiceBuilderOpen(false)
+              setInvoiceSourceQuotationId(undefined)
+            }}
+            onSubmit={(input) => createInvoice.mutate(input)}
+          />
+        ) : null}
 
-      {invoiceBuilderOpen ? (
-        <InvoiceBuilderWorkspace
-          quotations={query.data.quotations}
-          invoices={query.data.invoices}
-          {...(invoiceSourceQuotationId ? { initialQuotationId: invoiceSourceQuotationId } : {})}
-          saving={createInvoice.isPending}
-          onClose={() => {
-            setInvoiceBuilderOpen(false)
-            setInvoiceSourceQuotationId(undefined)
-          }}
-          onSubmit={(input) => createInvoice.mutate(input)}
-        />
-      ) : null}
+        {selectedInvoice ? (
+          <InvoiceDetailWorkspace
+            key={selectedInvoice.id}
+            invoice={selectedInvoice}
+            saving={recordPayment.isPending}
+            onClose={() => setSelectedInvoiceId(null)}
+            canConfirmPayment={canConfirmPayment}
+            onRecordPayment={(input) => recordPayment.mutate(input)}
+          />
+        ) : null}
 
-      {selectedInvoice ? (
-        <InvoiceDetailWorkspace
-          key={selectedInvoice.id}
-          invoice={selectedInvoice}
-          saving={recordPayment.isPending}
-          onClose={() => setSelectedInvoiceId(null)}
-          canConfirmPayment={canConfirmPayment}
-          onRecordPayment={(input) => recordPayment.mutate(input)}
-        />
-      ) : null}
-
-      {selectedApproval ? (
-        <ApprovalDecisionWorkspace
-          key={selectedApproval.id}
-          approval={selectedApproval}
-          saving={decideApproval.isPending}
-          onClose={() => setSelectedApprovalId(null)}
-          canApprove={canApproveApproval}
-          canReject={canRejectApproval}
-          onDecide={(input) => decideApproval.mutate(input)}
-        />
-      ) : null}
+        {selectedApproval ? (
+          <ApprovalDecisionWorkspace
+            key={selectedApproval.id}
+            approval={selectedApproval}
+            saving={decideApproval.isPending}
+            onClose={() => setSelectedApprovalId(null)}
+            canApprove={canApproveApproval}
+            canReject={canRejectApproval}
+            onDecide={(input) => decideApproval.mutate(input)}
+          />
+        ) : null}
       </ModulePageFrame>
     </>
   )

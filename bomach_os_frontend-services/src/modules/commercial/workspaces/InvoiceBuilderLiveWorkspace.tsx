@@ -220,9 +220,7 @@ export function InvoiceBuilderLiveWorkspace({
             <div className="commercial-form-section-heading">
               <div>
                 <h3>Commercial amount</h3>
-                <p>
-                  This invoice amount follows the approved quotation and is read-only here.
-                </p>
+                <p>This invoice amount follows the approved quotation and is read-only here.</p>
               </div>
               <div className="commercial-quote-total-chip commercial-quote-total-chip--lg">
                 <span>Accepted quote</span>

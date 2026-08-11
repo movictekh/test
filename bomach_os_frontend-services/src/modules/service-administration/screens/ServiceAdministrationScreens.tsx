@@ -177,7 +177,9 @@ export function ServiceCatalogueScreen({
             <section className="service-admin-card col-span-full border-dashed p-6 sm:p-8">
               <div className="mx-auto max-w-xl text-center">
                 <div className="service-admin-card-title">
-                  {hasActiveFilters ? 'No services match the current filters' : 'No services in the catalogue yet'}
+                  {hasActiveFilters
+                    ? 'No services match the current filters'
+                    : 'No services in the catalogue yet'}
                 </div>
                 <div className="service-admin-card-subtitle mt-1">
                   {hasActiveFilters
@@ -251,9 +253,7 @@ export function ServiceCatalogueScreen({
                       className="service-admin-button service-admin-button-small"
                       disabled={!onConfigure}
                       title={
-                        !onConfigure
-                          ? 'You do not have permission to view this service'
-                          : undefined
+                        !onConfigure ? 'You do not have permission to view this service' : undefined
                       }
                       onClick={() => onConfigure?.(service)}
                     >
@@ -472,7 +472,7 @@ export function CalculatorLibraryScreen({
                         <button
                           type="button"
                           className={`service-admin-button service-admin-button-small${
-                            isActive ? ' service-admin-calculator-test-button--active' : ''
+                            isActive ? 'service-admin-calculator-test-button--active' : ''
                           }`}
                           aria-pressed={isActive}
                           onClick={() => {
@@ -509,8 +509,6 @@ export function CalculatorLibraryScreen({
               and approval thresholds in one place.
             </div>
           ) : null}
-
-   
 
           {fields.map((field) => (
             <div className="service-admin-field" key={field.key}>

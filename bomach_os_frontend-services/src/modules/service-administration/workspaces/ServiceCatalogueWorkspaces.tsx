@@ -804,7 +804,9 @@ export function ConfigureServiceWorkspace({
     ).join('\n'),
   )
   const [selectedBranches, setSelectedBranches] = useState<string[]>(
-    service.branchNames.length ? [...service.branchNames] : branchOptions.map((branch) => branch.name),
+    service.branchNames.length
+      ? [...service.branchNames]
+      : branchOptions.map((branch) => branch.name),
   )
   const [status, setStatus] = useState(service.status)
   const [clientVisibility, setClientVisibility] = useState('Visible in catalogue')

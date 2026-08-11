@@ -306,6 +306,50 @@
   overflow: auto;
 }
 
+.fulfillment-task-modal .commercial-modal-body {
+  padding: 10px;
+}
+
+.fulfillment-task-modal .commercial-form-section {
+  margin-bottom: 10px;
+  padding: 11px;
+  border-radius: 11px;
+}
+
+.fulfillment-task-modal .commercial-form-section-heading {
+  margin-bottom: 8px;
+}
+
+.fulfillment-task-modal .commercial-form-section-heading h3 {
+  font-size: 11px;
+}
+
+.fulfillment-task-modal .commercial-form-section-heading p,
+.fulfillment-task-modal .commercial-form-note {
+  font-size: 8px;
+}
+
+.fulfillment-task-modal .commercial-field {
+  gap: 4px;
+  font-size: 9px;
+}
+
+.fulfillment-task-modal .commercial-field input,
+.fulfillment-task-modal .commercial-field select,
+.fulfillment-task-modal .commercial-field textarea {
+  padding: 8px 9px;
+  border-radius: 7px;
+  font-size: 10px;
+}
+
+.fulfillment-task-modal .commercial-field textarea {
+  min-height: 72px;
+}
+
+.fulfillment-task-modal .commercial-modal-footer {
+  padding-top: 0;
+}
+
 .fulfillment-order-summary-card {
   padding: 13px 15px;
   background: #fff;
@@ -349,11 +393,26 @@
   margin-top: 14px;
 }
 
+.fulfillment-task-detail-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 252px;
+  gap: 10px;
+  margin-top: 10px;
+}
+
 .fulfillment-order-room-main,
 .fulfillment-order-room-aside {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.fulfillment-task-detail-main,
+.fulfillment-task-detail-aside {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
 }
 
 .fulfillment-order-room-table {
@@ -370,6 +429,186 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
+}
+
+.fulfillment-task-hero-card,
+.fulfillment-task-summary-card {
+  padding: 12px 13px;
+  background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+  border: 1px solid #dbe4f2;
+  border-radius: 13px;
+  box-shadow: 0 2px 9px #14204012;
+}
+
+.fulfillment-task-summary-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.fulfillment-task-hero-header {
+  align-items: flex-start;
+}
+
+.fulfillment-task-hero-kicker {
+  margin-bottom: 4px;
+  color: #1f3d7a;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.fulfillment-task-summary-header h3 {
+  color: #15172d;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.fulfillment-task-summary-header p {
+  margin-top: 3px;
+  color: #8c95a8;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.fulfillment-task-summary-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.fulfillment-task-hero-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.fulfillment-task-meta-card {
+  padding: 8px 9px;
+  background: #f8fafc;
+  border: 1px solid #dbe4f2;
+  border-radius: 10px;
+}
+
+.fulfillment-task-meta-card span {
+  display: block;
+  color: #8c95a8;
+  font-size: 7.5px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.fulfillment-task-meta-card b {
+  display: block;
+  margin-top: 4px;
+  color: #17213d;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.fulfillment-task-assignee-list {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  gap: 6px;
+  margin-top: 6px;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+}
+
+.fulfillment-task-assignee-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  flex: 0 0 auto;
+  padding: 3px 8px;
+  border: 1px solid #cfdaf0;
+  border-radius: 999px;
+  background: #fff;
+  color: #17213d;
+  font-size: 8.5px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.fulfillment-task-control-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(240px, 0.9fr);
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.fulfillment-task-people-grid {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 8px;
+}
+
+.fulfillment-task-meta-card--wide {
+  grid-column: span 1;
+}
+
+.fulfillment-task-panel .fulfillment-order-detail-stack {
+  gap: 8px;
+}
+
+.fulfillment-task-panel .fulfillment-order-detail-row {
+  background: #f8fafc;
+  border-color: #dbe4f2;
+}
+
+.fulfillment-task-panel .fulfillment-order-detail-row b,
+.fulfillment-task-panel .fulfillment-order-detail-row p {
+  font-size: 9px;
+}
+
+.fulfillment-task-panel .fulfillment-order-detail-row p {
+  margin-top: 2px;
+}
+
+.fulfillment-task-panel .commercial-notice {
+  margin-top: 0;
+}
+
+.fulfillment-task-panel .fulfillment-task-detail-actions {
+  margin-top: 8px;
+}
+
+.fulfillment-task-modal .commercial-btn {
+  min-height: 32px;
+  font-size: 9.5px;
+}
+
+.fulfillment-task-modal .commercial-btn.commercial-btn-primary {
+  font-weight: 800;
+}
+
+.fulfillment-task-modal .commercial-check {
+  align-items: flex-start;
+}
+
+.fulfillment-task-modal .commercial-check span {
+  font-size: 9px;
+}
+
+.fulfillment-task-modal .commercial-check small {
+  font-size: 8px;
+}
+
+.fulfillment-task-summary-note {
+  margin-top: 6px;
+  color: #4f5b74;
+  font-size: 8.5px;
+  line-height: 1.4;
 }
 
 .fulfillment-order-key-grid--compact {
@@ -425,6 +664,28 @@
   color: #4f5b74;
   font-size: 9px;
   line-height: 1.45;
+}
+
+.fulfillment-task-detail-row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.fulfillment-task-detail-row p {
+  margin-top: 2px;
+}
+
+.fulfillment-task-detail-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.fulfillment-task-detail-actions .commercial-btn {
+  min-height: 34px;
+  padding: 6px 10px;
+  font-size: 10px;
+  margin-top: 0;
 }
 
 .fulfillment-order-primary-action {
@@ -916,7 +1177,6 @@
   }
 }
 
-/* API-3.01 live Service Order board/control room refinements */
 .fulfillment-content .commercial-card + .commercial-card {
   margin-top: 12px;
 }
@@ -934,7 +1194,15 @@
     grid-template-columns: 1fr;
   }
 
+  .fulfillment-task-detail-layout {
+    grid-template-columns: 1fr;
+  }
+
   .fulfillment-order-summary-header {
     flex-direction: column;
+  }
+
+  .fulfillment-task-detail-actions {
+    grid-template-columns: 1fr;
   }
 }

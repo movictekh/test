@@ -7,6 +7,10 @@ import { ToastProvider } from '@/shared/ui'
 import { WorkflowDesignerScreen } from './WorkflowDesignerScreen'
 import type { ServiceCatalogueItem, ServiceWorkflow } from '../types/service-administration.types'
 
+vi.mock('../components/AutomationRulesPanel', () => ({
+  AutomationRulesPanel: () => null,
+}))
+
 const services: ServiceCatalogueItem[] = [
   {
     id: '1',

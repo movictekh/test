@@ -18,7 +18,11 @@ describe('backend permission mapping', () => {
       orders: ['view', 'list'],
     })
 
-    expect(result.permissions).toEqual([PERMISSIONS.ordersView, PERMISSIONS.ordersList])
+    expect(result.permissions).toEqual([
+      PERMISSIONS.ordersView,
+      PERMISSIONS.ordersList,
+      PERMISSIONS.deliverableRead,
+    ])
     expect(result.unmappedBackendPermissions).toEqual([])
   })
 

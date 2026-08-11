@@ -150,9 +150,7 @@ export function OrderControlRoomLiveWorkspace({
   const canAddMilestone = canUpdate && !['completed', 'cancelled'].includes(order.orderStatus)
   const canShowAdvanceStage = canUpdate && !['completed', 'cancelled'].includes(order.orderStatus)
   const canAdvanceStage =
-    canShowAdvanceStage &&
-    activeMilestones.length === 1 &&
-    order.orderStatus !== 'on_hold'
+    canShowAdvanceStage && activeMilestones.length === 1 && order.orderStatus !== 'on_hold'
   const taskTotal = Object.values(order.taskCounts).reduce((sum, count) => sum + count, 0)
   const deliverableTotal = Object.values(order.deliverableCounts).reduce(
     (sum, count) => sum + count,

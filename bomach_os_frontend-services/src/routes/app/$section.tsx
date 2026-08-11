@@ -17,6 +17,7 @@ import {
   type CommercialSection,
 } from '@/modules/commercial'
 import {
+  ExecutionTasksLivePage,
   FulfillmentSectionPage,
   ServiceOrdersLivePage,
   type FulfillmentSection,
@@ -175,6 +176,10 @@ function AppShellRoute() {
 
   if (section === 'service-orders') {
     return <ServiceOrdersLivePage recordSearch={recordSearch} />
+  }
+
+  if (section === 'execution-tasks') {
+    return <ExecutionTasksLivePage recordSearch={recordSearch} />
   }
 
   if (commercialSections.has(section as CommercialSection)) {

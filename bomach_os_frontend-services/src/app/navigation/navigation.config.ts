@@ -120,7 +120,7 @@ export const operationsNavigation = [
         icon: 'tasks',
         to: appSectionRoute,
         params: { section: 'execution-tasks' },
-        permissions: [PERMISSIONS.tasksList],
+        permissions: [PERMISSIONS.ordersView],
       },
       {
         id: 'deliverables',
