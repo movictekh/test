@@ -350,6 +350,111 @@
   padding-top: 0;
 }
 
+.fulfillment-deliverable-modal .commercial-modal-body {
+  padding-top: 13px;
+}
+
+.fulfillment-deliverable-modal .fulfillment-order-summary-card {
+  padding: 13px 15px;
+}
+
+.fulfillment-deliverable-modal .fulfillment-order-summary-header {
+  margin-bottom: 8px;
+}
+
+.fulfillment-deliverable-modal .fulfillment-order-summary-header h3 {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.fulfillment-deliverable-modal .fulfillment-order-summary-header p {
+  margin-top: 3px;
+  font-size: 8.5px;
+  font-weight: 600;
+}
+
+.fulfillment-deliverable-modal .fulfillment-order-key-card {
+  min-width: 166px;
+  flex: 1 0 166px;
+  padding: 8px 9px;
+}
+
+.fulfillment-deliverable-modal .fulfillment-order-key-card b {
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.fulfillment-deliverable-modal .fulfillment-order-key-grid {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+}
+
+.fulfillment-deliverable-modal .fulfillment-order-detail-row {
+  padding: 7px 8px;
+  border-radius: 10px;
+}
+
+.fulfillment-deliverable-modal .fulfillment-order-detail-stack--compact {
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.fulfillment-deliverable-modal .fulfillment-order-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.fulfillment-deliverable-modal .fulfillment-order-detail-row .commercial-field-label,
+.fulfillment-deliverable-modal .fulfillment-order-key-card .commercial-field-label {
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.fulfillment-deliverable-modal .fulfillment-order-detail-row b {
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.fulfillment-deliverable-modal .fulfillment-order-detail-row p {
+  font-size: 8px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.fulfillment-deliverable-modal .commercial-form-section-heading h3 {
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.fulfillment-deliverable-modal .commercial-form-section-heading p {
+  font-size: 8.5px;
+  font-weight: 500;
+}
+
+.fulfillment-deliverable-modal .commercial-btn {
+  font-size: 9.5px;
+}
+
+.fulfillment-deliverable-modal .commercial-check {
+  align-items: flex-start;
+}
+
+.fulfillment-deliverable-modal .commercial-check b {
+  font-size: 9px;
+}
+
+.fulfillment-deliverable-modal .commercial-check small {
+  font-size: 7.5px;
+  font-weight: 600;
+}
+
 .fulfillment-order-summary-card {
   padding: 13px 15px;
   background: #fff;
@@ -581,6 +686,19 @@
 
 .fulfillment-task-panel .fulfillment-task-detail-actions {
   margin-top: 8px;
+}
+
+.fulfillment-deliverable-modal .fulfillment-task-panel .fulfillment-order-detail-row .commercial-field-label {
+  font-size: 8px;
+}
+
+.fulfillment-deliverable-modal .fulfillment-task-panel .fulfillment-order-detail-row b {
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.fulfillment-deliverable-modal .fulfillment-task-panel .fulfillment-order-detail-row p {
+  font-size: 8.5px;
 }
 
 .fulfillment-task-modal .commercial-btn {

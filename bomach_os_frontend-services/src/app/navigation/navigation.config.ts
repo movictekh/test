@@ -128,7 +128,7 @@ export const operationsNavigation = [
         icon: 'deliverables',
         to: appSectionRoute,
         params: { section: 'deliverables' },
-        permissions: [PERMISSIONS.deliverableRead],
+        permissions: [PERMISSIONS.ordersView],
       },
     ],
   },
