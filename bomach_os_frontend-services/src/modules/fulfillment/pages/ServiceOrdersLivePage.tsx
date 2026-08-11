@@ -1,4 +1,4 @@
-import { IconPlus, IconRefresh, IconSearch } from '@tabler/icons-react'
+import { IconFilePlus, IconPlus, IconRefresh, IconSearch } from '@tabler/icons-react'
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -391,24 +391,35 @@ export function ServiceOrdersLivePage({ recordSearch }: { recordSearch: AppSecti
         <CompactPageToolbar
           title="Service Orders"
           breadcrumb="Fulfillment / Orders"
+          secondaryAction={
+            <CompactActionButton
+              disabled={!hasPermission(user, PERMISSIONS.serviceRequestsCreate)}
+              locked={!hasPermission(user, PERMISSIONS.serviceRequestsCreate)}
+              onClick={() =>
+                void navigate({
+                  to: '/app/$section',
+                  params: { section: 'service-requests' },
+                })
+              }
+            >
+              <IconFilePlus size={14} />
+              Add New Request
+            </CompactActionButton>
+          }
           primaryAction={
             <CompactActionButton
               tone="primary"
-              disabled={
-                !hasPermission(user, PERMISSIONS.ordersCreate) ||
-                !hasPermission(user, PERMISSIONS.serviceInvoicesList)
-              }
-              locked={
-                !hasPermission(user, PERMISSIONS.ordersCreate) ||
-                !hasPermission(user, PERMISSIONS.serviceInvoicesList)
-              }
+              disabled={!hasPermission(user, PERMISSIONS.servicesCreate)}
+              locked={!hasPermission(user, PERMISSIONS.servicesCreate)}
               onClick={() => {
-                setBuilderOpen(true)
-                setBuilderInvoice(null)
+                void navigate({
+                  to: '/app/$section',
+                  params: { section: 'service-catalogue' },
+                })
               }}
             >
               <IconPlus size={14} />
-              Create Order
+              Create Service
             </CompactActionButton>
           }
         />
@@ -518,7 +529,28 @@ export function ServiceOrdersLivePage({ recordSearch }: { recordSearch: AppSecti
               <h2>Service Order Register</h2>
               <p>Complete paginated record of Service Orders.</p>
             </div>
-            <span className="commercial-count">{listQuery.data.count} records</span>
+            <div className="commercial-card-header-actions">
+              <span className="commercial-count">{listQuery.data.count} records</span>
+              <CompactActionButton
+                tone="primary"
+                disabled={
+                  !hasPermission(user, PERMISSIONS.ordersCreate) ||
+                  !hasPermission(user, PERMISSIONS.serviceInvoicesList)
+                }
+                locked={
+                  !hasPermission(user, PERMISSIONS.ordersCreate) ||
+                  !hasPermission(user, PERMISSIONS.serviceInvoicesList)
+                }
+                onClick={() => {
+                  setBuilderOpen(true)
+                  setBuilderInvoice(null)
+                }}
+              >
+                <IconPlus size={14} />
+                Create Order
+              </CompactActionButton>
+              {boardRefreshing ? <span className="commercial-count">Refreshing…</span> : null}
+            </div>
           </header>
 
           <div className="commercial-filters">

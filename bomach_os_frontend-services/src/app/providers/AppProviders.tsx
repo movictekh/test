@@ -9,15 +9,15 @@ import { ToastProvider } from '@/shared/ui/toast'
 export function AppProviders({ children }: PropsWithChildren) {
   return (
     <QueryClientProvider client={queryClient}>
-      <SkeletonTheme
-        baseColor="var(--app-surface-subtle)"
-        highlightColor="var(--app-surface)"
-        borderRadius="0.375rem"
-      >
-        <AuthProvider>
-          <ToastProvider>{children}</ToastProvider>
-        </AuthProvider>
-      </SkeletonTheme>
+      <ToastProvider>
+        <SkeletonTheme
+          baseColor="var(--app-surface-subtle)"
+          highlightColor="var(--app-surface)"
+          borderRadius="0.375rem"
+        >
+          <AuthProvider>{children}</AuthProvider>
+        </SkeletonTheme>
+      </ToastProvider>
     </QueryClientProvider>
   )
 }

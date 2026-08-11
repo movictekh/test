@@ -35,6 +35,7 @@ import {
   type NavigationIconName,
 } from '@/app/navigation'
 import { cn } from '@/shared/lib/cn'
+import { ConfirmDialog } from '@/shared/ui'
 import { Button } from '@/shared/ui/button'
 
 const navigationIcons: Record<NavigationIconName, typeof IconLayoutDashboard> = {
@@ -64,6 +65,7 @@ interface AppShellProps extends PropsWithChildren {
 
 export function AppShell({ children, navigation }: AppShellProps) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     if (typeof window === 'undefined') return false
     return window.localStorage.getItem('bomach.operations.sidebar-collapsed') === 'true'
@@ -261,7 +263,7 @@ export function AppShell({ children, navigation }: AppShellProps) {
             size="sm"
             fullWidth
             className={cn('justify-start px-2.5', sidebarCollapsed && 'justify-center px-0')}
-            onClick={handleSignOut}
+            onClick={() => setLogoutConfirmOpen(true)}
           >
             <IconLogout size={16} />
             {sidebarCollapsed ? null : 'Sign out'}
@@ -277,6 +279,20 @@ export function AppShell({ children, navigation }: AppShellProps) {
       >
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">{children}</div>
       </div>
+
+      <ConfirmDialog
+        open={logoutConfirmOpen}
+        tone="danger"
+        title="Sign out of Bomach?"
+        description="You will need to log in again to continue working in this workspace."
+        confirmLabel="Sign out"
+        cancelLabel="Stay signed in"
+        onCancel={() => setLogoutConfirmOpen(false)}
+        onConfirm={async () => {
+          setLogoutConfirmOpen(false)
+          await handleSignOut()
+        }}
+      />
     </div>
   )
 }

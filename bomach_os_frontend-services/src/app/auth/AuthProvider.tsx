@@ -7,12 +7,14 @@ import { isAuthAccessError } from '@/modules/auth/errors/auth-access-error'
 import type { LoginCredentials, LoginResult } from '@/modules/auth/types/auth.types'
 import { redirectToSessionExpiredLogin } from '@/shared/auth/session-navigation'
 import { tokenStore } from '@/shared/auth/token-store'
+import { useToast } from '@/shared/ui'
 
 import { AuthContext } from './auth.context'
 import type { AuthContextValue, AuthUser } from './auth.types'
 
 export function AuthProvider({ children }: PropsWithChildren) {
   const queryClient = useQueryClient()
+  const toast = useToast()
   const currentUserQueryOptions = useMemo(() => authQueries.currentUser(), [])
   const currentUserQuery = useQuery(currentUserQueryOptions)
   const { mutateAsync: loginMutateAsync } = useMutation(authMutations.login())
@@ -63,6 +65,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
             queryKey: currentUserQueryOptions.queryKey,
           })
           const user = await loadCurrentUser()
+          toast.success('Signed in successfully', {
+            description: `${user.name} is now signed in.`,
+          })
           return { type: 'authenticated', user }
         } catch (error) {
           // Login issued tokens, but staff bootstrap failed. Clear the half-session
@@ -75,7 +80,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
       return result
     },
-    [currentUserQueryOptions.queryKey, loadCurrentUser, loginMutateAsync, queryClient],
+    [currentUserQueryOptions.queryKey, loadCurrentUser, loginMutateAsync, queryClient, toast],
   )
 
   const verifyTwoFactor = useCallback(
@@ -85,7 +90,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
         await queryClient.invalidateQueries({
           queryKey: currentUserQueryOptions.queryKey,
         })
-        return await loadCurrentUser()
+        const user = await loadCurrentUser()
+        toast.success('Signed in successfully', {
+          description: `${user.name} is now signed in.`,
+        })
+        return user
       } catch (error) {
         if (tokenStore.getAccessToken()) {
           tokenStore.clear('manual')
@@ -94,7 +103,13 @@ export function AuthProvider({ children }: PropsWithChildren) {
         throw error
       }
     },
-    [currentUserQueryOptions.queryKey, loadCurrentUser, queryClient, verifyTwoFactorMutateAsync],
+    [
+      currentUserQueryOptions.queryKey,
+      loadCurrentUser,
+      queryClient,
+      toast,
+      verifyTwoFactorMutateAsync,
+    ],
   )
 
   const signOut = useCallback(async (): Promise<void> => {
@@ -103,8 +118,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
     } finally {
       tokenStore.clear('logout')
       queryClient.clear()
+      toast.success('Signed out', {
+        description: 'You have been logged out of the workspace.',
+      })
     }
-  }, [logoutMutateAsync, queryClient])
+  }, [logoutMutateAsync, queryClient, toast])
 
   const value = useMemo<AuthContextValue>(
     () => ({
