@@ -26,6 +26,7 @@ import {
 import {
   ExperienceIntelligenceSectionPage,
   FeedbackQualityLivePage,
+  ReportsAnalyticsLivePage,
   type ExperienceIntelligenceSection,
 } from '@/modules/experience-intelligence'
 import {
@@ -201,6 +202,7 @@ function AppShellRoute() {
   if (section === 'execution-tasks') return <ExecutionTasksLivePage recordSearch={recordSearch} />
   if (section === 'deliverables') return <DeliverablesLivePage recordSearch={recordSearch} />
   if (section === 'feedback-quality') return <FeedbackQualityLivePage recordSearch={recordSearch} />
+  if (section === 'reports-analytics') return <ReportsAnalyticsLivePage />
   if (section === 'real-estate-inventory')
     return <RealEstateInventoryLivePage recordSearch={recordSearch} />
   if (section === 'survey-engineering-others')
