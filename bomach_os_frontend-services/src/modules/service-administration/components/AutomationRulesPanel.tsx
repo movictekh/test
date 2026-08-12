@@ -241,6 +241,7 @@ function RuleEditor({
   )
   const [selectedRecipientIds, setSelectedRecipientIds] = useState<number[]>(recipientIds(rule))
   const [recipientSearch, setRecipientSearch] = useState('')
+  const [pendingRecipientId, setPendingRecipientId] = useState(0)
   const [title, setTitle] = useState(rule ? configText(rule, 'title') : '')
   const [message, setMessage] = useState(rule ? configText(rule, 'message') : '')
   const [link, setLink] = useState(rule ? configText(rule, 'link') : '')
@@ -260,6 +261,22 @@ function RuleEditor({
   )
   const unknownSelectedRecipientIds = selectedRecipientIds.filter(
     (id) => !availableRecipients.some((item) => item.userId === id),
+  )
+  const filteredRecipients = availableRecipients.filter((recipient) => {
+    const term = recipientSearch.trim().toLowerCase()
+    if (!term) return true
+    return [
+      recipient.name,
+      recipient.employeeId,
+      recipient.email,
+      recipient.designation,
+      recipient.roleName,
+    ]
+      .filter(Boolean)
+      .some((value) => value.toLowerCase().includes(term))
+  })
+  const selectableRecipients = filteredRecipients.filter(
+    (recipient) => !selectedRecipientIds.includes(recipient.userId),
   )
 
   const toggleRecipient = (userId: number) => {
@@ -428,7 +445,38 @@ function RuleEditor({
                     onChange={(event) => setRecipientSearch(event.target.value)}
                     placeholder="Search by name, employee ID, or email"
                   />
-                  <small>Select one or more people to receive this notification.</small>
+                  <small>Select recipients from the filtered directory.</small>
+                </label>
+
+                <label className="service-admin-config-field service-admin-config-field--full">
+                  <span>Add recipient</span>
+                  <select
+                    value={pendingRecipientId}
+                    onChange={(event) => {
+                      const nextId = Number(event.target.value)
+                      if (!nextId || selectedRecipientIds.includes(nextId)) return
+                      setSelectedRecipientIds((current) => [...current, nextId])
+                      setPendingRecipientId(0)
+                    }}
+                    disabled={
+                      recipientsQuery.isPending ||
+                      recipientsQuery.isError ||
+                      selectableRecipients.length === 0
+                    }
+                  >
+                    <option value={0}>
+                      {selectableRecipients.length > 0
+                        ? 'Select a team member'
+                        : 'No more matching team members'}
+                    </option>
+                    {selectableRecipients.map((recipient) => (
+                      <option key={recipient.userId} value={recipient.userId}>
+                        {recipient.name}
+                        {recipient.designation ? ` · ${recipient.designation}` : ''}
+                        {recipient.roleName ? ` · ${recipient.roleName}` : ''}
+                      </option>
+                    ))}
+                  </select>
                 </label>
 
                 {selectedRecipientIds.length > 0 ? (
@@ -462,45 +510,19 @@ function RuleEditor({
                   </div>
                 ) : null}
 
-                <div className="service-admin-rule-recipient-list service-admin-config-field--full">
-                  {recipientsQuery.isPending ? (
-                    <div className="service-admin-card-subtitle">Loading recipients...</div>
-                  ) : recipientsQuery.isError ? (
-                    <div className="service-admin-card-subtitle">
-                      Recipient directory is not available for this account.
-                    </div>
-                  ) : availableRecipients.length === 0 ? (
-                    <div className="service-admin-card-subtitle">
-                      No matching team members found.
-                    </div>
-                  ) : (
-                    availableRecipients.map((recipient) => {
-                      const checked = selectedRecipientIds.includes(recipient.userId)
-                      return (
-                        <button
-                          key={recipient.userId}
-                          type="button"
-                          className={`service-admin-rule-recipient-option${
-                            checked ? 'service-admin-rule-recipient-option--active' : ''
-                          }`}
-                          onClick={() => toggleRecipient(recipient.userId)}
-                        >
-                          <span className="service-admin-rule-recipient-name">
-                            {recipient.name}
-                          </span>
-                          <span className="service-admin-rule-recipient-meta">
-                            {recipient.employeeId}
-                            {recipient.designation ? ` · ${recipient.designation}` : ''}
-                            {recipient.roleName ? ` · ${recipient.roleName}` : ''}
-                          </span>
-                          <span className="service-admin-rule-recipient-email">
-                            {recipient.email}
-                          </span>
-                        </button>
-                      )
-                    })
-                  )}
-                </div>
+                {recipientsQuery.isPending ? (
+                  <div className="service-admin-card-subtitle service-admin-config-field--full">
+                    Loading recipients...
+                  </div>
+                ) : recipientsQuery.isError ? (
+                  <div className="service-admin-card-subtitle service-admin-config-field--full">
+                    Recipient directory is not available for this account.
+                  </div>
+                ) : filteredRecipients.length === 0 ? (
+                  <div className="service-admin-card-subtitle service-admin-config-field--full">
+                    No matching team members found.
+                  </div>
+                ) : null}
 
                 <label className="service-admin-config-field service-admin-config-field--full">
                   <span>Notification title</span>

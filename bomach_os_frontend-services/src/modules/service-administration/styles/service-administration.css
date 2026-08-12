@@ -2228,8 +2228,9 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
 
 .service-admin-rule-recipient-list {
   display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
-  max-height: 220px;
+  max-height: 180px;
   overflow-y: auto;
   border: 1px solid #e6ebf3;
   border-radius: 10px;
@@ -2243,7 +2244,7 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
   border: 1px solid #e6ebf3;
   border-radius: 10px;
   background: #f8fafc;
-  padding: 9px 10px;
+  padding: 8px 9px;
   text-align: left;
   cursor: pointer;
   transition:
@@ -2260,20 +2261,22 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
 .service-admin-rule-recipient-option--active {
   border-color: #a9c0f6;
   background: #edf2ff;
-  box-shadow: inset 3px 0 0 var(--service-admin-brand);
+  box-shadow:
+    inset 3px 0 0 var(--service-admin-brand),
+    0 0 0 1px rgba(49, 89, 170, 0.12);
 }
 
 .service-admin-rule-recipient-name {
   color: #1f2937;
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 800;
 }
 
 .service-admin-rule-recipient-meta,
 .service-admin-rule-recipient-email {
   color: var(--service-admin-foreground-subtle, #8c95a8);
-  font-size: 8.75px;
-  line-height: 1.35;
+  font-size: 8px;
+  line-height: 1.3;
 }
 
 @media (max-width: 600px) {
@@ -2283,6 +2286,10 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
 
   .service-admin-rule-section {
     padding: 11px;
+  }
+
+  .service-admin-rule-recipient-list {
+    grid-template-columns: 1fr;
   }
 }
 

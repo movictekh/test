@@ -10,7 +10,7 @@ import {
 } from '@tabler/icons-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 
 import { useAuth } from '@/app/auth'
 import { canPerformAction, hasPermission, PERMISSIONS } from '@/app/permissions'
@@ -41,10 +41,48 @@ import {
   type QuickUpdatePlotInput,
 } from '../real-estate/real-estate.types'
 import { validateQuickPlotUpdate } from '../real-estate/real-estate.validation'
-import { BatchCreatePropertiesWorkspace } from '../workspaces/BatchCreatePropertiesWorkspace'
-import { CreateBrokerageLiveWorkspace } from '../workspaces/CreateBrokerageLiveWorkspace'
-import { CreateEstateLiveWorkspace } from '../workspaces/CreateEstateLiveWorkspace'
-import { EditPropertyLiveWorkspace } from '../workspaces/EditPropertyLiveWorkspace'
+
+const BatchCreatePropertiesWorkspace = lazy(() =>
+  import('../workspaces/BatchCreatePropertiesWorkspace').then((module) => ({
+    default: module.BatchCreatePropertiesWorkspace,
+  })),
+)
+
+const CreateBrokerageLiveWorkspace = lazy(() =>
+  import('../workspaces/CreateBrokerageLiveWorkspace').then((module) => ({
+    default: module.CreateBrokerageLiveWorkspace,
+  })),
+)
+
+const CreateEstateLiveWorkspace = lazy(() =>
+  import('../workspaces/CreateEstateLiveWorkspace').then((module) => ({
+    default: module.CreateEstateLiveWorkspace,
+  })),
+)
+
+const EditPropertyLiveWorkspace = lazy(() =>
+  import('../workspaces/EditPropertyLiveWorkspace').then((module) => ({
+    default: module.EditPropertyLiveWorkspace,
+  })),
+)
+
+function RealEstateWorkspaceFallback() {
+  return (
+    <div className="commercial-modal-backdrop" role="presentation">
+      <section
+        className="commercial-modal specialized-real-estate-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Loading workspace"
+      >
+        <div className="commercial-modal-body">
+          <div className="commercial-notice">Loading workspace…</div>
+        </div>
+      </section>
+    </div>
+  )
+}
+
 import '../../commercial/styles/commercial.css'
 import '../styles/specialized-services.css'
 
@@ -836,11 +874,15 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
       </main>
 
       {estateOpen ? (
-        <CreateEstateLiveWorkspace
-          saving={createEstateMutation.isPending}
-          onClose={() => setEstateOpen(false)}
-          onSubmit={(input) => createEstateMutation.mutate(input)}
-        />
+        <Suspense fallback={<RealEstateWorkspaceFallback />}>
+          <CreateEstateLiveWorkspace
+            saving={createEstateMutation.isPending}
+
+            onClose={() => setEstateOpen(false)}
+
+            onSubmit={(input) => createEstateMutation.mutate(input)}
+          />
+        </Suspense>
       ) : null}
       {propertiesOpen && selectedEstate ? (
         <BatchCreatePropertiesWorkspace
@@ -853,12 +895,17 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
         />
       ) : null}
       {brokerageOpen ? (
-        <CreateBrokerageLiveWorkspace
-          estates={estates}
-          saving={createBrokerageMutation.isPending}
-          onClose={() => setBrokerageOpen(false)}
-          onSubmit={(input) => createBrokerageMutation.mutate(input)}
-        />
+        <Suspense fallback={<RealEstateWorkspaceFallback />}>
+          <CreateBrokerageLiveWorkspace
+            estates={estates}
+
+            saving={createBrokerageMutation.isPending}
+
+            onClose={() => setBrokerageOpen(false)}
+
+            onSubmit={(input) => createBrokerageMutation.mutate(input)}
+          />
+        </Suspense>
       ) : null}
       {propertyEditOpen && selectedProperty ? (
         <EditPropertyLiveWorkspace
