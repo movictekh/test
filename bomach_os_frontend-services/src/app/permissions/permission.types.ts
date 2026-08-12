@@ -117,7 +117,6 @@ export const VERIFIED_APP_PERMISSION_VALUES = [
   'feedback.delete',
 
   'reports.view',
-  'audit_logs.list',
 
   'estates.list',
   'estates.view',

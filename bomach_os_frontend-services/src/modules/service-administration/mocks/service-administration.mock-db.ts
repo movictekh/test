@@ -13,7 +13,6 @@ import type {
   ServiceWorkflow,
   WorkflowStage,
 } from '../types/service-administration.types'
-import { appendMockAuditEvent } from '@/shared/audit/mock-audit-store'
 
 const services: ServiceCatalogueItem[] = [
   {
@@ -804,12 +803,6 @@ export function createMockServiceWizard(input: CreateServiceWizardInput) {
     })
   }
 
-  appendMockAuditEvent({
-    area: 'Service',
-    action: `Created service ${serviceId}`,
-    entityType: 'service',
-    entityId: serviceId,
-  })
   return getServiceAdministrationWorkspace()
 }
 
@@ -927,12 +920,6 @@ export function configureMockService(input: ConfigureServiceInput) {
     }
   }
 
-  appendMockAuditEvent({
-    area: 'Service',
-    action: `Updated service ${input.id}`,
-    entityType: 'service',
-    entityId: input.id,
-  })
   return getServiceAdministrationWorkspace()
 }
 
@@ -975,9 +962,5 @@ export function saveMockBranchActivationMatrix(input: SaveBranchActivationMatrix
     service.slaDays = update.slaDays
   }
 
-  appendMockAuditEvent({
-    area: 'Branch Activation',
-    action: `Updated ${input.updates.length} service/branch activation records`,
-  })
   return getServiceAdministrationWorkspace()
 }

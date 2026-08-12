@@ -1,4 +1,4 @@
-export type ExperienceIntelligenceSection = 'feedback-quality' | 'reports-analytics' | 'audit-log'
+export type ExperienceIntelligenceSection = 'feedback-quality' | 'reports-analytics'
 
 export type FeedbackType =
   'Completion' | 'Milestone' | 'Complaint' | 'Defect / Rework' | 'Testimonial' | 'Referral'
@@ -19,19 +19,8 @@ export interface ServiceFeedback {
   followUpAt?: string
 }
 
-export interface AuditEvent {
-  id: string
-  occurredAt: string
-  actor: string
-  area: string
-  action: string
-  entityType?: string
-  entityId?: string
-}
-
 export interface ExperienceIntelligenceWorkspace {
   feedback: ServiceFeedback[]
-  audit: AuditEvent[]
 }
 
 export interface CreateFeedbackInput {
@@ -47,14 +36,6 @@ export interface UpdateFeedbackInput {
   status: FeedbackStatus
   correctiveAction: string
   followUpAt?: string
-}
-
-export interface AppendAuditEventInput {
-  actor: string
-  area: string
-  action: string
-  entityType?: string
-  entityId?: string
 }
 
 export interface FeedbackSummary {

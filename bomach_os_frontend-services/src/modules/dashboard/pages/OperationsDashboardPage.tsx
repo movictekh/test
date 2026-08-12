@@ -202,15 +202,8 @@ function RecentActivityCard({ items }: { items: DashboardActivityItem[] }) {
       <div className="command-center-card-header">
         <div>
           <div className="command-center-card-title">Recent system activity</div>
-          <div className="command-center-card-subtitle">Permanent audit history</div>
+          <div className="command-center-card-subtitle">Recent operational changes</div>
         </div>
-        <Link
-          to="/app/$section"
-          params={{ section: 'audit-log' }}
-          className="command-center-btn command-center-btn-small"
-        >
-          Full log
-        </Link>
       </div>
       <div className="command-center-timeline">
         {items.slice(0, 5).map((item) => (

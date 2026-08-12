@@ -1,5 +1,3 @@
-import { appendMockAuditEvent, getMockAuditEvents } from '@/shared/audit/mock-audit-store'
-
 import type {
   CreateFeedbackInput,
   ExperienceIntelligenceWorkspace,
@@ -55,7 +53,6 @@ function today(): string {
 export function getExperienceIntelligenceWorkspace(): ExperienceIntelligenceWorkspace {
   return {
     feedback,
-    audit: getMockAuditEvents(),
   }
 }
 
@@ -80,13 +77,6 @@ export function createMockFeedback(
     correctiveAction: input.correctiveAction,
   })
 
-  appendMockAuditEvent({
-    area: 'Feedback',
-    action: `Recorded ${id} for ${order.id}`,
-    entityType: 'feedback',
-    entityId: id,
-  })
-
   return getExperienceIntelligenceWorkspace()
 }
 
@@ -102,13 +92,6 @@ export function updateMockFeedback(
 
   if (input.followUpAt) item.followUpAt = input.followUpAt
   else delete item.followUpAt
-
-  appendMockAuditEvent({
-    area: 'Feedback',
-    action: `Updated ${feedbackId} to ${input.status}`,
-    entityType: 'feedback',
-    entityId: feedbackId,
-  })
 
   return getExperienceIntelligenceWorkspace()
 }

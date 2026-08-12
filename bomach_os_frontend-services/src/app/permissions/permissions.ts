@@ -118,7 +118,6 @@ export const PERMISSIONS = {
   feedbackDelete: 'feedback.delete',
 
   reportsView: 'reports.view',
-  auditLogsList: 'audit_logs.list',
 
   estatesList: 'estates.list',
   estatesView: 'estates.view',

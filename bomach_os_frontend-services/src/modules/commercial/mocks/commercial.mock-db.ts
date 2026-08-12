@@ -13,7 +13,6 @@ import type {
 } from '../types/commercial.types'
 import type { UpdateServiceRequestInput } from '../api/commercial.api'
 import { formatCurrency } from '@/shared/lib/formatters'
-import { appendMockAuditEvent } from '@/shared/audit/mock-audit-store'
 
 const requests: CommercialServiceRequest[] = [
   {
@@ -809,12 +808,6 @@ export function createMockInvoice(input: CreateInvoiceInput): CommercialWorkspac
     sourceRequest.nextAction = `Collect payment for ${id}`
   }
 
-  appendMockAuditEvent({
-    area: 'Invoice',
-    action: `Created ${id} from ${quotation.id}`,
-    entityType: 'invoice',
-    entityId: id,
-  })
   return getCommercialWorkspace()
 }
 
@@ -843,12 +836,6 @@ export function recordMockPayment(input: RecordPaymentInput): CommercialWorkspac
   invoice.status =
     invoice.balance === 0 ? 'Paid' : invoice.amountPaid > 0 ? 'Part Paid' : invoice.status
 
-  appendMockAuditEvent({
-    area: 'Payment',
-    action: `Recorded ${formatCurrency(input.amount)} against ${invoice.id}`,
-    entityType: 'invoice',
-    entityId: invoice.id,
-  })
   return getCommercialWorkspace()
 }
 
@@ -878,12 +865,6 @@ export function decideMockApproval(input: DecideApprovalInput): CommercialWorksp
     }
   }
 
-  appendMockAuditEvent({
-    area: 'Approval',
-    action: `${approval.id} ${approval.status.toLowerCase()}: ${approval.entityId}`,
-    entityType: 'approval',
-    entityId: approval.id,
-  })
   return getCommercialWorkspace()
 }
 
@@ -1020,12 +1001,6 @@ export function createMockQuotation(input: CreateQuotationInput): CommercialWork
     }
   }
 
-  appendMockAuditEvent({
-    area: 'Quotation',
-    action: `Created ${id} for ${source.id}`,
-    entityType: 'quotation',
-    entityId: id,
-  })
   return getCommercialWorkspace()
 }
 
@@ -1121,12 +1096,6 @@ export function updateMockQuotation(id: string, input: UpdateQuotationInput): Co
     source.nextAction = `Review revised quotation ${id}`
   }
 
-  appendMockAuditEvent({
-    area: 'Quotation',
-    action: `Updated ${id}: ${action}`,
-    entityType: 'quotation',
-    entityId: id,
-  })
   return getCommercialWorkspace()
 }
 
@@ -1189,12 +1158,6 @@ export function createMockServiceRequest(input: CreateServiceRequestInput): Comm
     ],
   })
 
-  appendMockAuditEvent({
-    area: 'Request',
-    action: `Created ${id} for ${input.client}`,
-    entityType: 'request',
-    entityId: id,
-  })
   return getCommercialWorkspace()
 }
 
@@ -1217,11 +1180,5 @@ export function updateMockServiceRequest(
     })
   }
 
-  appendMockAuditEvent({
-    area: 'Request',
-    action: `Updated ${id}${input.status ? ` to ${input.status}` : ''}`,
-    entityType: 'request',
-    entityId: id,
-  })
   return getCommercialWorkspace()
 }

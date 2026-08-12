@@ -7,7 +7,6 @@ import { SectionLoadingState } from '@/app/loading/SectionLoadingState'
 import type { AppRecordSearch } from '@/shared/navigation'
 import type { ServiceAdministrationSection } from '@/modules/service-administration'
 import { ModuleShellPage } from '@/modules/foundation/pages/ModuleShellPage'
-import type { ExperienceIntelligenceSection } from '@/modules/experience-intelligence'
 
 const ServiceAdministrationSectionPage = lazy(() =>
   import('@/modules/service-administration').then((module) => ({
@@ -81,24 +80,12 @@ const ReportsAnalyticsLivePage = lazy(() =>
   })),
 )
 
-const ExperienceIntelligenceSectionPage = lazy(() =>
-  import('@/modules/experience-intelligence').then((module) => ({
-    default: module.ExperienceIntelligenceSectionPage,
-  })),
-)
-
 const serviceAdministrationSections = new Set<ServiceAdministrationSection>([
   'service-catalogue',
   'calculator-library',
   'request-form-builder',
   'workflow-designer',
   'branch-activation',
-])
-
-const experienceIntelligenceSections = new Set<ExperienceIntelligenceSection>([
-  'feedback-quality',
-  'reports-analytics',
-  'audit-log',
 ])
 
 export type AppSectionSearch = AppRecordSearch & {
@@ -255,15 +242,6 @@ function AppShellRouteContent() {
     return (
       <ServiceAdministrationSectionPage
         section={section as ServiceAdministrationSection}
-        recordSearch={recordSearch}
-      />
-    )
-  }
-
-  if (experienceIntelligenceSections.has(section as ExperienceIntelligenceSection)) {
-    return (
-      <ExperienceIntelligenceSectionPage
-        section={section as ExperienceIntelligenceSection}
         recordSearch={recordSearch}
       />
     )

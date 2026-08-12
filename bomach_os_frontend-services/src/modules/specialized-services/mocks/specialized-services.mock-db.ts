@@ -8,7 +8,6 @@ import type {
   UpdatePlotInput,
 } from '../types/specialized-services.types'
 import { buildPlots } from '../workspaces/specialized-services.rules'
-import { appendMockAuditEvent } from '@/shared/audit/mock-audit-store'
 const plots = buildPlots(50, 500, 4_500_000)
 for (const no of ['03', '07', '18', '26', '39']) {
   const p = plots.find((x) => x.no === no)
@@ -133,15 +132,6 @@ export function createMockEstate(input: CreateEstateInput) {
     location: input.location,
     plots: buildPlots(input.plotCount, input.plotSize, input.unitPrice),
   })
-  const created = estates.at(-1)
-  if (created) {
-    appendMockAuditEvent({
-      area: 'Estate',
-      action: `Created ${created.name}`,
-      entityType: 'estate',
-      entityId: created.id,
-    })
-  }
   return getSpecializedWorkspace()
 }
 export function updateMockPlot(input: UpdatePlotInput) {
@@ -152,26 +142,9 @@ export function updateMockPlot(input: UpdatePlotInput) {
     p.client = input.client
     p.price = input.price
   }
-  if (p) {
-    appendMockAuditEvent({
-      area: 'Plot',
-      action: `Updated ${input.estateId} plot ${input.plotNo} to ${input.status}`,
-      entityType: 'plot',
-      entityId: `${input.estateId}-${input.plotNo}`,
-    })
-  }
   return getSpecializedWorkspace()
 }
 export function createMockBrokerageProperty(input: CreateBrokeragePropertyInput) {
   brokerage.unshift({ id: `PROP-${Date.now().toString().slice(-4)}`, ...input })
-  const created = brokerage[0]
-  if (created) {
-    appendMockAuditEvent({
-      area: 'Property',
-      action: `Created brokerage listing ${created.id}`,
-      entityType: 'property',
-      entityId: created.id,
-    })
-  }
   return getSpecializedWorkspace()
 }

@@ -126,13 +126,6 @@ const definitions: Record<string, SectionLoadingDefinition> = {
     family: 'analytics',
     kpis: 4,
   },
-  'audit-log': {
-    title: 'Audit Log',
-    breadcrumb: 'Intelligence / Accountability',
-    family: 'register',
-    filters: 4,
-    columns: 7,
-  },
   'real-estate-inventory': {
     title: 'Real Estate Inventory',
     breadcrumb: 'Specialized Services / Real Estate',
