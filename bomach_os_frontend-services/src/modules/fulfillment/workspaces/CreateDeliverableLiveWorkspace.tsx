@@ -227,7 +227,12 @@ export function CreateDeliverableLiveWorkspace({
                 : 'Select a Service Order to continue'}
             </p>
           </div>
-          <button type="button" className="commercial-modal-close" onClick={onClose} aria-label="Close">
+          <button
+            type="button"
+            className="commercial-modal-close"
+            onClick={onClose}
+            aria-label="Close"
+          >
             ×
           </button>
         </header>
@@ -272,7 +277,9 @@ export function CreateDeliverableLiveWorkspace({
                     >
                       <option value={0}>No milestone</option>
                       {[...(activeOrder?.milestones ?? [])]
-                        .sort((left, right) => left.sortOrder - right.sortOrder || left.id - right.id)
+                        .sort(
+                          (left, right) => left.sortOrder - right.sortOrder || left.id - right.id,
+                        )
                         .map((milestone) => (
                           <option key={milestone.id} value={milestone.id}>
                             {milestone.name} · {label(milestone.status)}
@@ -292,7 +299,9 @@ export function CreateDeliverableLiveWorkspace({
                       disabled={!activeOrder || tasksQuery.isPending}
                       onChange={(event) => field.handleChange(Number(event.target.value))}
                     >
-                      <option value={0}>{tasksQuery.isPending ? 'Loading tasks…' : 'No task link'}</option>
+                      <option value={0}>
+                        {tasksQuery.isPending ? 'Loading tasks…' : 'No task link'}
+                      </option>
                       {tasks.map((task) => (
                         <option key={task.id} value={task.id}>
                           {task.taskNumber} · {task.title} · {label(task.status)}
@@ -307,11 +316,15 @@ export function CreateDeliverableLiveWorkspace({
                 {(field) => (
                   <label className="commercial-field">
                     <span>Owner</span>
-                    <select value={field.state.value} onChange={(event) => field.handleChange(Number(event.target.value))}>
+                    <select
+                      value={field.state.value}
+                      onChange={(event) => field.handleChange(Number(event.target.value))}
+                    >
                       <option value={0}>Unassigned</option>
                       {employees.map((employee) => (
                         <option key={employee.id} value={employee.id}>
-                          {employee.name}{employee.designation ? ` · ${employee.designation}` : ''}
+                          {employee.name}
+                          {employee.designation ? ` · ${employee.designation}` : ''}
                         </option>
                       ))}
                     </select>
@@ -351,8 +364,17 @@ export function CreateDeliverableLiveWorkspace({
                 {(field) => (
                   <label className="commercial-field">
                     <span>Type</span>
-                    <select value={field.state.value} onChange={(event) => field.handleChange(event.target.value as DeliverableType)}>
-                      {deliverableTypes.map((type) => <option key={type.value} value={type.value}>{type.label}</option>)}
+                    <select
+                      value={field.state.value}
+                      onChange={(event) =>
+                        field.handleChange(event.target.value as DeliverableType)
+                      }
+                    >
+                      {deliverableTypes.map((type) => (
+                        <option key={type.value} value={type.value}>
+                          {type.label}
+                        </option>
+                      ))}
                     </select>
                   </label>
                 )}
@@ -362,7 +384,12 @@ export function CreateDeliverableLiveWorkspace({
                 {(field) => (
                   <label className="commercial-field">
                     <span>Version *</span>
-                    <input required value={field.state.value} onChange={(event) => field.handleChange(event.target.value)} placeholder="v1" />
+                    <input
+                      required
+                      value={field.state.value}
+                      onChange={(event) => field.handleChange(event.target.value)}
+                      placeholder="v1"
+                    />
                   </label>
                 )}
               </form.Field>
@@ -371,7 +398,11 @@ export function CreateDeliverableLiveWorkspace({
                 {(field) => (
                   <label className="commercial-field commercial-field--full">
                     <span>Description</span>
-                    <textarea value={field.state.value} onChange={(event) => field.handleChange(event.target.value)} placeholder="Describe the document, output or evidence." />
+                    <textarea
+                      value={field.state.value}
+                      onChange={(event) => field.handleChange(event.target.value)}
+                      placeholder="Describe the document, output or evidence."
+                    />
                   </label>
                 )}
               </form.Field>
@@ -395,7 +426,10 @@ export function CreateDeliverableLiveWorkspace({
                   </div>
                   <div>
                     <strong>Select document</strong>
-                    <small>Upload the file now and the deliverable will store the reference automatically.</small>
+                    <small>
+                      Upload the file now and the deliverable will store the reference
+                      automatically.
+                    </small>
                   </div>
                   <input
                     type="file"
@@ -428,8 +462,12 @@ export function CreateDeliverableLiveWorkspace({
                             <div className="commercial-upload-progress-bar" />
                           </div>
                         ) : null}
-                        {documentUpload.status === 'uploaded' ? <small>Ready to save this deliverable</small> : null}
-                        {documentUpload.status === 'error' ? <small>{documentUpload.error}</small> : null}
+                        {documentUpload.status === 'uploaded' ? (
+                          <small>Ready to save this deliverable</small>
+                        ) : null}
+                        {documentUpload.status === 'error' ? (
+                          <small>{documentUpload.error}</small>
+                        ) : null}
                       </div>
                       <div className="commercial-upload-actions">
                         {documentUpload.status === 'error' ? (
@@ -448,13 +486,19 @@ export function CreateDeliverableLiveWorkspace({
                           onClick={resetDocumentUpload}
                           aria-label={`Remove ${documentUpload.fileName}`}
                         >
-                          {documentUpload.status === 'uploading' ? <IconX size={14} /> : <IconTrash size={14} />}
+                          {documentUpload.status === 'uploading' ? (
+                            <IconX size={14} />
+                          ) : (
+                            <IconTrash size={14} />
+                          )}
                         </button>
                       </div>
                     </article>
                   </div>
                 ) : (
-                  <small>Choose a file so the system can upload it and store the reference automatically.</small>
+                  <small>
+                    Choose a file so the system can upload it and store the reference automatically.
+                  </small>
                 )}
               </div>
             </div>
@@ -481,7 +525,11 @@ export function CreateDeliverableLiveWorkspace({
                         if (next === 'client') form.setFieldValue('clientVisible', true)
                       }}
                     >
-                      {deliverableApprovalModes.map((mode) => <option key={mode.value} value={mode.value}>{mode.label}</option>)}
+                      {deliverableApprovalModes.map((mode) => (
+                        <option key={mode.value} value={mode.value}>
+                          {mode.label}
+                        </option>
+                      ))}
                     </select>
                   </label>
                 )}
@@ -508,8 +556,14 @@ export function CreateDeliverableLiveWorkspace({
         </div>
 
         <footer className="commercial-modal-footer">
-          <button type="button" className="commercial-btn" disabled={saving} onClick={onClose}>Cancel</button>
-          <button type="submit" className="commercial-btn commercial-btn-primary" disabled={saving || !activeOrder}>
+          <button type="button" className="commercial-btn" disabled={saving} onClick={onClose}>
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="commercial-btn commercial-btn-primary"
+            disabled={saving || !activeOrder}
+          >
             {saving ? 'Adding...' : 'Add Deliverable'}
           </button>
         </footer>

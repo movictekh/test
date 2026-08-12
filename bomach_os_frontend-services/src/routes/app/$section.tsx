@@ -174,23 +174,34 @@ function AppShellRoute() {
 
   if (section === 'service-requests') return <ServiceRequestsLivePage recordSearch={recordSearch} />
   if (section === 'quotations') return <QuotationsLivePage recordSearch={recordSearch} />
-  if (section === 'invoices-payments') return <InvoicesPaymentsLivePage recordSearch={recordSearch} />
+  if (section === 'invoices-payments')
+    return <InvoicesPaymentsLivePage recordSearch={recordSearch} />
   if (section === 'approvals') return <ApprovalsLivePage recordSearch={recordSearch} />
   if (section === 'service-orders') return <ServiceOrdersLivePage recordSearch={recordSearch} />
   if (section === 'execution-tasks') return <ExecutionTasksLivePage recordSearch={recordSearch} />
   if (section === 'deliverables') return <DeliverablesLivePage recordSearch={recordSearch} />
-  if (section === 'real-estate-inventory') return <RealEstateInventoryLivePage recordSearch={recordSearch} />
+  if (section === 'real-estate-inventory')
+    return <RealEstateInventoryLivePage recordSearch={recordSearch} />
 
   if (commercialSections.has(section as CommercialSection)) {
-    return <CommercialSectionPage section={section as CommercialSection} recordSearch={recordSearch} />
+    return (
+      <CommercialSectionPage section={section as CommercialSection} recordSearch={recordSearch} />
+    )
   }
 
   if (serviceAdministrationSections.has(section as ServiceAdministrationSection)) {
-    return <ServiceAdministrationSectionPage section={section as ServiceAdministrationSection} recordSearch={recordSearch} />
+    return (
+      <ServiceAdministrationSectionPage
+        section={section as ServiceAdministrationSection}
+        recordSearch={recordSearch}
+      />
+    )
   }
 
   if (fulfillmentSections.has(section as FulfillmentSection)) {
-    return <FulfillmentSectionPage section={section as FulfillmentSection} recordSearch={recordSearch} />
+    return (
+      <FulfillmentSectionPage section={section as FulfillmentSection} recordSearch={recordSearch} />
+    )
   }
 
   if (specializedSections.has(section as SpecializedServicesSection)) {
@@ -198,7 +209,12 @@ function AppShellRoute() {
   }
 
   if (experienceIntelligenceSections.has(section as ExperienceIntelligenceSection)) {
-    return <ExperienceIntelligenceSectionPage section={section as ExperienceIntelligenceSection} recordSearch={recordSearch} />
+    return (
+      <ExperienceIntelligenceSectionPage
+        section={section as ExperienceIntelligenceSection}
+        recordSearch={recordSearch}
+      />
+    )
   }
 
   const title = formatSectionTitle(section)

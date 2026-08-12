@@ -3,9 +3,7 @@ import type { Deliverable, PaginatedDeliverables } from './deliverable.types'
 type RecordValue = Record<string, unknown>
 
 const record = (value: unknown): RecordValue =>
-  typeof value === 'object' && value !== null && !Array.isArray(value)
-    ? (value as RecordValue)
-    : {}
+  typeof value === 'object' && value !== null && !Array.isArray(value) ? (value as RecordValue) : {}
 
 const array = (value: unknown): unknown[] => (Array.isArray(value) ? value : [])
 const string = (value: unknown, fallback = '') => (typeof value === 'string' ? value : fallback)
@@ -15,11 +13,9 @@ const number = (value: unknown, fallback = 0) => {
   return Number.isFinite(parsed) ? parsed : fallback
 }
 
-const nullableNumber = (value: unknown) =>
-  value == null || value === '' ? null : number(value)
+const nullableNumber = (value: unknown) => (value == null || value === '' ? null : number(value))
 
-const nullableString = (value: unknown) =>
-  value == null || value === '' ? null : string(value)
+const nullableString = (value: unknown) => (value == null || value === '' ? null : string(value))
 
 export function mapDeliverable(payload: unknown): Deliverable {
   const value = record(payload)

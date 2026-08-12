@@ -20,6 +20,7 @@
     "sync": "bash scripts/sync-to-services.sh"
   },
   "dependencies": {
+    "@eh1z/nigerian-locations": "^1.0.3",
     "@fontsource-variable/inter": "^5.3.0",
     "@tabler/icons-react": "^3.46.0",
     "@tailwindcss/vite": "^4.3.3",

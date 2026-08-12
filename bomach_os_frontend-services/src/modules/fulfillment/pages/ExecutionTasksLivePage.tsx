@@ -696,9 +696,7 @@ export function ExecutionTasksLivePage({ recordSearch }: { recordSearch: AppSect
         open={confirmAction !== null}
         tone={confirmAction?.kind === 'delete' ? 'danger' : 'warning'}
         title={
-          confirmAction?.kind === 'delete'
-            ? 'Delete execution task?'
-            : 'Cancel execution task?'
+          confirmAction?.kind === 'delete' ? 'Delete execution task?' : 'Cancel execution task?'
         }
         description={
           confirmAction?.kind === 'delete'
@@ -707,9 +705,7 @@ export function ExecutionTasksLivePage({ recordSearch }: { recordSearch: AppSect
         }
         confirmLabel={confirmAction?.kind === 'delete' ? 'Delete Task' : 'Cancel Task'}
         cancelLabel="Keep Task"
-        isConfirming={
-          deleteMutation.isPending || cancelMutation.isPending
-        }
+        isConfirming={deleteMutation.isPending || cancelMutation.isPending}
         onCancel={() => setConfirmAction(null)}
         onConfirm={() => {
           if (!confirmAction) return

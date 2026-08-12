@@ -1,9 +1,4 @@
-export type DeliverableStatus =
-  | 'draft'
-  | 'under_review'
-  | 'approved'
-  | 'rejected'
-  | 'superseded'
+export type DeliverableStatus = 'draft' | 'under_review' | 'approved' | 'rejected' | 'superseded'
 
 export type DeliverableType =
   | 'report'

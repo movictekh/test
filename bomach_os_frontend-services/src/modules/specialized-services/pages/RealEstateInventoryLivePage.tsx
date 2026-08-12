@@ -1,120 +1,885 @@
-import { IconPlus,IconRefresh,IconSearch,IconTrash } from '@tabler/icons-react'
-import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query'
+import {
+  IconBuilding,
+  IconFilePlus,
+  IconHome,
+  IconMap2,
+  IconPlus,
+  IconRefresh,
+  IconSearch,
+  IconTrash,
+} from '@tabler/icons-react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { useCallback,useEffect,useMemo,useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+
 import { useAuth } from '@/app/auth'
-import { hasPermission,PERMISSIONS } from '@/app/permissions'
+import { canPerformAction, hasPermission, PERMISSIONS } from '@/app/permissions'
 import type { AppSectionSearch } from '@/routes/app/$section'
 import { presentError } from '@/shared/errors'
 import { formatCurrency } from '@/shared/lib/formatters'
-import { withOptionalSearchValue,withoutSearchKeys } from '@/shared/navigation/search-state'
-import { ErrorState,useToast } from '@/shared/ui'
-import { EmptyState } from '@/shared/ui/empty-state'
+import { withOptionalSearchValue, withoutSearchKeys } from '@/shared/navigation/search-state'
+import { ErrorState, useToast } from '@/shared/ui'
 import { ConfirmDialog } from '@/shared/ui/confirm-dialog'
-import { CompactActionButton,CompactPageToolbar,ModulePageFrame } from '@/shared/ui/module-controls'
+import { EmptyState } from '@/shared/ui/empty-state'
+import {
+  CompactActionButton,
+  CompactPageToolbar,
+  ModulePageFrame,
+} from '@/shared/ui/module-controls'
+
 import { realEstateApi } from '../real-estate/real-estate.api'
 import { realEstateKeys } from '../real-estate/real-estate.keys'
 import { realEstateQueries } from '../real-estate/real-estate.queries'
-import { propertyStatuses,type CreateEstateInput,type CreateBrokerageInput,type EstatePlotLayoutItem,type PropertyStatus,type QuickUpdatePlotInput,type BrokerageVerificationStatus } from '../real-estate/real-estate.types'
+import {
+  propertyStatuses,
+  type BrokerageVerificationStatus,
+  type CreateBrokerageInput,
+  type CreateEstateInput,
+  type CreatePropertyInput,
+  type Property,
+  type PropertyStatus,
+  type QuickUpdatePlotInput,
+} from '../real-estate/real-estate.types'
 import { validateQuickPlotUpdate } from '../real-estate/real-estate.validation'
-import { CreateEstateLiveWorkspace } from '../workspaces/CreateEstateLiveWorkspace'
 import { BatchCreatePropertiesWorkspace } from '../workspaces/BatchCreatePropertiesWorkspace'
 import { CreateBrokerageLiveWorkspace } from '../workspaces/CreateBrokerageLiveWorkspace'
-import '../styles/specialized-services.css'
+import { CreateEstateLiveWorkspace } from '../workspaces/CreateEstateLiveWorkspace'
+import { EditPropertyLiveWorkspace } from '../workspaces/EditPropertyLiveWorkspace'
 import '../../commercial/styles/commercial.css'
+import '../styles/specialized-services.css'
 
-const plotClass=(s:PropertyStatus)=>s==='available'?'av':s==='reserved'?'rs':s==='sold'?'sd':'hd'
-const plotLabel=(p:EstatePlotLayoutItem)=>p.plotNumber!=null?String(p.plotNumber).padStart(2,'0'):p.propertyName
+function statusClass(status: PropertyStatus) {
+  if (status === 'available') return 'av'
+  if (status === 'reserved') return 'rs'
+  if (status === 'sold') return 'sd'
+  return 'hd'
+}
 
-export function RealEstateInventoryLivePage({recordSearch}:{recordSearch:AppSectionSearch}) {
- const {user}=useAuth(),navigate=useNavigate(),qc=useQueryClient(),toast=useToast()
- const estateId=recordSearch.estate?Number(recordSearch.estate):null,plotId=recordSearch.plot?Number(recordSearch.plot):null
- const [searchDraft,setSearchDraft]=useState(recordSearch.search??''),[sync,setSync]=useState(recordSearch.search??'')
- const [createEstate,setCreateEstate]=useState(false),[batch,setBatch]=useState(false),[createBrokerage,setCreateBrokerage]=useState(false)
- const [deletePropertyId,setDeletePropertyId]=useState<number|null>(null)
- const [editStatus,setEditStatus]=useState<PropertyStatus>('available'),[editClient,setEditClient]=useState(''),[editPrice,setEditPrice]=useState(0),[formError,setFormError]=useState('')
- const canEstateList=hasPermission(user,PERMISSIONS.estatesList),canEstateView=hasPermission(user,PERMISSIONS.estatesView),canEstateCreate=hasPermission(user,PERMISSIONS.estatesCreate)
- const canPropertyList=hasPermission(user,PERMISSIONS.propertiesList),canPropertyCreate=hasPermission(user,PERMISSIONS.propertiesCreate),canPropertyUpdate=hasPermission(user,PERMISSIONS.propertiesUpdate),canPropertyDelete=hasPermission(user,PERMISSIONS.propertiesDelete)
- const canBrokerageList=hasPermission(user,PERMISSIONS.brokerageList),canBrokerageCreate=hasPermission(user,PERMISSIONS.brokerageCreate),canBrokerageUpdate=hasPermission(user,PERMISSIONS.brokerageUpdate),canBrokerageDelete=hasPermission(user,PERMISSIONS.brokerageDelete)
+function kpiTone(label: string) {
+  if (label === 'Sold') return 'sd'
+  if (label === 'Reserved') return 'rs'
+  if (label === 'Available') return 'av'
+  return 'nt'
+}
+function TypeIcon({ property }: { property: Property }) {
+  if (property.propertyType === 'plot') return <IconMap2 size={15} />
+  if (property.propertyType === 'residential') return <IconHome size={15} />
+  return <IconBuilding size={15} />
+}
+function secondary(property: Property) {
+  if (property.propertyType === 'plot')
+    return `${property.plotSize ?? '—'} ${property.plotSizeUnit || 'sqm'}`
+  if (property.propertyType === 'residential')
+    return `${property.buildingTypeResidentialDisplay || property.buildingTypeResidential || 'Residential'} · ${property.bedrooms ?? '—'} bed · ${property.bathrooms ?? '—'} bath`
+  return `${property.buildingTypeCommercialDisplay || property.buildingTypeCommercial || 'Commercial'} · ${property.numberOfFloors ?? '—'} floor(s) · ${property.unitsOffices ?? '—'} unit(s)`
+}
 
- const estates=useQuery({...realEstateQueries.estates({...(recordSearch.search?{search:recordSearch.search}:{}),page:1,limit:100}),enabled:canEstateList})
- const detail=useQuery({...realEstateQueries.detail(estateId??0),enabled:Boolean(estateId)&&canEstateView})
- const stats=useQuery({...realEstateQueries.stats(estateId??0),enabled:Boolean(estateId)&&canEstateView})
- const layout=useQuery({...realEstateQueries.layout(estateId??0),enabled:Boolean(estateId)&&canPropertyList})
- const properties=useQuery({...realEstateQueries.properties(estateId??0,{page:1,limit:100}),enabled:Boolean(estateId)&&canPropertyList})
- const brokerage=useQuery({...realEstateQueries.brokerage({page:1,limit:8}),enabled:canBrokerageList})
- const brokerageStats=useQuery({...realEstateQueries.brokerageStats(),enabled:canBrokerageList})
+function SelectedPropertyForm({
+  selectedEstateName,
+  selectedProperty,
+  canPropertyUpdate,
+  canPropertyDelete,
+  updatePending,
+  formError,
+  setFormError,
+  onSubmit,
+  onDelete,
+  onEdit,
+}: {
+  selectedEstateName: string
+  selectedProperty: Property
+  canPropertyUpdate: boolean
+  canPropertyDelete: boolean
+  updatePending: boolean
+  formError: string
+  setFormError: (value: string) => void
+  onSubmit: (input: QuickUpdatePlotInput) => void
+  onDelete: () => void
+  onEdit: () => void
+}) {
+  const [propertyStatusDraft, setPropertyStatusDraft] = useState<PropertyStatus>(
+    selectedProperty.status,
+  )
+  const needsClientName = propertyStatusDraft === 'reserved' || propertyStatusDraft === 'sold'
 
- const setSearchValue=useCallback(function<Key extends keyof AppSectionSearch>(key:Key,value:AppSectionSearch[Key]|''|null){void navigate({to:'/app/$section',params:{section:'real-estate-inventory'},search:prev=>({...withoutSearchKeys(prev,[key]),...withOptionalSearchValue<AppSectionSearch,Key>(key,value)}),replace:true})},[navigate])
- if((recordSearch.search??'')!==sync){setSync(recordSearch.search??'');setSearchDraft(recordSearch.search??'')}
- useEffect(()=>{if(searchDraft===(recordSearch.search??''))return;const t=window.setTimeout(()=>setSearchValue('search',searchDraft),350);return()=>clearTimeout(t)},[searchDraft,recordSearch.search,setSearchValue])
- const estateOptions=useMemo(()=>estates.data?.items??[],[estates.data?.items])
- useEffect(()=>{if(estateId||!estateOptions[0])return;void navigate({to:'/app/$section',params:{section:'real-estate-inventory'},search:p=>({...p,estate:String(estateOptions[0]!.id)}),replace:true})},[estateId,estateOptions,navigate])
- const selectedEstate=detail.data??estateOptions.find(x=>x.id===estateId)??null
- const selectedPlot=(layout.data??[]).find(x=>x.id===plotId)??null
- useEffect(()=>{if(selectedPlot){setEditStatus(selectedPlot.status);setEditClient(selectedPlot.clientName);setEditPrice(selectedPlot.price);setFormError('')}},[selectedPlot])
+  return (
+    <form
+      onSubmit={(event) => {
+        event.preventDefault()
+        const d = new FormData(event.currentTarget)
+        const statusValue = d.get('status')
+        const clientValue = d.get('clientName')
+        const priceValue = d.get('price')
+        const input: QuickUpdatePlotInput = {
+          status: (typeof statusValue === 'string'
+            ? statusValue
+            : selectedProperty.status) as PropertyStatus,
+          clientName:
+            typeof clientValue === 'string' ? clientValue.trim() : selectedProperty.clientName,
+          price:
+            typeof priceValue === 'string' && priceValue !== ''
+              ? Number(priceValue)
+              : selectedProperty.price,
+        }
+        const validationError = validateQuickPlotUpdate(input)
+        setFormError(validationError)
+        if (!validationError) onSubmit(input)
+      }}
+    >
+      <div className="specialized-selected-property">
+        <div className="specialized-selected-property-icon">
+          <TypeIcon property={selectedProperty} />
+        </div>
+        <div>
+          <strong>{selectedProperty.propertyName}</strong>
+          <span>{selectedProperty.propertyTypeDisplay || selectedProperty.propertyType}</span>
+          <small>{secondary(selectedProperty)}</small>
+        </div>
+      </div>
+      <div className="specialized-selected-kpi">
+        <div>{selectedEstateName}</div>
+        <strong>{formatCurrency(selectedProperty.price)}</strong>
+        <span>{selectedProperty.statusDisplay || selectedProperty.status}</span>
+      </div>
+      <label className="specialized-field">
+        <span>Status</span>
+        <select
+          name="status"
+          defaultValue={selectedProperty.status}
+          disabled={!canPropertyUpdate}
+          onChange={(event) => setPropertyStatusDraft(event.target.value as PropertyStatus)}
+        >
+          {propertyStatuses.map((item) => (
+            <option key={item.value} value={item.value}>
+              {item.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      {needsClientName ? (
+        <label className="specialized-field">
+          <span>Client / reservation holder</span>
+          <input
+            name="clientName"
+            defaultValue={selectedProperty.clientName}
+            disabled={!canPropertyUpdate}
+          />
+        </label>
+      ) : null}
+      <label className="specialized-field">
+        <span>Agreed price</span>
+        <input
+          name="price"
+          type="number"
+          defaultValue={selectedProperty.price}
+          disabled={!canPropertyUpdate}
+        />
+      </label>
+      {formError ? (
+        <div className="commercial-notice commercial-notice-red">{formError}</div>
+      ) : null}
+      <button
+        className="specialized-btn specialized-btn-primary specialized-btn-block"
+        disabled={!canPropertyUpdate || updatePending}
+      >
+        Save Property Inventory
+      </button>
+      <button
+        type="button"
+        className="specialized-btn specialized-btn-block"
+        disabled={!canPropertyUpdate}
+        onClick={onEdit}
+      >
+        Edit Property Details
+      </button>
+      {canPropertyDelete ? (
+        <button type="button" className="specialized-btn specialized-btn-block" onClick={onDelete}>
+          <IconTrash size={13} />
+          Delete Property
+        </button>
+      ) : null}
+    </form>
+  )
+}
 
- const invalidateEstate=async(id:number)=>Promise.all([
-   qc.invalidateQueries({queryKey:realEstateKeys.estates()}),qc.invalidateQueries({queryKey:realEstateKeys.estateDetail(id)}),
-   qc.invalidateQueries({queryKey:realEstateKeys.estateStats(id)}),qc.invalidateQueries({queryKey:realEstateKeys.estateLayout(id)}),
-   qc.invalidateQueries({queryKey:realEstateKeys.properties(id)}),
- ])
- const createEstateMut=useMutation({mutationFn:(i:CreateEstateInput)=>realEstateApi.createEstate(i),onSuccess:async e=>{await qc.invalidateQueries({queryKey:realEstateKeys.estates()});setCreateEstate(false);toast.success(`Estate ${e.estateCode} created`);await navigate({to:'/app/$section',params:{section:'real-estate-inventory'},search:p=>({...p,estate:String(e.id)})})},onError:e=>toast.error('Estate could not be created',{description:presentError(e,'form-submit').message})})
- const quickMut=useMutation({mutationFn:({id,input}:{id:number;input:QuickUpdatePlotInput})=>realEstateApi.quickUpdatePlot(estateId!,id,input),onSuccess:async p=>{await invalidateEstate(estateId!);toast.success(`${plotLabel(p)} updated`)},onError:e=>toast.error('Plot could not be updated',{description:presentError(e,'form-submit').message})})
- const deletePropMut=useMutation({mutationFn:(id:number)=>realEstateApi.deleteProperty(estateId!,id),onSuccess:async()=>{setDeletePropertyId(null);await invalidateEstate(estateId!);toast.success('Property deleted');if(plotId===deletePropertyId)void navigate({to:'/app/$section',params:{section:'real-estate-inventory'},search:p=>withoutSearchKeys(p,['plot']),replace:true})},onError:e=>toast.error('Property could not be deleted',{description:presentError(e,'background-action').message})})
- const createBrokerageMut=useMutation({mutationFn:(i:CreateBrokerageInput)=>realEstateApi.createBrokerage(i),onSuccess:async()=>{setCreateBrokerage(false);await Promise.all([qc.invalidateQueries({queryKey:realEstateKeys.brokerage()}),qc.invalidateQueries({queryKey:realEstateKeys.brokerageStats()})]);toast.success('Brokerage listing added')},onError:e=>toast.error('Brokerage listing could not be added',{description:presentError(e,'form-submit').message})})
- const verifyMut=useMutation({mutationFn:({id,status}:{id:number;status:BrokerageVerificationStatus})=>realEstateApi.verifyBrokerage(id,status),onSuccess:async()=>{await Promise.all([qc.invalidateQueries({queryKey:realEstateKeys.brokerage()}),qc.invalidateQueries({queryKey:realEstateKeys.brokerageStats()})]);toast.success('Verification updated')}})
- const deleteBrokerageMut=useMutation({mutationFn:(id:number)=>realEstateApi.deleteBrokerage(id),onSuccess:async()=>{await Promise.all([qc.invalidateQueries({queryKey:realEstateKeys.brokerage()}),qc.invalidateQueries({queryKey:realEstateKeys.brokerageStats()})]);toast.success('Brokerage listing deleted')}})
+export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: AppSectionSearch }) {
+  const { user } = useAuth()
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const toast = useToast()
+  const estateId = recordSearch.estate ? Number(recordSearch.estate) : null
+  const propertyId = recordSearch.plot ? Number(recordSearch.plot) : null
 
- const refresh=async()=>{await Promise.all([estates.refetch(),...(estateId?[detail.refetch(),stats.refetch(),layout.refetch(),properties.refetch()]:[]),...(canBrokerageList?[brokerage.refetch(),brokerageStats.refetch()]:[])]);toast.success('Real Estate refreshed')}
+  const [searchDraft, setSearchDraft] = useState(recordSearch.search ?? '')
+  const [syncedSearch, setSyncedSearch] = useState(recordSearch.search ?? '')
+  const [estateOpen, setEstateOpen] = useState(false)
+  const [propertiesOpen, setPropertiesOpen] = useState(false)
+  const [brokerageOpen, setBrokerageOpen] = useState(false)
+  const [propertyEditOpen, setPropertyEditOpen] = useState(false)
+  const [deleteId, setDeleteId] = useState<number | null>(null)
+  const [formError, setFormError] = useState('')
 
- return <ModulePageFrame header={<CompactPageToolbar title="Real Estate Inventory" breadcrumb="Specialized Services / Real Estate" secondaryAction={<CompactActionButton onClick={()=>void refresh()}><IconRefresh size={14}/>Refresh</CompactActionButton>} primaryAction={<CompactActionButton tone="primary" disabled={!canEstateCreate} locked={!canEstateCreate} onClick={()=>setCreateEstate(true)}><IconPlus size={14}/>Add Estate</CompactActionButton>}/>}>
-  <main className="specialized-content">
-   <section className="specialized-card">
-    <div className="specialized-filter-row">
-     <select value={estateId??''} onChange={e=>void navigate({to:'/app/$section',params:{section:'real-estate-inventory'},search:p=>({...withoutSearchKeys(p,['estate','plot']),...(e.target.value?{estate:e.target.value}:{})})})}><option value="">Select Estate</option>{estateOptions.map(x=><option key={x.id} value={x.id}>{x.estateCode} · {x.estateName} — {x.cityTown}</option>)}</select>
-     <label className="commercial-search"><IconSearch size={14}/><input value={searchDraft} onChange={e=>setSearchDraft(e.target.value)} placeholder="Search Estates"/></label>
-     <span className="grow"/>
-     <button className="specialized-btn" disabled={!canBrokerageCreate} onClick={()=>setCreateBrokerage(true)}>Add Brokerage Property</button>
-     <button className="specialized-btn specialized-btn-primary" disabled={!selectedEstate||!canPropertyCreate} onClick={()=>setBatch(true)}>Add Properties</button>
-    </div>
-   </section>
+  const canEstateList = hasPermission(user, PERMISSIONS.estatesList)
+  const canEstateView = hasPermission(user, PERMISSIONS.estatesView)
+  const canEstateCreate = hasPermission(user, PERMISSIONS.estatesCreate)
+  const canPropertyList = hasPermission(user, PERMISSIONS.propertiesList)
+  const canPropertyCreate = hasPermission(user, PERMISSIONS.propertiesCreate)
+  const canPropertyUpdate = hasPermission(user, PERMISSIONS.propertiesUpdate)
+  const canPropertyDelete = hasPermission(user, PERMISSIONS.propertiesDelete)
+  const canBrokerageList = hasPermission(user, PERMISSIONS.brokerageList)
+  const canBrokerageCreate = hasPermission(user, PERMISSIONS.brokerageCreate)
+  const canBrokerageUpdate = hasPermission(user, PERMISSIONS.brokerageUpdate)
+  const canBrokerageDelete = hasPermission(user, PERMISSIONS.brokerageDelete)
+  const canCreateServiceRequest = canPerformAction(user, 'requestCreate')
+  const canCreateService = canPerformAction(user, 'serviceCreate')
 
-   {!selectedEstate?<EmptyState title="No Estate selected" description="Create or select an Estate to manage its property inventory."/>:<>
-    <div className="specialized-kpi-grid">
-     {[['Total plots',stats.data?.total],['Sold plots',stats.data?.sold],['Reserved plots',stats.data?.reserved],['Available plots',stats.data?.available]].map(([l,v])=><article key={String(l)} className="specialized-kpi-card"><div>{l}</div><strong>{v??'—'}</strong></article>)}
-    </div>
-    <div className="specialized-grid-2-1">
-     <section className="specialized-card">
-      <header className="specialized-card-header"><div><div className="specialized-card-title">Estate Layout & Inventory</div><div className="specialized-card-subtitle">Click a property to reserve, sell, release, hold or inspect it.</div></div><div className="specialized-legend"><span><i className="av"/>Available</span><span><i className="rs"/>Reserved</span><span><i className="sd"/>Sold</span><span><i className="hd"/>Hold / NFS</span></div></header>
-      {layout.isError?<ErrorState title="Layout unavailable" description={presentError(layout.error,'section-load').message} onRetry={()=>void layout.refetch()}/>:layout.data?.length?<div className="specialized-plot-grid">{layout.data.map(p=><button key={p.id} className={`specialized-plot ${plotClass(p.status)}`} onClick={()=>void navigate({to:'/app/$section',params:{section:'real-estate-inventory'},search:s=>({...s,estate:String(selectedEstate.id),plot:String(p.id)})})}>{plotLabel(p)}</button>)}</div>:<EmptyState title="No property inventory" description="Use Add Properties to build this Estate's inventory."/ >}
-     </section>
-     <aside>
-      <section className="specialized-card">
-       <header className="specialized-card-header"><div><div className="specialized-card-title">Selected Plot</div></div></header>
-       {!selectedPlot?<div className="specialized-empty">Select a property.</div>:<form onSubmit={e=>{e.preventDefault();const input={status:editStatus,clientName:editClient.trim(),price:editPrice};const er=validateQuickPlotUpdate(input);setFormError(er);if(!er)quickMut.mutate({id:selectedPlot.id,input})}}>
-        <div className="specialized-selected-kpi"><div>{selectedEstate.estateName}</div><strong>{selectedPlot.propertyName}</strong><span>{selectedPlot.plotSize??'—'} sqm · {formatCurrency(selectedPlot.price)}</span></div>
-        {formError?<div className="commercial-notice commercial-notice-red">{formError}</div>:null}
-        <label className="specialized-field"><span>Status</span><select value={editStatus} disabled={!canPropertyUpdate} onChange={e=>setEditStatus(e.target.value as PropertyStatus)}>{propertyStatuses.map(x=><option key={x.value} value={x.value}>{x.label}</option>)}</select></label>
-        <label className="specialized-field"><span>Client / reservation holder</span><input value={editClient} disabled={!canPropertyUpdate} onChange={e=>setEditClient(e.target.value)}/></label>
-        <label className="specialized-field"><span>Agreed price</span><input type="number" value={editPrice} disabled={!canPropertyUpdate} onChange={e=>setEditPrice(Number(e.target.value))}/></label>
-        <button className="specialized-btn specialized-btn-primary specialized-btn-block" disabled={!canPropertyUpdate||quickMut.isPending}>Save Plot Inventory</button>
-        {canPropertyDelete?<button type="button" className="specialized-btn specialized-btn-block" onClick={()=>setDeletePropertyId(selectedPlot.id)}><IconTrash size={13}/>Delete Property</button>:null}
-       </form>}
-      </section>
-      <section className="specialized-card"><header className="specialized-card-header"><div><div className="specialized-card-title">Brokerage Listings</div><div className="specialized-card-subtitle">{brokerageStats.data?.total??0} total · {brokerageStats.data?.verified??0} verified</div></div></header>
-       {!canBrokerageList?<div className="specialized-empty">Brokerage access not granted.</div>:brokerage.data?.items.length?brokerage.data.items.map(b=><div key={b.id} className="specialized-row"><div className="specialized-row-main"><div className="specialized-row-name">{b.title}</div><div className="specialized-row-sub">{b.location} · {formatCurrency(b.price)} · {b.verificationStatus.replaceAll('_',' ')}</div></div>{canBrokerageUpdate&&b.verificationStatus!=='verified'?<button className="specialized-btn specialized-btn-small" onClick={()=>verifyMut.mutate({id:b.id,status:'verified'})}>Verify</button>:null}{canBrokerageDelete?<button className="specialized-btn specialized-btn-small" onClick={()=>deleteBrokerageMut.mutate(b.id)}>×</button>:null}</div>):<div className="specialized-empty">No brokerage listings.</div>}
-      </section>
-     </aside>
-    </div>
-    <section className="specialized-card"><header className="specialized-card-header"><div><div className="specialized-card-title">Property Register</div><div className="specialized-card-subtitle">{properties.data?.count??0} properties in {selectedEstate.estateName}</div></div></header>
-     {properties.data?.items.length?<div className="specialized-table-wrap"><table className="specialized-table"><thead><tr><th>Property</th><th>Type</th><th>Status</th><th>Size</th><th>Price</th><th>Holder</th><th></th></tr></thead><tbody>{properties.data.items.map(p=><tr key={p.id}><td><b>{p.propertyName}</b><small>#{p.id}</small></td><td>{p.propertyTypeDisplay||p.propertyType}</td><td>{p.statusDisplay||p.status}</td><td>{p.plotSize??p.totalAreaResidential??p.totalAreaCommercial??'—'}</td><td>{formatCurrency(p.price)}</td><td>{p.clientName||'—'}</td><td>{canPropertyDelete?<button className="specialized-btn specialized-btn-small" onClick={()=>setDeletePropertyId(p.id)}>Delete</button>:null}</td></tr>)}</tbody></table></div>:<div className="specialized-empty">No property records.</div>}
-    </section>
-   </>}
-  </main>
-  {createEstate?<CreateEstateLiveWorkspace saving={createEstateMut.isPending} onClose={()=>setCreateEstate(false)} onSubmit={i=>createEstateMut.mutate(i)}/>:null}
-  {batch&&selectedEstate?<BatchCreatePropertiesWorkspace estateId={selectedEstate.id} estateName={selectedEstate.estateName} onClose={()=>setBatch(false)} onChanged={()=>invalidateEstate(selectedEstate.id)}/>:null}
-  {createBrokerage?<CreateBrokerageLiveWorkspace estates={estateOptions} saving={createBrokerageMut.isPending} onClose={()=>setCreateBrokerage(false)} onSubmit={i=>createBrokerageMut.mutate(i)}/>:null}
-  <ConfirmDialog open={deletePropertyId!=null} title="Delete Property?" description="This permanently removes the Property record. The current backend does not restrict deletion by sale state, so verify that this is appropriate before confirming." confirmLabel="Delete Property" tone="danger" isConfirming={deletePropMut.isPending} onCancel={()=>setDeletePropertyId(null)} onConfirm={()=>deletePropertyId!=null?deletePropMut.mutateAsync(deletePropertyId):Promise.resolve()}/>
- </ModulePageFrame>
+  const estatesQuery = useQuery({
+    ...realEstateQueries.estates({
+      ...(recordSearch.search ? { search: recordSearch.search } : {}),
+      page: 1,
+      limit: 100,
+    }),
+    enabled: canEstateList,
+  })
+  const detailQuery = useQuery({
+    ...realEstateQueries.detail(estateId ?? 0),
+    enabled: Boolean(estateId) && canEstateView,
+  })
+  const statsQuery = useQuery({
+    ...realEstateQueries.stats(estateId ?? 0),
+    enabled: Boolean(estateId) && canEstateView,
+  })
+  const propertiesQuery = useQuery({
+    ...realEstateQueries.properties(estateId ?? 0, { page: 1, limit: 250 }),
+    enabled: Boolean(estateId) && canPropertyList,
+  })
+  const brokerageQuery = useQuery({
+    ...realEstateQueries.brokerage({ page: 1, limit: 8 }),
+    enabled: canBrokerageList,
+  })
+  const brokerageStatsQuery = useQuery({
+    ...realEstateQueries.brokerageStats(),
+    enabled: canBrokerageList,
+  })
+
+  const estates = useMemo(() => estatesQuery.data?.items ?? [], [estatesQuery.data?.items])
+  const selectedEstate =
+    detailQuery.data ?? estates.find((estate) => estate.id === estateId) ?? null
+  const properties = propertiesQuery.data?.items ?? []
+  const selectedProperty = properties.find((property) => property.id === propertyId) ?? null
+
+  const setSearchValue = useCallback(
+    function <Key extends keyof AppSectionSearch>(
+      key: Key,
+      value: AppSectionSearch[Key] | '' | null,
+    ) {
+      void navigate({
+        to: '/app/$section',
+        params: { section: 'real-estate-inventory' },
+        search: (previous) => ({
+          ...withoutSearchKeys(previous, [key]),
+          ...withOptionalSearchValue<AppSectionSearch, Key>(key, value),
+        }),
+        replace: true,
+      })
+    },
+    [navigate],
+  )
+
+  if ((recordSearch.search ?? '') !== syncedSearch) {
+    setSyncedSearch(recordSearch.search ?? '')
+    setSearchDraft(recordSearch.search ?? '')
+  }
+  useEffect(() => {
+    if (searchDraft === (recordSearch.search ?? '')) return
+    const id = window.setTimeout(() => setSearchValue('search', searchDraft), 350)
+    return () => clearTimeout(id)
+  }, [recordSearch.search, searchDraft, setSearchValue])
+  useEffect(() => {
+    if (estateId || !estates[0]) return
+    void navigate({
+      to: '/app/$section',
+      params: { section: 'real-estate-inventory' },
+      search: (previous) => ({ ...previous, estate: String(estates[0]!.id) }),
+      replace: true,
+    })
+  }, [estateId, estates, navigate])
+
+  const invalidateEstate = async (id: number) => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: realEstateKeys.estates() }),
+      queryClient.invalidateQueries({ queryKey: realEstateKeys.estateDetail(id) }),
+      queryClient.invalidateQueries({ queryKey: realEstateKeys.estateStats(id) }),
+      queryClient.invalidateQueries({ queryKey: realEstateKeys.properties(id) }),
+    ])
+  }
+
+  const createEstateMutation = useMutation({
+    mutationFn: (input: CreateEstateInput) => realEstateApi.createEstate(input),
+    onSuccess: async (estate) => {
+      await queryClient.invalidateQueries({ queryKey: realEstateKeys.estates() })
+      setEstateOpen(false)
+      toast.success(`Estate ${estate.estateCode} created`)
+      await navigate({
+        to: '/app/$section',
+        params: { section: 'real-estate-inventory' },
+        search: (previous) => ({ ...previous, estate: String(estate.id) }),
+      })
+      setPropertiesOpen(true)
+    },
+    onError: (error) =>
+      toast.error('Estate could not be created', {
+        description: presentError(error, 'form-submit').message,
+      }),
+  })
+  const updateMutation = useMutation({
+    mutationFn: ({ id, input }: { id: number; input: QuickUpdatePlotInput }) =>
+      realEstateApi.quickUpdatePlot(estateId!, id, input),
+    onSuccess: async () => {
+      await invalidateEstate(estateId!)
+      toast.success('Property inventory updated')
+    },
+    onError: (error) =>
+      toast.error('Property could not be updated', {
+        description: presentError(error, 'form-submit').message,
+      }),
+  })
+  const updatePropertyMutation = useMutation({
+    mutationFn: ({ id, input }: { id: number; input: CreatePropertyInput }) =>
+      realEstateApi.updateProperty(estateId!, id, input),
+    onSuccess: async () => {
+      await invalidateEstate(estateId!)
+      setPropertyEditOpen(false)
+      toast.success('Property details updated')
+    },
+    onError: (error) =>
+      toast.error('Property could not be updated', {
+        description: presentError(error, 'form-submit').message,
+      }),
+  })
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => realEstateApi.deleteProperty(estateId!, id),
+    onSuccess: async () => {
+      setDeleteId(null)
+      await invalidateEstate(estateId!)
+      toast.success('Property deleted')
+      if (propertyId === deleteId)
+        await navigate({
+          to: '/app/$section',
+          params: { section: 'real-estate-inventory' },
+          search: (previous) => withoutSearchKeys(previous, ['plot']),
+          replace: true,
+        })
+    },
+    onError: (error) =>
+      toast.error('Property could not be deleted', {
+        description: presentError(error, 'background-action').message,
+      }),
+  })
+  const createBrokerageMutation = useMutation({
+    mutationFn: (input: CreateBrokerageInput) => realEstateApi.createBrokerage(input),
+    onSuccess: async () => {
+      setBrokerageOpen(false)
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: realEstateKeys.brokerage() }),
+        queryClient.invalidateQueries({ queryKey: realEstateKeys.brokerageStats() }),
+      ])
+      toast.success('Brokerage listing added')
+    },
+  })
+  const verifyMutation = useMutation({
+    mutationFn: ({ id, status }: { id: number; status: BrokerageVerificationStatus }) =>
+      realEstateApi.verifyBrokerage(id, status),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: realEstateKeys.brokerage() }),
+        queryClient.invalidateQueries({ queryKey: realEstateKeys.brokerageStats() }),
+      ])
+      toast.success('Brokerage verification updated')
+    },
+  })
+  const deleteBrokerageMutation = useMutation({
+    mutationFn: (id: number) => realEstateApi.deleteBrokerage(id),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: realEstateKeys.brokerage() }),
+        queryClient.invalidateQueries({ queryKey: realEstateKeys.brokerageStats() }),
+      ])
+      toast.success('Brokerage listing deleted')
+    },
+  })
+
+  const brokerageList = !canBrokerageList ? (
+    <div className="specialized-empty">Brokerage access not granted.</div>
+  ) : brokerageQuery.data?.items.length ? (
+    brokerageQuery.data.items.map((listing) => (
+      <div key={listing.id} className="specialized-row">
+        <div className="specialized-row-main">
+          <div className="specialized-row-name">{listing.title}</div>
+          <div className="specialized-row-sub">
+            {listing.location} · {formatCurrency(listing.price)} ·{' '}
+            {listing.verificationStatus.replaceAll('_', ' ')}
+          </div>
+        </div>
+        {canBrokerageUpdate && listing.verificationStatus !== 'verified' ? (
+          <button
+            type="button"
+            className="specialized-btn specialized-btn-small"
+            onClick={() => verifyMutation.mutate({ id: listing.id, status: 'verified' })}
+          >
+            Verify
+          </button>
+        ) : null}
+        {canBrokerageDelete ? (
+          <button
+            type="button"
+            className="specialized-btn specialized-btn-small"
+            onClick={() => deleteBrokerageMutation.mutate(listing.id)}
+          >
+            ×
+          </button>
+        ) : null}
+      </div>
+    ))
+  ) : (
+    <div className="specialized-empty">No Brokerage Listings.</div>
+  )
+
+  const estateSelectionState = !canEstateList ? (
+    <EmptyState
+      title="Estate access required"
+      description="You need estate list access before you can select an Estate and manage its property inventory."
+    />
+  ) : estatesQuery.isError ? (
+    <ErrorState
+      title="Estates could not be loaded"
+      description={presentError(estatesQuery.error, 'section-load').message}
+      onRetry={() => void estatesQuery.refetch()}
+    />
+  ) : recordSearch.search && !estates.length ? (
+    <EmptyState
+      title="No Estates match this search"
+      description="Change the estate search or clear it to review other estate records."
+    />
+  ) : !estates.length ? (
+    <EmptyState
+      title="No Estates yet"
+      description="Add the first Estate record, then create its property inventory and brokerage links."
+      action={
+        canEstateCreate ? (
+          <button
+            type="button"
+            className="commercial-btn commercial-btn-primary"
+            onClick={() => setEstateOpen(true)}
+          >
+            Add Estate
+          </button>
+        ) : null
+      }
+    />
+  ) : (
+    <EmptyState
+      title="Select an Estate"
+      description="Choose an Estate from the selector above to review its property board, details and inventory status."
+    />
+  )
+
+  const brokerageState = !canBrokerageList ? (
+    <EmptyState
+      title="Brokerage access required"
+      description="You need brokerage list access before third-party listings can be reviewed here."
+    />
+  ) : brokerageQuery.isError || brokerageStatsQuery.isError ? (
+    <ErrorState
+      title="Brokerage Listings could not be loaded"
+      description={
+        presentError(brokerageQuery.error ?? brokerageStatsQuery.error, 'section-load').message
+      }
+      onRetry={() => {
+        void brokerageQuery.refetch()
+        void brokerageStatsQuery.refetch()
+      }}
+    />
+  ) : brokerageQuery.isPending || brokerageStatsQuery.isPending ? (
+    <EmptyState
+      title="Loading Brokerage Listings"
+      description="Brokerage listing totals and verification status are being loaded."
+    />
+  ) : !brokerageQuery.data?.items.length ? (
+    <EmptyState
+      title="No Brokerage Listings yet"
+      description="Add the first third-party property listing to start tracking brokerage inventory here."
+      action={
+        canBrokerageCreate ? (
+          <button
+            type="button"
+            className="commercial-btn commercial-btn-primary"
+            onClick={() => setBrokerageOpen(true)}
+          >
+            Add Brokerage Listing
+          </button>
+        ) : null
+      }
+    />
+  ) : (
+    brokerageList
+  )
+
+  return (
+    <ModulePageFrame
+      header={
+        <CompactPageToolbar
+          title="Real Estate Inventory"
+          breadcrumb="Specialized Services / Real Estate"
+          secondaryAction={
+            <CompactActionButton
+              disabled={!canCreateServiceRequest}
+              locked={!canCreateServiceRequest}
+              onClick={() =>
+                void navigate({ to: '/app/$section', params: { section: 'service-requests' } })
+              }
+            >
+              <IconFilePlus size={14} />
+              New Request
+            </CompactActionButton>
+          }
+          primaryAction={
+            <CompactActionButton
+              tone="primary"
+              disabled={!canCreateService}
+              locked={!canCreateService}
+              onClick={() =>
+                void navigate({ to: '/app/$section', params: { section: 'service-catalogue' } })
+              }
+            >
+              <IconPlus size={14} />
+              Create Service
+            </CompactActionButton>
+          }
+        />
+      }
+    >
+      <main className="specialized-content">
+        {selectedEstate ? (
+          <div className="specialized-kpi-grid">
+            {[
+              ['Total Properties', statsQuery.data?.total],
+              ['Sold', statsQuery.data?.sold],
+              ['Reserved', statsQuery.data?.reserved],
+              ['Available', statsQuery.data?.available],
+            ].map(([label, value]) => (
+              <article
+                key={String(label)}
+                className={`specialized-kpi-card specialized-kpi-card--${kpiTone(String(label))}`}
+              >
+                <div>{label}</div>
+                <strong>{value ?? '—'}</strong>
+              </article>
+            ))}
+          </div>
+        ) : null}
+
+        <section className="specialized-card">
+          <header className="specialized-card-header specialized-card-header-utility">
+            <div>
+              <div className="specialized-card-title">Inventory Controls</div>
+              <div className="specialized-card-subtitle">
+                Manage estates, brokerage listings and estate property records.
+              </div>
+            </div>
+            <div className="specialized-action-row">
+              <button
+                type="button"
+                className="specialized-btn"
+                onClick={() => {
+                  void Promise.all([
+                    estatesQuery.refetch(),
+                    detailQuery.refetch(),
+                    statsQuery.refetch(),
+                    propertiesQuery.refetch(),
+                    brokerageQuery.refetch(),
+                  ])
+                }}
+              >
+                <IconRefresh size={14} />
+                Refresh
+              </button>
+              <button
+                type="button"
+                className="specialized-btn"
+                disabled={!canBrokerageCreate}
+                onClick={() => setBrokerageOpen(true)}
+              >
+                <IconPlus size={14} />
+                Add Brokerage Listing
+              </button>
+              <button
+                type="button"
+                className="specialized-btn"
+                disabled={!selectedEstate || !canPropertyCreate}
+                onClick={() => setPropertiesOpen(true)}
+              >
+                <IconPlus size={14} />
+                Add Estate Properties
+              </button>
+              <button
+                type="button"
+                className="specialized-btn specialized-btn-primary"
+                disabled={!canEstateCreate}
+                onClick={() => setEstateOpen(true)}
+              >
+                <IconPlus size={14} />
+                Add Estate
+              </button>
+            </div>
+          </header>
+          <div className="specialized-filter-row">
+            <select
+              value={estateId ?? ''}
+              disabled={!canEstateList}
+              onChange={(event) =>
+                void navigate({
+                  to: '/app/$section',
+                  params: { section: 'real-estate-inventory' },
+                  search: (previous) => ({
+                    ...withoutSearchKeys(previous, ['estate', 'plot']),
+                    ...(event.target.value ? { estate: event.target.value } : {}),
+                  }),
+                })
+              }
+            >
+              <option value="">Select Estate</option>
+              {estates.map((estate) => (
+                <option key={estate.id} value={estate.id}>
+                  {estate.estateCode} · {estate.estateName} — {estate.cityTown}
+                </option>
+              ))}
+            </select>
+            <label className="commercial-search">
+              <IconSearch size={14} />
+              <input
+                value={searchDraft}
+                onChange={(event) => setSearchDraft(event.target.value)}
+                placeholder="Search Estates"
+              />
+            </label>
+          </div>
+        </section>
+
+        {selectedEstate ? (
+          <>
+            <div className="specialized-grid-2-1">
+              <section className="specialized-card">
+                <header className="specialized-card-header">
+                  <div>
+                    <div className="specialized-card-title">Property Inventory</div>
+                    <div className="specialized-card-subtitle">
+                      All Estate Properties in one board. Color shows status; icon shows Property
+                      type.
+                    </div>
+                  </div>
+                  <div className="specialized-inventory-legend">
+                    <div className="specialized-legend">
+                      <span>
+                        <i className="av" />
+                        Available
+                      </span>
+                      <span>
+                        <i className="rs" />
+                        Reserved
+                      </span>
+                      <span>
+                        <i className="sd" />
+                        Sold
+                      </span>
+                      <span>
+                        <i className="hd" />
+                        Hold / NFS
+                      </span>
+                    </div>
+                    <div className="specialized-type-legend">
+                      <span>
+                        <IconMap2 size={13} />
+                        Plot
+                      </span>
+                      <span>
+                        <IconHome size={13} />
+                        Residential
+                      </span>
+                      <span>
+                        <IconBuilding size={13} />
+                        Commercial
+                      </span>
+                    </div>
+                  </div>
+                </header>
+                {propertiesQuery.isError ? (
+                  <ErrorState
+                    title="Property Inventory unavailable"
+                    description={presentError(propertiesQuery.error, 'section-load').message}
+                    onRetry={() => void propertiesQuery.refetch()}
+                  />
+                ) : properties.length ? (
+                  <div className="specialized-property-board-wrap scrollbar-thin">
+                    <div className="specialized-property-board">
+                      {properties.map((property) => (
+                        <button
+                          key={property.id}
+                          type="button"
+                          className={`specialized-property-tile ${statusClass(property.status)}${property.id === propertyId ? 'is-selected' : ''}`}
+                          onClick={() =>
+                            void navigate({
+                              to: '/app/$section',
+                              params: { section: 'real-estate-inventory' },
+                              search: (previous) => ({
+                                ...previous,
+                                estate: String(selectedEstate.id),
+                                plot: String(property.id),
+                              }),
+                            })
+                          }
+                        >
+                          <span className="specialized-property-tile-icon">
+                            <TypeIcon property={property} />
+                          </span>
+                          <span className="specialized-property-tile-name">
+                            {property.propertyName}
+                          </span>
+                          <span className="specialized-property-tile-type">
+                            {property.propertyTypeDisplay || property.propertyType}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <EmptyState
+                    title="No Property inventory"
+                    description="Use Add Estate Properties to add Plots, Residential Buildings or Commercial Buildings."
+                  />
+                )}
+              </section>
+
+              <aside>
+                <section className="specialized-card">
+                  <header className="specialized-card-header">
+                    <div>
+                      <div className="specialized-card-title">Selected Property</div>
+                      <div className="specialized-card-subtitle">
+                        Inventory record and type-specific details
+                      </div>
+                    </div>
+                  </header>
+                  {!selectedProperty ? (
+                    <div className="specialized-empty">Select a Property from the board.</div>
+                  ) : (
+                    <SelectedPropertyForm
+                      key={selectedProperty.id}
+                      selectedEstateName={selectedEstate.estateName}
+                      selectedProperty={selectedProperty}
+                      canPropertyUpdate={canPropertyUpdate}
+                      canPropertyDelete={canPropertyDelete}
+                      updatePending={updateMutation.isPending}
+                      formError={formError}
+                      setFormError={setFormError}
+                      onSubmit={(input) =>
+                        updateMutation.mutate({ id: selectedProperty.id, input })
+                      }
+                      onEdit={() => setPropertyEditOpen(true)}
+                      onDelete={() => setDeleteId(selectedProperty.id)}
+                    />
+                  )}
+                </section>
+
+                <section className="specialized-card">
+                  <header className="specialized-card-header">
+                    <div>
+                      <div className="specialized-card-title">Brokerage Listings</div>
+                      <div className="specialized-card-subtitle">
+                        {brokerageStatsQuery.data?.total ?? 0} total ·{' '}
+                        {brokerageStatsQuery.data?.verified ?? 0} verified
+                      </div>
+                    </div>
+                  </header>
+                  {brokerageList}
+                </section>
+              </aside>
+            </div>
+          </>
+        ) : (
+          <div className="specialized-grid-2-1">
+            <section className="specialized-card">
+              <header className="specialized-card-header">
+                <div>
+                  <div className="specialized-card-title">Estate Inventory</div>
+                  <div className="specialized-card-subtitle">
+                    Select an estate record before managing its property inventory.
+                  </div>
+                </div>
+              </header>
+              {estateSelectionState}
+            </section>
+            <section className="specialized-card">
+              <header className="specialized-card-header">
+                <div>
+                  <div className="specialized-card-title">Brokerage Listings</div>
+                  <div className="specialized-card-subtitle">
+                    {brokerageStatsQuery.data?.total ?? 0} total ·{' '}
+                    {brokerageStatsQuery.data?.verified ?? 0} verified
+                  </div>
+                </div>
+              </header>
+              {brokerageState}
+            </section>
+          </div>
+        )}
+      </main>
+
+      {estateOpen ? (
+        <CreateEstateLiveWorkspace
+          saving={createEstateMutation.isPending}
+          onClose={() => setEstateOpen(false)}
+          onSubmit={(input) => createEstateMutation.mutate(input)}
+        />
+      ) : null}
+      {propertiesOpen && selectedEstate ? (
+        <BatchCreatePropertiesWorkspace
+          estateId={selectedEstate.id}
+          estateName={selectedEstate.estateName}
+          onClose={() => setPropertiesOpen(false)}
+          onChanged={async () => {
+            await invalidateEstate(selectedEstate.id)
+          }}
+        />
+      ) : null}
+      {brokerageOpen ? (
+        <CreateBrokerageLiveWorkspace
+          estates={estates}
+          saving={createBrokerageMutation.isPending}
+          onClose={() => setBrokerageOpen(false)}
+          onSubmit={(input) => createBrokerageMutation.mutate(input)}
+        />
+      ) : null}
+      {propertyEditOpen && selectedProperty ? (
+        <EditPropertyLiveWorkspace
+          property={selectedProperty}
+          saving={updatePropertyMutation.isPending}
+          onClose={() => setPropertyEditOpen(false)}
+          onSubmit={(input) => updatePropertyMutation.mutate({ id: selectedProperty.id, input })}
+        />
+      ) : null}
+      <ConfirmDialog
+        open={deleteId != null}
+        title="Delete Property?"
+        description="This permanently removes the Property inventory record."
+        confirmLabel="Delete Property"
+        tone="danger"
+        isConfirming={deleteMutation.isPending}
+        onCancel={() => setDeleteId(null)}
+        onConfirm={() => {
+          if (deleteId != null) void deleteMutation.mutateAsync(deleteId)
+        }}
+      />
+    </ModulePageFrame>
+  )
 }

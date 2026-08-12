@@ -688,7 +688,10 @@
   margin-top: 8px;
 }
 
-.fulfillment-deliverable-modal .fulfillment-task-panel .fulfillment-order-detail-row .commercial-field-label {
+.fulfillment-deliverable-modal
+  .fulfillment-task-panel
+  .fulfillment-order-detail-row
+  .commercial-field-label {
   font-size: 8px;
 }
 

@@ -1,27 +1,301 @@
+import { IconX } from '@tabler/icons-react'
 import { useState } from 'react'
-import { brokerageStatuses,brokerageVerificationStatuses,type CreateBrokerageInput,type Estate } from '../real-estate/real-estate.types'
+
+import {
+  brokerageStatuses,
+  brokerageVerificationStatuses,
+  type CreateBrokerageInput,
+  type Estate,
+} from '../real-estate/real-estate.types'
 import { validateBrokerage } from '../real-estate/real-estate.validation'
-export function CreateBrokerageLiveWorkspace({estates,saving,onClose,onSubmit}:{estates:Estate[];saving:boolean;onClose:()=>void;onSubmit:(i:CreateBrokerageInput)=>void}) {
- const [v,setV]=useState<CreateBrokerageInput>({title:'',description:'',location:'',price:0,propertyType:'land',ownerName:'',ownerPhone:'',ownerEmail:'',commissionRate:5,verificationStatus:'pending',status:'available',estateId:null,tags:[]}),[tags,setTags]=useState(''),[error,setError]=useState('')
- const set=<K extends keyof CreateBrokerageInput>(k:K,val:CreateBrokerageInput[K])=>setV(x=>({...x,[k]:val}))
- return <div className="specialized-modal-backdrop" onMouseDown={onClose}><form className="specialized-modal" onMouseDown={e=>e.stopPropagation()} onSubmit={e=>{e.preventDefault();const input={...v,tags:tags.split(',').map(x=>x.trim()).filter(Boolean)};const er=validateBrokerage(input);setError(er);if(!er)onSubmit(input)}}>
-  <header className="specialized-modal-header"><div><h2>Add Brokerage Property</h2><p>Third-party property managed on commission.</p></div><button type="button" onClick={onClose}>×</button></header>
-  <div className="specialized-modal-body specialized-form-grid">
-   {error?<div className="commercial-notice commercial-notice-red specialized-field-full">{error}</div>:null}
-   <label className="specialized-field"><span>Property title *</span><input value={v.title} onChange={e=>set('title',e.target.value)}/></label>
-   <label className="specialized-field"><span>Property type</span><select value={v.propertyType} onChange={e=>set('propertyType',e.target.value as typeof v.propertyType)}><option value="land">Land</option><option value="residential">Residential</option><option value="commercial">Commercial</option></select></label>
-   <label className="specialized-field specialized-field-full"><span>Location *</span><input value={v.location} onChange={e=>set('location',e.target.value)}/></label>
-   <label className="specialized-field"><span>Asking price *</span><input type="number" min={1} value={v.price} onChange={e=>set('price',Number(e.target.value))}/></label>
-   <label className="specialized-field"><span>Commission (%)</span><input type="number" min={0} max={100} value={v.commissionRate} onChange={e=>set('commissionRate',Number(e.target.value))}/></label>
-   <label className="specialized-field"><span>Owner / mandate giver *</span><input value={v.ownerName} onChange={e=>set('ownerName',e.target.value)}/></label>
-   <label className="specialized-field"><span>Owner phone</span><input value={v.ownerPhone} onChange={e=>set('ownerPhone',e.target.value)}/></label>
-   <label className="specialized-field"><span>Owner email</span><input type="email" value={v.ownerEmail} onChange={e=>set('ownerEmail',e.target.value)}/></label>
-   <label className="specialized-field"><span>Verification</span><select value={v.verificationStatus} onChange={e=>set('verificationStatus',e.target.value as typeof v.verificationStatus)}>{brokerageVerificationStatuses.map(x=><option key={x.value} value={x.value}>{x.label}</option>)}</select></label>
-   <label className="specialized-field"><span>Market status</span><select value={v.status} onChange={e=>set('status',e.target.value as typeof v.status)}>{brokerageStatuses.map(x=><option key={x.value} value={x.value}>{x.label}</option>)}</select></label>
-   <label className="specialized-field"><span>Related Estate</span><select value={v.estateId??0} onChange={e=>set('estateId',Number(e.target.value)||null)}><option value={0}>No Estate link</option>{estates.map(x=><option key={x.id} value={x.id}>{x.estateCode} · {x.estateName}</option>)}</select></label>
-   <label className="specialized-field"><span>Tags</span><input value={tags} onChange={e=>setTags(e.target.value)}/></label>
-   <label className="specialized-field specialized-field-full"><span>Description</span><textarea value={v.description} onChange={e=>set('description',e.target.value)}/></label>
-  </div>
-  <footer className="specialized-modal-footer"><button type="button" className="specialized-btn" onClick={onClose}>Cancel</button><button className="specialized-btn specialized-btn-primary" disabled={saving}>{saving?'Adding...':'Add Listing'}</button></footer>
- </form></div>
+
+function parseNonNegativeNumber(value: string, fallback = 0) {
+  if (value.trim() === '') return fallback
+
+  const parsed = Number(value)
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback
+}
+
+function parsePercentageNumber(value: string, fallback = 0) {
+  if (value.trim() === '') return fallback
+
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed)) return fallback
+  return Math.min(100, Math.max(0, parsed))
+}
+
+function numberInputValue(value: number | null | undefined) {
+  return !value ? '' : String(value)
+}
+
+export function CreateBrokerageLiveWorkspace({
+  estates,
+  saving,
+  onClose,
+  onSubmit,
+}: {
+  estates: Estate[]
+  saving: boolean
+  onClose: () => void
+  onSubmit: (i: CreateBrokerageInput) => void
+}) {
+  const [value, setValue] = useState<CreateBrokerageInput>({
+    title: '',
+    description: '',
+    location: '',
+    price: 0,
+    propertyType: 'land',
+    ownerName: '',
+    ownerPhone: '',
+    ownerEmail: '',
+    commissionRate: 5,
+    verificationStatus: 'pending',
+    status: 'available',
+    estateId: null,
+    tags: [],
+  })
+  const [tags, setTags] = useState('')
+  const [error, setError] = useState('')
+
+  const setField = <K extends keyof CreateBrokerageInput>(
+    key: K,
+    nextValue: CreateBrokerageInput[K],
+  ) => setValue((current) => ({ ...current, [key]: nextValue }))
+
+  return (
+    <div className="commercial-modal-backdrop" role="presentation" onMouseDown={onClose}>
+      <form
+        className="commercial-modal specialized-real-estate-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Add Brokerage Property"
+        onMouseDown={(event) => event.stopPropagation()}
+        onSubmit={(event) => {
+          event.preventDefault()
+          const input = {
+            ...value,
+            tags: tags
+              .split(',')
+              .map((item) => item.trim())
+              .filter(Boolean),
+          }
+          const validationError = validateBrokerage(input)
+          setError(validationError)
+          if (!validationError) onSubmit(input)
+        }}
+      >
+        <header className="commercial-modal-header">
+          <div>
+            <h2>Add Brokerage Listing</h2>
+            <p>Third-party property offered on commission, with verification and estate linking.</p>
+          </div>
+          <button
+            type="button"
+            className="commercial-modal-close"
+            onClick={onClose}
+            aria-label="Close"
+          >
+            <IconX size={16} />
+          </button>
+        </header>
+
+        <div className="commercial-modal-body">
+          {error ? <div className="commercial-notice commercial-notice-red">{error}</div> : null}
+
+          <section className="commercial-form-section">
+            <div className="commercial-form-section-heading">
+              <div>
+                <h3>Listing profile</h3>
+                <p>Market-facing listing information, pricing and brokerage positioning.</p>
+              </div>
+            </div>
+
+            <div className="commercial-form-grid">
+              <label className="commercial-field">
+                <span>
+                  Property title <em>*</em>
+                </span>
+                <input
+                  autoFocus
+                  value={value.title}
+                  onChange={(event) => setField('title', event.target.value)}
+                />
+              </label>
+
+              <label className="commercial-field">
+                <span>Property type</span>
+                <select
+                  value={value.propertyType}
+                  onChange={(event) =>
+                    setField('propertyType', event.target.value as typeof value.propertyType)
+                  }
+                >
+                  <option value="land">Land</option>
+                  <option value="residential">Residential</option>
+                  <option value="commercial">Commercial</option>
+                </select>
+              </label>
+
+              <label className="commercial-field commercial-form-span">
+                <span>
+                  Location <em>*</em>
+                </span>
+                <input
+                  value={value.location}
+                  onChange={(event) => setField('location', event.target.value)}
+                />
+              </label>
+
+              <label className="commercial-field">
+                <span>
+                  Asking price <em>*</em>
+                </span>
+                <input
+                  className="commercial-number-input"
+                  type="number"
+                  min={1}
+                  step="any"
+                  inputMode="decimal"
+                  value={numberInputValue(value.price)}
+                  onChange={(event) =>
+                    setField('price', parseNonNegativeNumber(event.target.value))
+                  }
+                />
+              </label>
+
+              <label className="commercial-field">
+                <span>Commission rate (%)</span>
+                <input
+                  className="commercial-number-input"
+                  type="number"
+                  min={0}
+                  max={100}
+                  step="any"
+                  inputMode="decimal"
+                  value={numberInputValue(value.commissionRate)}
+                  onChange={(event) =>
+                    setField('commissionRate', parsePercentageNumber(event.target.value))
+                  }
+                />
+              </label>
+
+              <label className="commercial-field">
+                <span>Verification</span>
+                <select
+                  value={value.verificationStatus}
+                  onChange={(event) =>
+                    setField(
+                      'verificationStatus',
+                      event.target.value as typeof value.verificationStatus,
+                    )
+                  }
+                >
+                  {brokerageVerificationStatuses.map((item) => (
+                    <option key={item.value} value={item.value}>
+                      {item.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="commercial-field">
+                <span>Market status</span>
+                <select
+                  value={value.status}
+                  onChange={(event) =>
+                    setField('status', event.target.value as typeof value.status)
+                  }
+                >
+                  {brokerageStatuses.map((item) => (
+                    <option key={item.value} value={item.value}>
+                      {item.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="commercial-field commercial-form-span">
+                <span>Description</span>
+                <textarea
+                  value={value.description}
+                  onChange={(event) => setField('description', event.target.value)}
+                />
+              </label>
+            </div>
+          </section>
+
+          <section className="commercial-form-section">
+            <div className="commercial-form-section-heading">
+              <div>
+                <h3>Ownership and linkage</h3>
+                <p>Mandate giver details, contact data and optional estate relationship.</p>
+              </div>
+            </div>
+
+            <div className="commercial-form-grid">
+              <label className="commercial-field">
+                <span>
+                  Owner / mandate giver <em>*</em>
+                </span>
+                <input
+                  value={value.ownerName}
+                  onChange={(event) => setField('ownerName', event.target.value)}
+                />
+              </label>
+
+              <label className="commercial-field">
+                <span>Owner phone</span>
+                <input
+                  value={value.ownerPhone}
+                  onChange={(event) => setField('ownerPhone', event.target.value)}
+                />
+              </label>
+
+              <label className="commercial-field">
+                <span>Owner email</span>
+                <input
+                  type="email"
+                  value={value.ownerEmail}
+                  onChange={(event) => setField('ownerEmail', event.target.value)}
+                />
+              </label>
+
+              <label className="commercial-field">
+                <span>Related estate</span>
+                <select
+                  value={value.estateId ?? 0}
+                  onChange={(event) => setField('estateId', Number(event.target.value) || null)}
+                >
+                  <option value={0}>No Estate link</option>
+                  {estates.map((estate) => (
+                    <option key={estate.id} value={estate.id}>
+                      {estate.estateCode} · {estate.estateName}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="commercial-field commercial-form-span">
+                <span>Tags</span>
+                <input
+                  value={tags}
+                  onChange={(event) => setTags(event.target.value)}
+                  placeholder="brokerage, exclusive, urgent"
+                />
+              </label>
+            </div>
+          </section>
+        </div>
+
+        <footer className="commercial-modal-footer">
+          <button type="button" className="commercial-btn" onClick={onClose} disabled={saving}>
+            Cancel
+          </button>
+          <button type="submit" className="commercial-btn commercial-btn-primary" disabled={saving}>
+            {saving ? 'Adding...' : 'Add Listing'}
+          </button>
+        </footer>
+      </form>
+    </div>
+  )
 }

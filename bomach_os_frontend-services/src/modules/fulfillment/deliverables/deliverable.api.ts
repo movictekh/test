@@ -17,7 +17,8 @@ function deliverableQuery(filters: DeliverableFilters = {}) {
 
   if (filters.status) query.set('status', filters.status)
   if (filters.deliverableType) query.set('deliverable_type', filters.deliverableType)
-  if (filters.clientVisible !== undefined) query.set('client_visible', String(filters.clientVisible))
+  if (filters.clientVisible !== undefined)
+    query.set('client_visible', String(filters.clientVisible))
   if (filters.milestoneId) query.set('milestone_id', String(filters.milestoneId))
   if (filters.taskId) query.set('task_id', String(filters.taskId))
   if (filters.search) query.set('search', filters.search)
@@ -90,19 +91,15 @@ export const deliverableApi = {
 
   async approve(orderId: number, deliverableId: number) {
     return mapDeliverable(
-      await apiClient.post<unknown>(
-        `/orders/${orderId}/deliverables/${deliverableId}/approve`,
-        {},
-      ),
+      await apiClient.post<unknown>(`/orders/${orderId}/deliverables/${deliverableId}/approve`, {}),
     )
   },
 
   async reject(orderId: number, deliverableId: number, reason: string) {
     return mapDeliverable(
-      await apiClient.post<unknown>(
-        `/orders/${orderId}/deliverables/${deliverableId}/reject`,
-        { reason },
-      ),
+      await apiClient.post<unknown>(`/orders/${orderId}/deliverables/${deliverableId}/reject`, {
+        reason,
+      }),
     )
   },
 

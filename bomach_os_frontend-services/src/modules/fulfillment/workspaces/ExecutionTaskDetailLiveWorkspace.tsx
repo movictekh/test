@@ -210,7 +210,9 @@ export function ExecutionTaskDetailLiveWorkspace({
                     >
                       <option value={0}>No milestone</option>
                       {[...order.milestones]
-                        .sort((left, right) => left.sortOrder - right.sortOrder || left.id - right.id)
+                        .sort(
+                          (left, right) => left.sortOrder - right.sortOrder || left.id - right.id,
+                        )
                         .map((item) => (
                           <option key={item.id} value={item.id}>
                             {item.name} · {label(item.status)}
@@ -435,11 +437,7 @@ export function ExecutionTaskDetailLiveWorkspace({
                     </CompactActionButton>
                   ) : null}
                   {!['done', 'cancelled'].includes(task.status) ? (
-                    <CompactActionButton
-                      type="button"
-                      disabled={saving}
-                      onClick={onCancel}
-                    >
+                    <CompactActionButton type="button" disabled={saving} onClick={onCancel}>
                       Cancel Task
                     </CompactActionButton>
                   ) : null}
@@ -465,11 +463,7 @@ export function ExecutionTaskDetailLiveWorkspace({
                   >
                     Edit Task
                   </CompactActionButton>
-                  <CompactActionButton
-                    type="button"
-                    disabled={saving}
-                    onClick={onDelete}
-                  >
+                  <CompactActionButton type="button" disabled={saving} onClick={onDelete}>
                     Delete Task
                   </CompactActionButton>
                 </div>

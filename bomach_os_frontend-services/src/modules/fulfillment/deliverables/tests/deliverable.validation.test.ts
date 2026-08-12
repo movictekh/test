@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import {
-  validateDeliverableCreate,
-  validateDeliverableUpdate,
-} from '../deliverable.validation'
+import { validateDeliverableCreate, validateDeliverableUpdate } from '../deliverable.validation'
 
 describe('deliverable validation', () => {
   it('requires a valid document URL', () => {

@@ -136,7 +136,9 @@ export function DeliverableDetailLiveWorkspace({
             </p>
           </div>
           <div className="commercial-modal-header-meta">
-            <span className={`fulfillment-pill ${statusClass(deliverable.status)}`}>{label(deliverable.status)}</span>
+            <span className={`fulfillment-pill ${statusClass(deliverable.status)}`}>
+              {label(deliverable.status)}
+            </span>
             <button
               type="button"
               className="commercial-modal-close"
@@ -200,7 +202,9 @@ export function DeliverableDetailLiveWorkspace({
                 </div>
               </section>
 
-              {error ? <div className="commercial-notice commercial-notice-red">{error}</div> : null}
+              {error ? (
+                <div className="commercial-notice commercial-notice-red">{error}</div>
+              ) : null}
 
               <section className="commercial-form-section fulfillment-task-panel">
                 <div className="commercial-form-section-heading">
@@ -371,7 +375,10 @@ export function DeliverableDetailLiveWorkspace({
                 <div className="commercial-form-section-heading">
                   <div>
                     <h3>Edit Deliverable</h3>
-                    <p>Status and approval mode are intentionally excluded from normal metadata editing.</p>
+                    <p>
+                      Status and approval mode are intentionally excluded from normal metadata
+                      editing.
+                    </p>
                   </div>
                 </div>
                 <div className="commercial-form-grid">
@@ -448,7 +455,9 @@ export function DeliverableDetailLiveWorkspace({
                         <span>Type</span>
                         <select
                           value={field.state.value}
-                          onChange={(event) => field.handleChange(event.target.value as DeliverableType)}
+                          onChange={(event) =>
+                            field.handleChange(event.target.value as DeliverableType)
+                          }
                         >
                           {deliverableTypes.map((type) => (
                             <option key={type.value} value={type.value}>
@@ -547,10 +556,19 @@ export function DeliverableDetailLiveWorkspace({
                 </div>
               </section>
               <div className="commercial-modal-footer">
-                <button type="button" className="commercial-btn" disabled={saving} onClick={() => setEditing(false)}>
+                <button
+                  type="button"
+                  className="commercial-btn"
+                  disabled={saving}
+                  onClick={() => setEditing(false)}
+                >
                   Cancel Edit
                 </button>
-                <button type="submit" className="commercial-btn commercial-btn-primary" disabled={saving}>
+                <button
+                  type="submit"
+                  className="commercial-btn commercial-btn-primary"
+                  disabled={saving}
+                >
                   {saving ? 'Saving...' : 'Save Deliverable'}
                 </button>
               </div>

@@ -1,4 +1,5 @@
 import { APP_PERMISSION_VALUES, type AppPermission } from '@/app/permissions/permission.types'
+import { PERMISSIONS } from '@/app/permissions'
 
 const appPermissions = new Set<string>(APP_PERMISSION_VALUES)
 
@@ -19,11 +20,6 @@ export function flattenBackendPermissions(permissions: Record<string, string[]>)
   })
 }
 
-/**
- * Backend permissions are canonical.
- *
- * There is intentionally no resource/action synonym translation here.
- */
 export function mapBackendPermissions(
   permissions: Record<string, string[]>,
 ): BackendPermissionMapping {
@@ -37,6 +33,14 @@ export function mapBackendPermissions(
     } else {
       unmappedBackendPermissions.push(backendPermission)
     }
+  }
+
+  if (
+    backendPermissions.includes('documents.view') ||
+    backendPermissions.includes('orders.view') ||
+    backendPermissions.includes('orders.list')
+  ) {
+    granted.add(PERMISSIONS.deliverableRead)
   }
 
   return {

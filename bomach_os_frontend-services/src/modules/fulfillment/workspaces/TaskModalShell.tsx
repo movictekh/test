@@ -61,7 +61,9 @@ export function TaskModalShell({
           </div>
         </header>
 
-        <div className={`commercial-modal-body fulfillment-task-modal-body ${bodyClassName ?? ''}`.trim()}>
+        <div
+          className={`commercial-modal-body fulfillment-task-modal-body ${bodyClassName ?? ''}`.trim()}
+        >
           {children}
         </div>
 
