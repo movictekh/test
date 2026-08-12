@@ -208,7 +208,7 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
   const queryClient = useQueryClient()
   const toast = useToast()
   const estateId = recordSearch.estate ? Number(recordSearch.estate) : null
-  const propertyId = recordSearch.plot ? Number(recordSearch.plot) : null
+  const propertyId = recordSearch.property ? Number(recordSearch.property) : null
 
   const [searchDraft, setSearchDraft] = useState(recordSearch.search ?? '')
   const [syncedSearch, setSyncedSearch] = useState(recordSearch.search ?? '')
@@ -334,7 +334,7 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
   })
   const updateMutation = useMutation({
     mutationFn: ({ id, input }: { id: number; input: QuickUpdatePlotInput }) =>
-      realEstateApi.quickUpdatePlot(estateId!, id, input),
+      realEstateApi.quickUpdatePropertyInventory(estateId!, id, input),
     onSuccess: async () => {
       await invalidateEstate(estateId!)
       toast.success('Property inventory updated')
@@ -367,7 +367,7 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
         await navigate({
           to: '/app/$section',
           params: { section: 'real-estate-inventory' },
-          search: (previous) => withoutSearchKeys(previous, ['plot']),
+          search: (previous) => withoutSearchKeys(previous, ['property']),
           replace: true,
         })
     },
@@ -642,7 +642,7 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
                   to: '/app/$section',
                   params: { section: 'real-estate-inventory' },
                   search: (previous) => ({
-                    ...withoutSearchKeys(previous, ['estate', 'plot']),
+                    ...withoutSearchKeys(previous, ['estate', 'property']),
                     ...(event.target.value ? { estate: event.target.value } : {}),
                   }),
                 })
@@ -734,7 +734,7 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
                               search: (previous) => ({
                                 ...previous,
                                 estate: String(selectedEstate.id),
-                                plot: String(property.id),
+                                property: String(property.id),
                               }),
                             })
                           }

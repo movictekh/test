@@ -29,6 +29,7 @@ import {
 } from '@/modules/experience-intelligence'
 import {
   RealEstateInventoryLivePage,
+  SpecializedOperationsLivePage,
   SpecializedServicesSectionPage,
   type SpecializedServicesSection,
 } from '@/modules/specialized-services'
@@ -78,7 +79,7 @@ export type AppSectionSearch = AppRecordSearch & {
   deliverableType?: string
   clientVisible?: string
   estate?: string
-  plot?: string
+  property?: string
   page?: number
 }
 
@@ -95,7 +96,7 @@ export function parseRecordSearch(search: Record<string, unknown>): AppSectionSe
   const task = stringValue(search.task)
   const deliverable = stringValue(search.deliverable)
   const estate = stringValue(search.estate)
-  const plot = stringValue(search.plot)
+  const property = stringValue(search.property) ?? stringValue(search.plot)
   const feedback = stringValue(search.feedback)
 
   const catalogueSearch = stringValue(search.search)
@@ -128,7 +129,7 @@ export function parseRecordSearch(search: Record<string, unknown>): AppSectionSe
   if (task) result.task = task
   if (deliverable) result.deliverable = deliverable
   if (estate) result.estate = estate
-  if (plot) result.plot = plot
+  if (property) result.property = property
   if (feedback) result.feedback = feedback
 
   if (catalogueSearch) result.search = catalogueSearch
@@ -182,6 +183,8 @@ function AppShellRoute() {
   if (section === 'deliverables') return <DeliverablesLivePage recordSearch={recordSearch} />
   if (section === 'real-estate-inventory')
     return <RealEstateInventoryLivePage recordSearch={recordSearch} />
+  if (section === 'survey-engineering-others')
+    return <SpecializedOperationsLivePage recordSearch={recordSearch} />
 
   if (commercialSections.has(section as CommercialSection)) {
     return (

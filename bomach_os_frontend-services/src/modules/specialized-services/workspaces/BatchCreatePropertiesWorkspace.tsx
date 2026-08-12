@@ -238,7 +238,7 @@ export function BatchCreatePropertiesWorkspace({
                     <button
                       key={value}
                       type="button"
-                      className={`specialized-property-type-option${propertyType === value ? 'is-active' : ''}`}
+                      className={`specialized-property-type-option${propertyType === value ? ' is-active' : ''}`}
                       onClick={() => changeType(value)}
                     >
                       <span className="specialized-property-type-icon">

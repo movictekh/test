@@ -171,7 +171,7 @@ export const realEstateApi = {
     ),
   deleteProperty: async (estateId: number, id: number) =>
     apiClient.delete<unknown>(`/estates/${estateId}/properties/${id}`),
-  quickUpdatePlot: async (estateId: number, id: number, i: QuickUpdatePlotInput) =>
+  quickUpdatePropertyInventory: async (estateId: number, id: number, i: QuickUpdatePlotInput) =>
     mapPlotLayoutItem(
       await apiClient.patch<unknown>(`/estates/${estateId}/plots/${id}/quick-update`, {
         ...(i.status !== undefined ? { status: i.status } : {}),
