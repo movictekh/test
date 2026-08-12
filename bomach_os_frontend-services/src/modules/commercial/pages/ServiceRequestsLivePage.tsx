@@ -4,12 +4,13 @@ import { useNavigate } from '@tanstack/react-router'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { useAuth } from '@/app/auth'
+import { SectionLoadingState } from '@/app/loading/SectionLoadingState'
 import { hasPermission, PERMISSIONS } from '@/app/permissions'
 import { presentError } from '@/shared/errors'
 import { formatCurrency } from '@/shared/lib/formatters'
 import type { AppSectionSearch } from '@/routes/app/$section'
 import { withOptionalSearchValue, withoutSearchKeys } from '@/shared/navigation/search-state'
-import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
+import { ErrorState, useToast } from '@/shared/ui'
 import { EmptyState } from '@/shared/ui/empty-state'
 import {
   CompactActionButton,
@@ -281,11 +282,7 @@ export function ServiceRequestsLivePage({ recordSearch }: { recordSearch: AppSec
     clientsQuery.isPending ||
     servicesQuery.isPending
   ) {
-    return (
-      <ModulePageStatus title="Service Requests" breadcrumb="Commercial flow / Requests">
-        <DashboardSkeleton />
-      </ModulePageStatus>
-    )
+    return <SectionLoadingState section="service-requests" />
   }
 
   if (listQuery.isError || choicesQuery.isError || clientsQuery.isError || servicesQuery.isError) {

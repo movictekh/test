@@ -1,10 +1,12 @@
+import { SectionLoadingState } from '@/app/loading/SectionLoadingState'
 import { IconDownload, IconRefresh } from '@tabler/icons-react'
 import { useQuery } from '@tanstack/react-query'
 
 import { presentError } from '@/shared/errors'
 import { formatCurrency } from '@/shared/lib/formatters'
-import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
+import { ErrorState, useToast } from '@/shared/ui'
 import { EmptyState } from '@/shared/ui/empty-state'
+import { DashboardSkeleton } from '@/shared/ui/skeleton'
 import {
   CompactActionButton,
   CompactPageToolbar,
@@ -59,11 +61,7 @@ export function ReportsAnalyticsLivePage() {
   }
 
   if (kpisQuery.isPending && serviceQuery.isPending && branchQuery.isPending) {
-    return (
-      <ModulePageStatus title="Reports & Analytics" breadcrumb="Intelligence / Performance">
-        <DashboardSkeleton />
-      </ModulePageStatus>
-    )
+    return <SectionLoadingState section="reports-analytics" />
   }
 
   if (kpisQuery.isError) {

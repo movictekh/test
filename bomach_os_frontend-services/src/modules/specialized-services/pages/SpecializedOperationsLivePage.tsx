@@ -10,6 +10,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { useMemo } from 'react'
 
 import { useAuth } from '@/app/auth'
+import { SectionLoadingState } from '@/app/loading/SectionLoadingState'
 import { hasPermission, PERMISSIONS } from '@/app/permissions'
 import { serviceRequestQueries } from '@/modules/commercial/api/service-requests.queries'
 import { serviceOrderQueries } from '@/modules/fulfillment/service-orders/service-order.queries'
@@ -19,7 +20,7 @@ import type { AppSectionSearch } from '@/routes/app/$section'
 import { presentError } from '@/shared/errors'
 import { formatCurrency } from '@/shared/lib/formatters'
 import { withoutSearchKeys } from '@/shared/navigation/search-state'
-import { DashboardSkeleton, ErrorState } from '@/shared/ui'
+import { ErrorState } from '@/shared/ui'
 import { EmptyState } from '@/shared/ui/empty-state'
 import {
   CompactActionButton,
@@ -134,15 +135,7 @@ export function SpecializedOperationsLivePage({
         : []),
     ])
 
-  if (allQ.isPending)
-    return (
-      <ModulePageStatus
-        title="Survey / Engineering / Others"
-        breadcrumb="Specialized Services / Operations"
-      >
-        <DashboardSkeleton />
-      </ModulePageStatus>
-    )
+  if (allQ.isPending) return <SectionLoadingState section="survey-engineering-others" />
   if (allQ.isError) {
     const e = presentError(allQ.error, 'page-load')
     return (

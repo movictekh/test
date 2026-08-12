@@ -3,6 +3,7 @@ import { createFileRoute } from '@tanstack/react-router'
 
 import { findNavigationItemByPath, operationsNavigation } from '@/app/navigation'
 import { PERMISSIONS, requireRoutePermission } from '@/app/permissions'
+import { SectionLoadingState } from '@/app/loading/SectionLoadingState'
 import type { AppRecordSearch } from '@/shared/navigation'
 import type { ServiceAdministrationSection } from '@/modules/service-administration'
 import { ModuleShellPage } from '@/modules/foundation/pages/ModuleShellPage'
@@ -85,18 +86,6 @@ const ExperienceIntelligenceSectionPage = lazy(() =>
     default: module.ExperienceIntelligenceSectionPage,
   })),
 )
-
-function LazySectionFallback() {
-  return (
-    <ModuleShellPage
-      eyebrow="Service Operations"
-      title="Loading"
-      description="Loading this Service Operations workspace…"
-      backTo="/app/dashboard"
-      backLabel="Back to dashboard"
-    />
-  )
-}
 
 const serviceAdministrationSections = new Set<ServiceAdministrationSection>([
   'service-catalogue',
@@ -234,8 +223,10 @@ export const Route = createFileRoute('/app/$section')({
 })
 
 function AppShellRoute() {
+  const { section } = Route.useParams()
+
   return (
-    <Suspense fallback={<LazySectionFallback />}>
+    <Suspense fallback={<SectionLoadingState section={section} />}>
       <AppShellRouteContent />
     </Suspense>
   )

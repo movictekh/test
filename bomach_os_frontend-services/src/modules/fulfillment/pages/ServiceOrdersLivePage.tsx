@@ -4,6 +4,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { useAuth } from '@/app/auth'
+import { SectionLoadingState } from '@/app/loading/SectionLoadingState'
 import { hasPermission, PERMISSIONS } from '@/app/permissions'
 import { serviceRequestQueries } from '@/modules/commercial/api/service-requests.queries'
 import { billingKeys } from '@/modules/commercial/billing/billing.keys'
@@ -13,7 +14,7 @@ import type { AppSectionSearch } from '@/routes/app/$section'
 import { presentError } from '@/shared/errors'
 import { formatCurrency } from '@/shared/lib/formatters'
 import { withOptionalSearchValue, withoutSearchKeys } from '@/shared/navigation/search-state'
-import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
+import { ErrorState, useToast } from '@/shared/ui'
 import { EmptyState } from '@/shared/ui/empty-state'
 import {
   CompactActionButton,
@@ -340,11 +341,7 @@ export function ServiceOrdersLivePage({ recordSearch }: { recordSearch: AppSecti
   }
 
   if (listQuery.isPending) {
-    return (
-      <ModulePageStatus title="Service Orders" breadcrumb="Fulfillment / Orders">
-        <DashboardSkeleton />
-      </ModulePageStatus>
-    )
+    return <SectionLoadingState section="service-orders" />
   }
   if (listQuery.isError) {
     const error = presentError(listQuery.error, 'page-load')

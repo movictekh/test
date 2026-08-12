@@ -4,12 +4,13 @@ import { useNavigate } from '@tanstack/react-router'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { useAuth } from '@/app/auth'
+import { SectionLoadingState } from '@/app/loading/SectionLoadingState'
 import { hasPermission, PERMISSIONS } from '@/app/permissions'
 import type { AppSectionSearch } from '@/routes/app/$section'
 import { presentError } from '@/shared/errors'
 import { formatCurrency } from '@/shared/lib/formatters'
 import { withOptionalSearchValue, withoutSearchKeys } from '@/shared/navigation/search-state'
-import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
+import { ErrorState, useToast } from '@/shared/ui'
 import { EmptyState } from '@/shared/ui/empty-state'
 import {
   CompactActionButton,
@@ -309,11 +310,7 @@ export function QuotationsLivePage({ recordSearch }: { recordSearch: AppSectionS
   }
 
   if (listQuery.isPending || (recordSearch.search && searchListQuery.isPending)) {
-    return (
-      <ModulePageStatus title="Quotations & Proposals" breadcrumb="Commercial flow / Offers">
-        <DashboardSkeleton />
-      </ModulePageStatus>
-    )
+    return <SectionLoadingState section="quotations" />
   }
 
   if (listQuery.isError) {

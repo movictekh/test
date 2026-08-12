@@ -13,6 +13,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 
 import { useAuth } from '@/app/auth'
+import { SectionLoadingState } from '@/app/loading/SectionLoadingState'
 import { canPerformAction, hasPermission, PERMISSIONS } from '@/app/permissions'
 import type { AppSectionSearch } from '@/routes/app/$section'
 import { presentError } from '@/shared/errors'
@@ -446,6 +447,18 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
       toast.success('Brokerage listing deleted')
     },
   })
+
+  const initialInventoryLoading =
+    canEstateList &&
+    (estatesQuery.isPending ||
+      (!estateId && Boolean(estatesQuery.data?.items.length)) ||
+      (Boolean(estateId) &&
+        ((canEstateView && (detailQuery.isPending || statsQuery.isPending)) ||
+          (canPropertyList && propertiesQuery.isPending))))
+
+  if (initialInventoryLoading) {
+    return <SectionLoadingState section="real-estate-inventory" />
+  }
 
   const brokerageList = !canBrokerageList ? (
     <div className="specialized-empty">Brokerage access not granted.</div>

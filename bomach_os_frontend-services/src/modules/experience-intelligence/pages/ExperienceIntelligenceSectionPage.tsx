@@ -1,3 +1,4 @@
+import { SectionLoadingState } from '@/app/loading/SectionLoadingState'
 import { IconMessageStar } from '@tabler/icons-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
@@ -11,7 +12,7 @@ import {
   ModulePageStatus,
 } from '@/shared/ui/module-controls'
 import { presentError } from '@/shared/errors'
-import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
+import { ErrorState, useToast } from '@/shared/ui'
 import { useDeepLinkedSelection, type AppRecordSearch } from '@/shared/navigation'
 
 import { experienceIntelligenceApi } from '../api/experience-intelligence.api'
@@ -105,11 +106,7 @@ export function ExperienceIntelligenceSectionPage({
   }, [experienceQuery.data, selectedFeedbackId])
 
   if (experienceQuery.isPending || commercialQuery.isPending || fulfillmentQuery.isPending) {
-    return (
-      <ModulePageStatus title={metadata[section].title} breadcrumb={metadata[section].breadcrumb}>
-        <DashboardSkeleton />
-      </ModulePageStatus>
-    )
+    return <SectionLoadingState section={section} />
   }
 
   if (experienceQuery.isError || commercialQuery.isError || fulfillmentQuery.isError) {

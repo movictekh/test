@@ -4,6 +4,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 
 import { useAuth } from '@/app/auth'
+import { SectionLoadingState } from '@/app/loading/SectionLoadingState'
 
 import { CalculatorEditor, RequestFormEditor } from '../editors/ServiceAdministrationEditors'
 import {
@@ -13,7 +14,7 @@ import {
 
 import { presentError } from '@/shared/errors'
 import { ApiError } from '@/shared/api/api-error'
-import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
+import { ErrorState, useToast } from '@/shared/ui'
 import {
   AccessLockIcon,
   CompactPageToolbar,
@@ -621,12 +622,7 @@ export function ServiceAdministrationSectionPage({
         ? branchMatrixQuery
         : catalogueQuery
 
-  if (activeQuery.isLoading)
-    return (
-      <ModulePageStatus title={metadata[section].title} breadcrumb={metadata[section].breadcrumb}>
-        <DashboardSkeleton />
-      </ModulePageStatus>
-    )
+  if (activeQuery.isLoading) return <SectionLoadingState section={section} />
   if (activeQuery.isError) {
     const error = presentError(activeQuery.error, 'page-load')
     return (
@@ -645,11 +641,7 @@ export function ServiceAdministrationSectionPage({
     requestFormService &&
     (requestFormsQuery.isPending || fieldTypesQuery.isPending)
   ) {
-    return (
-      <ModulePageStatus title={metadata[section].title} breadcrumb={metadata[section].breadcrumb}>
-        <DashboardSkeleton />
-      </ModulePageStatus>
-    )
+    return <SectionLoadingState section={section} />
   }
 
   if (section === 'request-form-builder' && requestFormsQuery.isError) {

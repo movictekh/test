@@ -4,12 +4,13 @@ import { useNavigate } from '@tanstack/react-router'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { useAuth } from '@/app/auth'
+import { SectionLoadingState } from '@/app/loading/SectionLoadingState'
 import { hasPermission, PERMISSIONS } from '@/app/permissions'
 import type { AppSectionSearch } from '@/routes/app/$section'
 import { presentError } from '@/shared/errors'
 import { withOptionalSearchValue, withoutSearchKeys } from '@/shared/navigation/search-state'
 import { ConfirmDialog } from '@/shared/ui/confirm-dialog'
-import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
+import { ErrorState, useToast } from '@/shared/ui'
 import { EmptyState } from '@/shared/ui/empty-state'
 import {
   CompactActionButton,
@@ -282,11 +283,7 @@ export function ExecutionTasksLivePage({ recordSearch }: { recordSearch: AppSect
   const boardRefreshing = boardQueries.some((query) => query.isFetching)
 
   if (!selectedOrderId && canListOrders && ordersQuery.isPending) {
-    return (
-      <ModulePageStatus title="Execution Tasks" breadcrumb="Fulfillment / Tasks">
-        <DashboardSkeleton />
-      </ModulePageStatus>
-    )
+    return <SectionLoadingState section="execution-tasks" />
   }
 
   if (!selectedOrderId && canListOrders && ordersQuery.isError) {

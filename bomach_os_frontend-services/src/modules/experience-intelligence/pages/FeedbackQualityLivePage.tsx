@@ -9,11 +9,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuth } from '@/app/auth'
+import { SectionLoadingState } from '@/app/loading/SectionLoadingState'
 import { hasPermission, PERMISSIONS } from '@/app/permissions'
 import type { AppSectionSearch } from '@/routes/app/$section'
 import { presentError } from '@/shared/errors'
 import { withOptionalSearchValue, withoutSearchKeys } from '@/shared/navigation/search-state'
-import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
+import { ErrorState, useToast } from '@/shared/ui'
 import { EmptyState } from '@/shared/ui/empty-state'
 import {
   CompactActionButton,
@@ -158,12 +159,7 @@ export function FeedbackQualityLivePage({ recordSearch }: { recordSearch: AppSec
         />
       </ModulePageStatus>
     )
-  if (listQ.isPending || statsQ.isPending)
-    return (
-      <ModulePageStatus title="Feedback & Quality" breadcrumb="Client experience / Quality">
-        <DashboardSkeleton />
-      </ModulePageStatus>
-    )
+  if (listQ.isPending || statsQ.isPending) return <SectionLoadingState section="feedback-quality" />
   if (listQ.isError || statsQ.isError) {
     const e = presentError(listQ.error ?? statsQ.error, 'page-load')
     return (

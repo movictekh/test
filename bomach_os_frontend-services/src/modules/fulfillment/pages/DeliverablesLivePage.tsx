@@ -4,12 +4,13 @@ import { useNavigate } from '@tanstack/react-router'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { useAuth } from '@/app/auth'
+import { SectionLoadingState } from '@/app/loading/SectionLoadingState'
 import { hasPermission, PERMISSIONS } from '@/app/permissions'
 import { approvalQueueKeys } from '@/modules/commercial/approval-queue/approval-queue.keys'
 import type { AppSectionSearch } from '@/routes/app/$section'
 import { presentError } from '@/shared/errors'
 import { withOptionalSearchValue, withoutSearchKeys } from '@/shared/navigation/search-state'
-import { DashboardSkeleton, ErrorState, useToast } from '@/shared/ui'
+import { ErrorState, useToast } from '@/shared/ui'
 import { ConfirmDialog } from '@/shared/ui/confirm-dialog'
 import { EmptyState } from '@/shared/ui/empty-state'
 import {
@@ -312,11 +313,7 @@ export function DeliverablesLivePage({ recordSearch }: { recordSearch: AppSectio
   )
 
   if (!selectedOrderId && canListOrders && ordersQuery.isPending) {
-    return (
-      <ModulePageStatus title="Deliverables & Documents" breadcrumb="Fulfillment / Documents">
-        <DashboardSkeleton />
-      </ModulePageStatus>
-    )
+    return <SectionLoadingState section="deliverables" />
   }
 
   if (!selectedOrderId && canListOrders && ordersQuery.isError) {
