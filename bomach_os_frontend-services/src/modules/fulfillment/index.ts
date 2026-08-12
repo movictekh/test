@@ -1,5 +1,4 @@
 export { ServiceOrdersLivePage } from './pages/ServiceOrdersLivePage'
 export { ExecutionTasksLivePage } from './pages/ExecutionTasksLivePage'
 export { DeliverablesLivePage } from './pages/DeliverablesLivePage'
-export { FulfillmentSectionPage } from './pages/FulfillmentSectionPage'
 export type { FulfillmentSection } from './types/fulfillment.types'
