@@ -164,7 +164,7 @@ export const operationsNavigation = [
         icon: 'feedback',
         to: appSectionRoute,
         params: { section: 'feedback-quality' },
-        permissions: [PERMISSIONS.reportsView],
+        permissions: [PERMISSIONS.feedbackList],
       },
       {
         id: 'reports',

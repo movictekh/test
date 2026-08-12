@@ -25,6 +25,7 @@ import {
 } from '@/modules/fulfillment'
 import {
   ExperienceIntelligenceSectionPage,
+  FeedbackQualityLivePage,
   type ExperienceIntelligenceSection,
 } from '@/modules/experience-intelligence'
 import {
@@ -78,6 +79,8 @@ export type AppSectionSearch = AppRecordSearch & {
   service?: string
   deliverableType?: string
   clientVisible?: string
+  feedbackType?: string
+  ratingMin?: number
   estate?: string
   property?: string
   page?: number
@@ -112,6 +115,20 @@ export function parseRecordSearch(search: Record<string, unknown>): AppSectionSe
   const requestService = stringValue(search.service)
   const deliverableType = stringValue(search.deliverableType)
   const clientVisible = stringValue(search.clientVisible)
+  const feedbackType = stringValue(search.feedbackType)
+  const rawRatingMin =
+    typeof search.ratingMin === 'number'
+      ? search.ratingMin
+      : typeof search.ratingMin === 'string'
+        ? Number(search.ratingMin)
+        : undefined
+  const ratingMin =
+    rawRatingMin !== undefined &&
+    Number.isInteger(rawRatingMin) &&
+    rawRatingMin >= 1 &&
+    rawRatingMin <= 5
+      ? rawRatingMin
+      : undefined
   const rawPage =
     typeof search.page === 'number'
       ? search.page
@@ -143,6 +160,8 @@ export function parseRecordSearch(search: Record<string, unknown>): AppSectionSe
   if (requestService) result.service = requestService
   if (deliverableType) result.deliverableType = deliverableType
   if (clientVisible === 'true' || clientVisible === 'false') result.clientVisible = clientVisible
+  if (feedbackType) result.feedbackType = feedbackType
+  if (ratingMin) result.ratingMin = ratingMin
   if (cataloguePage) result.page = cataloguePage
 
   return result
@@ -181,6 +200,8 @@ function AppShellRoute() {
   if (section === 'service-orders') return <ServiceOrdersLivePage recordSearch={recordSearch} />
   if (section === 'execution-tasks') return <ExecutionTasksLivePage recordSearch={recordSearch} />
   if (section === 'deliverables') return <DeliverablesLivePage recordSearch={recordSearch} />
+  if (section === 'feedback-quality')
+    return <FeedbackQualityLivePage recordSearch={recordSearch} />
   if (section === 'real-estate-inventory')
     return <RealEstateInventoryLivePage recordSearch={recordSearch} />
   if (section === 'survey-engineering-others')
