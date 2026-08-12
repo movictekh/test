@@ -384,6 +384,9 @@
   flex-wrap: wrap;
   margin-bottom: 11px;
 }
+.experience-filter-row--actions {
+  justify-content: flex-end;
+}
 .experience-filter-row select {
   padding: 7px 9px;
   border: 1px solid #e1e7ef;
@@ -499,4 +502,59 @@
   .experience-modal-footer--split > div {
     justify-content: flex-end;
   }
+}
+
+/* Staff-assisted client feedback capture */
+.experience-feedback-capture-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+}
+.experience-feedback-capture-notice > svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: #1f3d7a;
+}
+.experience-feedback-order-summary {
+  margin-bottom: 11px;
+  padding: 10px 11px;
+  border: 1px solid #e1e7ef;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+.experience-feedback-order-summary b {
+  display: block;
+  font-size: 10px;
+  color: #15172d;
+}
+.experience-feedback-order-summary span {
+  display: block;
+  margin-top: 3px;
+  font-size: 8px;
+  color: #8c95a8;
+}
+.experience-quality-section {
+  padding: 12px;
+  border: 1px solid #e1e7ef;
+  border-radius: 10px;
+  background: #fff;
+  margin-bottom: 11px;
+}
+.experience-quality-section > header {
+  margin-bottom: 11px;
+}
+.experience-quality-section > header b {
+  display: block;
+  font-size: 10px;
+}
+.experience-quality-section > header span {
+  display: block;
+  color: #8c95a8;
+  font-size: 8.5px;
+  margin-top: 3px;
+}
+.experience-field-help {
+  color: #8c95a8;
+  font-size: 8px;
+  line-height: 1.35;
 }

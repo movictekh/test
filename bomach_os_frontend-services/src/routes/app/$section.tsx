@@ -200,8 +200,7 @@ function AppShellRoute() {
   if (section === 'service-orders') return <ServiceOrdersLivePage recordSearch={recordSearch} />
   if (section === 'execution-tasks') return <ExecutionTasksLivePage recordSearch={recordSearch} />
   if (section === 'deliverables') return <DeliverablesLivePage recordSearch={recordSearch} />
-  if (section === 'feedback-quality')
-    return <FeedbackQualityLivePage recordSearch={recordSearch} />
+  if (section === 'feedback-quality') return <FeedbackQualityLivePage recordSearch={recordSearch} />
   if (section === 'real-estate-inventory')
     return <RealEstateInventoryLivePage recordSearch={recordSearch} />
   if (section === 'survey-engineering-others')
