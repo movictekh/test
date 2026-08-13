@@ -60,6 +60,12 @@ from services.api.v1 import (
     funnel_router as svc_funnel, marketing_router as svc_marketing_cc,
     csrc_router as svc_csrc, pipeline_router as svc_pipeline,
 )
+from finance.api.v1 import (
+    accounts as finance_accounts,
+    invoices as finance_invoices,
+    payments as finance_payments,
+    receivables as finance_receivables,
+)
 
 # HR
 
@@ -189,6 +195,12 @@ api.add_router("/payments", svc_payments.router)
 api.add_router("/properties", svc_property.router)
 api.add_router("/revenue-execution", svc_revenue_execution.router)
 api.add_router("/stats", svc_stats.router)
+
+# === Finance routers ===
+api.add_router("/finance", finance_invoices.router)
+api.add_router("/finance", finance_accounts.router)
+api.add_router("/finance", finance_payments.router)
+api.add_router("/finance", finance_receivables.router)
 
 
 

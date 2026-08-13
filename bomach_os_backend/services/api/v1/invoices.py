@@ -3,22 +3,22 @@ from typing import List, Optional
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
-from django.utils import timezone
 from ninja import Query, Router
 from ninja.errors import HttpError
 from ninja.pagination import LimitOffsetPagination, paginate
 
 from services.api.schema.others import MessageSchema
 from services.api.schema.schemas import InvoiceIn, InvoiceOut, InvoiceSendIn, InvoiceUpdate, ServiceOrderFromInvoiceIn, ServiceOrderOut
-from services.models.payment import Invoice, InvoiceItem, Payment
+from services.models.payment import Invoice, InvoiceItem
 from services.models.service import ServiceRequestActivity
 from services.utils.service_orders import create_order_from_invoice
 from user.api.schemas.client_service import PaymentSubmissionResponseSchema, ReviewPaymentSchema
 from user.models.client_service import PaymentSubmission
 from user.utils.perm import require_permission, scope_queryset
+from finance.services import handle_payment_exception, review_payment_submission as review_submission_payment
 
 
 router = Router(tags=["Invoices"])
@@ -183,55 +183,20 @@ def list_payment_submissions(
 @require_permission("payments", "create")
 def review_payment_submission(request, submission_id: int, payload: ReviewPaymentSchema):
     try:
-        with transaction.atomic():
-            submission = get_object_or_404(
-                PaymentSubmission.objects.select_related("invoice", "invoice__service_request"),
-                id=submission_id,
-            )
-            if submission.status != PaymentSubmission.STATUS.PENDING:
-                return 400, {"detail": "This submission has already been reviewed."}
-
-            invoice = Invoice.objects.select_for_update().get(id=submission.invoice_id)
-            threshold_was_met = bool(invoice.activation_threshold_met_at)
-            if payload.status == PaymentSubmission.STATUS.CONFIRMED and submission.amount > invoice.balance:
-                return 400, {"detail": "Submitted amount exceeds outstanding balance."}
-
-            submission.status = payload.status
-            submission.reviewed_by = request.user
-            submission.reviewed_at = timezone.now()
-            if payload.status == PaymentSubmission.STATUS.CONFIRMED:
-                Payment.objects.create(
-                    invoice=invoice,
-                    amount=submission.amount,
-                    payment_method=submission.payment_method,
-                    payment_date=submission.payment_date,
-                    transaction_reference=submission.reference,
-                    notes=f"Confirmed from submission {submission.reference}. {submission.notes}".strip(),
-                    created_by=request.user,
-                )
-                invoice.refresh_from_db()
-                _log_request_activity(
-                    invoice.service_request,
-                    "payment_confirmed",
-                    f"Payment {submission.reference} confirmed for invoice {invoice.invoice_number}.",
-                    created_by=request.user,
-                )
-                if invoice.activation_threshold_met_at and not threshold_was_met:
-                    _log_request_activity(
-                        invoice.service_request,
-                        "payment_threshold_met",
-                        f"Payment threshold met for invoice {invoice.invoice_number}.",
-                        created_by=request.user,
-                        next_action="Create service order",
-                    )
-            elif payload.status == PaymentSubmission.STATUS.REJECTED:
-                submission.rejection_reason = payload.rejection_reason
-            else:
-                return 400, {"detail": "Unsupported review status."}
-            submission.save()
-        return 200, PaymentSubmission.objects.select_related("invoice").get(id=submission.id)
-    except (ValidationError, IntegrityError) as e:
-        return 400, {"detail": _validation_detail(e)}
+        submission = get_object_or_404(
+            PaymentSubmission.objects.select_related("invoice", "invoice__service_request"),
+            id=submission_id,
+        )
+        reviewed = review_submission_payment(
+            submission,
+            reviewed_by=request.user,
+            status=payload.status,
+            finance_account_id=payload.finance_account_id,
+            rejection_reason=payload.rejection_reason,
+        )
+        return 200, PaymentSubmission.objects.select_related("invoice").get(id=reviewed.id)
+    except Exception as e:
+        return 400, handle_payment_exception(e)
 
 
 @router.post("/{invoice_id}/send", response={200: InvoiceOut, 400: MessageSchema, 404: MessageSchema})

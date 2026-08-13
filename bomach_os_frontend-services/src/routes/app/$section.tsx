@@ -119,8 +119,7 @@ export function parseRecordSearch(search: Record<string, unknown>): AppSectionSe
     const first = raw.at(0)
     const last = raw.at(-1)
     const unquoted =
-      raw.length >= 2 &&
-      ((first === '"' && last === '"') || (first === "'" && last === "'"))
+      raw.length >= 2 && ((first === '"' && last === '"') || (first === "'" && last === "'"))
         ? raw.slice(1, -1).trim()
         : raw
 

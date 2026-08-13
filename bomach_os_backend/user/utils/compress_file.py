@@ -4,7 +4,19 @@ from io import BytesIO
 from PIL import Image
 import uuid
 from django.core.files.storage import default_storage
+from django.core.files.storage import FileSystemStorage
 from django.core.files.base import ContentFile
+from django.conf import settings
+
+
+def _save_file(name: str, content: ContentFile):
+    try:
+        saved_name = default_storage.save(name, content)
+        return default_storage.url(saved_name)
+    except Exception:
+        local_storage = FileSystemStorage(location=settings.MEDIA_ROOT, base_url=settings.MEDIA_URL)
+        saved_name = local_storage.save(name, content)
+        return local_storage.url(saved_name)
 
 def compress_image(file: UploadedFile):    
     # Open image with Pillow
@@ -55,6 +67,4 @@ def compress_image(file: UploadedFile):
     unique_name = f"{uuid.uuid4()}.{file_extension}"
     
     # Save compressed image
-    file_name = default_storage.save(unique_name, ContentFile(compressed_data))
-    file_url = default_storage.url(file_name)
-    return file_url
+    return _save_file(unique_name, ContentFile(compressed_data))

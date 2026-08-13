@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+SRC="/home/kachy/project/bomach/bomach_os_backend/"
+DEST="/home/kachy/project/bomach/test/bomach_os_backend/"
+
+echo "Source:      $SRC"
+echo "Destination: $DEST"
+echo
+
+rsync -a --delete \
+  --exclude '.git/' \
+  --exclude '.venv/' \
+  --exclude '.env' \
+  --exclude 'db.sqlite3' \
+  --exclude 'mediafiles/' \
+  --exclude 'sync' \
+  "$SRC" "$DEST"
+
+echo
+echo "Sync complete."
+echo
+git -C "$DEST" status --short

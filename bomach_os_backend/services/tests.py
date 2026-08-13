@@ -8,6 +8,7 @@ from django.db import IntegrityError, transaction
 from django.test import Client, TestCase
 from django.utils import timezone
 
+from finance.models import FinanceAccount
 from services.funnel_events import backfill_lead_funnel_events
 from services.models.content import Content, ContentCalendarItem, MediaLibraryAsset
 from services.models.crm import DailyActionInstance, Lead, LeadActivity, RevenueKeyResult, RevenueObjective, TurnaroundPlan
@@ -1893,10 +1894,23 @@ class ServiceRequestAPITests(TestCase):
         pending_response = self.client.get("/api/v1/invoices/payment-submissions", **self.staff_headers)
         self.assertEqual(pending_response.status_code, 200)
         self.assertEqual(pending_response.json()["count"], 1)
+        finance_account = FinanceAccount.objects.create(
+            account_type=FinanceAccount.ACCOUNT_TYPE.BANK,
+            display_name="GTBank Service Collections",
+            branch=self.branch,
+            bank_name="GTBank",
+            account_number="0123456789",
+            account_name="Bomach Group",
+            created_by=self.staff_user,
+        )
 
         review_response = self.post_json(
             f"/api/v1/invoices/payment-submissions/{submission_id}/review",
-            {"status": "confirmed", "rejection_reason": ""},
+            {
+                "status": "confirmed",
+                "finance_account_id": finance_account.id,
+                "rejection_reason": "",
+            },
             headers=self.staff_headers,
         )
         self.assertEqual(review_response.status_code, 200)

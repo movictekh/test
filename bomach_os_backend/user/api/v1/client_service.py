@@ -16,7 +16,8 @@ from user.api.schemas.client_service import (
 )
 from user.api.schemas.others import MessageSchema
 from user.models.client_service import ClientService, ServiceRequest, PaymentSubmission
-from services.models.payment import Invoice, Payment
+from finance.services import handle_payment_exception, review_payment_submission as review_submission_payment
+from services.models.payment import Invoice
 from typing import List, Optional
 from ninja.errors import HttpError
 
@@ -238,6 +239,8 @@ def submit_payment(request, data: PaymentSubmissionCreateSchema):
     submission = PaymentSubmission.objects.create(
         invoice=invoice,
         client=request.user.client_profile,
+        submitted_by=request.user,
+        submitted_by_type=PaymentSubmission.SUBMITTED_BY_TYPE.CLIENT,
         **data.dict(exclude={'invoice_id'})
     )
     return submission
@@ -256,33 +259,18 @@ def list_pending_submissions(request):
 @service_request_api.post("/admin/payment-submissions/{submission_id}/review")
 def review_submission(request, submission_id: int, data: ReviewPaymentSchema):
     """Admin confirms or rejects a payment submission"""
-    submission = get_object_or_404(PaymentSubmission, id=submission_id)
-
-    if submission.status != PaymentSubmission.STATUS.PENDING:
-        raise HttpError(400, "This submission has already been reviewed")
-
-    submission.status = data.status
-    submission.reviewed_by = request.user
-    submission.reviewed_at = timezone.now()
-
-    if data.status == PaymentSubmission.STATUS.CONFIRMED:
-        # Create the actual Payment record — this triggers
-        # your existing invoice update logic in Payment.save()
-        Payment.objects.create(
-            invoice=submission.invoice,
-            amount=submission.amount,
-            payment_method=submission.payment_method,
-            payment_date=submission.payment_date,
-            transaction_reference=submission.reference,
-            notes=f"Confirmed from submission {submission.reference}",
-            created_by=request.user,
+    try:
+        submission = get_object_or_404(PaymentSubmission, id=submission_id)
+        review_submission_payment(
+            submission,
+            reviewed_by=request.user,
+            status=data.status,
+            finance_account_id=data.finance_account_id,
+            rejection_reason=data.rejection_reason,
         )
-
-    elif data.status == PaymentSubmission.STATUS.REJECTED:
-        submission.rejection_reason = data.rejection_reason
-
-    submission.save()
-    return {"status": "ok"}
+        return {"status": "ok"}
+    except Exception as exc:
+        return handle_payment_exception(exc)
 
 @service_request_api.get(
     "/admin/service-requests",

@@ -523,10 +523,12 @@ class InvoiceOut(Schema):
 # Payment Schemas
 class PaymentIn(Schema):
     invoice_id: int
+    finance_account_id: int
     amount: Decimal
     payment_method: str
     payment_date: date
     transaction_reference: Optional[str] = ""
+    proof_of_payment: str
     notes: Optional[str] = ""
     created_by_id: int
 
@@ -539,6 +541,8 @@ class PaymentOut(Schema):
     payment_method: str
     payment_date: date
     transaction_reference: str
+    finance_account_id: Optional[int] = None
+    proof_of_payment: str
     notes: str
     created_at: datetime
     updated_at: datetime

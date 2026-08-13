@@ -50,5 +50,4 @@ describe('app section search parser', () => {
       request: 'REQ-1',
     })
   })
-
 })

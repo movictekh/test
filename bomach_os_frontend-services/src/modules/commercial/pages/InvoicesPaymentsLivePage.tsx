@@ -464,7 +464,10 @@ export function InvoicesPaymentsLivePage({ recordSearch }: { recordSearch: AppSe
           items={
             summaryQuery.data
               ? [
-                  { label: 'Total invoiced', value: formatCurrency(summaryQuery.data.totalInvoiced) },
+                  {
+                    label: 'Total invoiced',
+                    value: formatCurrency(summaryQuery.data.totalInvoiced),
+                  },
                   { label: 'Paid', value: formatCurrency(summaryQuery.data.paid) },
                   { label: 'Outstanding', value: formatCurrency(summaryQuery.data.outstanding) },
                   { label: 'Overdue', value: summaryQuery.data.overdue },

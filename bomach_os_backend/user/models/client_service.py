@@ -108,6 +108,10 @@ class PaymentSubmission(models.Model):
         CONFIRMED = 'confirmed', 'Confirmed'
         REJECTED = 'rejected', 'Rejected'
 
+    class SUBMITTED_BY_TYPE(models.TextChoices):
+        CLIENT = 'client', 'Client'
+        STAFF = 'staff', 'Staff'
+
     reference = models.CharField(max_length=100, unique=True, editable=False)
     invoice = models.ForeignKey(
         Invoice,
@@ -130,12 +134,33 @@ class PaymentSubmission(models.Model):
     )
     payment_date = models.DateField()
     proof_of_payment = models.URLField()  # uploaded file URL
+    receiving_account_text = models.CharField(max_length=255, blank=True, default='')
+    finance_account = models.ForeignKey(
+        'finance.FinanceAccount',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='payment_submissions',
+    )
+    transaction_reference = models.CharField(max_length=255, blank=True, default='')
     notes = models.TextField(blank=True)
 
     status = models.CharField(
         max_length=20,
         choices=STATUS.choices,
         default=STATUS.PENDING
+    )
+    submitted_by = models.ForeignKey(
+        'user.User',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='payment_submissions_created',
+    )
+    submitted_by_type = models.CharField(
+        max_length=20,
+        choices=SUBMITTED_BY_TYPE.choices,
+        default=SUBMITTED_BY_TYPE.CLIENT,
     )
     reviewed_by = models.ForeignKey(
         'user.User',
@@ -146,6 +171,13 @@ class PaymentSubmission(models.Model):
     )
     reviewed_at = models.DateTimeField(null=True, blank=True)
     rejection_reason = models.TextField(blank=True, default='')
+    confirmed_payment = models.OneToOneField(
+        Payment,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='source_submission',
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

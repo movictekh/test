@@ -8,6 +8,7 @@ from services.api.schema.others import MessageSchema
 from services.models.payment import Payment
 from ninja.pagination import paginate, LimitOffsetPagination
 from user.utils.perm import require_permission
+from finance.services import get_active_finance_account
 
 
 router = Router(tags=["Payments"])
@@ -29,7 +30,11 @@ def list_payments(request, invoice_id: int = None):
 @require_permission("payments", "create")
 def create_payment(request, payload: PaymentIn):
     try:
-        payment = Payment.objects.create(**payload.dict())
+        data = payload.dict()
+        get_active_finance_account(data["finance_account_id"])
+        data["created_by"] = request.user
+        data.pop("created_by_id", None)
+        payment = Payment.objects.create(**data)
         return 201, payment
     except ValidationError as e:
         return 400, {'detail': e.messages[0]}

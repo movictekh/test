@@ -148,7 +148,7 @@ export function ReportsAnalyticsLivePage() {
         </section>
 
         <div className="experience-page-actions">
-          {(kpisQuery.isFetching || serviceQuery.isFetching || branchQuery.isFetching) ? (
+          {kpisQuery.isFetching || serviceQuery.isFetching || branchQuery.isFetching ? (
             <span className="experience-count">Refreshing…</span>
           ) : null}
           <CompactActionButton

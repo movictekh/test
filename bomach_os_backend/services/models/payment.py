@@ -141,6 +141,14 @@ class Payment(models.Model):
     payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES)
     payment_date = models.DateField()
     transaction_reference = models.CharField(max_length=255, blank=True)
+    finance_account = models.ForeignKey(
+        'finance.FinanceAccount',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='confirmed_payments',
+    )
+    proof_of_payment = models.URLField(blank=True, default='')
     notes = models.TextField(blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)

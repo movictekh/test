@@ -93,6 +93,7 @@ INSTALLED_APPS = [
     "hr",
     "operations",
     "services",
+    "finance",
 ]
 
 MIDDLEWARE = [
@@ -190,32 +191,40 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
+AWS_STORAGE_BUCKET_NAME = config('AWS_STORAGE_BUCKET_NAME', default='').strip()
+AWS_ACCESS_KEY_ID = config('AWS_ACCESS_KEY_ID', default='').strip()
+AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY', default='').strip()
+AWS_S3_REGION_NAME = config('AWS_S3_REGION_NAME', default='').strip()
+AWS_S3_CUSTOM_DOMAIN = config('AWS_S3_CUSTOM_DOMAIN', default='').strip()
+
+USE_S3_MEDIA_STORAGE = bool(AWS_STORAGE_BUCKET_NAME and AWS_S3_REGION_NAME)
+
 STORAGES = {
-    "default": {
-        "BACKEND": "storages.backends.s3.S3Storage",
-        "OPTIONS": {
-            "bucket_name": config('AWS_STORAGE_BUCKET_NAME'),
-            "access_key": config("AWS_ACCESS_KEY_ID"),
-            "secret_key": config("AWS_SECRET_ACCESS_KEY"),
-            "region_name": config('AWS_S3_REGION_NAME'),
-            "file_overwrite": False,
-            "custom_domain": config('AWS_S3_CUSTOM_DOMAIN'),
-        },
-    },
+    "default": (
+        {
+            "BACKEND": "storages.backends.s3.S3Storage",
+            "OPTIONS": {
+                "bucket_name": AWS_STORAGE_BUCKET_NAME,
+                "access_key": AWS_ACCESS_KEY_ID,
+                "secret_key": AWS_SECRET_ACCESS_KEY,
+                "region_name": AWS_S3_REGION_NAME,
+                "file_overwrite": False,
+                "custom_domain": AWS_S3_CUSTOM_DOMAIN,
+            },
+        }
+        if USE_S3_MEDIA_STORAGE
+        else {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+            "OPTIONS": {
+                "location": BASE_DIR / "mediafiles",
+                "base_url": "/media/",
+            },
+        }
+    ),
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-        # "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
-        # "OPTIONS": {
-        #     "bucket_name": config('AWS_STORAGE_BUCKET_NAME'),
-        #     "access_key": config("AWS_ACCESS_KEY_ID"),
-        #     "secret_key": config("AWS_SECRET_ACCESS_KEY"),
-        #     "region_name": config('AWS_S3_REGION_NAME'),
-        #     "custom_domain": config('AWS_S3_CUSTOM_DOMAIN'),
-        # },
     },
 }
-
-AWS_S3_CUSTOM_DOMAIN = config('AWS_S3_CUSTOM_DOMAIN')
 
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"

@@ -2,6 +2,7 @@ from ninja import Router, File
 from ninja.files import UploadedFile
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
+from django.core.files.storage import FileSystemStorage
 from django.core.exceptions import ValidationError
 from django.conf import settings
 from typing import Optional
@@ -25,11 +26,20 @@ def upload_file(request, file: UploadedFile = File(...)):
     
     if mime_type and not mime_type.startswith("image/"):
         unique_name = f"{uuid.uuid4()}-{file.name}"
-
-        file_name = default_storage.save(unique_name, ContentFile(file.read()))
-        file_url = default_storage.url(file_name)
+        content = ContentFile(file.read())
+        try:
+            file_name = default_storage.save(unique_name, content)
+            file_url = default_storage.url(file_name)
+        except Exception:
+            local_storage = FileSystemStorage(location=settings.MEDIA_ROOT, base_url=settings.MEDIA_URL)
+            file_name = local_storage.save(unique_name, content)
+            file_url = local_storage.url(file_name)
+        if file_url.startswith("/"):
+            file_url = request.build_absolute_uri(file_url)
         return {"url": file_url}
     
     file_url = compress_image(file)
+    if file_url.startswith("/"):
+        file_url = request.build_absolute_uri(file_url)
 
     return {"url": file_url}

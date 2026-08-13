@@ -6,6 +6,7 @@ Current coverage:
 - [Roles](./roles/README.md)
 - [Service Catalogue](./service-catalogue.md)
 - [Revenue Execution](./revenue-execution.md)
+- [Finance](./finance.md)
 - [Real Estate](./real-estate.md)
 - [Approvals](./approvals.md)
 

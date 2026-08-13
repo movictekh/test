@@ -230,10 +230,20 @@ POST /api/v1/service-requests/orders/{order_id}/deliverables/{deliverable_id}/re
 ```
 
 Clients only see their own issued invoices. Client payment submission records
-proof of payment and creates a `payment_submitted` activity. Finance/admin users
-review submissions through the invoice payment-submission endpoints. Confirmed
-submissions create `Payment` records, update invoice `amount_paid`, update
-invoice status to `partially_paid` or `paid`, and record `payment_confirmed`.
+proof of payment and creates a `payment_submitted` activity. Payment submissions
+are pending records; they do not update `amount_paid` or invoice balance until
+approved.
+
+Finance/admin users review submissions through the invoice payment-submission
+endpoints or the Finance endpoints documented in [Finance](./finance.md).
+Confirmed submissions create `Payment` records, update invoice `amount_paid`,
+update invoice status to `partially_paid` or `paid`, and record
+`payment_confirmed`. Client-origin submissions carry free-text receiving account
+information; approval requires a managed finance account. Staff-origin
+submissions must be linked to an active finance account when submitted.
+
+Rejected submissions do not change the invoice balance. The client or staff
+member must create a new submission rather than editing the rejected one.
 
 When confirmed payments reach `activation_threshold_amount`,
 `activation_threshold_met_at` is set and a `payment_threshold_met` activity is
@@ -354,4 +364,11 @@ GET  /api/v1/service-requests/admin/payment-submissions
 POST /api/v1/service-requests/admin/payment-submissions/{submission_id}/review
 ```
 
-They should move under the invoice/payment routers in a later pass.
+They now follow the same submission-first design as the Finance module:
+submissions remain pending until reviewed, approval creates the confirmed
+`Payment`, and rejection leaves invoice balances unchanged. Review calls that
+approve a client-origin submission must include `finance_account_id`.
+
+The legacy direct `POST /api/v1/payments` endpoint remains for backfill and
+compatibility only. New direct creates require `finance_account_id` and
+`proof_of_payment`; the Finance UI should use payment submissions instead.

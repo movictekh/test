@@ -115,6 +115,8 @@ class PaymentSubmissionCreateSchema(Schema):
     payment_method: str
     payment_date: date
     proof_of_payment: str  # URL from file upload
+    receiving_account_text: str = ""
+    transaction_reference: str = ""
     notes: str = ""
 
 
@@ -126,8 +128,14 @@ class PaymentSubmissionResponseSchema(Schema):
     payment_method: str
     payment_date: date
     proof_of_payment: str
+    receiving_account_text: str
+    finance_account_id: Optional[int] = None
+    transaction_reference: str
+    submitted_by_id: Optional[int] = None
+    submitted_by_type: str
     status: str
     rejection_reason: str
+    confirmed_payment_id: Optional[int] = None
     created_at: datetime
 
     @staticmethod
@@ -142,4 +150,5 @@ class PaymentSubmissionResponseSchema(Schema):
 # Admin review
 class ReviewPaymentSchema(Schema):
     status: str  # 'confirmed' or 'rejected'
+    finance_account_id: Optional[int] = None
     rejection_reason: str = ""

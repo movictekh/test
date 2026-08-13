@@ -294,7 +294,10 @@ export function ApprovalsLivePage({ recordSearch }: { recordSearch: AppSectionSe
               ? [
                   { label: 'Pending approvals', value: statsQuery.data.pendingCount },
                   { label: 'High-value approvals', value: statsQuery.data.highValueCount },
-                  { label: 'Oldest waiting', value: oldestWaiting(statsQuery.data.oldestWaitingDays) },
+                  {
+                    label: 'Oldest waiting',
+                    value: oldestWaiting(statsQuery.data.oldestWaitingDays),
+                  },
                   { label: 'Approval SLA', value: `${statsQuery.data.slaPercent}%` },
                 ]
               : []
