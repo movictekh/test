@@ -1,6 +1,7 @@
 import { SectionLoadingState } from '@/app/loading/SectionLoadingState'
-import { IconDownload, IconRefresh } from '@tabler/icons-react'
+import { IconDownload, IconFilePlus, IconPlus, IconRefresh } from '@tabler/icons-react'
 import { useQuery } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
 
 import { presentError } from '@/shared/errors'
 import { formatCurrency } from '@/shared/lib/formatters'
@@ -37,6 +38,7 @@ function downloadCsv(content: string) {
 
 export function ReportsAnalyticsLivePage() {
   const toast = useToast()
+  const navigate = useNavigate()
 
   const kpisQuery = useQuery(reportsQueries.kpis())
   const serviceQuery = useQuery(reportsQueries.servicePerformance())
@@ -100,11 +102,23 @@ export function ReportsAnalyticsLivePage() {
           breadcrumb="Intelligence / Performance"
           secondaryAction={
             <CompactActionButton
-              disabled={kpisQuery.isFetching || serviceQuery.isFetching || branchQuery.isFetching}
-              onClick={() => void refresh()}
+              onClick={() =>
+                void navigate({ to: '/app/$section', params: { section: 'service-requests' } })
+              }
             >
-              <IconRefresh size={14} />
-              Refresh
+              <IconFilePlus size={14} />
+              New Request
+            </CompactActionButton>
+          }
+          primaryAction={
+            <CompactActionButton
+              tone="primary"
+              onClick={() =>
+                void navigate({ to: '/app/$section', params: { section: 'service-catalogue' } })
+              }
+            >
+              <IconPlus size={14} />
+              Create Service
             </CompactActionButton>
           }
         />
@@ -133,6 +147,19 @@ export function ReportsAnalyticsLivePage() {
           </article>
         </section>
 
+        <div className="experience-page-actions">
+          {(kpisQuery.isFetching || serviceQuery.isFetching || branchQuery.isFetching) ? (
+            <span className="experience-count">Refreshing…</span>
+          ) : null}
+          <CompactActionButton
+            disabled={kpisQuery.isFetching || serviceQuery.isFetching || branchQuery.isFetching}
+            onClick={() => void refresh()}
+          >
+            <IconRefresh size={14} />
+            Refresh
+          </CompactActionButton>
+        </div>
+
         <div className="experience-grid-2">
           <section className="experience-card">
             <header className="experience-card-header">
@@ -143,13 +170,15 @@ export function ReportsAnalyticsLivePage() {
                 </div>
               </div>
 
-              <CompactActionButton
-                disabled={serviceQuery.isPending || serviceQuery.isError}
-                onClick={() => void exportServicePerformance()}
-              >
-                <IconDownload size={13} />
-                Export CSV
-              </CompactActionButton>
+              <div className="experience-card-header-actions">
+                <CompactActionButton
+                  disabled={serviceQuery.isPending || serviceQuery.isError}
+                  onClick={() => void exportServicePerformance()}
+                >
+                  <IconDownload size={13} />
+                  Export CSV
+                </CompactActionButton>
+              </div>
             </header>
 
             {serviceQuery.isPending ? (

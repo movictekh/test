@@ -9,6 +9,13 @@
   gap: 10px;
   margin-bottom: 13px;
 }
+.experience-page-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 13px;
+}
 .experience-kpi-card,
 .experience-card {
   background: #fff;
