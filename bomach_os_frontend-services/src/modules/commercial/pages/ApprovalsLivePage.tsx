@@ -29,6 +29,10 @@ import { approvalQueueQueries } from '../approval-queue/approval-queue.queries'
 import type { ApprovalQueueItem, ApprovalQueueStatus } from '../approval-queue/approval-queue.types'
 import { quotationKeys } from '../quotation/quotation.keys'
 import { ApprovalQueueDetailLiveWorkspace } from '../workspaces/ApprovalQueueDetailLiveWorkspace'
+import {
+  CommercialRegisterHeader,
+  CommercialSummaryGrid,
+} from '../components/CommercialRegisterChrome'
 import '../styles/commercial.css'
 
 function statusClass(status: ApprovalQueueItem['status']) {
@@ -281,44 +285,29 @@ export function ApprovalsLivePage({ recordSearch }: { recordSearch: AppSectionSe
       }
     >
       <main className="commercial-content">
-        <section className="commercial-kgrid commercial-kgrid-4" aria-label="Approval summary">
-          {statsQuery.isPending ? (
-            <article className="commercial-kpi">
-              <div className="commercial-kpi-label">Loading summary...</div>
-            </article>
-          ) : statsQuery.isError ? (
-            <article className="commercial-kpi">
-              <div className="commercial-kpi-label">Summary unavailable</div>
-            </article>
-          ) : (
-            [
-              ['Pending approvals', statsQuery.data.pendingCount],
-              ['High-value approvals', statsQuery.data.highValueCount],
-              ['Oldest waiting', oldestWaiting(statsQuery.data.oldestWaitingDays)],
-              ['Approval SLA', `${statsQuery.data.slaPercent}%`],
-            ].map(([label, value]) => (
-              <article className="commercial-kpi" key={label}>
-                <div className="commercial-kpi-label">{label}</div>
-                <div className="commercial-kpi-value">{value}</div>
-              </article>
-            ))
-          )}
-        </section>
+        <CommercialSummaryGrid
+          ariaLabel="Approval summary"
+          loading={statsQuery.isPending}
+          error={statsQuery.isError}
+          items={
+            statsQuery.data
+              ? [
+                  { label: 'Pending approvals', value: statsQuery.data.pendingCount },
+                  { label: 'High-value approvals', value: statsQuery.data.highValueCount },
+                  { label: 'Oldest waiting', value: oldestWaiting(statsQuery.data.oldestWaitingDays) },
+                  { label: 'Approval SLA', value: `${statsQuery.data.slaPercent}%` },
+                ]
+              : []
+          }
+        />
 
         <section className="commercial-card">
-          <header className="commercial-card-header">
-            <div>
-              <h2>Approval & Escalation Queue</h2>
-              <p>Review operational approvals across quotations, deliverables, and expenses.</p>
-            </div>
-            <div className="commercial-card-header-actions">
-              <span className="commercial-count">
-                {listQuery.data.count} record
-                {listQuery.data.count === 1 ? '' : 's'}
-              </span>
-              {listQuery.isFetching || statsQuery.isFetching ? (
-                <span className="commercial-count">Refreshing…</span>
-              ) : null}
+          <CommercialRegisterHeader
+            title="Approval & Escalation Queue"
+            description="Review operational approvals across quotations, deliverables, and expenses."
+            countLabel={`${listQuery.data.count} record${listQuery.data.count === 1 ? '' : 's'}`}
+            refreshing={listQuery.isFetching || statsQuery.isFetching}
+            action={
               <CompactActionButton
                 onClick={() => void refresh()}
                 disabled={listQuery.isFetching || statsQuery.isFetching}
@@ -326,8 +315,8 @@ export function ApprovalsLivePage({ recordSearch }: { recordSearch: AppSectionSe
                 <IconRefresh size={14} />
                 Refresh
               </CompactActionButton>
-            </div>
-          </header>
+            }
+          />
 
           <div className="commercial-filters">
             <label className="commercial-search">

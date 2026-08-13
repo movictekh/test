@@ -8,8 +8,7 @@ interface CommercialRegisterPaginationProps {
 /**
  * Shared pagination for Commercial registers.
  *
- * This intentionally preserves the existing DOM and CSS classes so the
- * consolidation is visual- and behaviour-neutral.
+
  */
 export function CommercialRegisterPagination({
   countLabel,

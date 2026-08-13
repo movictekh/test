@@ -33,6 +33,10 @@ import type {
 import { QuotationBuilderLiveWorkspace } from '../workspaces/QuotationBuilderLiveWorkspace'
 import { QuotationDetailLiveWorkspace } from '../workspaces/QuotationDetailLiveWorkspace'
 import { CommercialRegisterPagination } from '../components/CommercialRegisterPagination'
+import {
+  CommercialRegisterHeader,
+  CommercialSummaryGrid,
+} from '../components/CommercialRegisterChrome'
 import '../styles/commercial.css'
 
 function statusClass(status: string) {
@@ -400,41 +404,29 @@ export function QuotationsLivePage({ recordSearch }: { recordSearch: AppSectionS
       }
     >
       <main className="commercial-content">
-        <section className="commercial-kgrid commercial-kgrid-4" aria-label="Quotation summary">
-          {summaryQuery.isPending ? (
-            <article className="commercial-kpi">
-              <div className="commercial-kpi-label">Loading summary...</div>
-            </article>
-          ) : summaryQuery.isError ? (
-            <article className="commercial-kpi">
-              <div className="commercial-kpi-label">Summary unavailable</div>
-            </article>
-          ) : (
-            [
-              ['Awaiting approval', summaryQuery.data.awaitingApproval],
-              ['Sent to clients', summaryQuery.data.sent],
-              ['Accepted', summaryQuery.data.accepted],
-              ['Acceptance rate', `${summaryQuery.data.acceptanceRate}%`],
-            ].map(([label, value]) => (
-              <article className="commercial-kpi" key={label}>
-                <div className="commercial-kpi-label">{label}</div>
-                <div className="commercial-kpi-value">{value}</div>
-              </article>
-            ))
-          )}
-        </section>
+        <CommercialSummaryGrid
+          ariaLabel="Quotation summary"
+          loading={summaryQuery.isPending}
+          error={summaryQuery.isError}
+          items={
+            summaryQuery.data
+              ? [
+                  { label: 'Awaiting approval', value: summaryQuery.data.awaitingApproval },
+                  { label: 'Sent to clients', value: summaryQuery.data.sent },
+                  { label: 'Accepted', value: summaryQuery.data.accepted },
+                  { label: 'Acceptance rate', value: `${summaryQuery.data.acceptanceRate}%` },
+                ]
+              : []
+          }
+        />
 
         <section className="commercial-card">
-          <header className="commercial-card-header">
-            <div>
-              <h2>Quotations & Proposals</h2>
-              <p>Live version-controlled scope, pricing, terms and approvals</p>
-            </div>
-            <div className="commercial-card-header-actions">
-              <span className="commercial-count">{displayedCount} records</span>
-              {listQuery.isFetching || searchListQuery.isFetching ? (
-                <span className="commercial-count">Refreshing…</span>
-              ) : null}
+          <CommercialRegisterHeader
+            title="Quotations & Proposals"
+            description="Live version-controlled scope, pricing, terms and approvals"
+            countLabel={`${displayedCount} records`}
+            refreshing={listQuery.isFetching || searchListQuery.isFetching}
+            action={
               <CompactActionButton
                 tone="primary"
                 disabled={!hasPermission(user, PERMISSIONS.quotesCreate)}
@@ -444,8 +436,8 @@ export function QuotationsLivePage({ recordSearch }: { recordSearch: AppSectionS
                 <IconPlus size={14} />
                 Build Quote
               </CompactActionButton>
-            </div>
-          </header>
+            }
+          />
 
           <div className="commercial-filters">
             <label className="commercial-search">

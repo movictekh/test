@@ -39,6 +39,10 @@ import type { Quotation } from '../quotation/quotation.types'
 import { InvoiceBuilderLiveWorkspace } from '../workspaces/InvoiceBuilderLiveWorkspace'
 import { InvoiceDetailLiveWorkspace } from '../workspaces/InvoiceDetailLiveWorkspace'
 import { CommercialRegisterPagination } from '../components/CommercialRegisterPagination'
+import {
+  CommercialRegisterHeader,
+  CommercialSummaryGrid,
+} from '../components/CommercialRegisterChrome'
 import '../styles/commercial.css'
 
 function invoiceStatusClass(status: Invoice['status']) {
@@ -453,41 +457,29 @@ export function InvoicesPaymentsLivePage({ recordSearch }: { recordSearch: AppSe
       }
     >
       <main className="commercial-content">
-        <section className="commercial-kgrid commercial-kgrid-4" aria-label="Invoice summary">
-          {summaryQuery.isPending ? (
-            <article className="commercial-kpi">
-              <div className="commercial-kpi-label">Loading summary...</div>
-            </article>
-          ) : summaryQuery.isError ? (
-            <article className="commercial-kpi">
-              <div className="commercial-kpi-label">Summary unavailable</div>
-            </article>
-          ) : (
-            [
-              ['Total invoiced', formatCurrency(summaryQuery.data.totalInvoiced)],
-              ['Paid', formatCurrency(summaryQuery.data.paid)],
-              ['Outstanding', formatCurrency(summaryQuery.data.outstanding)],
-              ['Overdue', summaryQuery.data.overdue],
-            ].map(([label, value]) => (
-              <article className="commercial-kpi" key={label}>
-                <div className="commercial-kpi-label">{label}</div>
-                <div className="commercial-kpi-value">{value}</div>
-              </article>
-            ))
-          )}
-        </section>
+        <CommercialSummaryGrid
+          ariaLabel="Invoice summary"
+          loading={summaryQuery.isPending}
+          error={summaryQuery.isError}
+          items={
+            summaryQuery.data
+              ? [
+                  { label: 'Total invoiced', value: formatCurrency(summaryQuery.data.totalInvoiced) },
+                  { label: 'Paid', value: formatCurrency(summaryQuery.data.paid) },
+                  { label: 'Outstanding', value: formatCurrency(summaryQuery.data.outstanding) },
+                  { label: 'Overdue', value: summaryQuery.data.overdue },
+                ]
+              : []
+          }
+        />
 
         <section className="commercial-card">
-          <header className="commercial-card-header">
-            <div>
-              <h2>Invoices & Payment Review</h2>
-              <p>Track issued invoices, payment confirmations, balances, and follow-up actions.</p>
-            </div>
-            <div className="commercial-card-header-actions">
-              <span className="commercial-count">
-                {listQuery.data.count} invoice{listQuery.data.count === 1 ? '' : 's'}
-              </span>
-              {listQuery.isFetching ? <span className="commercial-count">Refreshing…</span> : null}
+          <CommercialRegisterHeader
+            title="Invoices & Payment Review"
+            description="Track issued invoices, payment confirmations, balances, and follow-up actions."
+            countLabel={`${listQuery.data.count} invoice${listQuery.data.count === 1 ? '' : 's'}`}
+            refreshing={listQuery.isFetching}
+            action={
               <CompactActionButton
                 tone="primary"
                 disabled={!hasPermission(user, PERMISSIONS.serviceInvoicesCreate)}
@@ -497,8 +489,8 @@ export function InvoicesPaymentsLivePage({ recordSearch }: { recordSearch: AppSe
                 <IconPlus size={14} />
                 New Invoice
               </CompactActionButton>
-            </div>
-          </header>
+            }
+          />
 
           <div className="commercial-tabs" role="tablist">
             <button
