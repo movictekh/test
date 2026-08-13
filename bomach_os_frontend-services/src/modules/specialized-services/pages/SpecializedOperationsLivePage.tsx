@@ -135,6 +135,20 @@ export function SpecializedOperationsLivePage({
         : []),
     ])
 
+  if (!canServices) {
+    return (
+      <ModulePageStatus
+        title="Survey / Engineering / Others"
+        breadcrumb="Specialized Services / Operations"
+      >
+        <ErrorState
+          title="Service Catalogue access not granted"
+          description="You do not have permission to list Services required by this workspace."
+        />
+      </ModulePageStatus>
+    )
+  }
+
   if (allQ.isPending) return <SectionLoadingState section="survey-engineering-others" />
   if (allQ.isError) {
     const e = presentError(allQ.error, 'page-load')
@@ -278,7 +292,11 @@ export function SpecializedOperationsLivePage({
                   {services.map((s) => (
                     <button
                       key={s.id}
-                      className={`specialized-service-card${selected?.id === s.id ? 'is-selected' : ''}`}
+                      className={
+                        selected?.id === s.id
+                          ? 'specialized-service-card is-selected'
+                          : 'specialized-service-card'
+                      }
                       onClick={() => setContext(division, s.id)}
                     >
                       <b>{s.name}</b>

@@ -777,7 +777,11 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
                         <button
                           key={property.id}
                           type="button"
-                          className={`specialized-property-tile ${statusClass(property.status)}${property.id === propertyId ? 'is-selected' : ''}`}
+                          className={
+                            property.id === propertyId
+                              ? `specialized-property-tile ${statusClass(property.status)} is-selected`
+                              : `specialized-property-tile ${statusClass(property.status)}`
+                          }
                           onClick={() =>
                             void navigate({
                               to: '/app/$section',

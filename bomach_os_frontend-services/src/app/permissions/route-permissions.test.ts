@@ -50,13 +50,23 @@ describe('requireRoutePermission', () => {
     expect(result).toBeUndefined()
   })
 
-  it('does not convert an unauthenticated state into a permission denial', () => {
+  it('redirects a resolved unauthenticated state to login instead of allowing the route to mount', () => {
     const result = requireRoutePermission({
       auth: makeAuth(),
       permissions: [PERMISSIONS.servicesList],
+      locationHref: '/app/service-catalogue',
     })
 
-    expect(result).toBeUndefined()
+    expect(result).toBeDefined()
+    expect(result).toMatchObject({
+      options: {
+        to: '/login',
+        search: {
+          redirect: '/app/service-catalogue',
+        },
+        replace: true,
+      },
+    })
   })
 
   it('allows an authenticated user with the required permission', () => {

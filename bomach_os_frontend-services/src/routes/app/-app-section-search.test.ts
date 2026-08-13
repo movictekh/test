@@ -37,4 +37,18 @@ describe('app section search parser', () => {
       search: 'estate',
     })
   })
+  it('normalizes accidentally quoted identifier search values', () => {
+    expect(
+      parseRecordSearch({
+        service: '"1"',
+        estate: "'12'",
+        request: '"REQ-1"',
+      }),
+    ).toMatchObject({
+      service: '1',
+      estate: '12',
+      request: 'REQ-1',
+    })
+  })
+
 })

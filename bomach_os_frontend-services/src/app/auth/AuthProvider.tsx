@@ -128,7 +128,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     () => ({
       user: currentUserQuery.data ?? null,
       isAuthenticated: Boolean(currentUserQuery.data),
-      isLoading: currentUserQuery.isPending || currentUserQuery.isFetching,
+      isLoading: currentUserQuery.isPending && !currentUserQuery.data,
       accessIssue: isAuthAccessError(currentUserQuery.error) ? currentUserQuery.error.issue : null,
       login,
       verifyTwoFactor,
@@ -137,7 +137,6 @@ export function AuthProvider({ children }: PropsWithChildren) {
     [
       currentUserQuery.data,
       currentUserQuery.error,
-      currentUserQuery.isFetching,
       currentUserQuery.isPending,
       login,
       signOut,

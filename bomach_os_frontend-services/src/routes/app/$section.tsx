@@ -1,8 +1,9 @@
 import { lazy, Suspense } from 'react'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Navigate } from '@tanstack/react-router'
 
+import { useAuth } from '@/app/auth'
 import { findNavigationItemByPath, operationsNavigation } from '@/app/navigation'
-import { PERMISSIONS, requireRoutePermission } from '@/app/permissions'
+import { hasPermissions, PERMISSIONS, requireRoutePermission } from '@/app/permissions'
 import { SectionLoadingState } from '@/app/loading/SectionLoadingState'
 import type { AppRecordSearch } from '@/shared/navigation'
 import type { ServiceAdministrationSection } from '@/modules/service-administration'
@@ -109,19 +110,34 @@ export type AppSectionSearch = AppRecordSearch & {
 
 export function parseRecordSearch(search: Record<string, unknown>): AppSectionSearch {
   const stringValue = (value: unknown): string | undefined =>
-    typeof value === 'string' && value.trim() ? value : undefined
+    typeof value === 'string' && value.trim() ? value.trim() : undefined
+
+  const identifierValue = (value: unknown): string | undefined => {
+    const raw = stringValue(value)
+    if (!raw) return undefined
+
+    const first = raw.at(0)
+    const last = raw.at(-1)
+    const unquoted =
+      raw.length >= 2 &&
+      ((first === '"' && last === '"') || (first === "'" && last === "'"))
+        ? raw.slice(1, -1).trim()
+        : raw
+
+    return unquoted || undefined
+  }
 
   const result: AppSectionSearch = {}
-  const request = stringValue(search.request)
-  const quotation = stringValue(search.quotation)
-  const invoice = stringValue(search.invoice)
-  const approval = stringValue(search.approval)
-  const order = stringValue(search.order)
-  const task = stringValue(search.task)
-  const deliverable = stringValue(search.deliverable)
-  const estate = stringValue(search.estate)
-  const property = stringValue(search.property) ?? stringValue(search.plot)
-  const feedback = stringValue(search.feedback)
+  const request = identifierValue(search.request)
+  const quotation = identifierValue(search.quotation)
+  const invoice = identifierValue(search.invoice)
+  const approval = identifierValue(search.approval)
+  const order = identifierValue(search.order)
+  const task = identifierValue(search.task)
+  const deliverable = identifierValue(search.deliverable)
+  const estate = identifierValue(search.estate)
+  const property = identifierValue(search.property) ?? identifierValue(search.plot)
+  const feedback = identifierValue(search.feedback)
 
   const catalogueSearch = stringValue(search.search)
   const catalogueStatus = stringValue(search.status)
@@ -133,7 +149,7 @@ export function parseRecordSearch(search: Record<string, unknown>): AppSectionSe
   const catalogueDivision = stringValue(search.division)
   const requestPriority = stringValue(search.priority)
   const requestBranch = stringValue(search.branch)
-  const requestService = stringValue(search.service)
+  const requestService = identifierValue(search.service)
   const deliverableType = stringValue(search.deliverableType)
   const clientVisible = stringValue(search.clientVisible)
   const feedbackType = stringValue(search.feedbackType)
@@ -204,6 +220,7 @@ export const Route = createFileRoute('/app/$section')({
     return requireRoutePermission({
       auth: context.auth,
       permissions: matchingItem?.permissions ?? [PERMISSIONS.dashboardView],
+      locationHref: location.href,
     })
   },
   component: AppShellRoute,
@@ -211,6 +228,21 @@ export const Route = createFileRoute('/app/$section')({
 
 function AppShellRoute() {
   const { section } = Route.useParams()
+  const auth = useAuth()
+  const matchingItem = findNavigationItemByPath(operationsNavigation, `/app/${section}`)
+  const requiredPermissions = matchingItem?.permissions ?? [PERMISSIONS.dashboardView]
+
+  if (auth.isLoading) {
+    return <SectionLoadingState section={section} />
+  }
+
+  if (!auth.isAuthenticated || !auth.user) {
+    return <Navigate to="/login" replace />
+  }
+
+  if (!hasPermissions(auth.user, requiredPermissions)) {
+    return <Navigate to="/forbidden" replace />
+  }
 
   return (
     <Suspense fallback={<SectionLoadingState section={section} />}>
