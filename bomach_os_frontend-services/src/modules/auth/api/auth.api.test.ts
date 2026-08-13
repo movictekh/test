@@ -57,13 +57,24 @@ describe('authApi', () => {
     })
   })
 
-  it('rejects invalid credentials', async () => {
-    await expect(
-      authApi.login({
-        email: 'service.admin@bomach.local',
-        password: 'wrong-password',
-      }),
-    ).rejects.toThrow('No active account found with the given credentials.')
+  it('rejects invalid credentials without emitting a session-expired event', async () => {
+    const sessionEvents: Array<{ reason?: string }> = []
+    const unsubscribe = tokenStore.subscribe((event) => {
+      sessionEvents.push({ ...(event.reason ? { reason: event.reason } : {}) })
+    })
+
+    try {
+      await expect(
+        authApi.login({
+          email: 'service.admin@bomach.local',
+          password: 'wrong-password',
+        }),
+      ).rejects.toThrow('No active account found with the given credentials.')
+
+      expect(sessionEvents).toEqual([])
+    } finally {
+      unsubscribe()
+    }
   })
 
   it('returns null when there is no stored session', async () => {

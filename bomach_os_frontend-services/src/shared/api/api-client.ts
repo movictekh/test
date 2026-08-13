@@ -158,7 +158,7 @@ async function request<TResponse>(
     const errorPayload =
       typeof payload === 'object' && payload !== null ? (payload as ApiErrorPayload) : undefined
 
-    if (response.status === 401) tokenStore.clear('expired')
+    if (response.status === 401 && !options.skipAuth) tokenStore.clear('expired')
 
     throw new ApiError(
       errorPayload?.detail ?? errorPayload?.message ?? 'The request could not be completed.',
