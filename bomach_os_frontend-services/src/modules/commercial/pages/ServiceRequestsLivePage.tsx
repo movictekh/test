@@ -30,6 +30,7 @@ import type {
 } from '../api/service-requests.types'
 import { CreateServiceRequestLiveWorkspace } from '../workspaces/CreateServiceRequestLiveWorkspace'
 import { ServiceRequestDetailWorkspace } from '../workspaces/ServiceRequestDetailWorkspace'
+import { CommercialRegisterPagination } from '../components/CommercialRegisterPagination'
 import '../styles/commercial.css'
 
 function statusClass(status: string) {
@@ -562,33 +563,12 @@ export function ServiceRequestsLivePage({ recordSearch }: { recordSearch: AppSec
             </div>
           )}
 
-          <div className="commercial-table-pagination">
-            <div className="commercial-table-pagination-summary">
-              <span className="commercial-table-pagination-count">{recordCountLabel}</span>
-              <span className="commercial-table-pagination-divider" aria-hidden="true" />
-              <span>
-                Page <b>{page}</b> of <b>{totalPages}</b>
-              </span>
-            </div>
-            <div className="commercial-table-pagination-actions">
-              <button
-                type="button"
-                className="commercial-btn commercial-btn-small"
-                disabled={page <= 1}
-                onClick={() => setSearch({ page: page - 1 })}
-              >
-                Previous
-              </button>
-              <button
-                type="button"
-                className="commercial-btn commercial-btn-small"
-                disabled={page >= totalPages}
-                onClick={() => setSearch({ page: page + 1 })}
-              >
-                Next
-              </button>
-            </div>
-          </div>
+          <CommercialRegisterPagination
+            countLabel={recordCountLabel}
+            page={page}
+            totalPages={totalPages}
+            onPageChange={(nextPage) => setSearch({ page: nextPage })}
+          />
         </section>
       </main>
 

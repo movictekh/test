@@ -38,6 +38,7 @@ import { quotationQueries } from '../quotation/quotation.queries'
 import type { Quotation } from '../quotation/quotation.types'
 import { InvoiceBuilderLiveWorkspace } from '../workspaces/InvoiceBuilderLiveWorkspace'
 import { InvoiceDetailLiveWorkspace } from '../workspaces/InvoiceDetailLiveWorkspace'
+import { CommercialRegisterPagination } from '../components/CommercialRegisterPagination'
 import '../styles/commercial.css'
 
 function invoiceStatusClass(status: Invoice['status']) {
@@ -634,35 +635,12 @@ export function InvoicesPaymentsLivePage({ recordSearch }: { recordSearch: AppSe
                 </div>
               )}
 
-              <div className="commercial-table-pagination">
-                <div className="commercial-table-pagination-summary">
-                  <span className="commercial-table-pagination-count">
-                    {listQuery.data.count} record{listQuery.data.count === 1 ? '' : 's'}
-                  </span>
-                  <span className="commercial-table-pagination-divider" aria-hidden="true" />
-                  <span>
-                    Page <b>{page}</b> of <b>{totalPages}</b>
-                  </span>
-                </div>
-                <div className="commercial-table-pagination-actions">
-                  <button
-                    type="button"
-                    className="commercial-btn commercial-btn-small"
-                    disabled={page <= 1}
-                    onClick={() => setSearch({ page: page - 1 })}
-                  >
-                    Previous
-                  </button>
-                  <button
-                    type="button"
-                    className="commercial-btn commercial-btn-small"
-                    disabled={page >= totalPages}
-                    onClick={() => setSearch({ page: page + 1 })}
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
+              <CommercialRegisterPagination
+                countLabel={`${listQuery.data.count} record${listQuery.data.count === 1 ? '' : 's'}`}
+                page={page}
+                totalPages={totalPages}
+                onPageChange={(nextPage) => setSearch({ page: nextPage })}
+              />
             </>
           ) : (
             <PaymentSubmissionsPanel
