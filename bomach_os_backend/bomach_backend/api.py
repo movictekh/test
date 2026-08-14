@@ -52,16 +52,17 @@ from domains.service_operations.api.v1 import (
     invoices_router as svc_invoices_router,
     feedback_router as svc_feedback_router,
     reports_router as svc_reports_router,
+    categories_router as svc_categories_router,
+    service_leads_router as svc_service_leads_router,
 )
 
 # Services routers
 from services.api.v1 import (
-    budgets as svc_budgets, categories as svc_categories, content as svc_content,
+    budgets as svc_budgets, content as svc_content,
     documents as svc_documents, expenses as svc_expenses,
     leads as svc_leads, marketing_campaigns as svc_marketing,
     payments as svc_payments, property as svc_property,
     revenue_execution as svc_revenue_execution,
-    service_leads as svc_service_leads,
     stats as svc_stats,
     funnel_router as svc_funnel, marketing_router as svc_marketing_cc,
     csrc_router as svc_csrc, pipeline_router as svc_pipeline,
@@ -175,7 +176,7 @@ register_project_operations_v1(api)
 
 # === Services routers ===
 api.add_router("/budgets", svc_budgets.router)
-api.add_router("/categories", svc_categories.router)
+api.add_router("/categories", svc_categories_router)
 api.add_router("/content", svc_content.router)
 api.add_router("/documents", svc_documents.router)
 
@@ -184,7 +185,7 @@ api.add_router("/feedback", svc_feedback_router)
 api.add_router("/reports", svc_reports_router)
 api.add_router("/services", svc_services_router)
 api.add_router("/leads", svc_leads.router)
-api.add_router("/service-leads", svc_service_leads.router)
+api.add_router("/service-leads", svc_service_leads_router)
 api.add_router("/quotes", svc_quotes_router)
 api.add_router("/orders", svc_orders_router)
 api.add_router("/invoices", svc_invoices_router)
