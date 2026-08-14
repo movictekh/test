@@ -56,6 +56,8 @@ from domains.service_operations.api.v1 import (
     service_leads_router as svc_service_leads_router,
     service_request_admin_router as svc_service_request_admin_router,
     client_service_portal_router as svc_client_service_portal_router,
+    service_configuration_router as svc_service_configuration_router,
+    service_branch_activation_router as svc_service_branch_activation_router,
 )
 
 # Services routers
@@ -187,6 +189,8 @@ api.add_router("/documents", svc_documents.router)
 api.add_router("/expenses", svc_expenses.router)
 api.add_router("/feedback", svc_feedback_router)
 api.add_router("/reports", svc_reports_router)
+api.add_router("/services", svc_service_configuration_router)
+api.add_router("/services", svc_service_branch_activation_router)
 api.add_router("/services", svc_services_router)
 api.add_router("/leads", svc_leads.router)
 api.add_router("/service-leads", svc_service_leads_router)
