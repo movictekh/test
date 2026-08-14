@@ -10,7 +10,7 @@ from ninja.errors import HttpError
 from ninja.pagination import LimitOffsetPagination, paginate
 
 from services.api.schema.others import MessageSchema
-from services.api.schema.schemas import (
+from ..schemas.lifecycle import (
     ServiceOrderActivityIn,
     ServiceOrderActivityOut,
     ServiceDeliverableActionIn,

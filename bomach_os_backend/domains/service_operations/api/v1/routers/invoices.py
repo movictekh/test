@@ -11,7 +11,7 @@ from ninja.errors import HttpError
 from ninja.pagination import LimitOffsetPagination, paginate
 
 from services.api.schema.others import MessageSchema
-from services.api.schema.schemas import InvoiceIn, InvoiceOut, InvoiceSendIn, InvoiceUpdate, ServiceOrderFromInvoiceIn, ServiceOrderOut
+from ..schemas.lifecycle import InvoiceIn, InvoiceOut, InvoiceSendIn, InvoiceUpdate, ServiceOrderFromInvoiceIn, ServiceOrderOut
 from services.models.payment import Invoice, InvoiceItem
 from services.models.service import ServiceRequestActivity
 from domains.service_operations.services import create_order_from_invoice

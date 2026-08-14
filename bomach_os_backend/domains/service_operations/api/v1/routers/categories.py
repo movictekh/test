@@ -3,7 +3,7 @@ from ninja import Router
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import ValidationError
 
-from services.api.schema.schemas import ServiceCategoryIn, ServiceCategoryOut
+from ..schemas.lifecycle import ServiceCategoryIn, ServiceCategoryOut
 from services.api.schema.others import MessageSchema
 from services.models.service import ServiceCategory
 from ninja.pagination import paginate, LimitOffsetPagination
