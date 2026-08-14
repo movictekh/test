@@ -17,7 +17,7 @@ from domains.service_operations.models import (
 )
 from services.models.payment import Invoice
 from services.models.expenses import Expense
-from services.models.feedback import ClientFeedback
+from domains.service_operations.models import ClientFeedback
 from user.utils.perm import require_permission
 
 router = Router(tags=["Reports"])

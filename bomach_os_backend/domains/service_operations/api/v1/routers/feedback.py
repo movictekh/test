@@ -9,7 +9,7 @@ from ..schemas.feedback import (
     FeedbackIn, FeedbackOut, FeedbackUpdate, FeedbackStatsSchema,
 )
 from services.api.schema.others import MessageSchema
-from services.models.feedback import ClientFeedback
+from domains.service_operations.models import ClientFeedback
 from user.utils.perm import require_permission
 
 router = Router(tags=["Feedback"])
