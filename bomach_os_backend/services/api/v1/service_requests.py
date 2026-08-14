@@ -21,7 +21,7 @@ from services.api.schema.schemas import (
     ServiceDeliverableOut,
     ServiceOrderOut,
 )
-from services.api.schema.service_catalogue_schemas import FieldTypeOut
+from domains.service_operations.api.v1.schemas.catalogue import FieldTypeOut
 from services.api.schema.service_request_schemas import (
     ServiceRequestActivityCreateSchema,
     ServiceRequestActivityOut,

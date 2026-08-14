@@ -43,6 +43,9 @@ from user.api.v1.sops import dept_router, unit_router, resp_router, sop_dashboar
 # Project Operations API v1
 from domains.project_operations.api.v1 import register_project_operations_v1
 
+# Service Operations API v1
+from domains.service_operations.api.v1 import catalogue_router as svc_services_router
+
 # Services routers
 from services.api.v1 import (
     budgets as svc_budgets, categories as svc_categories, content as svc_content,
@@ -52,7 +55,7 @@ from services.api.v1 import (
     orders as svc_orders, payments as svc_payments, property as svc_property,
     quotes as svc_quotes, reports as svc_reports, revenue_execution as svc_revenue_execution,
     service_leads as svc_service_leads, service_requests as svc_service_requests,
-    services as svc_services, stats as svc_stats,
+    stats as svc_stats,
     funnel_router as svc_funnel, marketing_router as svc_marketing_cc,
     csrc_router as svc_csrc, pipeline_router as svc_pipeline,
 )
@@ -172,7 +175,7 @@ api.add_router("/documents", svc_documents.router)
 api.add_router("/expenses", svc_expenses.router)
 api.add_router("/feedback", svc_feedback.router)
 api.add_router("/reports", svc_reports.router)
-api.add_router("/services", svc_services.router)
+api.add_router("/services", svc_services_router)
 api.add_router("/leads", svc_leads.router)
 api.add_router("/service-leads", svc_service_leads.router)
 api.add_router("/quotes", svc_quotes.router)

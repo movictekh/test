@@ -9,7 +9,7 @@ from ninja import Router
 from ninja.pagination import LimitOffsetPagination, paginate
 
 from services.api.schema.others import MessageSchema
-from services.api.schema.service_catalogue_schemas import (
+from ..schemas.catalogue import (
     BranchActivationBulkUpsert,
     FieldTypeOut,
     PricingConfigIn,
@@ -455,7 +455,7 @@ def _service_dependents_count(service):
     )
 
 
-@router.get("/request-field-types", response=List[FieldTypeOut])
+@router.get("/request-field-types", response=List[FieldTypeOut], operation_id="services_api_v1_services_list_request_field_types")
 @require_permission("service_request_forms", "list")
 def list_request_field_types(request):
     option_types = {"select", "multiselect", "checkbox"}
@@ -470,7 +470,7 @@ def list_request_field_types(request):
     ]
 
 
-@router.get("/catalogue", response=List[Dict[str, Any]])
+@router.get("/catalogue", response=List[Dict[str, Any]], operation_id="services_api_v1_services_list_service_catalogue")
 @paginate(LimitOffsetPagination, page_size=10)
 @require_permission("services", "list")
 def list_service_catalogue(
@@ -494,14 +494,14 @@ def list_service_catalogue(
     return [_serialize_catalogue_card(service) for service in services]
 
 
-@router.get("/catalogue/{service_id}", response=Dict[str, Any])
+@router.get("/catalogue/{service_id}", response=Dict[str, Any], operation_id="services_api_v1_services_get_service_catalogue_detail")
 @require_permission("services", "view")
 def get_service_catalogue_detail(request, service_id: int):
     service = get_object_or_404(_service_queryset(), id=service_id)
     return _serialize_catalogue_detail(service)
 
 
-@router.get("/pricing-configs", response=List[Dict[str, Any]])
+@router.get("/pricing-configs", response=List[Dict[str, Any]], operation_id="services_api_v1_services_list_pricing_configs")
 @paginate(LimitOffsetPagination, page_size=10)
 @require_permission("service_pricing_configs", "list")
 def list_pricing_configs(request, service_id: int = None, status: str = None, pricing_type: str = None, search: str = None):
@@ -521,7 +521,7 @@ def list_pricing_configs(request, service_id: int = None, status: str = None, pr
     return [_serialize_pricing_config(config, include_fields=False) for config in configs]
 
 
-@router.get("/branch-activation-matrix", response=List[Dict[str, Any]])
+@router.get("/branch-activation-matrix", response=List[Dict[str, Any]], operation_id="services_api_v1_services_get_branch_activation_matrix")
 @require_permission("service_branch_activations", "list")
 def get_branch_activation_matrix(request, division: str = None, status: str = None, branch_id: int = None, search: str = None):
     services = _filter_services(_service_queryset(), division=division, branch_id=branch_id, search=search)
@@ -530,7 +530,7 @@ def get_branch_activation_matrix(request, division: str = None, status: str = No
     return [_serialize_catalogue_card(service) for service in services]
 
 
-@router.get("", response=List[ServiceCoreOut])
+@router.get("", response=List[ServiceCoreOut], operation_id="services_api_v1_services_list_services")
 @paginate(LimitOffsetPagination, page_size=10)
 @require_permission("services", "list")
 def list_services(
@@ -556,7 +556,7 @@ def list_services(
     return [_serialize_service_core(service) for service in services]
 
 
-@router.post("", response={201: ServiceCoreOut, 400: MessageSchema})
+@router.post("", response={201: ServiceCoreOut, 400: MessageSchema}, operation_id="services_api_v1_services_create_service")
 @require_permission("services", "create")
 def create_service(request, payload: ServiceCreateSchema):
     try:
@@ -589,14 +589,14 @@ def create_service(request, payload: ServiceCreateSchema):
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.get("/{service_id}", response=ServiceCoreOut)
+@router.get("/{service_id}", response=ServiceCoreOut, operation_id="services_api_v1_services_get_service")
 @require_permission("services", "view")
 def get_service(request, service_id: int):
     service = get_object_or_404(_service_queryset(), id=service_id)
     return _serialize_service_core(service)
 
 
-@router.put("/{service_id}", response={200: ServiceCoreOut, 400: MessageSchema, 404: MessageSchema})
+@router.put("/{service_id}", response={200: ServiceCoreOut, 400: MessageSchema, 404: MessageSchema}, operation_id="services_api_v1_services_update_service")
 @require_permission("services", "update")
 def update_service(request, service_id: int, payload: ServiceUpdateSchema):
     try:
@@ -622,7 +622,7 @@ def update_service(request, service_id: int, payload: ServiceUpdateSchema):
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.delete("/{service_id}", response={200: MessageSchema, 400: MessageSchema, 404: MessageSchema})
+@router.delete("/{service_id}", response={200: MessageSchema, 400: MessageSchema, 404: MessageSchema}, operation_id="services_api_v1_services_delete_service")
 @require_permission("services", "delete")
 def delete_service(request, service_id: int):
     try:
@@ -637,7 +637,7 @@ def delete_service(request, service_id: int):
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.post("/{service_id}/publish", response={200: Dict[str, Any], 400: MessageSchema, 404: MessageSchema})
+@router.post("/{service_id}/publish", response={200: Dict[str, Any], 400: MessageSchema, 404: MessageSchema}, operation_id="services_api_v1_services_publish_service")
 @require_permission("services", "update")
 def publish_service(request, service_id: int, payload: ServicePublishIn):
     try:
@@ -685,14 +685,14 @@ def publish_service(request, service_id: int, payload: ServicePublishIn):
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.get("/{service_id}/subservices", response=List[Dict[str, Any]])
+@router.get("/{service_id}/subservices", response=List[Dict[str, Any]], operation_id="services_api_v1_services_list_subservices")
 @require_permission("service_subservices", "list")
 def list_subservices(request, service_id: int):
     get_object_or_404(Service, id=service_id)
     return [_serialize_subservice(item) for item in ServiceSubService.objects.filter(service_id=service_id)]
 
 
-@router.put("/{service_id}/subservices", response={200: List[Dict[str, Any]], 400: MessageSchema})
+@router.put("/{service_id}/subservices", response={200: List[Dict[str, Any]], 400: MessageSchema}, operation_id="services_api_v1_services_replace_subservices")
 @require_permission("service_subservices", "update")
 def replace_subservices(request, service_id: int, payload: ServiceSubServiceBulkReplace):
     try:
@@ -719,7 +719,7 @@ def replace_subservices(request, service_id: int, payload: ServiceSubServiceBulk
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.post("/{service_id}/subservices", response={201: Dict[str, Any], 400: MessageSchema})
+@router.post("/{service_id}/subservices", response={201: Dict[str, Any], 400: MessageSchema}, operation_id="services_api_v1_services_create_subservice")
 @require_permission("service_subservices", "create")
 def create_subservice(request, service_id: int, payload: ServiceSubServiceIn):
     try:
@@ -739,7 +739,7 @@ def create_subservice(request, service_id: int, payload: ServiceSubServiceIn):
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.put("/{service_id}/subservices/{subservice_id}", response={200: Dict[str, Any], 400: MessageSchema, 404: MessageSchema})
+@router.put("/{service_id}/subservices/{subservice_id}", response={200: Dict[str, Any], 400: MessageSchema, 404: MessageSchema}, operation_id="services_api_v1_services_update_subservice")
 @require_permission("service_subservices", "update")
 def update_subservice(request, service_id: int, subservice_id: int, payload: ServiceSubServiceUpdate):
     try:
@@ -755,7 +755,7 @@ def update_subservice(request, service_id: int, subservice_id: int, payload: Ser
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.delete("/{service_id}/subservices/{subservice_id}", response={200: MessageSchema, 404: MessageSchema})
+@router.delete("/{service_id}/subservices/{subservice_id}", response={200: MessageSchema, 404: MessageSchema}, operation_id="services_api_v1_services_delete_subservice")
 @require_permission("service_subservices", "delete")
 def delete_subservice(request, service_id: int, subservice_id: int):
     subservice = get_object_or_404(ServiceSubService, id=subservice_id, service_id=service_id)
@@ -767,7 +767,7 @@ def delete_subservice(request, service_id: int, subservice_id: int):
     return 200, {"detail": "Subservice marked inactive successfully"}
 
 
-@router.get("/{service_id}/request-forms", response=List[Dict[str, Any]])
+@router.get("/{service_id}/request-forms", response=List[Dict[str, Any]], operation_id="services_api_v1_services_list_request_forms")
 @require_permission("service_request_forms", "list")
 def list_request_forms(request, service_id: int):
     get_object_or_404(Service, id=service_id)
@@ -775,7 +775,7 @@ def list_request_forms(request, service_id: int):
     return [_serialize_request_form(form) for form in forms]
 
 
-@router.post("/{service_id}/request-forms", response={201: Dict[str, Any], 400: MessageSchema})
+@router.post("/{service_id}/request-forms", response={201: Dict[str, Any], 400: MessageSchema}, operation_id="services_api_v1_services_create_request_form")
 @require_permission("service_request_forms", "create")
 def create_request_form(request, service_id: int, payload: RequestFormIn):
     try:
@@ -799,14 +799,14 @@ def create_request_form(request, service_id: int, payload: RequestFormIn):
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.get("/{service_id}/request-forms/{form_id}", response=Dict[str, Any])
+@router.get("/{service_id}/request-forms/{form_id}", response=Dict[str, Any], operation_id="services_api_v1_services_get_request_form")
 @require_permission("service_request_forms", "view")
 def get_request_form(request, service_id: int, form_id: int):
     form = get_object_or_404(ServiceRequestForm.objects.prefetch_related("fields"), id=form_id, service_id=service_id)
     return _serialize_request_form(form)
 
 
-@router.put("/{service_id}/request-forms/{form_id}", response={200: Dict[str, Any], 400: MessageSchema, 404: MessageSchema})
+@router.put("/{service_id}/request-forms/{form_id}", response={200: Dict[str, Any], 400: MessageSchema, 404: MessageSchema}, operation_id="services_api_v1_services_update_request_form")
 @require_permission("service_request_forms", "update")
 def update_request_form(request, service_id: int, form_id: int, payload: RequestFormUpdate):
     try:
@@ -838,7 +838,7 @@ def update_request_form(request, service_id: int, form_id: int, payload: Request
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.delete("/{service_id}/request-forms/{form_id}", response={200: MessageSchema, 404: MessageSchema})
+@router.delete("/{service_id}/request-forms/{form_id}", response={200: MessageSchema, 404: MessageSchema}, operation_id="services_api_v1_services_delete_request_form")
 @require_permission("service_request_forms", "delete")
 def delete_request_form(request, service_id: int, form_id: int):
     form = get_object_or_404(ServiceRequestForm, id=form_id, service_id=service_id)
@@ -855,7 +855,7 @@ def delete_request_form(request, service_id: int, form_id: int):
     return 200, {"detail": "Request form archived successfully"}
 
 
-@router.post("/{service_id}/request-forms/{form_id}/activate", response={200: Dict[str, Any], 404: MessageSchema})
+@router.post("/{service_id}/request-forms/{form_id}/activate", response={200: Dict[str, Any], 404: MessageSchema}, operation_id="services_api_v1_services_activate_request_form")
 @require_permission("service_request_forms", "update")
 def activate_request_form(request, service_id: int, form_id: int):
     service = get_object_or_404(Service, id=service_id)
@@ -866,7 +866,7 @@ def activate_request_form(request, service_id: int, form_id: int):
     return 200, _serialize_request_form(form)
 
 
-@router.post("/{service_id}/pricing-configs", response={201: Dict[str, Any], 400: MessageSchema})
+@router.post("/{service_id}/pricing-configs", response={201: Dict[str, Any], 400: MessageSchema}, operation_id="services_api_v1_services_create_pricing_config")
 @require_permission("service_pricing_configs", "create")
 def create_pricing_config(request, service_id: int, payload: PricingConfigIn):
     try:
@@ -896,7 +896,7 @@ def create_pricing_config(request, service_id: int, payload: PricingConfigIn):
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.get("/{service_id}/pricing-configs/{config_id}", response=Dict[str, Any])
+@router.get("/{service_id}/pricing-configs/{config_id}", response=Dict[str, Any], operation_id="services_api_v1_services_get_pricing_config")
 @require_permission("service_pricing_configs", "view")
 def get_pricing_config(request, service_id: int, config_id: int):
     config = get_object_or_404(
@@ -907,7 +907,7 @@ def get_pricing_config(request, service_id: int, config_id: int):
     return _serialize_pricing_config(config)
 
 
-@router.put("/{service_id}/pricing-configs/{config_id}", response={200: Dict[str, Any], 400: MessageSchema, 404: MessageSchema})
+@router.put("/{service_id}/pricing-configs/{config_id}", response={200: Dict[str, Any], 400: MessageSchema, 404: MessageSchema}, operation_id="services_api_v1_services_update_pricing_config")
 @require_permission("service_pricing_configs", "update")
 def update_pricing_config(request, service_id: int, config_id: int, payload: PricingConfigUpdate):
     try:
@@ -941,7 +941,7 @@ def update_pricing_config(request, service_id: int, config_id: int, payload: Pri
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.delete("/{service_id}/pricing-configs/{config_id}", response={200: MessageSchema, 404: MessageSchema})
+@router.delete("/{service_id}/pricing-configs/{config_id}", response={200: MessageSchema, 404: MessageSchema}, operation_id="services_api_v1_services_delete_pricing_config")
 @require_permission("service_pricing_configs", "delete")
 def delete_pricing_config(request, service_id: int, config_id: int):
     config = get_object_or_404(ServicePricingConfig, id=config_id, service_id=service_id)
@@ -958,7 +958,7 @@ def delete_pricing_config(request, service_id: int, config_id: int):
     return 200, {"detail": "Pricing config archived successfully"}
 
 
-@router.post("/{service_id}/pricing-configs/{config_id}/activate", response={200: Dict[str, Any], 404: MessageSchema})
+@router.post("/{service_id}/pricing-configs/{config_id}/activate", response={200: Dict[str, Any], 404: MessageSchema}, operation_id="services_api_v1_services_activate_pricing_config")
 @require_permission("service_pricing_configs", "update")
 def activate_pricing_config(request, service_id: int, config_id: int):
     service = get_object_or_404(Service, id=service_id)
@@ -990,7 +990,7 @@ def _create_workflow(request, service, payload):
     return _workflow_queryset().get(id=workflow.id)
 
 
-@router.get("/{service_id}/workflows", response=List[Dict[str, Any]])
+@router.get("/{service_id}/workflows", response=List[Dict[str, Any]], operation_id="services_api_v1_services_list_workflows")
 @require_permission("service_workflows", "list")
 def list_workflows(request, service_id: int):
     get_object_or_404(Service, id=service_id)
@@ -998,7 +998,7 @@ def list_workflows(request, service_id: int):
     return [_serialize_workflow(workflow) for workflow in workflows]
 
 
-@router.post("/{service_id}/workflows", response={201: Dict[str, Any], 400: MessageSchema})
+@router.post("/{service_id}/workflows", response={201: Dict[str, Any], 400: MessageSchema}, operation_id="services_api_v1_services_create_workflow")
 @require_permission("service_workflows", "create")
 def create_workflow(request, service_id: int, payload: WorkflowIn):
     try:
@@ -1009,14 +1009,14 @@ def create_workflow(request, service_id: int, payload: WorkflowIn):
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.get("/{service_id}/workflows/{workflow_id}", response=Dict[str, Any])
+@router.get("/{service_id}/workflows/{workflow_id}", response=Dict[str, Any], operation_id="services_api_v1_services_get_workflow")
 @require_permission("service_workflows", "view")
 def get_workflow(request, service_id: int, workflow_id: int):
     workflow = get_object_or_404(_workflow_queryset(), id=workflow_id, service_id=service_id)
     return _serialize_workflow(workflow)
 
 
-@router.put("/{service_id}/workflows/{workflow_id}", response={200: Dict[str, Any], 400: MessageSchema, 404: MessageSchema})
+@router.put("/{service_id}/workflows/{workflow_id}", response={200: Dict[str, Any], 400: MessageSchema, 404: MessageSchema}, operation_id="services_api_v1_services_update_workflow")
 @require_permission("service_workflows", "update")
 def update_workflow(request, service_id: int, workflow_id: int, payload: WorkflowUpdate):
     try:
@@ -1048,7 +1048,7 @@ def update_workflow(request, service_id: int, workflow_id: int, payload: Workflo
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.delete("/{service_id}/workflows/{workflow_id}", response={200: MessageSchema, 404: MessageSchema})
+@router.delete("/{service_id}/workflows/{workflow_id}", response={200: MessageSchema, 404: MessageSchema}, operation_id="services_api_v1_services_delete_workflow")
 @require_permission("service_workflows", "delete")
 def delete_workflow(request, service_id: int, workflow_id: int):
     workflow = get_object_or_404(ServiceWorkflow, id=workflow_id, service_id=service_id)
@@ -1066,7 +1066,7 @@ def delete_workflow(request, service_id: int, workflow_id: int):
     return 200, {"detail": "Workflow archived successfully"}
 
 
-@router.get("/{service_id}/workflows/{workflow_id}/stages", response=List[Dict[str, Any]])
+@router.get("/{service_id}/workflows/{workflow_id}/stages", response=List[Dict[str, Any]], operation_id="services_api_v1_services_list_workflow_stages")
 @require_permission("service_workflows", "view")
 def list_workflow_stages(request, service_id: int, workflow_id: int):
     get_object_or_404(ServiceWorkflow, id=workflow_id, service_id=service_id)
@@ -1074,7 +1074,7 @@ def list_workflow_stages(request, service_id: int, workflow_id: int):
     return [_serialize_workflow_stage(stage) for stage in stages]
 
 
-@router.put("/{service_id}/workflows/{workflow_id}/stages", response={200: List[Dict[str, Any]], 400: MessageSchema, 404: MessageSchema})
+@router.put("/{service_id}/workflows/{workflow_id}/stages", response={200: List[Dict[str, Any]], 400: MessageSchema, 404: MessageSchema}, operation_id="services_api_v1_services_replace_workflow_stages")
 @require_permission("service_workflows", "update")
 def replace_workflow_stages(request, service_id: int, workflow_id: int, payload: WorkflowStageBulkReplace):
     try:
@@ -1088,7 +1088,7 @@ def replace_workflow_stages(request, service_id: int, workflow_id: int, payload:
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.post("/{service_id}/workflows/{workflow_id}/stages", response={201: Dict[str, Any], 400: MessageSchema, 404: MessageSchema})
+@router.post("/{service_id}/workflows/{workflow_id}/stages", response={201: Dict[str, Any], 400: MessageSchema, 404: MessageSchema}, operation_id="services_api_v1_services_create_workflow_stage")
 @require_permission("service_workflows", "update")
 def create_workflow_stage(request, service_id: int, workflow_id: int, payload: WorkflowStageIn):
     try:
@@ -1111,7 +1111,7 @@ def create_workflow_stage(request, service_id: int, workflow_id: int, payload: W
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.put("/{service_id}/workflows/{workflow_id}/stages/{stage_id}", response={200: Dict[str, Any], 400: MessageSchema, 404: MessageSchema})
+@router.put("/{service_id}/workflows/{workflow_id}/stages/{stage_id}", response={200: Dict[str, Any], 400: MessageSchema, 404: MessageSchema}, operation_id="services_api_v1_services_update_workflow_stage")
 @require_permission("service_workflows", "update")
 def update_workflow_stage(request, service_id: int, workflow_id: int, stage_id: int, payload: WorkflowStageUpdate):
     try:
@@ -1128,7 +1128,7 @@ def update_workflow_stage(request, service_id: int, workflow_id: int, stage_id: 
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.delete("/{service_id}/workflows/{workflow_id}/stages/{stage_id}", response={200: MessageSchema, 404: MessageSchema})
+@router.delete("/{service_id}/workflows/{workflow_id}/stages/{stage_id}", response={200: MessageSchema, 404: MessageSchema}, operation_id="services_api_v1_services_delete_workflow_stage")
 @require_permission("service_workflows", "update")
 def delete_workflow_stage(request, service_id: int, workflow_id: int, stage_id: int):
     stage = get_object_or_404(ServiceWorkflowStage, id=stage_id, workflow_id=workflow_id, workflow__service_id=service_id)
@@ -1136,7 +1136,7 @@ def delete_workflow_stage(request, service_id: int, workflow_id: int, stage_id: 
     return 200, {"detail": "Workflow stage deleted successfully"}
 
 
-@router.post("/{service_id}/workflow-seed", response={201: Dict[str, Any], 400: MessageSchema})
+@router.post("/{service_id}/workflow-seed", response={201: Dict[str, Any], 400: MessageSchema}, operation_id="services_api_v1_services_seed_workflow")
 @require_permission("service_workflows", "create")
 def seed_workflow(request, service_id: int, payload: WorkflowSeedIn):
     try:
@@ -1147,7 +1147,7 @@ def seed_workflow(request, service_id: int, payload: WorkflowSeedIn):
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.get("/{service_id}/workflow-summary", response=List[Dict[str, Any]])
+@router.get("/{service_id}/workflow-summary", response=List[Dict[str, Any]], operation_id="services_api_v1_services_get_workflow_summary")
 @require_permission("service_workflows", "list")
 def get_workflow_summary(request, service_id: int):
     get_object_or_404(Service, id=service_id)
@@ -1155,7 +1155,7 @@ def get_workflow_summary(request, service_id: int):
     return [_serialize_workflow(workflow) for workflow in workflows]
 
 
-@router.post("/{service_id}/workflows/{workflow_id}/activate", response={200: Dict[str, Any], 404: MessageSchema})
+@router.post("/{service_id}/workflows/{workflow_id}/activate", response={200: Dict[str, Any], 404: MessageSchema}, operation_id="services_api_v1_services_activate_workflow")
 @require_permission("service_workflows", "update")
 def activate_workflow(request, service_id: int, workflow_id: int):
     service = get_object_or_404(Service, id=service_id)
@@ -1166,7 +1166,7 @@ def activate_workflow(request, service_id: int, workflow_id: int):
     return 200, _serialize_workflow(workflow)
 
 
-@router.get("/{service_id}/branch-activations", response=List[Dict[str, Any]])
+@router.get("/{service_id}/branch-activations", response=List[Dict[str, Any]], operation_id="services_api_v1_services_list_branch_activations")
 @require_permission("service_branch_activations", "list")
 def list_branch_activations(request, service_id: int):
     get_object_or_404(Service, id=service_id)
@@ -1174,7 +1174,7 @@ def list_branch_activations(request, service_id: int):
     return [_serialize_branch_activation(activation) for activation in activations]
 
 
-@router.put("/{service_id}/branch-activations", response={200: List[Dict[str, Any]], 400: MessageSchema})
+@router.put("/{service_id}/branch-activations", response={200: List[Dict[str, Any]], 400: MessageSchema}, operation_id="services_api_v1_services_upsert_branch_activations")
 @require_permission("service_branch_activations", "update")
 def upsert_branch_activations(request, service_id: int, payload: BranchActivationBulkUpsert):
     try:
