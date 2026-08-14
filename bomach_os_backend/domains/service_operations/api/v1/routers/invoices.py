@@ -14,7 +14,7 @@ from services.api.schema.others import MessageSchema
 from ..schemas.lifecycle import InvoiceIn, InvoiceOut, InvoiceSendIn, InvoiceUpdate, ServiceOrderFromInvoiceIn, ServiceOrderOut
 from domains.service_operations.models import Invoice, InvoiceItem
 from domains.service_operations.models import ServiceRequestActivity
-from domains.service_operations.services import create_order_from_invoice
+from domains.service_operations.services.orders import create_order_from_invoice
 from user.api.schemas.client_service import PaymentSubmissionResponseSchema, ReviewPaymentSchema
 from user.models.client_service import PaymentSubmission
 from user.utils.perm import require_permission, scope_queryset
