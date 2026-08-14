@@ -176,7 +176,10 @@ export function SpecializedOperationsLivePage({
                 void navigate({
                   to: '/app/$section',
                   params: { section: 'service-requests' },
-                  search: serviceId ? { service: String(serviceId) } : {},
+                  search: {
+                    create: 'request',
+                    ...(serviceId ? { service: String(serviceId) } : {}),
+                  },
                 })
               }
             >

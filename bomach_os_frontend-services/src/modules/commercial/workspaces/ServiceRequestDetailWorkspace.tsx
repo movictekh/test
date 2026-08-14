@@ -49,6 +49,10 @@ function renderAnswerValue(value: unknown) {
   return '—'
 }
 
+function normalizeAttachmentText(value: string | null | undefined) {
+  return value?.trim().toLowerCase() ?? ''
+}
+
 export function ServiceRequestDetailWorkspace({
   request,
   choices,
@@ -397,31 +401,43 @@ export function ServiceRequestDetailWorkspace({
                   {request.attachments.length === 0 ? (
                     <div className="commercial-empty">No attachments recorded.</div>
                   ) : (
-                    request.attachments.map((attachment) => (
-                      <a
-                        key={attachment.id}
-                        href={attachment.fileUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="service-admin-list-row"
-                      >
-                        <div className="commercial-upload-item-icon">
-                          <FileTypeIcon
-                            fileName={attachment.fileName || attachment.label || attachment.fileUrl}
-                            contentType={attachment.contentType}
-                          />
-                        </div>
-                        <div className="service-admin-list-meta">
-                          <div className="service-admin-list-name">
-                            {attachment.label || attachment.fileName || 'Attachment'}
-                          </div>
-                          <div className="service-admin-list-sub">
-                            {attachment.fileName || attachment.contentType || 'Open attachment'}
-                          </div>
-                        </div>
-                        <IconExternalLink size={16} />
-                      </a>
-                    ))
+                    <div className="commercial-attachment-list">
+                      {request.attachments.map((attachment) => {
+                        const title =
+                          attachment.label?.trim() || attachment.fileName?.trim() || 'Attachment'
+                        const subtitle =
+                          normalizeAttachmentText(attachment.fileName) ===
+                          normalizeAttachmentText(attachment.label)
+                            ? attachment.contentType || 'Open attachment'
+                            : attachment.fileName || attachment.contentType || 'Open attachment'
+
+                        return (
+                          <a
+                            key={attachment.id}
+                            href={attachment.fileUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="commercial-attachment-row"
+                          >
+                            <div className="commercial-upload-item-icon">
+                              <FileTypeIcon
+                                fileName={
+                                  attachment.fileName || attachment.label || attachment.fileUrl
+                                }
+                                contentType={attachment.contentType}
+                              />
+                            </div>
+                            <div className="commercial-attachment-meta">
+                              <div className="commercial-attachment-name">{title}</div>
+                              <div className="commercial-attachment-sub">{subtitle}</div>
+                            </div>
+                            <span className="commercial-attachment-action">
+                              <IconExternalLink size={16} />
+                            </span>
+                          </a>
+                        )
+                      })}
+                    </div>
                   )}
                 </section>
               </div>

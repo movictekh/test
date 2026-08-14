@@ -187,7 +187,11 @@ export function FeedbackQualityLivePage({ recordSearch }: { recordSearch: AppSec
           secondaryAction={
             <CompactActionButton
               onClick={() =>
-                void navigate({ to: '/app/$section', params: { section: 'service-requests' } })
+                void navigate({
+                  to: '/app/$section',
+                  params: { section: 'service-requests' },
+                  search: { create: 'request' },
+                })
               }
             >
               <IconFilePlus size={14} />

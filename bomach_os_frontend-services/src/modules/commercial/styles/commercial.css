@@ -331,6 +331,64 @@
   font-size: 10px;
   text-align: center;
 }
+
+.commercial-attachment-list {
+  display: grid;
+  gap: 10px;
+}
+
+.commercial-attachment-row {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 20px;
+  gap: 10px;
+  align-items: center;
+  padding: 11px 12px;
+  border: 1px solid #dbe4f0;
+  border-radius: 12px;
+  background: #fff;
+  color: inherit;
+  text-decoration: none;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
+}
+
+.commercial-attachment-row:hover {
+  border-color: #bfd0ea;
+  background: #f8fbff;
+  box-shadow: 0 8px 18px rgba(25, 42, 70, 0.06);
+}
+
+.commercial-attachment-meta {
+  min-width: 0;
+}
+
+.commercial-attachment-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #15172d;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.commercial-attachment-sub {
+  margin-top: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-foreground-subtle);
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.commercial-attachment-action {
+  display: grid;
+  place-items: center;
+  color: #5d6980;
+}
+
 @media (max-width: 1100px) {
   .commercial-kgrid {
     grid-template-columns: repeat(3, minmax(0, 1fr));

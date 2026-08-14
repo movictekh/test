@@ -260,6 +260,7 @@ export function ApprovalsLivePage({ recordSearch }: { recordSearch: AppSectionSe
                 void navigate({
                   to: '/app/$section',
                   params: { section: 'service-requests' },
+                  search: { create: 'request' },
                 })
               }
             >

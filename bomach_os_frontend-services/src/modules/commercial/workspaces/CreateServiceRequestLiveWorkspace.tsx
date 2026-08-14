@@ -64,9 +64,8 @@ export function CreateServiceRequestLiveWorkspace({
 }) {
   const toast = useToast()
   const activeClients = clients.filter((item) => item.active)
-  const initialService = services[0] ?? null
   const initialClient = activeClients[0] ?? null
-  const [serviceId, setServiceId] = useState(initialService?.id ?? 0)
+  const [serviceId, setServiceId] = useState(0)
   const [error, setError] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [showInternalDetails, setShowInternalDetails] = useState(false)
@@ -112,7 +111,7 @@ export function CreateServiceRequestLiveWorkspace({
       sourceReference: '',
       priority: (choices.priorities[0]?.value ?? 'normal') as 'normal' | 'high' | 'critical',
       subserviceId: 0,
-      branchId: initialService?.activeBranches[0]?.id ?? 0,
+      branchId: 0,
       budget: 0,
       estimatedValue: 0,
       preferredDate: '',
@@ -420,6 +419,9 @@ export function CreateServiceRequestLiveWorkspace({
   }
 
   const ready = activeClients.length > 0 && services.length > 0
+  const intakeErrorMessage = intakeQuery.isError
+    ? presentError(intakeQuery.error, 'section-load').message
+    : ''
   const autoAnswerContext = {
     contactName: form.state.values.contactName.trim(),
     contactPhone: form.state.values.contactPhone.trim(),
@@ -463,6 +465,10 @@ export function CreateServiceRequestLiveWorkspace({
     toast.success(`Estimate calculated: ${formatCurrency(result.total)}`)
   }
 
+  const retryIntakeForm = () => {
+    void intakeQuery.refetch()
+  }
+
   return (
     <div className="commercial-modal-backdrop" role="presentation" onMouseDown={onClose}>
       <form
@@ -498,18 +504,6 @@ export function CreateServiceRequestLiveWorkspace({
                 activeClients.length === 0
                   ? 'Add at least one active client before creating a service request.'
                   : 'There are no active services available for request intake right now.'
-              }
-            />
-          ) : intakeQuery.isPending ? (
-            <div className="commercial-empty">Loading request form...</div>
-          ) : intakeQuery.isError ? (
-            <EmptyState
-              title="Request form unavailable"
-              description="This service is not ready for request intake yet. Publish its request form and try again."
-              action={
-                <Button variant="outline" size="sm" onClick={() => void intakeQuery.refetch()}>
-                  Retry
-                </Button>
               }
             />
           ) : (
@@ -560,6 +554,7 @@ export function CreateServiceRequestLiveWorkspace({
                       value={serviceId}
                       onChange={(event) => chooseService(Number(event.target.value))}
                     >
+                      <option value={0}>Select a service</option>
                       {services.map((service) => (
                         <option key={service.id} value={service.id}>
                           {service.name}
@@ -621,212 +616,237 @@ export function CreateServiceRequestLiveWorkspace({
                 </div>
               </section>
 
-              <section className="commercial-form-section">
-                <div className="commercial-form-section-heading">
-                  <div>
-                    <h3>{intakeQuery.data?.form.name ?? 'Request details'}</h3>
-                    <p>
-                      These questions are specific to this service and become part of the request
-                      record.
-                    </p>
-                  </div>
-                </div>
-                <div className="commercial-form-grid">
-                  <RequestIntakeFields
-                    fields={visibleFields}
-                    answerValues={answerValues}
-                    fieldErrors={fieldErrors}
-                    uploadsByField={uploadsByField}
-                    fieldRefs={fieldRefs}
-                    onValueChange={setAnswerValue}
-                    onFileSelection={handleFileSelection}
-                    onRetryUpload={retryUpload}
-                    onRemoveUpload={removeUpload}
-                  />
-                </div>
-              </section>
+              {!selectedService ? (
+                <EmptyState
+                  title="Select a service"
+                  description="Choose the service you want to request before the intake form can be loaded."
+                />
+              ) : intakeQuery.isPending ? (
+                <div className="commercial-empty">Loading request form...</div>
+              ) : intakeQuery.isError ? (
+                <EmptyState
+                  title="Request form unavailable"
+                  description={
+                    intakeErrorMessage ||
+                    'This service is not ready for request intake yet. Publish its request form and try again.'
+                  }
+                  action={
+                    <Button variant="outline" size="sm" onClick={retryIntakeForm}>
+                      Retry
+                    </Button>
+                  }
+                />
+              ) : (
+                <>
+                  <section className="commercial-form-section">
+                    <div className="commercial-form-section-heading">
+                      <div>
+                        <h3>{intakeQuery.data?.form.name ?? 'Request details'}</h3>
+                        <p>
+                          These questions are specific to this service and become part of the
+                          request record.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="commercial-form-grid">
+                      <RequestIntakeFields
+                        fields={visibleFields}
+                        answerValues={answerValues}
+                        fieldErrors={fieldErrors}
+                        uploadsByField={uploadsByField}
+                        fieldRefs={fieldRefs}
+                        onValueChange={setAnswerValue}
+                        onFileSelection={handleFileSelection}
+                        onRetryUpload={retryUpload}
+                        onRemoveUpload={removeUpload}
+                      />
+                    </div>
+                  </section>
 
-              <section className="commercial-form-section">
-                <button
-                  type="button"
-                  className="commercial-inline-toggle"
-                  onClick={() => setShowInternalDetails((current) => !current)}
-                >
-                  <span>Optional internal details</span>
-                  <IconChevronDown
-                    size={16}
-                    className={showInternalDetails ? 'commercial-inline-toggle-icon-open' : ''}
-                  />
-                </button>
-                {showInternalDetails ? (
-                  <div className="commercial-form-grid commercial-form-grid-top">
-                    <form.Field name="priority">
-                      {(field) => (
-                        <label className="commercial-field">
-                          <span>Priority</span>
-                          <select
-                            value={field.state.value}
-                            onChange={(event) => {
-                              const nextValue = event.target.value
-                              if (isPriorityValue(nextValue)) field.handleChange(nextValue)
-                            }}
-                          >
-                            {choices.priorities.map((item) => (
-                              <option key={item.value} value={item.value}>
-                                {item.label}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                      )}
-                    </form.Field>
+                  <section className="commercial-form-section">
+                    <button
+                      type="button"
+                      className="commercial-inline-toggle"
+                      onClick={() => setShowInternalDetails((current) => !current)}
+                    >
+                      <span>Optional internal details</span>
+                      <IconChevronDown
+                        size={16}
+                        className={showInternalDetails ? 'commercial-inline-toggle-icon-open' : ''}
+                      />
+                    </button>
+                    {showInternalDetails ? (
+                      <div className="commercial-form-grid commercial-form-grid-top">
+                        <form.Field name="priority">
+                          {(field) => (
+                            <label className="commercial-field">
+                              <span>Priority</span>
+                              <select
+                                value={field.state.value}
+                                onChange={(event) => {
+                                  const nextValue = event.target.value
+                                  if (isPriorityValue(nextValue)) field.handleChange(nextValue)
+                                }}
+                              >
+                                {choices.priorities.map((item) => (
+                                  <option key={item.value} value={item.value}>
+                                    {item.label}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                          )}
+                        </form.Field>
 
-                    <form.Field name="sourceReference">
-                      {(field) => (
-                        <label className="commercial-field">
-                          <span>Lead / campaign reference</span>
-                          <input
-                            value={field.state.value}
-                            onChange={(event) => field.handleChange(event.target.value)}
-                          />
-                        </label>
-                      )}
-                    </form.Field>
+                        <form.Field name="sourceReference">
+                          {(field) => (
+                            <label className="commercial-field">
+                              <span>Lead / campaign reference</span>
+                              <input
+                                value={field.state.value}
+                                onChange={(event) => field.handleChange(event.target.value)}
+                              />
+                            </label>
+                          )}
+                        </form.Field>
 
-                    {!hasBudgetField ? (
-                      <form.Field name="budget">
-                        {(field) => (
-                          <label className="commercial-field">
-                            <span>Budget</span>
-                            <input
-                              type="number"
-                              min="0"
-                              value={field.state.value}
-                              onChange={(event) =>
-                                field.handleChange(nonNegativeNumber(event.target.value))
-                              }
-                            />
-                          </label>
-                        )}
-                      </form.Field>
+                        {!hasBudgetField ? (
+                          <form.Field name="budget">
+                            {(field) => (
+                              <label className="commercial-field">
+                                <span>Budget</span>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={field.state.value}
+                                  onChange={(event) =>
+                                    field.handleChange(nonNegativeNumber(event.target.value))
+                                  }
+                                />
+                              </label>
+                            )}
+                          </form.Field>
+                        ) : null}
+
+                        <form.Field name="estimatedValue">
+                          {(field) => (
+                            <label className="commercial-field commercial-field--full">
+                              <span>Estimated value</span>
+                              <div className="commercial-estimate-row">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={field.state.value}
+                                  onChange={(event) =>
+                                    field.handleChange(nonNegativeNumber(event.target.value))
+                                  }
+                                />
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  className="commercial-estimate-button"
+                                  onClick={calculateEstimate}
+                                  disabled={pricingConfigQuery.isPending}
+                                >
+                                  <IconCalculator size={14} />
+                                  {pricingConfigQuery.isPending
+                                    ? 'Loading pricing...'
+                                    : 'Calculate estimate'}
+                                </Button>
+                              </div>
+                              {estimatePreview?.supported ? (
+                                <small>
+                                  Current calculator result: {formatCurrency(estimatePreview.total)}
+                                </small>
+                              ) : activePricingConfig ? (
+                                <small>
+                                  Use the button when the pricing inputs for this service are
+                                  filled.
+                                </small>
+                              ) : null}
+                            </label>
+                          )}
+                        </form.Field>
+
+                        {!hasPreferredDateField ? (
+                          <form.Field name="preferredDate">
+                            {(field) => (
+                              <label className="commercial-field">
+                                <span>Preferred date</span>
+                                <input
+                                  type="date"
+                                  value={field.state.value}
+                                  onChange={(event) => field.handleChange(event.target.value)}
+                                />
+                              </label>
+                            )}
+                          </form.Field>
+                        ) : null}
+
+                        <form.Field name="dueDate">
+                          {(field) => (
+                            <label className="commercial-field">
+                              <span>Due date</span>
+                              <input
+                                type="date"
+                                value={field.state.value}
+                                onChange={(event) => field.handleChange(event.target.value)}
+                              />
+                            </label>
+                          )}
+                        </form.Field>
+
+                        {!hasScopeSummaryField ? (
+                          <form.Field name="scopeSummary">
+                            {(field) => (
+                              <label className="commercial-field commercial-field--full">
+                                <span>Scope summary</span>
+                                <textarea
+                                  rows={4}
+                                  value={field.state.value}
+                                  onChange={(event) => field.handleChange(event.target.value)}
+                                />
+                              </label>
+                            )}
+                          </form.Field>
+                        ) : null}
+
+                        <form.Field name="nextAction">
+                          {(field) => (
+                            <label className="commercial-field commercial-field--full">
+                              <span>Next action</span>
+                              <input
+                                value={field.state.value}
+                                onChange={(event) => field.handleChange(event.target.value)}
+                              />
+                            </label>
+                          )}
+                        </form.Field>
+                      </div>
                     ) : null}
+                  </section>
 
-                    <form.Field name="estimatedValue">
-                      {(field) => (
-                        <label className="commercial-field commercial-field--full">
-                          <span>Estimated value</span>
-                          <div className="commercial-estimate-row">
-                            <input
-                              type="number"
-                              min="0"
-                              value={field.state.value}
-                              onChange={(event) =>
-                                field.handleChange(nonNegativeNumber(event.target.value))
-                              }
-                            />
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              className="commercial-estimate-button"
-                              onClick={calculateEstimate}
-                              disabled={pricingConfigQuery.isPending}
-                            >
-                              <IconCalculator size={14} />
-                              {pricingConfigQuery.isPending
-                                ? 'Loading pricing...'
-                                : 'Calculate estimate'}
-                            </Button>
-                          </div>
-                          {estimatePreview?.supported ? (
-                            <small>
-                              Current calculator result: {formatCurrency(estimatePreview.total)}
-                            </small>
-                          ) : activePricingConfig ? (
-                            <small>
-                              Use the button when the pricing inputs for this service are filled.
-                            </small>
-                          ) : null}
-                        </label>
-                      )}
-                    </form.Field>
+                  {hasUploadingFiles ? (
+                    <div className="commercial-form-alert">
+                      <IconLoader2 size={16} className="commercial-spin" />
+                      <span>
+                        Document uploads are still in progress. Submit will unlock when they finish.
+                      </span>
+                    </div>
+                  ) : null}
 
-                    {!hasPreferredDateField ? (
-                      <form.Field name="preferredDate">
-                        {(field) => (
-                          <label className="commercial-field">
-                            <span>Preferred date</span>
-                            <input
-                              type="date"
-                              value={field.state.value}
-                              onChange={(event) => field.handleChange(event.target.value)}
-                            />
-                          </label>
-                        )}
-                      </form.Field>
-                    ) : null}
-
-                    <form.Field name="dueDate">
-                      {(field) => (
-                        <label className="commercial-field">
-                          <span>Due date</span>
-                          <input
-                            type="date"
-                            value={field.state.value}
-                            onChange={(event) => field.handleChange(event.target.value)}
-                          />
-                        </label>
-                      )}
-                    </form.Field>
-
-                    {!hasScopeSummaryField ? (
-                      <form.Field name="scopeSummary">
-                        {(field) => (
-                          <label className="commercial-field commercial-field--full">
-                            <span>Scope summary</span>
-                            <textarea
-                              rows={4}
-                              value={field.state.value}
-                              onChange={(event) => field.handleChange(event.target.value)}
-                            />
-                          </label>
-                        )}
-                      </form.Field>
-                    ) : null}
-
-                    <form.Field name="nextAction">
-                      {(field) => (
-                        <label className="commercial-field commercial-field--full">
-                          <span>Next action</span>
-                          <input
-                            value={field.state.value}
-                            onChange={(event) => field.handleChange(event.target.value)}
-                          />
-                        </label>
-                      )}
-                    </form.Field>
-                  </div>
-                ) : null}
-              </section>
-
-              {hasUploadingFiles ? (
-                <div className="commercial-form-alert">
-                  <IconLoader2 size={16} className="commercial-spin" />
-                  <span>
-                    Document uploads are still in progress. Submit will unlock when they finish.
-                  </span>
-                </div>
-              ) : null}
-
-              {hasUploadErrors ? (
-                <div className="commercial-form-alert commercial-form-alert-danger">
-                  <IconAlertCircle size={16} />
-                  <span>
-                    One or more documents failed to upload. Remove or upload them again before
-                    submitting.
-                  </span>
-                </div>
-              ) : null}
+                  {hasUploadErrors ? (
+                    <div className="commercial-form-alert commercial-form-alert-danger">
+                      <IconAlertCircle size={16} />
+                      <span>
+                        One or more documents failed to upload. Remove or upload them again before
+                        submitting.
+                      </span>
+                    </div>
+                  ) : null}
+                </>
+              )}
             </>
           )}
         </div>
@@ -839,7 +859,12 @@ export function CreateServiceRequestLiveWorkspace({
             type="submit"
             className="commercial-btn commercial-btn-primary"
             disabled={
-              saving || !ready || intakeQuery.isPending || intakeQuery.isError || hasUploadingFiles
+              saving ||
+              !ready ||
+              !selectedService ||
+              intakeQuery.isPending ||
+              intakeQuery.isError ||
+              hasUploadingFiles
             }
           >
             {saving ? 'Creating...' : 'Create Request'}

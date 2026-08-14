@@ -20,10 +20,12 @@ pnpm-debug.log*
 !.env.example
 
 # Editors and operating systems
-.vscode/*
-!.vscode/extensions.json
-!.vscode/settings.json
+.vscode/
 .idea/
+.zed/
+.fleet/
+*.code-workspace
+.history/
 .DS_Store
 *.suo
 *.ntvs*
@@ -37,6 +39,8 @@ test-results/
 
 # Temporary files
 *.local
+.envrc
+.direnv/
 node_modules/.tmp/
 .tanstack/
 test.md

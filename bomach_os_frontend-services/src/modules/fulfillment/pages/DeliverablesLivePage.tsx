@@ -340,7 +340,11 @@ export function DeliverablesLivePage({ recordSearch }: { recordSearch: AppSectio
               disabled={!hasPermission(user, PERMISSIONS.serviceRequestsCreate)}
               locked={!hasPermission(user, PERMISSIONS.serviceRequestsCreate)}
               onClick={() =>
-                void navigate({ to: '/app/$section', params: { section: 'service-requests' } })
+                void navigate({
+                  to: '/app/$section',
+                  params: { section: 'service-requests' },
+                  search: { create: 'request' },
+                })
               }
             >
               <IconFilePlus size={14} /> New Request

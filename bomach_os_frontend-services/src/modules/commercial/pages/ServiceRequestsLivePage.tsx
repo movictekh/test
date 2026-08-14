@@ -59,6 +59,12 @@ function withoutRequestSearch(previous: AppSectionSearch) {
   return next
 }
 
+function withoutCreateSearch(previous: AppSectionSearch) {
+  const next = { ...previous }
+  delete next.create
+  return next
+}
+
 export function ServiceRequestsLivePage({ recordSearch }: { recordSearch: AppSectionSearch }) {
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -280,6 +286,21 @@ export function ServiceRequestsLivePage({ recordSearch }: { recordSearch: AppSec
     }, 350)
     return () => window.clearTimeout(timeoutId)
   }, [recordSearch.search, searchDraft, setSearchValue])
+
+  useEffect(() => {
+    if (recordSearch.create !== 'request') return
+    setCreateOpen(true)
+  }, [recordSearch.create])
+
+  useEffect(() => {
+    if (!createOpen || recordSearch.create !== 'request') return
+    void navigate({
+      to: '/app/$section',
+      params: { section: 'service-requests' },
+      search: (previous) => withoutCreateSearch(previous),
+      replace: true,
+    })
+  }, [createOpen, navigate, recordSearch.create])
 
   if (
     listQuery.isPending ||

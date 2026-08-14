@@ -313,6 +313,7 @@ export function ExecutionTasksLivePage({ recordSearch }: { recordSearch: AppSect
                 void navigate({
                   to: '/app/$section',
                   params: { section: 'service-requests' },
+                  search: { create: 'request' },
                 })
               }
             >

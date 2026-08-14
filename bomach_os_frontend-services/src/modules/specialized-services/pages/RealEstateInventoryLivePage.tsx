@@ -587,7 +587,11 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
               disabled={!canCreateServiceRequest}
               locked={!canCreateServiceRequest}
               onClick={() =>
-                void navigate({ to: '/app/$section', params: { section: 'service-requests' } })
+                void navigate({
+                  to: '/app/$section',
+                  params: { section: 'service-requests' },
+                  search: { create: 'request' },
+                })
               }
             >
               <IconFilePlus size={14} />

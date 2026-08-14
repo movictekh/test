@@ -396,6 +396,7 @@ export function ServiceOrdersLivePage({ recordSearch }: { recordSearch: AppSecti
                 void navigate({
                   to: '/app/$section',
                   params: { section: 'service-requests' },
+                  search: { create: 'request' },
                 })
               }
             >

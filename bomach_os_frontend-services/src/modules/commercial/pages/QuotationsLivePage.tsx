@@ -379,6 +379,7 @@ export function QuotationsLivePage({ recordSearch }: { recordSearch: AppSectionS
                 void navigate({
                   to: '/app/$section',
                   params: { section: 'service-requests' },
+                  search: { create: 'request' },
                 })
               }
             >

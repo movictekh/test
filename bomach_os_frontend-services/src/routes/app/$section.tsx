@@ -90,6 +90,7 @@ const serviceAdministrationSections = new Set<ServiceAdministrationSection>([
 ])
 
 export type AppSectionSearch = AppRecordSearch & {
+  create?: string
   search?: string
   status?: string
   paymentStatus?: string
@@ -137,6 +138,7 @@ export function parseRecordSearch(search: Record<string, unknown>): AppSectionSe
   const estate = identifierValue(search.estate)
   const property = identifierValue(search.property) ?? identifierValue(search.plot)
   const feedback = identifierValue(search.feedback)
+  const create = stringValue(search.create)
 
   const catalogueSearch = stringValue(search.search)
   const catalogueStatus = stringValue(search.status)
@@ -184,6 +186,7 @@ export function parseRecordSearch(search: Record<string, unknown>): AppSectionSe
   if (estate) result.estate = estate
   if (property) result.property = property
   if (feedback) result.feedback = feedback
+  if (create) result.create = create
 
   if (catalogueSearch) result.search = catalogueSearch
   if (catalogueStatus) result.status = catalogueStatus

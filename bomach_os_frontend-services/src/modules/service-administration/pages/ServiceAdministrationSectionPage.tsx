@@ -474,7 +474,12 @@ export function ServiceAdministrationSectionPage({
         serviceId,
         input.subservices.map((name, index) => ({
           name,
-          status: input.status === 'inactive' ? 'archived' : 'draft',
+          status:
+            input.status === 'inactive'
+              ? 'archived'
+              : input.status === 'active'
+                ? 'active'
+                : 'draft',
           default_sla_days: input.slaDays,
           sort_order: index,
         })),
@@ -487,7 +492,12 @@ export function ServiceAdministrationSectionPage({
         serviceId: input.id,
         description: selectedCalculator?.description ?? `Pricing for ${input.name}`,
         pricingType: pricingTypeMap[input.pricing.method.trim().toLowerCase()] ?? 'fixed',
-        status: input.status === 'inactive' ? 'inactive' : 'draft',
+        status:
+          input.status === 'inactive'
+            ? 'inactive'
+            : input.status === 'active'
+              ? 'active'
+              : 'draft',
         variables: selectedCalculator?.variables ?? [],
         charges: [
           {
@@ -540,7 +550,12 @@ export function ServiceAdministrationSectionPage({
           ...(selectedRequestForm ? { id: selectedRequestForm.id } : {}),
           name: selectedRequestForm?.name ?? `${input.name} Request Form`,
           serviceId: input.id,
-          status: input.status === 'inactive' ? 'inactive' : 'draft',
+          status:
+            input.status === 'inactive'
+              ? 'inactive'
+              : input.status === 'active'
+                ? 'active'
+                : 'draft',
           fields: input.requestFields.map((label, index) => ({
             id: selectedRequestForm?.fields[index]?.id ?? `field-${index + 1}`,
             label,
@@ -560,7 +575,12 @@ export function ServiceAdministrationSectionPage({
           ...(selectedWorkflow ? { id: selectedWorkflow.id } : {}),
           name: selectedWorkflow?.name ?? `${input.name} Workflow`,
           serviceId: input.id,
-          status: input.status === 'inactive' ? 'inactive' : 'draft',
+          status:
+            input.status === 'inactive'
+              ? 'inactive'
+              : input.status === 'active'
+                ? 'active'
+                : 'draft',
           stages: input.workflowStages.map((name, index) => ({
             id: selectedWorkflow?.stages[index]?.id ?? `stage-${index + 1}`,
             name,
@@ -711,6 +731,7 @@ export function ServiceAdministrationSectionPage({
                   void navigate({
                     to: '/app/$section',
                     params: { section: 'service-requests' },
+                    search: { create: 'request' },
                   })
                 }
               >
