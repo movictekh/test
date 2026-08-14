@@ -100,7 +100,7 @@ api = NinjaAPI(
     docs=Swagger(settings={"persistAuthorization": True}),
 )
 
-@api.get("/health", tags=["Health"], auth=None)
+@api.get("/health", tags=["Health"], auth=None, operation_id="user_api_health_check")
 def health_check(request):
     """Health check endpoint"""
     return {"status": "healthy", "detail": "API is running"}
