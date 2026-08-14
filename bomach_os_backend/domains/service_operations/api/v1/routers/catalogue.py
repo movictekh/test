@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from ninja import Router
 from ninja.pagination import LimitOffsetPagination, paginate
+from domains.service_operations import selectors as domain_selectors, services as domain_services
 
 from services.api.schema.others import MessageSchema
 from ..schemas.catalogue import (
@@ -60,73 +61,8 @@ def _validation_detail(exc):
     return exc.messages[0] if getattr(exc, "messages", None) else str(exc)
 
 
-def _choice_values(choices):
-    return {choice[0] for choice in choices}
-
-
-def _ensure_choice(value, choices, field_name):
-    if value not in _choice_values(choices):
-        raise ValidationError({field_name: f"Invalid {field_name}: {value}."})
-
-
-def _ensure_unique_keys(items, label):
-    seen = set()
-    for item in items:
-        key = _item_value(item, "key")
-        if key in seen:
-            raise ValidationError({"key": f"Duplicate {label} key: {key}."})
-        seen.add(key)
-
-
-def _item_value(item, key, default=None):
-    if isinstance(item, dict):
-        return item.get(key, default)
-    return getattr(item, key, default)
-
-
 def _current_user_id(request, explicit_user_id=None):
     return explicit_user_id or request.user.id
-
-
-def _service_queryset():
-    return Service.objects.select_related(
-        "category",
-        "owner_role",
-        "created_by",
-        "active_request_form",
-        "active_pricing_config",
-        "active_workflow",
-    ).prefetch_related(
-        "subservices",
-        "request_forms__fields",
-        "pricing_configs__fields",
-        "workflows__stages__owner_role",
-        "branch_activations__branch",
-    )
-
-
-def _filter_services(qs, status=None, category_id=None, division=None, owner_role_id=None,
-                     client_visibility=None, branch_id=None, search=None):
-    if status:
-        qs = qs.filter(status=status)
-    if category_id:
-        qs = qs.filter(category_id=category_id)
-    if division:
-        qs = qs.filter(division=division)
-    if owner_role_id:
-        qs = qs.filter(owner_role_id=owner_role_id)
-    if client_visibility:
-        qs = qs.filter(client_visibility=client_visibility)
-    if branch_id:
-        qs = qs.filter(branch_activations__branch_id=branch_id).distinct()
-    if search:
-        qs = qs.filter(
-            Q(name__icontains=search)
-            | Q(code__icontains=search)
-            | Q(description__icontains=search)
-            | Q(division__icontains=search)
-        )
-    return qs
 
 
 def _category_name(service):
@@ -350,111 +286,6 @@ def _serialize_catalogue_detail(service):
     return row
 
 
-def _create_request_fields(form, fields):
-    _ensure_unique_keys(fields, "request field")
-    rows = []
-    valid_types = _choice_values(ServiceFieldType.choices)
-    for index, item in enumerate(fields):
-        field_type = _item_value(item, "field_type")
-        if field_type not in valid_types:
-            raise ValidationError({"field_type": f"Invalid field type: {field_type}."})
-        rows.append(ServiceRequestField(
-            form=form,
-            key=_item_value(item, "key"),
-            label=_item_value(item, "label"),
-            field_type=field_type,
-            required=_item_value(item, "required", False),
-            options=_item_value(item, "options", []),
-            validation=_item_value(item, "validation", {}),
-            help_text=_item_value(item, "help_text", "") or "",
-            placeholder=_item_value(item, "placeholder", "") or "",
-            sort_order=_item_value(item, "sort_order", index),
-        ))
-    ServiceRequestField.objects.bulk_create(rows)
-
-
-def _create_pricing_fields(config, fields):
-    _ensure_unique_keys(fields, "pricing field")
-    rows = []
-    valid_types = _choice_values(ServiceFieldType.choices)
-    for index, item in enumerate(fields):
-        field_type = _item_value(item, "field_type")
-        if field_type not in valid_types:
-            raise ValidationError({"field_type": f"Invalid field type: {field_type}."})
-        rows.append(ServicePricingField(
-            pricing_config=config,
-            key=_item_value(item, "key"),
-            label=_item_value(item, "label"),
-            field_type=field_type,
-            default_value=_item_value(item, "default_value"),
-            required=_item_value(item, "required", False),
-            options=_item_value(item, "options", []),
-            validation=_item_value(item, "validation", {}),
-            sort_order=_item_value(item, "sort_order", index),
-        ))
-    ServicePricingField.objects.bulk_create(rows)
-
-
-def _create_workflow_stages(workflow, stages):
-    rows = []
-    for index, item in enumerate(stages):
-        owner_role_id = _item_value(item, "owner_role_id")
-        if owner_role_id:
-            get_object_or_404(Role, id=owner_role_id)
-        rows.append(ServiceWorkflowStage(
-            workflow=workflow,
-            name=_item_value(item, "name"),
-            owner_role_id=owner_role_id,
-            sla_days=_item_value(item, "sla_days", 0),
-            requires_approval=_item_value(item, "requires_approval", False),
-            requires_evidence=_item_value(item, "requires_evidence", False),
-            client_visible=_item_value(item, "client_visible", False),
-            sort_order=_item_value(item, "sort_order", index),
-        ))
-    ServiceWorkflowStage.objects.bulk_create(rows)
-
-
-def _activate_request_form(service, form):
-    ServiceRequestForm.objects.filter(service=service, is_active=True).exclude(id=form.id).update(is_active=False)
-    form.status = "active"
-    form.is_active = True
-    form.save()
-    service.active_request_form = form
-    service.save(update_fields=["active_request_form", "updated_at"])
-
-
-def _activate_pricing_config(service, config):
-    ServicePricingConfig.objects.filter(service=service, is_active=True).exclude(id=config.id).update(is_active=False)
-    config.status = "active"
-    config.is_active = True
-    config.save()
-    service.active_pricing_config = config
-    service.save(update_fields=["active_pricing_config", "updated_at"])
-
-
-def _activate_workflow(service, workflow):
-    ServiceWorkflow.objects.filter(service=service, is_active=True).exclude(id=workflow.id).update(is_active=False)
-    workflow.status = "active"
-    workflow.is_active = True
-    workflow.save()
-    service.active_workflow = workflow
-    service.save(update_fields=["active_workflow", "updated_at"])
-
-
-def _service_dependents_count(service):
-    return (
-        service.leads.count()
-        + service.quotes.count()
-        + service.orders.count()
-        + service.invoices.count()
-        + service.request_forms.count()
-        + service.pricing_configs.count()
-        + service.workflows.count()
-        + service.branch_activations.count()
-        + service.subservices.count()
-    )
-
-
 @router.get("/request-field-types", response=List[FieldTypeOut], operation_id="services_api_v1_services_list_request_field_types")
 @require_permission("service_request_forms", "list")
 def list_request_field_types(request):
@@ -482,8 +313,8 @@ def list_service_catalogue(
     client_visibility: str = None,
     search: str = None,
 ):
-    services = _filter_services(
-        _service_queryset(),
+    services = domain_selectors.filter_services(
+        domain_selectors.service_queryset(),
         status=status,
         category_id=category_id,
         division=division,
@@ -497,7 +328,7 @@ def list_service_catalogue(
 @router.get("/catalogue/{service_id}", response=Dict[str, Any], operation_id="services_api_v1_services_get_service_catalogue_detail")
 @require_permission("services", "view")
 def get_service_catalogue_detail(request, service_id: int):
-    service = get_object_or_404(_service_queryset(), id=service_id)
+    service = get_object_or_404(domain_selectors.service_queryset(), id=service_id)
     return _serialize_catalogue_detail(service)
 
 
@@ -524,7 +355,7 @@ def list_pricing_configs(request, service_id: int = None, status: str = None, pr
 @router.get("/branch-activation-matrix", response=List[Dict[str, Any]], operation_id="services_api_v1_services_get_branch_activation_matrix")
 @require_permission("service_branch_activations", "list")
 def get_branch_activation_matrix(request, division: str = None, status: str = None, branch_id: int = None, search: str = None):
-    services = _filter_services(_service_queryset(), division=division, branch_id=branch_id, search=search)
+    services = domain_selectors.filter_services(domain_selectors.service_queryset(), division=division, branch_id=branch_id, search=search)
     if status:
         services = services.filter(branch_activations__status=status).distinct()
     return [_serialize_catalogue_card(service) for service in services]
@@ -543,8 +374,8 @@ def list_services(
     branch_id: int = None,
     search: str = None,
 ):
-    services = _filter_services(
-        _service_queryset(),
+    services = domain_selectors.filter_services(
+        domain_selectors.service_queryset(),
         status=status,
         category_id=category_id,
         division=division,
@@ -561,10 +392,10 @@ def list_services(
 def create_service(request, payload: ServiceCreateSchema):
     try:
         if payload.status:
-            _ensure_choice(payload.status, Service.STATUS_CHOICES, "status")
+            domain_services.ensure_choice(payload.status, Service.STATUS_CHOICES, "status")
         if payload.fulfillment_mode:
-            _ensure_choice(payload.fulfillment_mode, Service.FULFILLMENT_MODE_CHOICES, "fulfillment_mode")
-        _ensure_choice(payload.client_visibility, Service.CLIENT_VISIBILITY_CHOICES, "client_visibility")
+            domain_services.ensure_choice(payload.fulfillment_mode, Service.FULFILLMENT_MODE_CHOICES, "fulfillment_mode")
+        domain_services.ensure_choice(payload.client_visibility, Service.CLIENT_VISIBILITY_CHOICES, "client_visibility")
         get_object_or_404(ServiceCategory, id=payload.category_id)
         if payload.owner_role_id:
             get_object_or_404(Role, id=payload.owner_role_id)
@@ -592,7 +423,7 @@ def create_service(request, payload: ServiceCreateSchema):
 @router.get("/{service_id}", response=ServiceCoreOut, operation_id="services_api_v1_services_get_service")
 @require_permission("services", "view")
 def get_service(request, service_id: int):
-    service = get_object_or_404(_service_queryset(), id=service_id)
+    service = get_object_or_404(domain_selectors.service_queryset(), id=service_id)
     return _serialize_service_core(service)
 
 
@@ -607,7 +438,7 @@ def update_service(request, service_id: int, payload: ServiceUpdateSchema):
                 choices = getattr(Service, f"{field_name.upper()}_CHOICES", None)
                 if field_name == "status":
                     choices = Service.STATUS_CHOICES
-                _ensure_choice(update_data[field_name], choices, field_name)
+                domain_services.ensure_choice(update_data[field_name], choices, field_name)
         if "category_id" in update_data and update_data["category_id"]:
             get_object_or_404(ServiceCategory, id=update_data["category_id"])
         if "owner_role_id" in update_data and update_data["owner_role_id"]:
@@ -616,7 +447,7 @@ def update_service(request, service_id: int, payload: ServiceUpdateSchema):
         for attr, value in update_data.items():
             setattr(service, attr, value)
         service.save()
-        service = get_object_or_404(_service_queryset(), id=service_id)
+        service = get_object_or_404(domain_selectors.service_queryset(), id=service_id)
         return 200, _serialize_service_core(service)
     except (ValidationError, IntegrityError) as e:
         return 400, {"detail": _validation_detail(e)}
@@ -627,7 +458,7 @@ def update_service(request, service_id: int, payload: ServiceUpdateSchema):
 def delete_service(request, service_id: int):
     try:
         service = get_object_or_404(Service, id=service_id)
-        if service.status == "draft" and _service_dependents_count(service) == 0:
+        if service.status == "draft" and domain_selectors.service_dependents_count(service) == 0:
             service.delete()
             return 200, {"detail": "Service deleted successfully"}
         service.status = "inactive"
@@ -643,9 +474,9 @@ def publish_service(request, service_id: int, payload: ServicePublishIn):
     try:
         with transaction.atomic():
             service = get_object_or_404(Service, id=service_id)
-            _ensure_choice(payload.status, Service.STATUS_CHOICES, "status")
+            domain_services.ensure_choice(payload.status, Service.STATUS_CHOICES, "status")
             if payload.client_visibility:
-                _ensure_choice(payload.client_visibility, Service.CLIENT_VISIBILITY_CHOICES, "client_visibility")
+                domain_services.ensure_choice(payload.client_visibility, Service.CLIENT_VISIBILITY_CHOICES, "client_visibility")
 
             request_form = (
                 get_object_or_404(ServiceRequestForm, id=payload.request_form_id, service=service)
@@ -669,17 +500,17 @@ def publish_service(request, service_id: int, payload: ServicePublishIn):
                     raise ValidationError({"branch_activations": "At least one active branch is required before publishing."})
 
             if request_form:
-                _activate_request_form(service, request_form)
+                domain_services.activate_request_form(service, request_form)
             if pricing_config:
-                _activate_pricing_config(service, pricing_config)
+                domain_services.activate_pricing_config(service, pricing_config)
             if workflow:
-                _activate_workflow(service, workflow)
+                domain_services.activate_workflow(service, workflow)
 
             service.status = payload.status
             if payload.client_visibility:
                 service.client_visibility = payload.client_visibility
             service.save()
-        service = get_object_or_404(_service_queryset(), id=service_id)
+        service = get_object_or_404(domain_selectors.service_queryset(), id=service_id)
         return 200, _serialize_catalogue_detail(service)
     except (ValidationError, IntegrityError) as e:
         return 400, {"detail": _validation_detail(e)}
@@ -724,7 +555,7 @@ def replace_subservices(request, service_id: int, payload: ServiceSubServiceBulk
 def create_subservice(request, service_id: int, payload: ServiceSubServiceIn):
     try:
         service = get_object_or_404(Service, id=service_id)
-        _ensure_choice(payload.status, ServiceSubService.STATUS_CHOICES, "status")
+        domain_services.ensure_choice(payload.status, ServiceSubService.STATUS_CHOICES, "status")
         subservice = ServiceSubService.objects.create(
             service=service,
             code=payload.code or payload.name.lower().replace(" ", "-"),
@@ -746,7 +577,7 @@ def update_subservice(request, service_id: int, subservice_id: int, payload: Ser
         subservice = get_object_or_404(ServiceSubService, id=subservice_id, service_id=service_id)
         update_data = payload.dict(exclude_unset=True)
         if update_data.get("status"):
-            _ensure_choice(update_data["status"], ServiceSubService.STATUS_CHOICES, "status")
+            domain_services.ensure_choice(update_data["status"], ServiceSubService.STATUS_CHOICES, "status")
         for attr, value in update_data.items():
             setattr(subservice, attr, value)
         subservice.save()
@@ -780,7 +611,7 @@ def list_request_forms(request, service_id: int):
 def create_request_form(request, service_id: int, payload: RequestFormIn):
     try:
         service = get_object_or_404(Service, id=service_id)
-        _ensure_choice(payload.status, ServiceRequestForm.STATUS_CHOICES, "status")
+        domain_services.ensure_choice(payload.status, ServiceRequestForm.STATUS_CHOICES, "status")
         with transaction.atomic():
             form = ServiceRequestForm.objects.create(
                 service=service,
@@ -790,9 +621,9 @@ def create_request_form(request, service_id: int, payload: RequestFormIn):
                 is_active=False,
                 created_by_id=_current_user_id(request, payload.created_by_id),
             )
-            _create_request_fields(form, payload.fields)
+            domain_services.create_request_fields(form, payload.fields)
             if payload.is_active:
-                _activate_request_form(service, form)
+                domain_services.activate_request_form(service, form)
         form = ServiceRequestForm.objects.prefetch_related("fields").get(id=form.id)
         return 201, _serialize_request_form(form)
     except (ValidationError, IntegrityError) as e:
@@ -815,7 +646,7 @@ def update_request_form(request, service_id: int, form_id: int, payload: Request
         update_data = payload.dict(exclude_unset=True)
         fields = update_data.pop("fields", None)
         if update_data.get("status"):
-            _ensure_choice(update_data["status"], ServiceRequestForm.STATUS_CHOICES, "status")
+            domain_services.ensure_choice(update_data["status"], ServiceRequestForm.STATUS_CHOICES, "status")
         with transaction.atomic():
             make_active = update_data.pop("is_active", None)
             for attr, value in update_data.items():
@@ -823,9 +654,9 @@ def update_request_form(request, service_id: int, form_id: int, payload: Request
             form.save()
             if fields is not None:
                 form.fields.all().delete()
-                _create_request_fields(form, fields)
+                domain_services.create_request_fields(form, fields)
             if make_active is True:
-                _activate_request_form(service, form)
+                domain_services.activate_request_form(service, form)
             elif make_active is False and form.is_active:
                 form.is_active = False
                 form.save(update_fields=["is_active", "updated_at"])
@@ -861,7 +692,7 @@ def activate_request_form(request, service_id: int, form_id: int):
     service = get_object_or_404(Service, id=service_id)
     form = get_object_or_404(ServiceRequestForm.objects.prefetch_related("fields"), id=form_id, service=service)
     with transaction.atomic():
-        _activate_request_form(service, form)
+        domain_services.activate_request_form(service, form)
     form.refresh_from_db()
     return 200, _serialize_request_form(form)
 
@@ -871,8 +702,8 @@ def activate_request_form(request, service_id: int, form_id: int):
 def create_pricing_config(request, service_id: int, payload: PricingConfigIn):
     try:
         service = get_object_or_404(Service, id=service_id)
-        _ensure_choice(payload.status, ServicePricingConfig.STATUS_CHOICES, "status")
-        _ensure_choice(payload.pricing_type, ServicePricingConfig.PRICING_TYPE_CHOICES, "pricing_type")
+        domain_services.ensure_choice(payload.status, ServicePricingConfig.STATUS_CHOICES, "status")
+        domain_services.ensure_choice(payload.pricing_type, ServicePricingConfig.PRICING_TYPE_CHOICES, "pricing_type")
         with transaction.atomic():
             config = ServicePricingConfig.objects.create(
                 service=service,
@@ -887,9 +718,9 @@ def create_pricing_config(request, service_id: int, payload: PricingConfigIn):
                 is_active=False,
                 created_by_id=_current_user_id(request, payload.created_by_id),
             )
-            _create_pricing_fields(config, payload.fields)
+            domain_services.create_pricing_fields(config, payload.fields)
             if payload.is_active:
-                _activate_pricing_config(service, config)
+                domain_services.activate_pricing_config(service, config)
         config = ServicePricingConfig.objects.select_related("service").prefetch_related("fields").get(id=config.id)
         return 201, _serialize_pricing_config(config)
     except (ValidationError, IntegrityError) as e:
@@ -916,9 +747,9 @@ def update_pricing_config(request, service_id: int, config_id: int, payload: Pri
         update_data = payload.dict(exclude_unset=True)
         fields = update_data.pop("fields", None)
         if update_data.get("status"):
-            _ensure_choice(update_data["status"], ServicePricingConfig.STATUS_CHOICES, "status")
+            domain_services.ensure_choice(update_data["status"], ServicePricingConfig.STATUS_CHOICES, "status")
         if update_data.get("pricing_type"):
-            _ensure_choice(update_data["pricing_type"], ServicePricingConfig.PRICING_TYPE_CHOICES, "pricing_type")
+            domain_services.ensure_choice(update_data["pricing_type"], ServicePricingConfig.PRICING_TYPE_CHOICES, "pricing_type")
         with transaction.atomic():
             make_active = update_data.pop("is_active", None)
             for attr, value in update_data.items():
@@ -926,9 +757,9 @@ def update_pricing_config(request, service_id: int, config_id: int, payload: Pri
             config.save()
             if fields is not None:
                 config.fields.all().delete()
-                _create_pricing_fields(config, fields)
+                domain_services.create_pricing_fields(config, fields)
             if make_active is True:
-                _activate_pricing_config(service, config)
+                domain_services.activate_pricing_config(service, config)
             elif make_active is False and config.is_active:
                 config.is_active = False
                 config.save(update_fields=["is_active", "updated_at"])
@@ -964,7 +795,7 @@ def activate_pricing_config(request, service_id: int, config_id: int):
     service = get_object_or_404(Service, id=service_id)
     config = get_object_or_404(ServicePricingConfig.objects.select_related("service").prefetch_related("fields"), id=config_id, service=service)
     with transaction.atomic():
-        _activate_pricing_config(service, config)
+        domain_services.activate_pricing_config(service, config)
     config.refresh_from_db()
     return 200, _serialize_pricing_config(config)
 
@@ -974,7 +805,7 @@ def _workflow_queryset():
 
 
 def _create_workflow(request, service, payload):
-    _ensure_choice(payload.status, ServiceWorkflow.STATUS_CHOICES, "status")
+    domain_services.ensure_choice(payload.status, ServiceWorkflow.STATUS_CHOICES, "status")
     with transaction.atomic():
         workflow = ServiceWorkflow.objects.create(
             service=service,
@@ -984,9 +815,9 @@ def _create_workflow(request, service, payload):
             is_active=False,
             created_by_id=_current_user_id(request, payload.created_by_id),
         )
-        _create_workflow_stages(workflow, payload.stages)
+        domain_services.create_workflow_stages(workflow, payload.stages)
         if payload.is_active:
-            _activate_workflow(service, workflow)
+            domain_services.activate_workflow(service, workflow)
     return _workflow_queryset().get(id=workflow.id)
 
 
@@ -1025,7 +856,7 @@ def update_workflow(request, service_id: int, workflow_id: int, payload: Workflo
         update_data = payload.dict(exclude_unset=True)
         stages = update_data.pop("stages", None)
         if update_data.get("status"):
-            _ensure_choice(update_data["status"], ServiceWorkflow.STATUS_CHOICES, "status")
+            domain_services.ensure_choice(update_data["status"], ServiceWorkflow.STATUS_CHOICES, "status")
         with transaction.atomic():
             make_active = update_data.pop("is_active", None)
             for attr, value in update_data.items():
@@ -1033,9 +864,9 @@ def update_workflow(request, service_id: int, workflow_id: int, payload: Workflo
             workflow.save()
             if stages is not None:
                 workflow.stages.all().delete()
-                _create_workflow_stages(workflow, stages)
+                domain_services.create_workflow_stages(workflow, stages)
             if make_active is True:
-                _activate_workflow(service, workflow)
+                domain_services.activate_workflow(service, workflow)
             elif make_active is False and workflow.is_active:
                 workflow.is_active = False
                 workflow.save(update_fields=["is_active", "updated_at"])
@@ -1081,7 +912,7 @@ def replace_workflow_stages(request, service_id: int, workflow_id: int, payload:
         workflow = get_object_or_404(ServiceWorkflow, id=workflow_id, service_id=service_id)
         with transaction.atomic():
             workflow.stages.all().delete()
-            _create_workflow_stages(workflow, payload.stages)
+            domain_services.create_workflow_stages(workflow, payload.stages)
         stages = ServiceWorkflowStage.objects.filter(workflow=workflow).select_related("owner_role")
         return 200, [_serialize_workflow_stage(stage) for stage in stages]
     except (ValidationError, IntegrityError) as e:
@@ -1161,7 +992,7 @@ def activate_workflow(request, service_id: int, workflow_id: int):
     service = get_object_or_404(Service, id=service_id)
     workflow = get_object_or_404(_workflow_queryset(), id=workflow_id, service=service)
     with transaction.atomic():
-        _activate_workflow(service, workflow)
+        domain_services.activate_workflow(service, workflow)
     workflow.refresh_from_db()
     return 200, _serialize_workflow(workflow)
 
@@ -1183,7 +1014,7 @@ def upsert_branch_activations(request, service_id: int, payload: BranchActivatio
         if len(branch_ids) != len(set(branch_ids)):
             raise ValidationError({"branch_id": "Branch IDs must be unique in the payload."})
         for item in payload.branch_activations:
-            _ensure_choice(item.status, ServiceBranchActivation.STATUS_CHOICES, "status")
+            domain_services.ensure_choice(item.status, ServiceBranchActivation.STATUS_CHOICES, "status")
             get_object_or_404(Branch, id=item.branch_id)
         with transaction.atomic():
             for item in payload.branch_activations:
