@@ -13,7 +13,7 @@ from ninja.pagination import LimitOffsetPagination, paginate
 from services.api.schema.others import MessageSchema
 from ..schemas.lifecycle import InvoiceIn, InvoiceOut, InvoiceSendIn, InvoiceUpdate, ServiceOrderFromInvoiceIn, ServiceOrderOut
 from services.models.payment import Invoice, InvoiceItem
-from services.models.service import ServiceRequestActivity
+from domains.service_operations.models import ServiceRequestActivity
 from domains.service_operations.services import create_order_from_invoice
 from user.api.schemas.client_service import PaymentSubmissionResponseSchema, ReviewPaymentSchema
 from user.models.client_service import PaymentSubmission

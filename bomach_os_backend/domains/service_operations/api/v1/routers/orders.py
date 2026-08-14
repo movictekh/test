@@ -26,7 +26,7 @@ from ..schemas.lifecycle import (
     ServiceOrderOut,
     ServiceOrderUpdate,
 )
-from services.models.service import (
+from domains.service_operations.models import (
     ServiceDeliverable,
     ServiceExecutionTask,
     ServiceOrder,

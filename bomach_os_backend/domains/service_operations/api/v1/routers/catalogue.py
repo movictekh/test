@@ -31,7 +31,7 @@ from ..schemas.catalogue import (
     WorkflowStageUpdate,
     WorkflowUpdate,
 )
-from services.models.service import (
+from domains.service_operations.models import (
     Service,
     ServiceBranchActivation,
     ServiceCategory,

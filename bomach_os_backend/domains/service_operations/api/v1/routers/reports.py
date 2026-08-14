@@ -12,7 +12,7 @@ from ninja import Router
 from ..schemas.reports import (
     KPISchema, ServicePerformanceItem, BranchPerformanceItem,
 )
-from services.models.service import (
+from domains.service_operations.models import (
     Quote, ServiceOrder, ServiceRequest, ServiceRequestActivity,
 )
 from services.models.payment import Invoice

@@ -1,6 +1,6 @@
 """Reusable read/query logic for Service Operations."""
 from django.db.models import Q
-from services.models.service import Service
+from domains.service_operations.models import Service
 
 def service_queryset():
     return Service.objects.select_related(

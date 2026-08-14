@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 
 from ..schemas.lifecycle import ServiceCategoryIn, ServiceCategoryOut
 from services.api.schema.others import MessageSchema
-from services.models.service import ServiceCategory
+from domains.service_operations.models import ServiceCategory
 from ninja.pagination import paginate, LimitOffsetPagination
 from user.utils.perm import require_permission
 

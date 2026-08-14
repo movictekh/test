@@ -68,7 +68,7 @@ def list_feedback(
 @require_permission("feedback", "create")
 def create_feedback(request, payload: FeedbackIn):
     """Create a new feedback record."""
-    from services.models.service import ServiceOrder
+    from domains.service_operations.models import ServiceOrder
 
     try:
         order = ServiceOrder.objects.select_related('client', 'service').get(
