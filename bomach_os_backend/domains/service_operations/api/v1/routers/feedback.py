@@ -5,7 +5,7 @@ from django.db.models import Q, Avg, Count, Case, When, IntegerField, DecimalFie
 from django.db.models.functions import Coalesce
 from decimal import Decimal
 
-from services.api.schema.feedback_schemas import (
+from ..schemas.feedback import (
     FeedbackIn, FeedbackOut, FeedbackUpdate, FeedbackStatsSchema,
 )
 from services.api.schema.others import MessageSchema
