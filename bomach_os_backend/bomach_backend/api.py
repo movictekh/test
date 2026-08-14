@@ -41,7 +41,7 @@ from user.utils.auth import JWTAuthenticator
 from user.api.v1.sops import dept_router, unit_router, resp_router, sop_dashboard_router
 
 # Project Operations API v1
-from domains.project_operations.api import register_project_operations_v1
+from domains.project_operations.api.v1 import register_project_operations_v1
 
 # Services routers
 from services.api.v1 import (
