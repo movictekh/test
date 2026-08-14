@@ -2,8 +2,8 @@
 
 set -euo pipefail
 
-SRC="/home/kachy/project/bomach/bomach_os_backend/"
-DEST="/home/kachy/project/bomach/test/bomach_os_backend/"
+SRC="/home/kachy/project/bomach/test/bomach_os_backend/"
+DEST="/home/kachy/project/bomach/bomach_os_backend/"
 EXCLUDES=(
   --exclude '.git/'
   --exclude '.venv/'
