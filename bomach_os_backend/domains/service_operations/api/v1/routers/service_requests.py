@@ -35,7 +35,7 @@ from ..schemas.service_requests import (
     ServiceRequestUpdateSchema,
     StaffServiceRequestCreateSchema,
 )
-from services.models.payment import Invoice
+from domains.service_operations.models import Invoice
 from domains.service_operations.models import (
     Quote,
     Service,

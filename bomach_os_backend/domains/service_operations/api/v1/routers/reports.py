@@ -15,7 +15,7 @@ from ..schemas.reports import (
 from domains.service_operations.models import (
     Quote, ServiceOrder, ServiceRequest, ServiceRequestActivity,
 )
-from services.models.payment import Invoice
+from domains.service_operations.models import Invoice
 from services.models.expenses import Expense
 from domains.service_operations.models import ClientFeedback
 from user.utils.perm import require_permission

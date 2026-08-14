@@ -13,7 +13,7 @@ from ninja.pagination import LimitOffsetPagination, paginate
 
 from services.api.schema.others import MessageSchema
 from ..schemas.lifecycle import InvoiceFromQuoteIn, InvoiceOut, QuoteIn, QuoteOut, QuoteUpdate
-from services.models.payment import Invoice, InvoiceItem
+from domains.service_operations.models import Invoice, InvoiceItem
 from domains.service_operations.models import Quote, ServiceRequest, ServiceRequestActivity
 from user.utils.perm import require_permission, scope_queryset
 
