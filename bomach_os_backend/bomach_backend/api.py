@@ -54,6 +54,8 @@ from domains.service_operations.api.v1 import (
     reports_router as svc_reports_router,
     categories_router as svc_categories_router,
     service_leads_router as svc_service_leads_router,
+    service_request_admin_router as svc_service_request_admin_router,
+    client_service_portal_router as svc_client_service_portal_router,
 )
 
 # Services routers
@@ -144,6 +146,8 @@ api.add_router("/dashboard/", employee_dashboard_router)
 api.add_router("/roles/", role_router)
 api.add_router("/drawing-bank/", drawing_bank_router)
 api.add_router("/client-services/", client_service_router)
+api.add_router("/service-requests/", svc_service_request_admin_router)
+api.add_router("/service-requests/", svc_client_service_portal_router)
 api.add_router("/service-requests/", svc_service_requests_router)
 api.add_router("/partners/", partner_router)
 api.add_router("/target-reports", target_report_router)
