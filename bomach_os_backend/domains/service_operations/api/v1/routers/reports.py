@@ -9,7 +9,7 @@ from django.db.models import (
 from django.db.models.functions import Coalesce, TruncDate
 from ninja import Router
 
-from services.api.schema.report_schemas import (
+from ..schemas.reports import (
     KPISchema, ServicePerformanceItem, BranchPerformanceItem,
 )
 from services.models.service import (
