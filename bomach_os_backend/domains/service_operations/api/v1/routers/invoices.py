@@ -20,6 +20,8 @@ from user.models.client_service import PaymentSubmission
 from user.utils.perm import require_permission, scope_queryset
 from finance.services import handle_payment_exception, review_payment_submission as review_submission_payment
 
+from domains.service_operations.services import invoices as invoice_services
+
 
 router = Router(tags=["Invoices"])
 
@@ -145,17 +147,9 @@ def list_invoices(
 @require_permission("service_invoices", "create")
 def create_invoice(request, payload: InvoiceIn):
     try:
-        data = payload.dict()
-        items_data = data.pop("items", [])
-        data["created_by"] = request.user
-        data.pop("created_by_id", None)
-        invoice = Invoice.objects.create(**data)
-        _create_invoice_items(invoice, items_data)
-        return 201, _invoice_queryset().get(id=invoice.id)
-    except (ValidationError, IntegrityError) as e:
-        return 400, {"detail": _validation_detail(e)}
-    except Exception as e:
-        return 400, {"detail": str(e)}
+        i=invoice_services.create_invoice(payload,user=request.user); return 201,_invoice_queryset().get(id=i.id)
+    except (ValidationError,IntegrityError) as e: return 400,{"detail":_validation_detail(e)}
+    except Exception as e: return 400,{"detail":str(e)}
 
 
 @router.get("/payment-submissions", response=List[PaymentSubmissionResponseSchema])
@@ -203,46 +197,16 @@ def review_payment_submission(request, submission_id: int, payload: ReviewPaymen
 @require_permission("service_invoices", "update")
 def send_invoice(request, invoice_id: int, payload: InvoiceSendIn):
     try:
-        invoice = get_object_or_404(_invoice_queryset(), id=invoice_id)
-        if invoice.status not in {"draft", "sent"}:
-            return 400, {"detail": "Only draft or sent invoices can be sent."}
-        if payload and payload.payment_instructions is not None:
-            invoice.payment_instructions = payload.payment_instructions
-        invoice.status = "sent"
-        invoice.save(update_fields=["payment_instructions", "status", "updated_at"])
-        _log_request_activity(
-            invoice.service_request,
-            "invoice_issued",
-            f"Invoice {invoice.invoice_number} issued for {invoice.total_amount}.",
-            created_by=request.user,
-            next_action="Await payment",
-        )
-        try:
-            _send_invoice_email(invoice)
-        except Exception as exc:
-            _log_request_activity(
-                invoice.service_request,
-                "internal_note",
-                f"Invoice email delivery failed for {invoice.invoice_number}: {exc}",
-                created_by=request.user,
-                next_action="Follow up with client manually",
-            )
-        return 200, _invoice_queryset().get(id=invoice.id)
-    except (ValidationError, IntegrityError) as e:
-        return 400, {"detail": _validation_detail(e)}
+        i=get_object_or_404(_invoice_queryset(),id=invoice_id); invoice_services.send_invoice(i,payload,user=request.user); return 200,_invoice_queryset().get(id=i.id)
+    except (ValidationError,IntegrityError) as e: return 400,{"detail":_validation_detail(e)}
 
 
 @router.post("/{invoice_id}/cancel", response={200: InvoiceOut, 400: MessageSchema, 404: MessageSchema})
 @require_permission("service_invoices", "update")
 def cancel_invoice(request, invoice_id: int):
-    invoice = get_object_or_404(Invoice, id=invoice_id)
-    if invoice.amount_paid > 0:
-        return 400, {"detail": "Invoices with confirmed payments cannot be cancelled."}
-    if invoice.status == "cancelled":
-        return 400, {"detail": "Invoice is already cancelled."}
-    invoice.status = "cancelled"
-    invoice.save(update_fields=["status", "updated_at"])
-    return 200, _invoice_queryset().get(id=invoice.id)
+    i=get_object_or_404(Invoice,id=invoice_id)
+    try: invoice_services.cancel_invoice(i); return 200,_invoice_queryset().get(id=i.id)
+    except ValidationError as e: return 400,{"detail":_validation_detail(e)}
 
 
 @router.post("/{invoice_id}/service-order", response={201: ServiceOrderOut, 400: MessageSchema, 404: MessageSchema})
@@ -289,15 +253,8 @@ def get_invoice(request, invoice_id: int):
 @require_permission("service_invoices", "update")
 def update_invoice(request, invoice_id: int, payload: InvoiceUpdate):
     try:
-        invoice = get_object_or_404(Invoice, id=invoice_id)
-        if invoice.status not in EDITABLE_STATUSES:
-            return 400, {"detail": "Only draft or sent invoices can be edited."}
-        for attr, value in payload.dict(exclude_unset=True).items():
-            setattr(invoice, attr, value)
-        invoice.save()
-        return 200, _invoice_queryset().get(id=invoice.id)
-    except (ValidationError, IntegrityError) as e:
-        return 400, {"detail": _validation_detail(e)}
+        i=get_object_or_404(Invoice,id=invoice_id); invoice_services.update_invoice(i,payload); return 200,_invoice_queryset().get(id=i.id)
+    except (ValidationError,IntegrityError) as e: return 400,{"detail":_validation_detail(e)}
 
 
 @router.put("/{invoice_id}", response={200: InvoiceOut, 400: MessageSchema, 404: MessageSchema})
@@ -309,8 +266,6 @@ def replace_invoice(request, invoice_id: int, payload: InvoiceUpdate):
 @router.delete("/{invoice_id}", response={200: MessageSchema, 400: MessageSchema, 404: MessageSchema})
 @require_permission("service_invoices", "delete")
 def delete_invoice(request, invoice_id: int):
-    invoice = get_object_or_404(Invoice, id=invoice_id)
-    if invoice.quote_id or invoice.service_request_id:
-        return 400, {"detail": "Commercial flow invoices cannot be deleted. Cancel them instead."}
-    invoice.delete()
-    return 200, {"detail": "Invoice deleted successfully"}
+    i=get_object_or_404(Invoice,id=invoice_id)
+    try: invoice_services.delete_invoice(i); return 200,{"detail":"Invoice deleted successfully"}
+    except ValidationError as e: return 400,{"detail":_validation_detail(e)}

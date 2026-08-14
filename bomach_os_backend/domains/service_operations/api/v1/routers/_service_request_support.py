@@ -4,70 +4,12 @@ Shared API-layer query, validation and serialization helpers.
 This module defines no HTTP endpoints.
 """
 
-from datetime import timedelta
-from decimal import Decimal
-from typing import Any, Dict, List, Optional
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError, transaction
 from django.db.models import Prefetch, Q
 from django.shortcuts import get_object_or_404
-from django.utils import timezone
-from ninja import Query, Router
 from ninja.errors import HttpError
-from ninja.pagination import LimitOffsetPagination, paginate
-from services.api.schema.others import MessageSchema
-from ..schemas.lifecycle import (
-    InvoiceOut,
-    QuoteClientActionIn,
-    QuoteOut,
-    ServiceClientExecutionTaskOut,
-    ServiceDeliverableActionIn,
-    ServiceDeliverableOut,
-    ServiceOrderOut,
-)
-from domains.service_operations.api.v1.schemas.catalogue import FieldTypeOut
-from ..schemas.service_requests import (
-    ServiceRequestActivityCreateSchema,
-    ServiceRequestActivityOut,
-    ServiceRequestAttachmentCreateSchema,
-    ServiceRequestAttachmentOut,
-    ServiceRequestCreateSchema,
-    ServiceRequestDetailOut,
-    ServiceRequestListOut,
-    ServiceRequestQuoteCreateSchema,
-    ServiceRequestSummaryOut,
-    ServiceRequestUpdateSchema,
-    StaffServiceRequestCreateSchema,
-)
 from domains.service_operations.models import Invoice
-from domains.service_operations.models import (
-    Quote,
-    Service,
-    ServiceFieldType,
-    ServiceLead,
-    ServiceDeliverable,
-    ServiceExecutionTask,
-    ServiceOrder,
-    ServiceOrderActivity,
-    ServiceOrderMilestone,
-    ServiceRequest,
-    ServiceRequestActivity,
-    ServiceRequestAnswer,
-    ServiceRequestAttachment,
-    ServiceRequestForm,
-    ServiceSubService,
-)
-from user.api.schemas.client_service import (
-    ClientInvoiceSchema,
-    PaymentSubmissionCreateSchema,
-    PaymentSubmissionResponseSchema,
-    ReviewPaymentSchema,
-)
-from user.models.client import Client as CustomerClient
-from user.models.client_service import PaymentSubmission
-from finance.services import handle_payment_exception, review_payment_submission as review_submission_payment
-from user.models.employee import Employee
-from user.utils.perm import require_permission, scope_queryset
+from domains.service_operations.models import Quote, ServiceDeliverable, ServiceExecutionTask, ServiceOrder, ServiceOrderActivity, ServiceOrderMilestone, ServiceRequest
 
 
 CLIENT_ACTIVITY_TYPES = {"document_received", "email", "whatsapp", "internal_note"}
@@ -319,35 +261,8 @@ def _serialize_request_form(form):
     }
 
 
-def _create_answer_rows(service_request):
-    field_rows = service_request.form_snapshot.get("fields", [])
-    rows = [
-        ServiceRequestAnswer(
-            request=service_request,
-            field_id=field.get("id"),
-            field_key=field["key"],
-            label=field["label"],
-            field_type=field["field_type"],
-            value=service_request.answers_snapshot.get(field["key"]),
-            sort_order=field.get("sort_order", 0),
-        )
-        for field in field_rows
-    ]
-    ServiceRequestAnswer.objects.bulk_create(rows)
 
 
-def _log_activity(service_request, activity_type, note, created_by=None, outcome="not_applicable", next_action=""):
-    _ensure_choice(activity_type, ServiceRequestActivity.ACTIVITY_TYPE_CHOICES, "activity_type")
-    _ensure_choice(outcome, ServiceRequestActivity.OUTCOME_CHOICES, "outcome")
-    activity = ServiceRequestActivity.objects.create(
-        request=service_request,
-        activity_type=activity_type,
-        outcome=outcome,
-        note=note,
-        next_action=next_action or "",
-        created_by=created_by,
-    )
-    return activity
 
 
 def _quote_queryset():
@@ -378,35 +293,10 @@ def _invoice_queryset():
     ).prefetch_related("items", "payments", "submissions")
 
 
-def _latest_rejected_quote(service_request):
-    return (
-        service_request.quotes
-        .filter(status="rejected")
-        .order_by("-version", "-created_at", "-id")
-        .first()
-    )
 
 
-def _ensure_no_active_quote(service_request):
-    if service_request.quotes.exclude(status__in=["rejected", "expired"]).exists():
-        raise ValidationError("This service request already has an active quote.")
 
 
-def _quote_payload_data(payload, service_request):
-    data = payload.dict(exclude_unset=True)
-    if not data.get("required_approver_role_id"):
-        raise ValidationError({"required_approver_role_id": "Required approver role is required."})
-    service_fee = data.get("service_fee")
-    amount = data.get("amount")
-    if service_fee is None:
-        data["service_fee"] = amount if amount is not None else service_request.estimated_value
-    data["amount"] = Decimal("0.00")
-    data["description"] = data.get("description") or service_request.scope_summary or service_request.service.name
-    data["scope_summary"] = data.get("scope_summary") or service_request.scope_summary
-    data["terms"] = data.get("terms") or "Work begins after the required mobilisation payment and approved documents are received."
-    data["valid_until"] = data.get("valid_until") or (timezone.localdate() + timedelta(days=14))
-    data["status"] = "awaiting_approval"
-    return data
 
 
 def _get_client_profile(user):
@@ -465,39 +355,3 @@ def _apply_filters(qs, status=None, priority=None, service_id=None, branch_id=No
     return qs
 
 
-def _create_service_request(payload, client, created_by, submitted_by=None, staff=False):
-    data = payload.dict()
-    answers = data.pop("answers")
-    relation_ids = {
-        "subservice_id": data.pop("subservice_id", None),
-        "branch_id": data.pop("branch_id", None),
-        "service_lead_id": data.pop("service_lead_id", None) if staff else None,
-        "crm_lead_id": data.pop("crm_lead_id", None) if staff else None,
-        "owner_id": data.pop("owner_id", None) if staff else None,
-    }
-    data.pop("client_id", None)
-    service_id = data.pop("service_id")
-    service = get_object_or_404(Service, id=service_id)
-    subservice = None
-    if relation_ids["subservice_id"]:
-        subservice = get_object_or_404(ServiceSubService, id=relation_ids["subservice_id"], service=service)
-
-    with transaction.atomic():
-        obj = ServiceRequest.objects.create(
-            client=client,
-            service=service,
-            subservice=subservice,
-            answers_snapshot=answers,
-            created_by=created_by,
-            submitted_by=submitted_by,
-            **{key: value for key, value in relation_ids.items() if key != "subservice_id"},
-            **data,
-        )
-        _create_answer_rows(obj)
-        _log_activity(
-            obj,
-            "request_created",
-            "Service request submitted and consent recorded.",
-            created_by=created_by,
-        )
-    return _request_queryset().get(id=obj.id)

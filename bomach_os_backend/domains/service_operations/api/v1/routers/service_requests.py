@@ -1,83 +1,18 @@
 """Client request intake and self-service Service Request HTTP endpoints."""
 
-from datetime import timedelta
-from decimal import Decimal
 from typing import Any, Dict, List, Optional
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError, transaction
-from django.db.models import Prefetch, Q
+from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
-from django.utils import timezone
 from ninja import Query, Router
-from ninja.errors import HttpError
 from ninja.pagination import LimitOffsetPagination, paginate
 from services.api.schema.others import MessageSchema
-from ..schemas.lifecycle import (
-    InvoiceOut,
-    QuoteClientActionIn,
-    QuoteOut,
-    ServiceClientExecutionTaskOut,
-    ServiceDeliverableActionIn,
-    ServiceDeliverableOut,
-    ServiceOrderOut,
-)
 from domains.service_operations.api.v1.schemas.catalogue import FieldTypeOut
-from ..schemas.service_requests import (
-    ServiceRequestActivityCreateSchema,
-    ServiceRequestActivityOut,
-    ServiceRequestAttachmentCreateSchema,
-    ServiceRequestAttachmentOut,
-    ServiceRequestCreateSchema,
-    ServiceRequestDetailOut,
-    ServiceRequestListOut,
-    ServiceRequestQuoteCreateSchema,
-    ServiceRequestSummaryOut,
-    ServiceRequestUpdateSchema,
-    StaffServiceRequestCreateSchema,
-)
-from domains.service_operations.models import Invoice
-from domains.service_operations.models import (
-    Quote,
-    Service,
-    ServiceFieldType,
-    ServiceLead,
-    ServiceDeliverable,
-    ServiceExecutionTask,
-    ServiceOrder,
-    ServiceOrderActivity,
-    ServiceOrderMilestone,
-    ServiceRequest,
-    ServiceRequestActivity,
-    ServiceRequestAnswer,
-    ServiceRequestAttachment,
-    ServiceRequestForm,
-    ServiceSubService,
-)
-from user.api.schemas.client_service import (
-    ClientInvoiceSchema,
-    PaymentSubmissionCreateSchema,
-    PaymentSubmissionResponseSchema,
-    ReviewPaymentSchema,
-)
-from user.models.client import Client as CustomerClient
-from user.models.client_service import PaymentSubmission
-from finance.services import handle_payment_exception, review_payment_submission as review_submission_payment
-from user.models.employee import Employee
-from user.utils.perm import require_permission, scope_queryset
-from ._service_request_support import (
-    CLIENT_ACTIVITY_TYPES,
-    _apply_filters,
-    _choice_rows,
-    _create_service_request,
-    _ensure_choice,
-    _get_client_profile,
-    _request_queryset,
-    _serialize_activity,
-    _serialize_attachment,
-    _serialize_request,
-    _serialize_request_form,
-    _validation_detail,
-)
+from ..schemas.service_requests import ServiceRequestActivityCreateSchema, ServiceRequestActivityOut, ServiceRequestAttachmentCreateSchema, ServiceRequestAttachmentOut, ServiceRequestCreateSchema, ServiceRequestDetailOut, ServiceRequestListOut, ServiceRequestSummaryOut
+from domains.service_operations.models import Service, ServiceFieldType, ServiceRequest, ServiceRequestActivity
+from ._service_request_support import CLIENT_ACTIVITY_TYPES, _apply_filters, _choice_rows, _get_client_profile, _request_queryset, _serialize_activity, _serialize_attachment, _serialize_request, _serialize_request_form, _validation_detail
+
+from domains.service_operations.services import requests as request_services
 
 
 router = Router(tags=["Service Requests"])
@@ -179,11 +114,8 @@ def list_my_requests(
 @router.post("", response={201: ServiceRequestDetailOut, 400: MessageSchema})
 def create_my_request(request, payload: ServiceRequestCreateSchema):
     try:
-        client = _get_client_profile(request.user)
-        obj = _create_service_request(payload, client=client, created_by=request.user, submitted_by=request.user)
-        return 201, _serialize_request(obj, include_detail=True)
-    except (ValidationError, IntegrityError) as e:
-        return 400, {"detail": _validation_detail(e)}
+        client=_get_client_profile(request.user); obj=request_services.create_service_request(payload,client=client,created_by=request.user,submitted_by=request.user); obj=_request_queryset().get(id=obj.id); return 201,_serialize_request(obj,include_detail=True)
+    except (ValidationError,IntegrityError) as e: return 400,{"detail":_validation_detail(e)}
 
 
 @router.get("/{request_id}", response={200: ServiceRequestDetailOut, 404: MessageSchema})
@@ -196,33 +128,13 @@ def get_my_request(request, request_id: int):
 @router.post("/{request_id}/activities", response={201: ServiceRequestActivityOut, 400: MessageSchema, 404: MessageSchema})
 def create_my_activity(request, request_id: int, payload: ServiceRequestActivityCreateSchema):
     try:
-        if payload.activity_type not in CLIENT_ACTIVITY_TYPES:
-            return 400, {"detail": "This activity type is not available from the client portal."}
-        client = _get_client_profile(request.user)
-        obj = get_object_or_404(ServiceRequest, id=request_id, client=client)
-        _ensure_choice(payload.outcome, ServiceRequestActivity.OUTCOME_CHOICES, "outcome")
-        activity = ServiceRequestActivity.objects.create(
-            request=obj,
-            activity_type=payload.activity_type,
-            outcome=payload.outcome,
-            note=payload.note,
-            next_action=payload.next_action or "",
-            next_follow_up_at=payload.next_follow_up_at,
-            created_by=request.user,
-        )
-        return 201, _serialize_activity(activity)
-    except ValidationError as e:
-        return 400, {"detail": _validation_detail(e)}
+        if payload.activity_type not in CLIENT_ACTIVITY_TYPES: return 400,{"detail":"This activity type is not available from the client portal."}
+        client=_get_client_profile(request.user); obj=get_object_or_404(ServiceRequest,id=request_id,client=client); a=request_services.create_request_activity(obj,payload,created_by=request.user); return 201,_serialize_activity(a)
+    except ValidationError as e: return 400,{"detail":_validation_detail(e)}
 
 
 @router.post("/{request_id}/attachments", response={201: ServiceRequestAttachmentOut, 400: MessageSchema, 404: MessageSchema})
 def create_my_attachment(request, request_id: int, payload: ServiceRequestAttachmentCreateSchema):
     try:
-        client = _get_client_profile(request.user)
-        obj = get_object_or_404(ServiceRequest, id=request_id, client=client)
-        attachment = ServiceRequestAttachment(request=obj, uploaded_by=request.user, **payload.dict())
-        attachment.full_clean()
-        attachment.save()
-        return 201, _serialize_attachment(attachment)
-    except ValidationError as e:
-        return 400, {"detail": _validation_detail(e)}
+        client=_get_client_profile(request.user); obj=get_object_or_404(ServiceRequest,id=request_id,client=client); x=request_services.create_request_attachment(obj,payload,uploaded_by=request.user); return 201,_serialize_attachment(x)
+    except ValidationError as e: return 400,{"detail":_validation_detail(e)}

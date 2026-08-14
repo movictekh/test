@@ -1,11 +1,8 @@
 """Client commercial and delivery portal endpoints under Service Requests."""
 
-from datetime import timedelta
-from decimal import Decimal
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError, transaction
-from django.db.models import Prefetch, Q
+from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from ninja import Query, Router
@@ -21,62 +18,14 @@ from ..schemas.lifecycle import (
     ServiceDeliverableOut,
     ServiceOrderOut,
 )
-from domains.service_operations.api.v1.schemas.catalogue import FieldTypeOut
-from ..schemas.service_requests import (
-    ServiceRequestActivityCreateSchema,
-    ServiceRequestActivityOut,
-    ServiceRequestAttachmentCreateSchema,
-    ServiceRequestAttachmentOut,
-    ServiceRequestCreateSchema,
-    ServiceRequestDetailOut,
-    ServiceRequestListOut,
-    ServiceRequestQuoteCreateSchema,
-    ServiceRequestSummaryOut,
-    ServiceRequestUpdateSchema,
-    StaffServiceRequestCreateSchema,
-)
 from domains.service_operations.models import Invoice
-from domains.service_operations.models import (
-    Quote,
-    Service,
-    ServiceFieldType,
-    ServiceLead,
-    ServiceDeliverable,
-    ServiceExecutionTask,
-    ServiceOrder,
-    ServiceOrderActivity,
-    ServiceOrderMilestone,
-    ServiceRequest,
-    ServiceRequestActivity,
-    ServiceRequestAnswer,
-    ServiceRequestAttachment,
-    ServiceRequestForm,
-    ServiceSubService,
-)
-from user.api.schemas.client_service import (
-    ClientInvoiceSchema,
-    PaymentSubmissionCreateSchema,
-    PaymentSubmissionResponseSchema,
-    ReviewPaymentSchema,
-)
-from user.models.client import Client as CustomerClient
+from domains.service_operations.models import ServiceOrderActivity
+from user.api.schemas.client_service import ClientInvoiceSchema, PaymentSubmissionCreateSchema, PaymentSubmissionResponseSchema
 from user.models.client_service import PaymentSubmission
-from finance.services import handle_payment_exception, review_payment_submission as review_submission_payment
-from user.models.employee import Employee
-from user.utils.perm import require_permission, scope_queryset
-from ._service_request_support import (
-    CLIENT_VISIBLE_INVOICE_STATUSES,
-    CLIENT_VISIBLE_ORDER_STATUSES,
-    CLIENT_VISIBLE_QUOTE_STATUSES,
-    _client_deliverable_queryset,
-    _client_order_queryset,
-    _client_task_queryset,
-    _get_client_profile,
-    _invoice_queryset,
-    _log_activity,
-    _quote_queryset,
-    _validation_detail,
-)
+from ._service_request_support import CLIENT_VISIBLE_INVOICE_STATUSES, CLIENT_VISIBLE_ORDER_STATUSES, CLIENT_VISIBLE_QUOTE_STATUSES, _client_deliverable_queryset, _client_order_queryset, _client_task_queryset, _get_client_profile, _invoice_queryset, _quote_queryset, _validation_detail
+
+from domains.service_operations.services import quotes as quote_services
+from domains.service_operations.services import invoices as invoice_services
 
 
 router = Router(tags=["Service Requests"])
@@ -143,36 +92,8 @@ def get_my_invoice(request, invoice_id: int):
 @router.post("/invoices/{invoice_id}/payment-submissions", response={201: PaymentSubmissionResponseSchema, 400: MessageSchema, 404: MessageSchema})
 def submit_invoice_payment(request, invoice_id: int, payload: PaymentSubmissionCreateSchema):
     try:
-        client = _get_client_profile(request.user)
-        invoice = get_object_or_404(
-            _invoice_queryset(),
-            id=invoice_id,
-            client=client,
-            status__in=CLIENT_VISIBLE_INVOICE_STATUSES,
-        )
-        if payload.invoice_id != invoice.id:
-            return 400, {"detail": "Payload invoice_id must match the invoice path."}
-        if payload.amount > invoice.balance:
-            return 400, {"detail": "Amount exceeds outstanding balance."}
-        if PaymentSubmission.objects.filter(invoice=invoice, client=client, status=PaymentSubmission.STATUS.PENDING).exists():
-            return 400, {"detail": "You already have a pending submission for this invoice."}
-        submission = PaymentSubmission.objects.create(
-            invoice=invoice,
-            client=client,
-            submitted_by=request.user,
-            submitted_by_type=PaymentSubmission.SUBMITTED_BY_TYPE.CLIENT,
-            **payload.dict(exclude={"invoice_id"}),
-        )
-        _log_activity(
-            invoice.service_request,
-            "payment_submitted",
-            f"Payment proof {submission.reference} submitted for invoice {invoice.invoice_number}.",
-            created_by=request.user,
-            next_action="Review payment submission",
-        )
-        return 201, submission
-    except (ValidationError, IntegrityError) as e:
-        return 400, {"detail": _validation_detail(e)}
+        client=_get_client_profile(request.user); i=get_object_or_404(_invoice_queryset(),id=invoice_id,client=client,status__in=CLIENT_VISIBLE_INVOICE_STATUSES); s=invoice_services.submit_payment(i,payload,client=client,user=request.user); return 201,s
+    except (ValidationError,IntegrityError) as e: return 400,{"detail":_validation_detail(e)}
 
 
 @router.get("/quotes", response=List[QuoteOut])
@@ -206,65 +127,15 @@ def get_my_quote(request, quote_id: int):
 @router.post("/quotes/{quote_id}/accept", response={200: QuoteOut, 400: MessageSchema, 404: MessageSchema})
 def accept_my_quote(request, quote_id: int):
     try:
-        client = _get_client_profile(request.user)
-        with transaction.atomic():
-            quote = get_object_or_404(
-                _quote_queryset().select_for_update(),
-                id=quote_id,
-                client=client,
-                status__in=CLIENT_VISIBLE_QUOTE_STATUSES,
-            )
-            if quote.status != "sent":
-                return 400, {"detail": "Only sent quotes can be accepted."}
-            quote.status = "accepted"
-            quote.client_responded_at = timezone.now()
-            quote.save(update_fields=["status", "client_responded_at", "updated_at"])
-            if quote.service_request:
-                quote.service_request.next_action = "Create invoice for accepted quotation"
-                quote.service_request.save(update_fields=["next_action", "updated_at"])
-                _log_activity(
-                    quote.service_request,
-                    "quote_accepted",
-                    f"Client accepted quotation {quote.quote_number}.",
-                    created_by=request.user,
-                    next_action="Create invoice",
-                )
-        return 200, _quote_queryset().get(id=quote.id)
-    except (ValidationError, IntegrityError) as e:
-        return 400, {"detail": _validation_detail(e)}
+        client=_get_client_profile(request.user); q=get_object_or_404(_quote_queryset(),id=quote_id,client=client,status__in=CLIENT_VISIBLE_QUOTE_STATUSES); quote_services.client_accept(q,user=request.user); return 200,_quote_queryset().get(id=q.id)
+    except (ValidationError,IntegrityError) as e: return 400,{"detail":_validation_detail(e)}
 
 
 @router.post("/quotes/{quote_id}/reject", response={200: QuoteOut, 400: MessageSchema, 404: MessageSchema})
 def reject_my_quote(request, quote_id: int, payload: QuoteClientActionIn):
     try:
-        client = _get_client_profile(request.user)
-        with transaction.atomic():
-            quote = get_object_or_404(
-                _quote_queryset().select_for_update(),
-                id=quote_id,
-                client=client,
-                status__in=CLIENT_VISIBLE_QUOTE_STATUSES,
-            )
-            if quote.status != "sent":
-                return 400, {"detail": "Only sent quotes can be rejected."}
-            quote.status = "rejected"
-            quote.client_rejection_reason = payload.reason or ""
-            quote.client_responded_at = timezone.now()
-            quote.save(update_fields=["status", "client_rejection_reason", "client_responded_at", "updated_at"])
-            if quote.service_request:
-                quote.service_request.status = "under_review"
-                quote.service_request.next_action = "Prepare revised quotation"
-                quote.service_request.save(update_fields=["status", "next_action", "updated_at"])
-                _log_activity(
-                    quote.service_request,
-                    "quote_rejected",
-                    f"Client rejected quotation {quote.quote_number}.",
-                    created_by=request.user,
-                    next_action="Prepare revised quote",
-                )
-        return 200, _quote_queryset().get(id=quote.id)
-    except (ValidationError, IntegrityError) as e:
-        return 400, {"detail": _validation_detail(e)}
+        client=_get_client_profile(request.user); q=get_object_or_404(_quote_queryset(),id=quote_id,client=client,status__in=CLIENT_VISIBLE_QUOTE_STATUSES); quote_services.client_reject(q,reason=payload.reason,user=request.user); return 200,_quote_queryset().get(id=q.id)
+    except (ValidationError,IntegrityError) as e: return 400,{"detail":_validation_detail(e)}
 
 
 @router.get("/orders", response=List[ServiceOrderOut])

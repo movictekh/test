@@ -4,18 +4,19 @@ from typing import List, Optional
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
-from django.utils import timezone
 from ninja import Query, Router
 from ninja.errors import HttpError
 from ninja.pagination import LimitOffsetPagination, paginate
 
 from services.api.schema.others import MessageSchema
 from ..schemas.lifecycle import InvoiceFromQuoteIn, InvoiceOut, QuoteIn, QuoteOut, QuoteUpdate
-from domains.service_operations.models import Invoice, InvoiceItem
+from domains.service_operations.models import Invoice
 from domains.service_operations.models import Quote, ServiceRequest, ServiceRequestActivity
 from user.utils.perm import require_permission, scope_queryset
+
+from domains.service_operations.services import quotes as quote_services
 
 
 router = Router(tags=["Quotes"])
@@ -217,92 +218,25 @@ def list_quotes(
 @require_permission("quotes", "create")
 def create_quote(request, payload: QuoteIn):
     try:
-        with transaction.atomic():
-            quote = _create_quote_from_data(_quote_payload_data(payload), request.user)
-        return 201, _quote_queryset().get(id=quote.id)
-    except (ValidationError, IntegrityError) as e:
-        return 400, {"detail": _validation_detail(e)}
+        q=quote_services.create_quote(payload,created_by=request.user); return 201,_quote_queryset().get(id=q.id)
+    except (ValidationError,IntegrityError) as e: return 400,{"detail":_validation_detail(e)}
 
 
 @router.post("/{quote_id}/approve", response={200: QuoteOut, 400: MessageSchema, 404: MessageSchema})
 @require_permission("quotes", "approve")
 def approve_quote(request, quote_id: int):
     try:
-        with transaction.atomic():
-            quote = get_object_or_404(_quote_queryset().select_for_update(), id=quote_id)
-            if quote.status != "awaiting_approval":
-                return 400, {"detail": "Only quotes awaiting approval can be approved."}
-            _ensure_required_approver(quote, request._perm_employee)
-            quote.status = "sent"
-            quote.approved_by = request.user
-            quote.approved_at = timezone.now()
-            quote.sent_at = quote.approved_at
-            quote.save()
-            if quote.service_request:
-                quote.service_request.status = "quoted"
-                quote.service_request.next_action = "Client to accept or reject quotation"
-                quote.service_request.save(update_fields=["status", "next_action", "updated_at"])
-                _log_request_activity(
-                    quote.service_request,
-                    "quote_sent",
-                    f"Quotation {quote.quote_number} approved and sent to client.",
-                    created_by=request.user,
-                    next_action="Await client quote response",
-                )
-        try:
-            _send_quote_email(quote)
-        except Exception as exc:
-            _log_request_activity(
-                quote.service_request,
-                "internal_note",
-                f"Quote email delivery failed for {quote.quote_number}: {exc}",
-                created_by=request.user,
-                next_action="Follow up with client manually",
-            )
-        return 200, _quote_queryset().get(id=quote.id)
-    except (ValidationError, IntegrityError) as e:
-        return 400, {"detail": _validation_detail(e)}
+        q=get_object_or_404(_quote_queryset(),id=quote_id); quote_services.approve_quote(q,employee=request._perm_employee,user=request.user); return 200,_quote_queryset().get(id=q.id)
+    except PermissionError as e: raise HttpError(403,str(e))
+    except (ValidationError,IntegrityError) as e: return 400,{"detail":_validation_detail(e)}
 
 
 @router.post("/{quote_id}/invoice", response={201: InvoiceOut, 400: MessageSchema, 404: MessageSchema})
 @require_permission("service_invoices", "create")
 def create_invoice_from_quote(request, quote_id: int, payload: InvoiceFromQuoteIn):
     try:
-        with transaction.atomic():
-            quote = get_object_or_404(_quote_queryset().select_for_update(), id=quote_id)
-            if quote.status != "accepted":
-                return 400, {"detail": "Invoices can only be created from accepted quotes."}
-            if quote.invoices.filter(status__in=ACTIVE_INVOICE_STATUSES).exists():
-                return 400, {"detail": "This quote already has an active invoice."}
-
-            invoice = Invoice.objects.create(
-                client=quote.client,
-                service=quote.service,
-                quote=quote,
-                service_request=quote.service_request,
-                issue_date=timezone.localdate(),
-                due_date=payload.due_date,
-                subtotal=quote.subtotal or quote.amount,
-                tax_rate=quote.tax_rate,
-                status="draft",
-                payment_schedule=payload.payment_schedule,
-                payment_instructions=payload.payment_instructions,
-                activation_threshold_amount=quote.deposit_amount,
-                notes=payload.notes or quote.terms,
-                created_by=request.user,
-            )
-            InvoiceItem.objects.create(
-                invoice=invoice,
-                description=quote.description or quote.service.name,
-                quantity=1,
-                unit_price=invoice.subtotal,
-            )
-            if quote.service_request:
-                quote.service_request.next_action = f"Send invoice {invoice.invoice_number}"
-                quote.service_request.save(update_fields=["next_action", "updated_at"])
-        return 201, _invoice_queryset().get(id=invoice.id)
-    except (ValidationError, IntegrityError) as e:
-        return 400, {"detail": _validation_detail(e)}
+        q=get_object_or_404(_quote_queryset(),id=quote_id); i=quote_services.create_invoice_from_quote(q,payload,user=request.user); return 201,_invoice_queryset().get(id=i.id)
+    except (ValidationError,IntegrityError) as e: return 400,{"detail":_validation_detail(e)}
 
 
 @router.get("/{quote_id}", response=QuoteOut)
@@ -315,15 +249,8 @@ def get_quote(request, quote_id: int):
 @require_permission("quotes", "update")
 def update_quote(request, quote_id: int, payload: QuoteUpdate):
     try:
-        quote = get_object_or_404(Quote, id=quote_id)
-        if quote.status not in EDITABLE_STATUSES:
-            return 400, {"detail": "Only quotes awaiting approval can be edited."}
-        for attr, value in payload.dict(exclude_unset=True).items():
-            setattr(quote, attr, value)
-        quote.save()
-        return 200, _quote_queryset().get(id=quote.id)
-    except (ValidationError, IntegrityError) as e:
-        return 400, {"detail": _validation_detail(e)}
+        q=get_object_or_404(Quote,id=quote_id); quote_services.update_quote(q,payload); return 200,_quote_queryset().get(id=q.id)
+    except (ValidationError,IntegrityError) as e: return 400,{"detail":_validation_detail(e)}
 
 
 @router.put("/{quote_id}", response={200: QuoteOut, 400: MessageSchema, 404: MessageSchema})
@@ -335,10 +262,6 @@ def replace_quote(request, quote_id: int, payload: QuoteUpdate):
 @router.delete("/{quote_id}", response={200: MessageSchema, 400: MessageSchema, 404: MessageSchema})
 @require_permission("quotes", "delete")
 def delete_quote(request, quote_id: int):
-    quote = get_object_or_404(Quote, id=quote_id)
-    if quote.service_request_id:
-        return 400, {"detail": "Service request quotes cannot be deleted."}
-    if quote.status == "rejected":
-        return 400, {"detail": "Rejected quotes are immutable and cannot be deleted."}
-    quote.delete()
-    return 200, {"detail": "Quote deleted successfully"}
+    q=get_object_or_404(Quote,id=quote_id)
+    try: quote_services.delete_quote(q); return 200,{"detail":"Quote deleted successfully"}
+    except ValidationError as e: return 400,{"detail":_validation_detail(e)}
