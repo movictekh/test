@@ -49,6 +49,7 @@ from domains.service_operations.api.v1 import (
     service_requests_router as svc_service_requests_router,
     quotes_router as svc_quotes_router,
     orders_router as svc_orders_router,
+    invoices_router as svc_invoices_router,
 )
 
 # Services routers
@@ -56,7 +57,7 @@ from services.api.v1 import (
     budgets as svc_budgets, categories as svc_categories, content as svc_content,
     documents as svc_documents, expenses as svc_expenses,
     feedback as svc_feedback,
-    invoices as svc_invoices, leads as svc_leads, marketing_campaigns as svc_marketing,
+    leads as svc_leads, marketing_campaigns as svc_marketing,
     payments as svc_payments, property as svc_property,
     reports as svc_reports, revenue_execution as svc_revenue_execution,
     service_leads as svc_service_leads,
@@ -185,7 +186,7 @@ api.add_router("/leads", svc_leads.router)
 api.add_router("/service-leads", svc_service_leads.router)
 api.add_router("/quotes", svc_quotes_router)
 api.add_router("/orders", svc_orders_router)
-api.add_router("/invoices", svc_invoices.router)
+api.add_router("/invoices", svc_invoices_router)
 api.add_router("/marketing-campaigns", svc_marketing.router)
 api.add_router("/payments", svc_payments.router)
 api.add_router("/properties", svc_property.router)
