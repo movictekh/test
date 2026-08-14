@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404
 from ninja.errors import HttpError
 from ninja.pagination import paginate, LimitOffsetPagination
 
-from operations.models import Task
+from domains.project_operations.models import Task
 from ..schemas.schemas import TaskOutSchema, TaskStatusUpdateSchema, MessageSchema
 from user.utils.perm import require_permission
 

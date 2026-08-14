@@ -2,7 +2,7 @@ from ninja import Router
 from django.db.models import Sum
 from decimal import Decimal
 
-from operations.models import Project, Worksite, Contract, Timeline
+from domains.project_operations.models import Project, Worksite, Contract, Timeline
 from ..schemas.schemas import DashboardStatsSchema
 from user.utils.perm import require_permission
 

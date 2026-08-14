@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from django.core.exceptions import ValidationError
 
-from operations.models import SiteEquipment, Worksite
+from domains.project_operations.models import SiteEquipment, Worksite
 from ..schemas.schemas import SiteEquipmentCreateSchema, SiteEquipmentUpdateSchema, SiteEquipmentOutSchema, MessageSchema
 from ninja.pagination import paginate, LimitOffsetPagination
 from user.utils.perm import require_permission

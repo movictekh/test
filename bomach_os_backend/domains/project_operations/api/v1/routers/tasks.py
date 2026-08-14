@@ -5,7 +5,7 @@ from django.db.models import Q
 from django.core.exceptions import ValidationError
 from ninja.errors import HttpError
 from django.db import transaction
-from operations.models import Milestone, Task, Project
+from domains.project_operations.models import Milestone, Task, Project
 from ..schemas.schemas import TaskCreateSchema, TaskUpdateSchema, TaskOutSchema, MessageSchema
 from ninja.pagination import paginate, LimitOffsetPagination
 from user.utils.perm import require_permission
