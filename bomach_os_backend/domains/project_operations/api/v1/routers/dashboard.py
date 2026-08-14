@@ -1,10 +1,9 @@
 from ninja import Router
-from django.db.models import Sum
-from decimal import Decimal
 
-from domains.project_operations.models import Project, Worksite, Contract, Timeline
-from ..schemas.schemas import DashboardStatsSchema
+from domains.project_operations import selectors
 from user.utils.perm import require_permission
+
+from ..schemas.schemas import DashboardStatsSchema
 
 router = Router(tags=["Dashboard"])
 
@@ -12,20 +11,4 @@ router = Router(tags=["Dashboard"])
 @router.get("/stats", response=DashboardStatsSchema, operation_id="operations_api_v1_dashboard_get_dashboard_stats")
 @require_permission("dashboard", "view")
 def get_dashboard_stats(request):
-    """Get dashboard statistics"""
-    total_projects = Project.objects.count()
-    total_worksites = Worksite.objects.count()
-    total_contracts = Contract.objects.count()
-    total_timelines = Timeline.objects.count()
-
-    total_budget = Project.objects.aggregate(total=Sum('budget'))['total'] or Decimal('0.00')
-    budget_utilization = Project.objects.filter(status='completed').aggregate(total=Sum('budget'))['total'] or Decimal('0.00')
-
-    return {
-        "total_projects": total_projects,
-        "total_budget": total_budget,
-        "budget_utilization": budget_utilization,
-        "total_worksites": total_worksites,
-        "total_contracts": total_contracts,
-        "total_timelines": total_timelines,
-    }
+    return selectors.get_dashboard_stats()
