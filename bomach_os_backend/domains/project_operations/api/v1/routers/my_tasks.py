@@ -5,7 +5,7 @@ from ninja.errors import HttpError
 from ninja.pagination import paginate, LimitOffsetPagination
 
 from operations.models import Task
-from ..schema.schemas import TaskOutSchema, TaskStatusUpdateSchema, MessageSchema
+from ..schemas.schemas import TaskOutSchema, TaskStatusUpdateSchema, MessageSchema
 from user.utils.perm import require_permission
 
 router = Router(tags=["My Tasks"])
@@ -13,7 +13,7 @@ router = Router(tags=["My Tasks"])
 VALID_STATUSES = {s[0] for s in Task.STATUS_CHOICES}
 
 
-@router.get("", response=List[TaskOutSchema])
+@router.get("", response=List[TaskOutSchema], operation_id="operations_api_v1_my_tasks_list_my_tasks")
 @paginate(LimitOffsetPagination, page_size=10)
 @require_permission("tasks", "list", owner_lookup="assigned_to")
 def list_my_tasks(request, status: str = None, ):
@@ -27,7 +27,7 @@ def list_my_tasks(request, status: str = None, ):
     return list(tasks)
 
 
-@router.get("/{task_id}", response=TaskOutSchema)
+@router.get("/{task_id}", response=TaskOutSchema, operation_id="operations_api_v1_my_tasks_get_my_task")
 @require_permission("tasks", "view", owner_lookup="assigned_to")
 def get_my_task(request, task_id: int):
     """Get a specific task assigned to the logged-in employee."""
@@ -40,7 +40,7 @@ def get_my_task(request, task_id: int):
     return task
 
 
-@router.patch("/{task_id}/status", response={200: TaskOutSchema, 400: MessageSchema})
+@router.patch("/{task_id}/status", response={200: TaskOutSchema, 400: MessageSchema}, operation_id="operations_api_v1_my_tasks_update_my_task_status")
 @require_permission("tasks", "update", owner_lookup="assigned_to")
 def update_my_task_status(request, task_id: int, payload: TaskStatusUpdateSchema):
     """Update only the status of a task assigned to the logged-in employee."""

@@ -5,14 +5,14 @@ from django.db.models import Q
 from django.core.exceptions import ValidationError
 
 from operations.models import Milestone, Project
-from ..schema.schemas import MilestoneCreateSchema, MilestoneUpdateSchema, MilestoneOutSchema, MessageSchema
+from ..schemas.schemas import MilestoneCreateSchema, MilestoneUpdateSchema, MilestoneOutSchema, MessageSchema
 from ninja.pagination import paginate, LimitOffsetPagination
 from user.utils.perm import require_permission
 
 router = Router(tags=["Milestones"])
 
 
-@router.get("", response=List[MilestoneOutSchema])
+@router.get("", response=List[MilestoneOutSchema], operation_id="operations_api_v1_milestones_list_milestones")
 @paginate(LimitOffsetPagination, page_size=10)
 @require_permission("milestones", "list")
 def list_milestones(
@@ -40,7 +40,7 @@ def list_milestones(
     return list(milestones)
 
 
-@router.get("/{milestone_id}", response=MilestoneOutSchema)
+@router.get("/{milestone_id}", response=MilestoneOutSchema, operation_id="operations_api_v1_milestones_get_milestone")
 @require_permission("milestones", "view")
 def get_milestone(request, milestone_id: int):
     """Get a specific milestone by ID"""
@@ -48,7 +48,7 @@ def get_milestone(request, milestone_id: int):
     return milestone
 
 
-@router.post("", response={200: MilestoneOutSchema, 400: MessageSchema})
+@router.post("", response={200: MilestoneOutSchema, 400: MessageSchema}, operation_id="operations_api_v1_milestones_create_milestone")
 @require_permission("milestones", "create")
 def create_milestone(request, payload: MilestoneCreateSchema):
     """Create a new milestone"""
@@ -61,7 +61,7 @@ def create_milestone(request, payload: MilestoneCreateSchema):
         return 400, {'detail': e.messages[0]}
 
 
-@router.put("/{milestone_id}", response={200: MilestoneOutSchema, 400: MessageSchema})
+@router.put("/{milestone_id}", response={200: MilestoneOutSchema, 400: MessageSchema}, operation_id="operations_api_v1_milestones_update_milestone")
 @require_permission("milestones", "update")
 def update_milestone(request, milestone_id: int, payload: MilestoneUpdateSchema):
     """Update an existing milestone"""
@@ -82,7 +82,7 @@ def update_milestone(request, milestone_id: int, payload: MilestoneUpdateSchema)
         return 400, {'detail': e.messages[0]}
 
 
-@router.delete("/{milestone_id}")
+@router.delete("/{milestone_id}", operation_id="operations_api_v1_milestones_delete_milestone")
 @require_permission("milestones", "delete")
 def delete_milestone(request, milestone_id: int):
     """Delete a milestone"""

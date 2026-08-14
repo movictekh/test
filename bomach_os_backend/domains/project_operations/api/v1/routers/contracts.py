@@ -5,14 +5,14 @@ from django.db.models import Q
 from django.core.exceptions import ValidationError
 
 from operations.models import Contract, Project
-from ..schema.schemas import ContractCreateSchema, ContractUpdateSchema, ContractOutSchema, MessageSchema
+from ..schemas.schemas import ContractCreateSchema, ContractUpdateSchema, ContractOutSchema, MessageSchema
 from ninja.pagination import paginate, LimitOffsetPagination
 from user.utils.perm import require_permission
 
 router = Router(tags=["Contracts"])
 
 
-@router.get("", response=List[ContractOutSchema])
+@router.get("", response=List[ContractOutSchema], operation_id="operations_api_v1_contracts_list_contracts")
 @paginate(LimitOffsetPagination, page_size=10)
 @require_permission("contracts", "list")
 def list_contracts(
@@ -40,7 +40,7 @@ def list_contracts(
     return list(contracts)
 
 
-@router.get("/{contract_id}", response=ContractOutSchema)
+@router.get("/{contract_id}", response=ContractOutSchema, operation_id="operations_api_v1_contracts_get_contract")
 @require_permission("contracts", "view")
 def get_contract(request, contract_id: int):
     """Get a specific contract by ID"""
@@ -48,7 +48,7 @@ def get_contract(request, contract_id: int):
     return contract
 
 
-@router.post("", response={200: ContractOutSchema, 400: MessageSchema})
+@router.post("", response={200: ContractOutSchema, 400: MessageSchema}, operation_id="operations_api_v1_contracts_create_contract")
 @require_permission("contracts", "create")
 def create_contract(request, payload: ContractCreateSchema):
     """Create a new contract"""
@@ -61,7 +61,7 @@ def create_contract(request, payload: ContractCreateSchema):
         return 400, {'detail': e.messages[0]}
 
 
-@router.put("/{contract_id}", response={200: ContractOutSchema, 400: MessageSchema})
+@router.put("/{contract_id}", response={200: ContractOutSchema, 400: MessageSchema}, operation_id="operations_api_v1_contracts_update_contract")
 @require_permission("contracts", "update")
 def update_contract(request, contract_id: int, payload: ContractUpdateSchema):
     """Update an existing contract"""
@@ -82,7 +82,7 @@ def update_contract(request, contract_id: int, payload: ContractUpdateSchema):
         return 400, {'detail': e.messages[0]}
 
 
-@router.delete("/{contract_id}")
+@router.delete("/{contract_id}", operation_id="operations_api_v1_contracts_delete_contract")
 @require_permission("contracts", "delete")
 def delete_contract(request, contract_id: int):
     """Delete a contract"""

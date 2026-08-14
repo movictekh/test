@@ -40,12 +40,8 @@ from user.utils.auth import JWTAuthenticator
 
 from user.api.v1.sops import dept_router, unit_router, resp_router, sop_dashboard_router
 
-# Operations routers
-from operations.api.v1 import dashboard as ops_dashboard, projects as ops_projects
-from operations.api.v1 import tasks as ops_tasks, my_tasks as ops_my_tasks
-from operations.api.v1 import worksites as ops_worksites
-from operations.api.v1 import contracts as ops_contracts, timelines as ops_timelines
-from operations.api.v1 import milestones as ops_milestones, site_equipment as ops_site_equipment
+# Project Operations API v1
+from domains.project_operations.api import register_project_operations_v1
 
 # Services routers
 from services.api.v1 import (
@@ -164,16 +160,8 @@ api.add_router('/applicants', interviews_router)
 api.add_router('/applicants', offer_letters_router)
 
 
-# === Operations routers ===
-api.add_router("/dashboard", ops_dashboard.router)
-api.add_router("/projects", ops_projects.router)
-api.add_router("/tasks", ops_tasks.router)
-api.add_router("/my-tasks", ops_my_tasks.router)
-api.add_router("/worksites", ops_worksites.router)
-api.add_router("/contracts", ops_contracts.router)
-api.add_router("/timelines", ops_timelines.router)
-api.add_router("/milestones", ops_milestones.router)
-api.add_router("/site-equipment", ops_site_equipment.router)
+# === Project Operations API v1 ===
+register_project_operations_v1(api)
 
 # === Services routers ===
 api.add_router("/budgets", svc_budgets.router)

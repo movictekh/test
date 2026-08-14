@@ -3,13 +3,13 @@ from django.db.models import Sum
 from decimal import Decimal
 
 from operations.models import Project, Worksite, Contract, Timeline
-from ..schema.schemas import DashboardStatsSchema
+from ..schemas.schemas import DashboardStatsSchema
 from user.utils.perm import require_permission
 
 router = Router(tags=["Dashboard"])
 
 
-@router.get("/stats", response=DashboardStatsSchema)
+@router.get("/stats", response=DashboardStatsSchema, operation_id="operations_api_v1_dashboard_get_dashboard_stats")
 @require_permission("dashboard", "view")
 def get_dashboard_stats(request):
     """Get dashboard statistics"""

@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from ninja.errors import HttpError
 from django.db import transaction
 from operations.models import Milestone, Task, Project
-from ..schema.schemas import TaskCreateSchema, TaskUpdateSchema, TaskOutSchema, MessageSchema
+from ..schemas.schemas import TaskCreateSchema, TaskUpdateSchema, TaskOutSchema, MessageSchema
 from ninja.pagination import paginate, LimitOffsetPagination
 from user.utils.perm import require_permission
 from user.utils.send_email import send_task_assignment_email, send_associate_task_assignment_email
@@ -16,7 +16,7 @@ router = Router(tags=["Tasks"])
 
 DOMAIN = settings.DOMAIN
 
-@router.get("", response=List[TaskOutSchema])
+@router.get("", response=List[TaskOutSchema], operation_id="operations_api_v1_tasks_list_tasks")
 @paginate(LimitOffsetPagination, page_size=10)
 @require_permission("tasks", "list")
 def list_tasks(
@@ -47,7 +47,7 @@ def list_tasks(
     return list(tasks)
 
 
-@router.get("/{task_id}", response=TaskOutSchema)
+@router.get("/{task_id}", response=TaskOutSchema, operation_id="operations_api_v1_tasks_get_task")
 @require_permission("tasks", "view")
 def get_task(request, task_id: int):
     """Get a specific task by ID"""
@@ -55,7 +55,7 @@ def get_task(request, task_id: int):
     return task
 
 
-@router.post("", response={201: TaskOutSchema, 400: MessageSchema})
+@router.post("", response={201: TaskOutSchema, 400: MessageSchema}, operation_id="operations_api_v1_tasks_create_task")
 @require_permission("tasks", "create")
 def create_task(request, payload: TaskCreateSchema):
     """Create a new task"""
@@ -107,7 +107,7 @@ def create_task(request, payload: TaskCreateSchema):
         return 400, {'detail': e.messages[0]}
 
 
-@router.put("/{task_id}", response={200: TaskOutSchema, 400: MessageSchema})
+@router.put("/{task_id}", response={200: TaskOutSchema, 400: MessageSchema}, operation_id="operations_api_v1_tasks_update_task")
 @require_permission("tasks", "update")
 def update_task(request, task_id: int, payload: TaskUpdateSchema):
     """Update an existing task"""
@@ -134,7 +134,7 @@ def update_task(request, task_id: int, payload: TaskUpdateSchema):
         return 400, {'detail': e.messages[0]}
 
 
-@router.delete("/{task_id}")
+@router.delete("/{task_id}", operation_id="operations_api_v1_tasks_delete_task")
 @require_permission("tasks", "delete")
 def delete_task(request, task_id: int):
     """Delete a task"""

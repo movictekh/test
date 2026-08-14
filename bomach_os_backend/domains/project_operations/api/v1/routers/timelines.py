@@ -5,14 +5,14 @@ from django.db.models import Q
 from django.core.exceptions import ValidationError
 
 from operations.models import Timeline, Project
-from ..schema.schemas import TimelineCreateSchema, TimelineUpdateSchema, TimelineOutSchema, MessageSchema
+from ..schemas.schemas import TimelineCreateSchema, TimelineUpdateSchema, TimelineOutSchema, MessageSchema
 from ninja.pagination import paginate, LimitOffsetPagination
 from user.utils.perm import require_permission
 
 router = Router(tags=["Timelines"])
 
 
-@router.get("", response=List[TimelineOutSchema])
+@router.get("", response=List[TimelineOutSchema], operation_id="operations_api_v1_timelines_list_timelines")
 @paginate(LimitOffsetPagination, page_size=10)
 @require_permission("timelines", "list")
 def list_timelines(
@@ -37,7 +37,7 @@ def list_timelines(
     return list(timelines)
 
 
-@router.get("/{timeline_id}", response=TimelineOutSchema)
+@router.get("/{timeline_id}", response=TimelineOutSchema, operation_id="operations_api_v1_timelines_get_timeline")
 @require_permission("timelines", "view")
 def get_timeline(request, timeline_id: int):
     """Get a specific timeline by ID"""
@@ -45,7 +45,7 @@ def get_timeline(request, timeline_id: int):
     return timeline
 
 
-@router.post("", response={200: TimelineOutSchema, 400: MessageSchema})
+@router.post("", response={200: TimelineOutSchema, 400: MessageSchema}, operation_id="operations_api_v1_timelines_create_timeline")
 @require_permission("timelines", "create")
 def create_timeline(request, payload: TimelineCreateSchema):
     """Create a new timeline"""
@@ -58,7 +58,7 @@ def create_timeline(request, payload: TimelineCreateSchema):
         return 400, {'detail': e.messages[0]}
 
 
-@router.put("/{timeline_id}", response={200: TimelineOutSchema, 400: MessageSchema})
+@router.put("/{timeline_id}", response={200: TimelineOutSchema, 400: MessageSchema}, operation_id="operations_api_v1_timelines_update_timeline")
 @require_permission("timelines", "update")
 def update_timeline(request, timeline_id: int, payload: TimelineUpdateSchema):
     """Update an existing timeline"""
@@ -79,7 +79,7 @@ def update_timeline(request, timeline_id: int, payload: TimelineUpdateSchema):
         return 400, {'detail': e.messages[0]}
 
 
-@router.delete("/{timeline_id}")
+@router.delete("/{timeline_id}", operation_id="operations_api_v1_timelines_delete_timeline")
 @require_permission("timelines", "delete")
 def delete_timeline(request, timeline_id: int):
     """Delete a timeline"""

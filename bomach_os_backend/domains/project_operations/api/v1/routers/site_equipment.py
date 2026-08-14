@@ -5,14 +5,14 @@ from django.db.models import Q
 from django.core.exceptions import ValidationError
 
 from operations.models import SiteEquipment, Worksite
-from ..schema.schemas import SiteEquipmentCreateSchema, SiteEquipmentUpdateSchema, SiteEquipmentOutSchema, MessageSchema
+from ..schemas.schemas import SiteEquipmentCreateSchema, SiteEquipmentUpdateSchema, SiteEquipmentOutSchema, MessageSchema
 from ninja.pagination import paginate, LimitOffsetPagination
 from user.utils.perm import require_permission
 
 router = Router(tags=["Site Equipment"])
 
 
-@router.get("", response=List[SiteEquipmentOutSchema])
+@router.get("", response=List[SiteEquipmentOutSchema], operation_id="operations_api_v1_site_equipment_list_site_equipment")
 @paginate(LimitOffsetPagination, page_size=10)
 @require_permission("site_equipment", "list")
 def list_site_equipment(
@@ -34,7 +34,7 @@ def list_site_equipment(
     return list(equipment)
 
 
-@router.get("/{equipment_id}", response=SiteEquipmentOutSchema)
+@router.get("/{equipment_id}", response=SiteEquipmentOutSchema, operation_id="operations_api_v1_site_equipment_get_site_equipment")
 @require_permission("site_equipment", "view")
 def get_site_equipment(request, equipment_id: int):
     """Get a specific site equipment item by ID"""
@@ -42,7 +42,7 @@ def get_site_equipment(request, equipment_id: int):
     return equipment
 
 
-@router.post("", response={200: SiteEquipmentOutSchema, 400: MessageSchema})
+@router.post("", response={200: SiteEquipmentOutSchema, 400: MessageSchema}, operation_id="operations_api_v1_site_equipment_create_site_equipment")
 @require_permission("site_equipment", "create")
 def create_site_equipment(request, payload: SiteEquipmentCreateSchema):
     """Create a new site equipment item"""
@@ -55,7 +55,7 @@ def create_site_equipment(request, payload: SiteEquipmentCreateSchema):
         return 400, {'detail': e.messages[0]}
 
 
-@router.put("/{equipment_id}", response={200: SiteEquipmentOutSchema, 400: MessageSchema})
+@router.put("/{equipment_id}", response={200: SiteEquipmentOutSchema, 400: MessageSchema}, operation_id="operations_api_v1_site_equipment_update_site_equipment")
 @require_permission("site_equipment", "update")
 def update_site_equipment(request, equipment_id: int, payload: SiteEquipmentUpdateSchema):
     """Update an existing site equipment item"""
@@ -76,7 +76,7 @@ def update_site_equipment(request, equipment_id: int, payload: SiteEquipmentUpda
         return 400, {'detail': e.messages[0]}
 
 
-@router.delete("/{equipment_id}")
+@router.delete("/{equipment_id}", operation_id="operations_api_v1_site_equipment_delete_site_equipment")
 @require_permission("site_equipment", "delete")
 def delete_site_equipment(request, equipment_id: int):
     """Delete a site equipment item"""

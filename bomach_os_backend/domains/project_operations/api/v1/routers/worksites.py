@@ -5,14 +5,14 @@ from django.db.models import Q
 from django.core.exceptions import ValidationError
 
 from operations.models import Worksite, Project
-from ..schema.schemas import WorksiteCreateSchema, WorksiteUpdateSchema, WorksiteOutSchema, MessageSchema
+from ..schemas.schemas import WorksiteCreateSchema, WorksiteUpdateSchema, WorksiteOutSchema, MessageSchema
 from ninja.pagination import paginate, LimitOffsetPagination
 from user.utils.perm import require_permission
 
 router = Router(tags=["Worksites"])
 
 
-@router.get("", response=List[WorksiteOutSchema])
+@router.get("", response=List[WorksiteOutSchema], operation_id="operations_api_v1_worksites_list_worksites")
 @paginate(LimitOffsetPagination, page_size=10)
 @require_permission("worksites", "list")
 def list_worksites(
@@ -37,7 +37,7 @@ def list_worksites(
     return list(worksites)
 
 
-@router.get("/{worksite_id}", response=WorksiteOutSchema)
+@router.get("/{worksite_id}", response=WorksiteOutSchema, operation_id="operations_api_v1_worksites_get_worksite")
 @require_permission("worksites", "view")
 def get_worksite(request, worksite_id: int):
     """Get a specific worksite by ID"""
@@ -45,7 +45,7 @@ def get_worksite(request, worksite_id: int):
     return worksite
 
 
-@router.post("", response={200: WorksiteOutSchema, 400: MessageSchema})
+@router.post("", response={200: WorksiteOutSchema, 400: MessageSchema}, operation_id="operations_api_v1_worksites_create_worksite")
 @require_permission("worksites", "create")
 def create_worksite(request, payload: WorksiteCreateSchema):
     """Create a new worksite"""
@@ -58,7 +58,7 @@ def create_worksite(request, payload: WorksiteCreateSchema):
         return 400, {'detail': e.messages[0]}
 
 
-@router.put("/{worksite_id}", response={200: WorksiteOutSchema, 400: MessageSchema})
+@router.put("/{worksite_id}", response={200: WorksiteOutSchema, 400: MessageSchema}, operation_id="operations_api_v1_worksites_update_worksite")
 @require_permission("worksites", "update")
 def update_worksite(request, worksite_id: int, payload: WorksiteUpdateSchema):
     """Update an existing worksite"""
@@ -79,7 +79,7 @@ def update_worksite(request, worksite_id: int, payload: WorksiteUpdateSchema):
         return 400, {'detail': e.messages[0]}
 
 
-@router.delete("/{worksite_id}")
+@router.delete("/{worksite_id}", operation_id="operations_api_v1_worksites_delete_worksite")
 @require_permission("worksites", "delete")
 def delete_worksite(request, worksite_id: int):
     """Delete a worksite"""

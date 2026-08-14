@@ -5,14 +5,14 @@ from django.db.models import Q
 from django.core.exceptions import ValidationError
 
 from operations.models import Project
-from ..schema.schemas import ProjectCreateSchema, ProjectUpdateSchema, ProjectOutSchema, MessageSchema, PaginatedEmployeeResponse
+from ..schemas.schemas import ProjectCreateSchema, ProjectUpdateSchema, ProjectOutSchema, MessageSchema, PaginatedEmployeeResponse
 from ninja.pagination import paginate, LimitOffsetPagination
 from user.utils.perm import require_permission
 
 router = Router(tags=["Projects"])
 
 
-@router.get("", response=List[ProjectOutSchema])
+@router.get("", response=List[ProjectOutSchema], operation_id="operations_api_v1_projects_list_projects")
 @paginate(LimitOffsetPagination, page_size=10)
 @require_permission("projects", "list")
 def list_projects(
@@ -41,7 +41,7 @@ def list_projects(
     return list(projects)
 
 
-@router.get("/{project_id}", response=ProjectOutSchema)
+@router.get("/{project_id}", response=ProjectOutSchema, operation_id="operations_api_v1_projects_get_project")
 @require_permission("projects", "view")
 def get_project(request, project_id: int):
     """Get a specific project by ID"""
@@ -49,7 +49,7 @@ def get_project(request, project_id: int):
     return project
 
 
-@router.post("", response={200: ProjectOutSchema, 400: MessageSchema})
+@router.post("", response={200: ProjectOutSchema, 400: MessageSchema}, operation_id="operations_api_v1_projects_create_project")
 @require_permission("projects", "create")
 def create_project(request, payload: ProjectCreateSchema):
     """Create a new project"""
@@ -64,7 +64,7 @@ def create_project(request, payload: ProjectCreateSchema):
         return 400, {'detail': e.messages[0]}
 
 
-@router.put("/{project_id}", response={200: ProjectOutSchema, 400: MessageSchema})
+@router.put("/{project_id}", response={200: ProjectOutSchema, 400: MessageSchema}, operation_id="operations_api_v1_projects_update_project")
 @require_permission("projects", "update")
 def update_project(request, project_id: int, payload: ProjectUpdateSchema):
     """Update an existing project"""
@@ -87,7 +87,7 @@ def update_project(request, project_id: int, payload: ProjectUpdateSchema):
         return 400, {'detail': e.messages[0]}
 
 
-@router.delete("/{project_id}")
+@router.delete("/{project_id}", operation_id="operations_api_v1_projects_delete_project")
 @require_permission("projects", "delete")
 def delete_project(request, project_id: int):
     """Delete a project"""
@@ -96,7 +96,7 @@ def delete_project(request, project_id: int):
     return {"detail": "Project deleted successfully"}
 
 
-@router.get("/stats/")
+@router.get("/stats/", operation_id="operations_api_v1_projects_stats_project")
 @require_permission("projects", "view")
 def stats_project(request):
     """Delete a project"""
@@ -104,7 +104,7 @@ def stats_project(request):
     return {"detail": "Project deleted successfully"}
 
 
-@router.get("/{project_id}/employees", response=PaginatedEmployeeResponse)
+@router.get("/{project_id}/employees", response=PaginatedEmployeeResponse, operation_id="operations_api_v1_projects_list_project_employees")
 @require_permission("projects", "view")
 def list_project_employees(request, project_id: int, limit: int = 10, offset: int = 0):
     """List employees assigned to a project with pagination"""
