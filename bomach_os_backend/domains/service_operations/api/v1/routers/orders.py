@@ -33,7 +33,7 @@ from services.models.service import (
     ServiceOrderActivity,
     ServiceOrderMilestone,
 )
-from services.utils.service_orders import create_manual_order
+from domains.service_operations.services import create_manual_order
 from user.utils.perm import require_permission, scope_queryset
 
 
