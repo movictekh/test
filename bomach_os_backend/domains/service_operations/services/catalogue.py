@@ -3,13 +3,7 @@
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.shortcuts import get_object_or_404
-from domains.service_operations.models import (
-    ServiceFieldType, ServicePricingConfig, ServicePricingField,
-    ServiceRequestField, ServiceRequestForm, ServiceWorkflow,
-    ServiceWorkflowStage,    ServiceOrder,
-    ServiceOrderActivity,
-
-)
+from domains.service_operations.models import ServiceFieldType, ServicePricingConfig, ServicePricingField, ServiceRequestField, ServiceRequestForm, ServiceWorkflow, ServiceWorkflowStage
 from user.models.role import Role
 
 
@@ -115,3 +109,26 @@ def activate_workflow(service, workflow):
     workflow.save()
     service.active_workflow = workflow
     service.save(update_fields=["active_workflow", "updated_at"])
+
+def create_workflow(service, payload, *, created_by_id):
+    """Create a workflow, its stages, and optionally activate it atomically."""
+    ensure_choice(payload.status, ServiceWorkflow.STATUS_CHOICES, "status")
+    with transaction.atomic():
+        workflow = ServiceWorkflow.objects.create(
+            service=service,
+            name=payload.name,
+            version=payload.version,
+            status=payload.status,
+            is_active=False,
+            created_by_id=created_by_id,
+        )
+        create_workflow_stages(workflow, payload.stages)
+        if payload.is_active:
+            activate_workflow(service, workflow)
+
+    return (
+        ServiceWorkflow.objects
+        .select_related("service", "created_by")
+        .prefetch_related("stages__owner_role")
+        .get(id=workflow.id)
+    )

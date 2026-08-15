@@ -1,12 +1,7 @@
 """Service Operations feedback models."""
 
 from django.db import models
-from django.core.exceptions import ValidationError
-from django.core.validators import MaxValueValidator, MinValueValidator, validate_email
-from django.utils import timezone
-from django.utils.dateparse import parse_date
-from decimal import Decimal
-import uuid
+from django.core.validators import MaxValueValidator, MinValueValidator
 
 
 class ClientFeedback(models.Model):

@@ -5,51 +5,15 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
-from django.utils import timezone
 from ninja import Router
 from ninja.pagination import LimitOffsetPagination, paginate
-from domains.service_operations import selectors as domain_selectors
 from domains.service_operations.services import catalogue as domain_services
 from services.api.schema.others import MessageSchema
-from ..schemas.catalogue import (
-    BranchActivationBulkUpsert,
-    FieldTypeOut,
-    PricingConfigIn,
-    PricingConfigUpdate,
-    RequestFormIn,
-    RequestFormUpdate,
-    ServiceCoreOut,
-    ServiceCreateSchema,
-    ServicePublishIn,
-    ServiceSubServiceBulkReplace,
-    ServiceSubServiceIn,
-    ServiceSubServiceUpdate,
-    ServiceUpdateSchema,
-    WorkflowIn,
-    WorkflowSeedIn,
-    WorkflowStageBulkReplace,
-    WorkflowStageIn,
-    WorkflowStageUpdate,
-    WorkflowUpdate,
-)
-from domains.service_operations.models import (
-    Service,
-    ServiceBranchActivation,
-    ServiceCategory,
-    ServiceFieldType,
-    ServicePricingConfig,
-    ServicePricingField,
-    ServiceRequestField,
-    ServiceRequestForm,
-    ServiceSubService,
-    ServiceWorkflow,
-    ServiceWorkflowStage,
-)
-from user.models.branch import Branch
+from ..schemas.catalogue import FieldTypeOut, PricingConfigIn, PricingConfigUpdate, RequestFormIn, RequestFormUpdate, WorkflowIn, WorkflowSeedIn, WorkflowStageBulkReplace, WorkflowStageIn, WorkflowStageUpdate, WorkflowUpdate
+from domains.service_operations.models import Service, ServiceFieldType, ServicePricingConfig, ServiceRequestForm, ServiceWorkflow, ServiceWorkflowStage
 from user.models.role import Role
 from user.utils.perm import require_permission
 from ._catalogue_support import (
-    _create_workflow,
     _current_user_id,
     _serialize_pricing_config,
     _serialize_request_form,
@@ -313,7 +277,7 @@ def list_workflows(request, service_id: int):
 def create_workflow(request, service_id: int, payload: WorkflowIn):
     try:
         service = get_object_or_404(Service, id=service_id)
-        workflow = _create_workflow(request, service, payload)
+        workflow = domain_services.create_workflow(service, payload, created_by_id=_current_user_id(request, payload.created_by_id))
         return 201, _serialize_workflow(workflow)
     except (ValidationError, IntegrityError) as e:
         return 400, {"detail": _validation_detail(e)}

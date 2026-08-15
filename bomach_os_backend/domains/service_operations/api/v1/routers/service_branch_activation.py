@@ -3,50 +3,15 @@
 from typing import Any, Dict, List
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
-from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from ninja import Router
-from ninja.pagination import LimitOffsetPagination, paginate
 from domains.service_operations import selectors as domain_selectors
 from domains.service_operations.services import catalogue as domain_services
 from services.api.schema.others import MessageSchema
-from ..schemas.catalogue import (
-    BranchActivationBulkUpsert,
-    FieldTypeOut,
-    PricingConfigIn,
-    PricingConfigUpdate,
-    RequestFormIn,
-    RequestFormUpdate,
-    ServiceCoreOut,
-    ServiceCreateSchema,
-    ServicePublishIn,
-    ServiceSubServiceBulkReplace,
-    ServiceSubServiceIn,
-    ServiceSubServiceUpdate,
-    ServiceUpdateSchema,
-    WorkflowIn,
-    WorkflowSeedIn,
-    WorkflowStageBulkReplace,
-    WorkflowStageIn,
-    WorkflowStageUpdate,
-    WorkflowUpdate,
-)
-from domains.service_operations.models import (
-    Service,
-    ServiceBranchActivation,
-    ServiceCategory,
-    ServiceFieldType,
-    ServicePricingConfig,
-    ServicePricingField,
-    ServiceRequestField,
-    ServiceRequestForm,
-    ServiceSubService,
-    ServiceWorkflow,
-    ServiceWorkflowStage,
-)
+from ..schemas.catalogue import BranchActivationBulkUpsert
+from domains.service_operations.models import Service, ServiceBranchActivation
 from user.models.branch import Branch
-from user.models.role import Role
 from user.utils.perm import require_permission
 from ._catalogue_support import (
     _serialize_branch_activation,

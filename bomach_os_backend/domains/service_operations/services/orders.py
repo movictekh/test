@@ -2,15 +2,7 @@
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.shortcuts import get_object_or_404
-from domains.service_operations.models import (
-    ServiceFieldType, ServicePricingConfig, ServicePricingField,
-    ServiceRequestField, ServiceRequestForm, ServiceWorkflow,
-    ServiceWorkflowStage,    ServiceOrder,
-    ServiceOrderActivity,
-
-)
-from user.models.role import Role
+from domains.service_operations.models import ServiceOrder, ServiceOrderActivity
 
 
 def create_order_from_invoice(invoice, created_by, assigned_to_id=None, due_date=None, description="", stage="", next_action="Confirm team and mobilisation"):

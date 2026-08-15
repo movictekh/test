@@ -2,19 +2,14 @@ from datetime import date as date_type
 from decimal import Decimal
 
 from django.http import HttpResponse
-from django.db.models import (
-    Q, Count, Sum, Avg, Min, F, ExpressionWrapper, DateTimeField, DateField,
-    DecimalField,
-)
-from django.db.models.functions import Coalesce, TruncDate
+from django.db.models import Q, Count, Sum, Avg, Min, F, DateTimeField, DecimalField
+from django.db.models.functions import Coalesce
 from ninja import Router
 
 from ..schemas.reports import (
     KPISchema, ServicePerformanceItem, BranchPerformanceItem,
 )
-from domains.service_operations.models import (
-    Quote, ServiceOrder, ServiceRequest, ServiceRequestActivity,
-)
+from domains.service_operations.models import Quote, ServiceOrder, ServiceRequest
 from domains.service_operations.models import Invoice
 from services.models.expenses import Expense
 from domains.service_operations.models import ClientFeedback

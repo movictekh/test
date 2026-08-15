@@ -3,54 +3,7 @@
 Contains transport serialization/query helpers only; no HTTP endpoints.
 """
 
-from typing import Any, Dict, List
-from django.core.exceptions import ValidationError
-from django.db import IntegrityError, transaction
-from django.db.models import Q
-from django.shortcuts import get_object_or_404
-from django.utils import timezone
-from ninja import Router
-from ninja.pagination import LimitOffsetPagination, paginate
-from domains.service_operations import selectors as domain_selectors
-from domains.service_operations.services import catalogue as domain_services
-from services.api.schema.others import MessageSchema
-from ..schemas.catalogue import (
-    BranchActivationBulkUpsert,
-    FieldTypeOut,
-    PricingConfigIn,
-    PricingConfigUpdate,
-    RequestFormIn,
-    RequestFormUpdate,
-    ServiceCoreOut,
-    ServiceCreateSchema,
-    ServicePublishIn,
-    ServiceSubServiceBulkReplace,
-    ServiceSubServiceIn,
-    ServiceSubServiceUpdate,
-    ServiceUpdateSchema,
-    WorkflowIn,
-    WorkflowSeedIn,
-    WorkflowStageBulkReplace,
-    WorkflowStageIn,
-    WorkflowStageUpdate,
-    WorkflowUpdate,
-)
-from domains.service_operations.models import (
-    Service,
-    ServiceBranchActivation,
-    ServiceCategory,
-    ServiceFieldType,
-    ServicePricingConfig,
-    ServicePricingField,
-    ServiceRequestField,
-    ServiceRequestForm,
-    ServiceSubService,
-    ServiceWorkflow,
-    ServiceWorkflowStage,
-)
-from user.models.branch import Branch
-from user.models.role import Role
-from user.utils.perm import require_permission
+from domains.service_operations.models import ServiceWorkflow
 
 
 def _validation_detail(exc):
@@ -289,20 +242,3 @@ def _serialize_catalogue_detail(service):
 
 def _workflow_queryset():
     return ServiceWorkflow.objects.select_related("service", "created_by").prefetch_related("stages__owner_role")
-
-
-def _create_workflow(request, service, payload):
-    domain_services.ensure_choice(payload.status, ServiceWorkflow.STATUS_CHOICES, "status")
-    with transaction.atomic():
-        workflow = ServiceWorkflow.objects.create(
-            service=service,
-            name=payload.name,
-            version=payload.version,
-            status=payload.status,
-            is_active=False,
-            created_by_id=_current_user_id(request, payload.created_by_id),
-        )
-        domain_services.create_workflow_stages(workflow, payload.stages)
-        if payload.is_active:
-            domain_services.activate_workflow(service, workflow)
-    return _workflow_queryset().get(id=workflow.id)

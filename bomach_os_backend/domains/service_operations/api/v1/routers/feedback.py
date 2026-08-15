@@ -1,7 +1,7 @@
 from typing import List
 from ninja import Router
 from django.shortcuts import get_object_or_404
-from django.db.models import Q, Avg, Count, Case, When, IntegerField, DecimalField
+from django.db.models import Q, Avg, Count, DecimalField
 from django.db.models.functions import Coalesce
 from decimal import Decimal
 
