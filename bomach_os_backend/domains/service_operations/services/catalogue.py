@@ -85,30 +85,33 @@ def create_workflow_stages(workflow, stages):
 
 
 def activate_request_form(service, form):
-    ServiceRequestForm.objects.filter(service=service, is_active=True).exclude(id=form.id).update(is_active=False)
-    form.status = "active"
-    form.is_active = True
-    form.save()
-    service.active_request_form = form
-    service.save(update_fields=["active_request_form", "updated_at"])
+    with transaction.atomic():
+        ServiceRequestForm.objects.filter(service=service, is_active=True).exclude(id=form.id).update(is_active=False)
+        form.status = "active"
+        form.is_active = True
+        form.save()
+        service.active_request_form = form
+        service.save(update_fields=["active_request_form", "updated_at"])
 
 
 def activate_pricing_config(service, config):
-    ServicePricingConfig.objects.filter(service=service, is_active=True).exclude(id=config.id).update(is_active=False)
-    config.status = "active"
-    config.is_active = True
-    config.save()
-    service.active_pricing_config = config
-    service.save(update_fields=["active_pricing_config", "updated_at"])
+    with transaction.atomic():
+        ServicePricingConfig.objects.filter(service=service, is_active=True).exclude(id=config.id).update(is_active=False)
+        config.status = "active"
+        config.is_active = True
+        config.save()
+        service.active_pricing_config = config
+        service.save(update_fields=["active_pricing_config", "updated_at"])
 
 
 def activate_workflow(service, workflow):
-    ServiceWorkflow.objects.filter(service=service, is_active=True).exclude(id=workflow.id).update(is_active=False)
-    workflow.status = "active"
-    workflow.is_active = True
-    workflow.save()
-    service.active_workflow = workflow
-    service.save(update_fields=["active_workflow", "updated_at"])
+    with transaction.atomic():
+        ServiceWorkflow.objects.filter(service=service, is_active=True).exclude(id=workflow.id).update(is_active=False)
+        workflow.status = "active"
+        workflow.is_active = True
+        workflow.save()
+        service.active_workflow = workflow
+        service.save(update_fields=["active_workflow", "updated_at"])
 
 def create_workflow(service, payload, *, created_by_id):
     """Create a workflow, its stages, and optionally activate it atomically."""
@@ -132,3 +135,162 @@ def create_workflow(service, payload, *, created_by_id):
         .prefetch_related("stages__owner_role")
         .get(id=workflow.id)
     )
+
+
+def create_request_form(service, payload, *, created_by_id):
+    ensure_choice(payload.status, ServiceRequestForm.STATUS_CHOICES, "status")
+    with transaction.atomic():
+        form = ServiceRequestForm.objects.create(
+            service=service, name=payload.name, version=payload.version,
+            status=payload.status, is_active=False, created_by_id=created_by_id,
+        )
+        create_request_fields(form, payload.fields)
+        if payload.is_active:
+            activate_request_form(service, form)
+    return ServiceRequestForm.objects.prefetch_related("fields").get(id=form.id)
+
+
+def update_request_form(form, payload):
+    service = form.service
+    data = payload.dict(exclude_unset=True)
+    fields = data.pop("fields", None)
+    if data.get("status"):
+        ensure_choice(data["status"], ServiceRequestForm.STATUS_CHOICES, "status")
+    with transaction.atomic():
+        make_active = data.pop("is_active", None)
+        for attr, value in data.items():
+            setattr(form, attr, value)
+        form.save()
+        if fields is not None:
+            form.fields.all().delete()
+            create_request_fields(form, fields)
+        if make_active is True:
+            activate_request_form(service, form)
+        elif make_active is False and form.is_active:
+            form.is_active = False
+            form.save(update_fields=["is_active", "updated_at"])
+            if service.active_request_form_id == form.id:
+                service.active_request_form = None
+                service.save(update_fields=["active_request_form", "updated_at"])
+    return ServiceRequestForm.objects.prefetch_related("fields").get(id=form.id)
+
+
+def delete_request_form(form):
+    service = form.service
+    if form.status == "draft" and not form.is_active:
+        form.delete()
+        return "deleted"
+    with transaction.atomic():
+        form.status = "archived"
+        form.is_active = False
+        form.save(update_fields=["status", "is_active", "updated_at"])
+        if service.active_request_form_id == form.id:
+            service.active_request_form = None
+            service.save(update_fields=["active_request_form", "updated_at"])
+    return "archived"
+
+
+def create_pricing_config(service, payload, *, created_by_id):
+    ensure_choice(payload.status, ServicePricingConfig.STATUS_CHOICES, "status")
+    ensure_choice(payload.pricing_type, ServicePricingConfig.PRICING_TYPE_CHOICES, "pricing_type")
+    with transaction.atomic():
+        config = ServicePricingConfig.objects.create(
+            service=service, name=payload.name, version=payload.version,
+            pricing_type=payload.pricing_type, formula=payload.formula or "",
+            tax_rate=payload.tax_rate, deposit_percent=payload.deposit_percent,
+            discount_approval_threshold_percent=payload.discount_approval_threshold_percent,
+            status=payload.status, is_active=False, created_by_id=created_by_id,
+        )
+        create_pricing_fields(config, payload.fields)
+        if payload.is_active:
+            activate_pricing_config(service, config)
+    return ServicePricingConfig.objects.select_related("service").prefetch_related("fields").get(id=config.id)
+
+
+def update_pricing_config(config, payload):
+    service = config.service
+    data = payload.dict(exclude_unset=True)
+    fields = data.pop("fields", None)
+    if data.get("status"):
+        ensure_choice(data["status"], ServicePricingConfig.STATUS_CHOICES, "status")
+    if data.get("pricing_type"):
+        ensure_choice(data["pricing_type"], ServicePricingConfig.PRICING_TYPE_CHOICES, "pricing_type")
+    with transaction.atomic():
+        make_active = data.pop("is_active", None)
+        for attr, value in data.items():
+            setattr(config, attr, value)
+        config.save()
+        if fields is not None:
+            config.fields.all().delete()
+            create_pricing_fields(config, fields)
+        if make_active is True:
+            activate_pricing_config(service, config)
+        elif make_active is False and config.is_active:
+            config.is_active = False
+            config.save(update_fields=["is_active", "updated_at"])
+            if service.active_pricing_config_id == config.id:
+                service.active_pricing_config = None
+                service.save(update_fields=["active_pricing_config", "updated_at"])
+    return ServicePricingConfig.objects.select_related("service").prefetch_related("fields").get(id=config.id)
+
+
+def delete_pricing_config(config):
+    service = config.service
+    if config.status == "draft" and not config.is_active:
+        config.delete()
+        return "deleted"
+    with transaction.atomic():
+        config.status = "archived"
+        config.is_active = False
+        config.save(update_fields=["status", "is_active", "updated_at"])
+        if service.active_pricing_config_id == config.id:
+            service.active_pricing_config = None
+            service.save(update_fields=["active_pricing_config", "updated_at"])
+    return "archived"
+
+
+def update_workflow(workflow, payload):
+    service = workflow.service
+    data = payload.dict(exclude_unset=True)
+    stages = data.pop("stages", None)
+    if data.get("status"):
+        ensure_choice(data["status"], ServiceWorkflow.STATUS_CHOICES, "status")
+    with transaction.atomic():
+        make_active = data.pop("is_active", None)
+        for attr, value in data.items():
+            setattr(workflow, attr, value)
+        workflow.save()
+        if stages is not None:
+            workflow.stages.all().delete()
+            create_workflow_stages(workflow, stages)
+        if make_active is True:
+            activate_workflow(service, workflow)
+        elif make_active is False and workflow.is_active:
+            workflow.is_active = False
+            workflow.save(update_fields=["is_active", "updated_at"])
+            if service.active_workflow_id == workflow.id:
+                service.active_workflow = None
+                service.save(update_fields=["active_workflow", "updated_at"])
+    return ServiceWorkflow.objects.select_related("service", "created_by").prefetch_related("stages__owner_role").get(id=workflow.id)
+
+
+def delete_workflow(workflow):
+    service = workflow.service
+    with transaction.atomic():
+        if workflow.status == "draft" and not workflow.is_active:
+            workflow.delete()
+            return "deleted"
+        workflow.status = "archived"
+        workflow.is_active = False
+        workflow.save(update_fields=["status", "is_active", "updated_at"])
+        if service.active_workflow_id == workflow.id:
+            service.active_workflow = None
+            service.save(update_fields=["active_workflow", "updated_at"])
+    return "archived"
+
+
+def replace_workflow_stages(workflow, stages):
+    with transaction.atomic():
+        workflow.stages.all().delete()
+        create_workflow_stages(workflow, stages)
+    return ServiceWorkflowStage.objects.filter(workflow=workflow).select_related("owner_role")

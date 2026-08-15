@@ -4,7 +4,6 @@ from typing import List, Optional
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
-from django.utils import timezone
 from ninja import Query, Router
 from ninja.errors import HttpError
 from ninja.pagination import LimitOffsetPagination, paginate
@@ -19,13 +18,13 @@ from ..schemas.lifecycle import (
     ServiceOrderOut,
 )
 from domains.service_operations.models import Invoice
-from domains.service_operations.models import ServiceOrderActivity
 from user.api.schemas.client_service import ClientInvoiceSchema, PaymentSubmissionCreateSchema, PaymentSubmissionResponseSchema
 from user.models.client_service import PaymentSubmission
 from ._service_request_support import CLIENT_VISIBLE_INVOICE_STATUSES, CLIENT_VISIBLE_ORDER_STATUSES, CLIENT_VISIBLE_QUOTE_STATUSES, _client_deliverable_queryset, _client_order_queryset, _client_task_queryset, _get_client_profile, _invoice_queryset, _quote_queryset, _validation_detail
 
 from domains.service_operations.services import quotes as quote_services
 from domains.service_operations.services import invoices as invoice_services
+from domains.service_operations.services import orders as order_services
 
 
 router = Router(tags=["Service Requests"])
@@ -215,26 +214,9 @@ def approve_my_order_deliverable(request, order_id: int, deliverable_id: int):
     try:
         client = _get_client_profile(request.user)
         order = get_object_or_404(_client_order_queryset(), id=order_id, client=client, order_status__in=CLIENT_VISIBLE_ORDER_STATUSES)
-        deliverable = get_object_or_404(_client_deliverable_queryset(), id=deliverable_id, order=order)
-        if deliverable.approval_mode != "client":
-            return 400, {"detail": "This deliverable does not require client approval."}
-        if deliverable.status != "under_review":
-            return 400, {"detail": "Only deliverables under review can be approved."}
-        deliverable.status = "approved"
-        deliverable.approved_by = request.user
-        deliverable.approved_at = timezone.now()
-        deliverable.rejected_by = None
-        deliverable.rejected_at = None
-        deliverable.rejection_reason = ""
-        deliverable.save()
-        ServiceOrderActivity.objects.create(
-            order=order,
-            activity_type="deliverable_approved",
-            visibility="internal_client",
-            note=f"Client approved deliverable {deliverable.deliverable_number}.",
-            created_by=request.user,
-        )
-        return 200, _client_deliverable_queryset().get(id=deliverable.id)
+        obj = get_object_or_404(_client_deliverable_queryset(), id=deliverable_id, order=order)
+        order_services.approve_order_deliverable(order, obj, user=request.user, client_mode=True)
+        return 200, _client_deliverable_queryset().get(id=obj.id)
     except (ValidationError, IntegrityError) as e:
         return 400, {"detail": _validation_detail(e)}
 
@@ -244,23 +226,8 @@ def reject_my_order_deliverable(request, order_id: int, deliverable_id: int, pay
     try:
         client = _get_client_profile(request.user)
         order = get_object_or_404(_client_order_queryset(), id=order_id, client=client, order_status__in=CLIENT_VISIBLE_ORDER_STATUSES)
-        deliverable = get_object_or_404(_client_deliverable_queryset(), id=deliverable_id, order=order)
-        if deliverable.approval_mode != "client":
-            return 400, {"detail": "This deliverable does not require client approval."}
-        if deliverable.status != "under_review":
-            return 400, {"detail": "Only deliverables under review can be rejected."}
-        deliverable.status = "rejected"
-        deliverable.rejected_by = request.user
-        deliverable.rejected_at = timezone.now()
-        deliverable.rejection_reason = payload.reason or ""
-        deliverable.save()
-        ServiceOrderActivity.objects.create(
-            order=order,
-            activity_type="deliverable_rejected",
-            visibility="internal_client",
-            note=f"Client rejected deliverable {deliverable.deliverable_number}.",
-            created_by=request.user,
-        )
-        return 200, _client_deliverable_queryset().get(id=deliverable.id)
+        obj = get_object_or_404(_client_deliverable_queryset(), id=deliverable_id, order=order)
+        order_services.reject_order_deliverable(order, obj, reason=payload.reason, user=request.user, client_mode=True)
+        return 200, _client_deliverable_queryset().get(id=obj.id)
     except (ValidationError, IntegrityError) as e:
         return 400, {"detail": _validation_detail(e)}
