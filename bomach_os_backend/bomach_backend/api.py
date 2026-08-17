@@ -53,6 +53,7 @@ from hr.api.v1.work_reports import router as work_reports_router
 # Marketing & Sales API v1
 from domains.marketing_sales.api.v1 import (
     campaigns_router as svc_marketing_router,
+    content_router as svc_content_router,
     csrc_router as svc_csrc,
     funnel_router as svc_funnel,
     leads_router as svc_leads_router,
@@ -63,7 +64,6 @@ from domains.marketing_sales.api.v1 import (
 
 # Remaining legacy Services routers
 from services.api.v1 import budgets as svc_budgets
-from services.api.v1 import content as svc_content
 from services.api.v1 import documents as svc_documents
 from services.api.v1 import expenses as svc_expenses
 from services.api.v1 import payments as svc_payments
@@ -199,7 +199,7 @@ register_project_operations_v1(api)
 # === Services routers ===
 api.add_router("/budgets", svc_budgets.router)
 api.add_router("/categories", svc_categories_router)
-api.add_router("/content", svc_content.router)
+api.add_router("/content", svc_content_router)
 api.add_router("/documents", svc_documents.router)
 
 api.add_router("/expenses", svc_expenses.router)

@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 
-from services.funnel_events import backfill_lead_funnel_events
-from services.models.crm import Lead
+from domains.marketing_sales.services.funnel import backfill_lead_funnel_events
+from domains.marketing_sales.models.sales import Lead
 
 
 class Command(BaseCommand):

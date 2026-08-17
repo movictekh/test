@@ -41,7 +41,7 @@ from domains.marketing_sales.api.v1.schemas.marketing import (
     TraditionalMediaPlacementUpdate,
 )
 from domains.marketing_sales.services.funnel import record_initial_funnel_event
-from services.models.content import ContentCalendarItem
+from domains.marketing_sales.models.content import ContentCalendarItem
 from domains.marketing_sales.models.sales import FunnelLead, Lead, LeadActivity
 from domains.marketing_sales.models.marketing import (
     CampaignDecision,
