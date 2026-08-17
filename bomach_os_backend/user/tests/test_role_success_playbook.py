@@ -151,7 +151,9 @@ class RoleSuccessPlaybookAPITests(RoleAPITestMixin, TestCase):
 
         first_response = self.client.post(
             f"/api/v1/roles/{target_role.id}/success-playbook",
-            data=json.dumps({"title": "Update CRM immediately", "kind": "best_practice"}),
+            data=json.dumps(
+                {"title": "Update CRM immediately", "kind": "best_practice"}
+            ),
             content_type="application/json",
             **self.auth_headers(admin),
         )

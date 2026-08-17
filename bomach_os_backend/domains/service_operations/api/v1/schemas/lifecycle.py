@@ -4,10 +4,11 @@ Extracted from the legacy mixed services schema module. These classes describe
 Service Operations transport contracts only; they are not domain models.
 """
 
-from ninja import Schema
-from typing import Optional, List, Dict
 from datetime import date, datetime
 from decimal import Decimal
+from typing import Dict, List, Optional
+
+from ninja import Schema
 
 
 class ServiceCategoryIn(Schema):
@@ -462,7 +463,9 @@ class InvoiceUpdate(Schema):
 class InvoiceFromQuoteIn(Schema):
     due_date: date
     payment_schedule: str = "Deposit / mobilisation"
-    payment_instructions: str = "Pay through client wallet, payment gateway, bank transfer or approved POS."
+    payment_instructions: str = (
+        "Pay through client wallet, payment gateway, bank transfer or approved POS."
+    )
     notes: Optional[str] = ""
 
 

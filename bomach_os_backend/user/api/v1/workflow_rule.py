@@ -1,10 +1,13 @@
-from ninja import Router
-from ninja.pagination import paginate, LimitOffsetPagination
 from django.shortcuts import get_object_or_404
+from ninja import Router
+from ninja.pagination import LimitOffsetPagination, paginate
 
 from user.api.schemas.workflow_rule import (
-    WorkflowRuleIn, WorkflowRuleUpdate, WorkflowRuleOut,
-    WorkflowRuleLogOut, ChoiceSchema,
+    ChoiceSchema,
+    WorkflowRuleIn,
+    WorkflowRuleLogOut,
+    WorkflowRuleOut,
+    WorkflowRuleUpdate,
 )
 from user.models.workflow_rule import WorkflowRule, WorkflowRuleLog
 from user.utils.perm import require_permission
@@ -49,7 +52,7 @@ def list_rules(request, trigger_event: str = None, is_active: bool = None):
             action_type=r.action_type,
             action_config=r.action_config,
             is_active=r.is_active,
-            created_by_name=r.created_by.get_full_name() if r.created_by else '',
+            created_by_name=r.created_by.get_full_name() if r.created_by else "",
             execution_count=r.execution_logs.count(),
             created_at=r.created_at,
         )
@@ -70,7 +73,7 @@ def get_rule(request, rule_id: int):
         action_type=r.action_type,
         action_config=r.action_config,
         is_active=r.is_active,
-        created_by_name=r.created_by.get_full_name() if r.created_by else '',
+        created_by_name=r.created_by.get_full_name() if r.created_by else "",
         created_at=r.created_at,
     )
 
@@ -107,10 +110,9 @@ def create_rule(request, payload: WorkflowRuleIn):
 def update_rule(request, rule_id: int, payload: WorkflowRuleUpdate):
     rule = get_object_or_404(WorkflowRule, id=rule_id)
     data = payload.dict(exclude_unset=True)
-    if 'conditions' in data and data['conditions'] is not None:
-        data['conditions'] = [
-            c.dict() if hasattr(c, 'dict') else c
-            for c in data['conditions']
+    if "conditions" in data and data["conditions"] is not None:
+        data["conditions"] = [
+            c.dict() if hasattr(c, "dict") else c for c in data["conditions"]
         ]
     for field, value in data.items():
         setattr(rule, field, value)
@@ -124,7 +126,7 @@ def update_rule(request, rule_id: int, payload: WorkflowRuleUpdate):
         action_type=rule.action_type,
         action_config=rule.action_config,
         is_active=rule.is_active,
-        created_by_name=rule.created_by.get_full_name() if rule.created_by else '',
+        created_by_name=rule.created_by.get_full_name() if rule.created_by else "",
         created_at=rule.created_at,
     )
 
@@ -134,5 +136,5 @@ def update_rule(request, rule_id: int, payload: WorkflowRuleUpdate):
 def deactivate_rule(request, rule_id: int):
     rule = get_object_or_404(WorkflowRule, id=rule_id)
     rule.is_active = False
-    rule.save(update_fields=['is_active', 'updated_at'])
+    rule.save(update_fields=["is_active", "updated_at"])
     return {"detail": f"Rule '{rule.name}' deactivated"}

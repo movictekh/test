@@ -51,7 +51,9 @@ class ApprovalQueueAPITests(RoleAPITestMixin, TestCase):
             first_name="Ada",
             last_name="Okoro",
         )
-        self.customer = Client.objects.create(user=self.client_user, phone="+2348012345678")
+        self.customer = Client.objects.create(
+            user=self.client_user, phone="+2348012345678"
+        )
 
         self.category = ServiceCategory.objects.create(
             name=ServiceCategory.CategoryChoices.SURVEYING,
@@ -73,7 +75,9 @@ class ApprovalQueueAPITests(RoleAPITestMixin, TestCase):
             created_by=self.staff_user,
         )
 
-    def make_quote(self, status="awaiting_approval", amount=Decimal("5000000.00"), created_at=None):
+    def make_quote(
+        self, status="awaiting_approval", amount=Decimal("5000000.00"), created_at=None
+    ):
         quote = Quote.objects.create(
             client=self.customer,
             service=self.service,
@@ -112,7 +116,9 @@ class ApprovalQueueAPITests(RoleAPITestMixin, TestCase):
             created_by=self.staff_user,
         )
         if created_at is not None:
-            ServiceDeliverable.objects.filter(id=deliverable.id).update(created_at=created_at)
+            ServiceDeliverable.objects.filter(id=deliverable.id).update(
+                created_at=created_at
+            )
             deliverable.refresh_from_db()
         return deliverable
 

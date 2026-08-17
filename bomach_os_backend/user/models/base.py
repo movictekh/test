@@ -3,8 +3,12 @@ from django.utils import timezone
 
 
 class BaseModel(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True, help_text="When this record was created")
-    updated_at = models.DateTimeField(auto_now=True, help_text="When this record was last updated")
+    created_at = models.DateTimeField(
+        auto_now_add=True, help_text="When this record was created"
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, help_text="When this record was last updated"
+    )
 
     class Meta:
         abstract = True
@@ -15,8 +19,12 @@ class BaseModel(models.Model):
 
 
 class TimeStampedModel(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True, help_text="When this record was created")
-    updated_at = models.DateTimeField(auto_now=True, help_text="When this record was last updated")
+    created_at = models.DateTimeField(
+        auto_now_add=True, help_text="When this record was created"
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, help_text="When this record was last updated"
+    )
 
     class Meta:
         abstract = True

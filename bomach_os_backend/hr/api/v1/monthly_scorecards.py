@@ -1,33 +1,36 @@
 import logging
 from decimal import Decimal
 from typing import Optional
-from ninja import Router
-from django.shortcuts import get_object_or_404
+
 from django.core.exceptions import ValidationError
 from django.db.models import Avg
+from django.shortcuts import get_object_or_404
+from ninja import Router
 
-from hr.models.monthly_scorecard import MonthlyScorecard
-from hr.services.scorecard_calculator import (
-    generate_scorecard,
-    calc_overall_score,
-    calc_target_achievement,
-    update_rankings,
-)
 from hr.api.schemas import (
-    ScorecardUpdateSchema,
-    ScorecardResponseSchema,
     LeaderboardResponseSchema,
     MessageSchema,
+    ScorecardResponseSchema,
+    ScorecardUpdateSchema,
+)
+from hr.models.monthly_scorecard import MonthlyScorecard
+from hr.services.scorecard_calculator import (
+    calc_overall_score,
+    calc_target_achievement,
+    generate_scorecard,
+    update_rankings,
 )
 from hr.utils.auth_client import get_auth_client
-from user.utils.perm import require_permission, scope_queryset, check_obj_permission
+from user.utils.perm import check_obj_permission, require_permission, scope_queryset
 
 logger = logging.getLogger(__name__)
 
-router = Router(tags=['Monthly Scorecards'])
+router = Router(tags=["Monthly Scorecards"])
 
 
-@router.get('/leaderboard', response={200: LeaderboardResponseSchema, 400: MessageSchema})
+@router.get(
+    "/leaderboard", response={200: LeaderboardResponseSchema, 400: MessageSchema}
+)
 @require_permission("monthly_scorecards", "list")
 def get_leaderboard(
     request,
@@ -35,11 +38,14 @@ def get_leaderboard(
     year: Optional[int] = None,
 ):
     if not month or not year:
-        return 400, {'detail': 'Month and year are required.'}
+        return 400, {"detail": "Month and year are required."}
 
     scorecards = MonthlyScorecard.objects.filter(
-        month=month, year=year,
-    ).order_by('ranking')[:10]  # Limit to top 10 for performance
+        month=month,
+        year=year,
+    ).order_by("ranking")[
+        :10
+    ]  # Limit to top 10 for performance
 
     # Enrich each scorecard with employee details from gRPC
     entries = []
@@ -49,37 +55,42 @@ def get_leaderboard(
         try:
             emp = get_auth_client().get_employee_info(sc.employee_id)
             if emp:
-                employee_name = emp.get('full_name')
-                employee_branch = emp.get('branch_name')
+                employee_name = emp.get("full_name")
+                employee_branch = emp.get("branch_name")
         except Exception as e:
             logger.warning(f"Failed to fetch employee {sc.employee_id}: {e}")
 
-
-        entries.append({
-            'rank': sc.ranking or 0,
-            'employee_id': sc.employee_id,
-            'employee_name': employee_name,
-            'branch': employee_branch,
-            'score': sc.overall_score,
-            'award': None,
-        })
+        entries.append(
+            {
+                "rank": sc.ranking or 0,
+                "employee_id": sc.employee_id,
+                "employee_name": employee_name,
+                "branch": employee_branch,
+                "score": sc.overall_score,
+                "award": None,
+            }
+        )
 
     total_participants = len(entries)
     avg_score = (
-        sum(e['score'] for e in entries) / total_participants
-        if total_participants > 0 else Decimal('0.00')
+        sum(e["score"] for e in entries) / total_participants
+        if total_participants > 0
+        else Decimal("0.00")
     )
 
     return 200, {
-        'month': month,
-        'year': year,
-        'entries': entries,
-        'avg_score': round(avg_score, 2),
-        'total_participants': total_participants,
+        "month": month,
+        "year": year,
+        "entries": entries,
+        "avg_score": round(avg_score, 2),
+        "total_participants": total_participants,
     }
 
 
-@router.get('/employee/{employee_id}', response={200: ScorecardResponseSchema, 400: MessageSchema, 404: MessageSchema})
+@router.get(
+    "/employee/{employee_id}",
+    response={200: ScorecardResponseSchema, 400: MessageSchema, 404: MessageSchema},
+)
 @require_permission("monthly_scorecards", "view", owner_lookup="employee__user")
 def get_employee_scorecard(
     request,
@@ -88,7 +99,7 @@ def get_employee_scorecard(
     year: Optional[int] = None,
 ):
     if not month or not year:
-        return 400, {'detail': 'Month and year are required.'}
+        return 400, {"detail": "Month and year are required."}
 
     # Check if scorecard already exists, otherwise generate it
     scorecard = MonthlyScorecard.objects.filter(
@@ -110,8 +121,8 @@ def get_employee_scorecard(
     try:
         employee = get_auth_client().get_employee_info(employee_id)
         if employee:
-            employee_name = employee.get('full_name')
-            employee_level = employee.get('position')
+            employee_name = employee.get("full_name")
+            employee_level = employee.get("position")
     except Exception as e:
         logger.warning(f"Failed to fetch employee details for {employee_id}: {e}")
 
@@ -122,7 +133,9 @@ def get_employee_scorecard(
     return 200, scorecard
 
 
-@router.put('/{scorecard_id}', response={200: ScorecardResponseSchema, 400: MessageSchema})
+@router.put(
+    "/{scorecard_id}", response={200: ScorecardResponseSchema, 400: MessageSchema}
+)
 @require_permission("monthly_scorecards", "update")
 def update_scorecard(request, scorecard_id: int, payload: ScorecardUpdateSchema):
     """Manual override of scorecard scores. Recalculates overall and sets is_auto_generated=False."""
@@ -135,11 +148,11 @@ def update_scorecard(request, scorecard_id: int, payload: ScorecardUpdateSchema)
 
         # Recalculate overall score from individual metrics
         scores = {
-            'attendance': scorecard.attendance_score,
-            'task_delivery': scorecard.task_delivery_score,
-            'report_accuracy': scorecard.report_accuracy_score,
-            'brand_contribution': scorecard.brand_contribution_score,
-            'training_progress': scorecard.training_progress_score,
+            "attendance": scorecard.attendance_score,
+            "task_delivery": scorecard.task_delivery_score,
+            "report_accuracy": scorecard.report_accuracy_score,
+            "brand_contribution": scorecard.brand_contribution_score,
+            "training_progress": scorecard.training_progress_score,
         }
         scorecard.overall_score = calc_overall_score(scores)
         scorecard.target_achievement = calc_target_achievement(
@@ -155,4 +168,4 @@ def update_scorecard(request, scorecard_id: int, payload: ScorecardUpdateSchema)
 
         return 200, scorecard
     except ValidationError as e:
-        return 400, {'detail': e.messages[0] if hasattr(e, 'messages') else str(e)}
+        return 400, {"detail": e.messages[0] if hasattr(e, "messages") else str(e)}

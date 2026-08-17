@@ -1,13 +1,26 @@
 """Client commercial and delivery portal endpoints under Service Requests."""
 
 from typing import List, Optional
+
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
 from ninja import Query, Router
 from ninja.errors import HttpError
 from ninja.pagination import LimitOffsetPagination, paginate
+
+from domains.service_operations.models import Invoice
+from domains.service_operations.services import invoices as invoice_services
+from domains.service_operations.services import orders as order_services
+from domains.service_operations.services import quotes as quote_services
 from services.api.schema.others import MessageSchema
+from user.api.schemas.client_service import (
+    ClientInvoiceSchema,
+    PaymentSubmissionCreateSchema,
+    PaymentSubmissionResponseSchema,
+)
+from user.models.client_service import PaymentSubmission
+
 from ..schemas.lifecycle import (
     InvoiceOut,
     QuoteClientActionIn,
@@ -17,15 +30,18 @@ from ..schemas.lifecycle import (
     ServiceDeliverableOut,
     ServiceOrderOut,
 )
-from domains.service_operations.models import Invoice
-from user.api.schemas.client_service import ClientInvoiceSchema, PaymentSubmissionCreateSchema, PaymentSubmissionResponseSchema
-from user.models.client_service import PaymentSubmission
-from ._service_request_support import CLIENT_VISIBLE_INVOICE_STATUSES, CLIENT_VISIBLE_ORDER_STATUSES, CLIENT_VISIBLE_QUOTE_STATUSES, _client_deliverable_queryset, _client_order_queryset, _client_task_queryset, _get_client_profile, _invoice_queryset, _quote_queryset, _validation_detail
-
-from domains.service_operations.services import quotes as quote_services
-from domains.service_operations.services import invoices as invoice_services
-from domains.service_operations.services import orders as order_services
-
+from ._service_request_support import (
+    CLIENT_VISIBLE_INVOICE_STATUSES,
+    CLIENT_VISIBLE_ORDER_STATUSES,
+    CLIENT_VISIBLE_QUOTE_STATUSES,
+    _client_deliverable_queryset,
+    _client_order_queryset,
+    _client_task_queryset,
+    _get_client_profile,
+    _invoice_queryset,
+    _quote_queryset,
+    _validation_detail,
+)
 
 router = Router(tags=["Service Requests"])
 
@@ -36,13 +52,18 @@ def list_client_invoices(request):
     return Invoice.objects.filter(client=client).prefetch_related("service_requests")
 
 
-@router.post("/payments/submit", response={201: PaymentSubmissionResponseSchema, 400: MessageSchema})
+@router.post(
+    "/payments/submit",
+    response={201: PaymentSubmissionResponseSchema, 400: MessageSchema},
+)
 def submit_payment(request, data: PaymentSubmissionCreateSchema):
     client = _get_client_profile(request.user)
     invoice = get_object_or_404(Invoice, id=data.invoice_id, client=client)
     if data.amount > invoice.balance:
         raise HttpError(400, "Amount exceeds outstanding balance")
-    if PaymentSubmission.objects.filter(invoice=invoice, client=client, status=PaymentSubmission.STATUS.PENDING).exists():
+    if PaymentSubmission.objects.filter(
+        invoice=invoice, client=client, status=PaymentSubmission.STATUS.PENDING
+    ).exists():
         raise HttpError(400, "You already have a pending submission for this invoice")
     submission = PaymentSubmission.objects.create(
         invoice=invoice,
@@ -57,7 +78,9 @@ def submit_payment(request, data: PaymentSubmissionCreateSchema):
 @router.get("/payments/{invoice_id}", response=List[PaymentSubmissionResponseSchema])
 def list_invoice_submissions(request, invoice_id: int):
     client = _get_client_profile(request.user)
-    return PaymentSubmission.objects.filter(invoice_id=invoice_id, client=client).select_related("invoice")
+    return PaymentSubmission.objects.filter(
+        invoice_id=invoice_id, client=client
+    ).select_related("invoice")
 
 
 @router.get("/invoices", response=List[InvoiceOut])
@@ -68,7 +91,9 @@ def list_my_invoices(
     service_request_id: Optional[int] = Query(None),
 ):
     client = _get_client_profile(request.user)
-    qs = _invoice_queryset().filter(client=client, status__in=CLIENT_VISIBLE_INVOICE_STATUSES)
+    qs = _invoice_queryset().filter(
+        client=client, status__in=CLIENT_VISIBLE_INVOICE_STATUSES
+    )
     if status:
         qs = qs.filter(status=status)
     if service_request_id:
@@ -88,11 +113,31 @@ def get_my_invoice(request, invoice_id: int):
     return 200, invoice
 
 
-@router.post("/invoices/{invoice_id}/payment-submissions", response={201: PaymentSubmissionResponseSchema, 400: MessageSchema, 404: MessageSchema})
-def submit_invoice_payment(request, invoice_id: int, payload: PaymentSubmissionCreateSchema):
+@router.post(
+    "/invoices/{invoice_id}/payment-submissions",
+    response={
+        201: PaymentSubmissionResponseSchema,
+        400: MessageSchema,
+        404: MessageSchema,
+    },
+)
+def submit_invoice_payment(
+    request, invoice_id: int, payload: PaymentSubmissionCreateSchema
+):
     try:
-        client=_get_client_profile(request.user); i=get_object_or_404(_invoice_queryset(),id=invoice_id,client=client,status__in=CLIENT_VISIBLE_INVOICE_STATUSES); s=invoice_services.submit_payment(i,payload,client=client,user=request.user); return 201,s
-    except (ValidationError,IntegrityError) as e: return 400,{"detail":_validation_detail(e)}
+        client = _get_client_profile(request.user)
+        i = get_object_or_404(
+            _invoice_queryset(),
+            id=invoice_id,
+            client=client,
+            status__in=CLIENT_VISIBLE_INVOICE_STATUSES,
+        )
+        s = invoice_services.submit_payment(
+            i, payload, client=client, user=request.user
+        )
+        return 201, s
+    except (ValidationError, IntegrityError) as e:
+        return 400, {"detail": _validation_detail(e)}
 
 
 @router.get("/quotes", response=List[QuoteOut])
@@ -103,7 +148,9 @@ def list_my_quotes(
     service_request_id: Optional[int] = Query(None),
 ):
     client = _get_client_profile(request.user)
-    qs = _quote_queryset().filter(client=client, status__in=CLIENT_VISIBLE_QUOTE_STATUSES)
+    qs = _quote_queryset().filter(
+        client=client, status__in=CLIENT_VISIBLE_QUOTE_STATUSES
+    )
     if status:
         qs = qs.filter(status=status)
     if service_request_id:
@@ -123,18 +170,42 @@ def get_my_quote(request, quote_id: int):
     return 200, quote
 
 
-@router.post("/quotes/{quote_id}/accept", response={200: QuoteOut, 400: MessageSchema, 404: MessageSchema})
+@router.post(
+    "/quotes/{quote_id}/accept",
+    response={200: QuoteOut, 400: MessageSchema, 404: MessageSchema},
+)
 def accept_my_quote(request, quote_id: int):
     try:
-        client=_get_client_profile(request.user); q=get_object_or_404(_quote_queryset(),id=quote_id,client=client,status__in=CLIENT_VISIBLE_QUOTE_STATUSES); quote_services.client_accept(q,user=request.user); return 200,_quote_queryset().get(id=q.id)
-    except (ValidationError,IntegrityError) as e: return 400,{"detail":_validation_detail(e)}
+        client = _get_client_profile(request.user)
+        q = get_object_or_404(
+            _quote_queryset(),
+            id=quote_id,
+            client=client,
+            status__in=CLIENT_VISIBLE_QUOTE_STATUSES,
+        )
+        quote_services.client_accept(q, user=request.user)
+        return 200, _quote_queryset().get(id=q.id)
+    except (ValidationError, IntegrityError) as e:
+        return 400, {"detail": _validation_detail(e)}
 
 
-@router.post("/quotes/{quote_id}/reject", response={200: QuoteOut, 400: MessageSchema, 404: MessageSchema})
+@router.post(
+    "/quotes/{quote_id}/reject",
+    response={200: QuoteOut, 400: MessageSchema, 404: MessageSchema},
+)
 def reject_my_quote(request, quote_id: int, payload: QuoteClientActionIn):
     try:
-        client=_get_client_profile(request.user); q=get_object_or_404(_quote_queryset(),id=quote_id,client=client,status__in=CLIENT_VISIBLE_QUOTE_STATUSES); quote_services.client_reject(q,reason=payload.reason,user=request.user); return 200,_quote_queryset().get(id=q.id)
-    except (ValidationError,IntegrityError) as e: return 400,{"detail":_validation_detail(e)}
+        client = _get_client_profile(request.user)
+        q = get_object_or_404(
+            _quote_queryset(),
+            id=quote_id,
+            client=client,
+            status__in=CLIENT_VISIBLE_QUOTE_STATUSES,
+        )
+        quote_services.client_reject(q, reason=payload.reason, user=request.user)
+        return 200, _quote_queryset().get(id=q.id)
+    except (ValidationError, IntegrityError) as e:
+        return 400, {"detail": _validation_detail(e)}
 
 
 @router.get("/orders", response=List[ServiceOrderOut])
@@ -145,7 +216,9 @@ def list_my_orders(
     service_request_id: Optional[int] = Query(None),
 ):
     client = _get_client_profile(request.user)
-    qs = _client_order_queryset().filter(client=client, order_status__in=CLIENT_VISIBLE_ORDER_STATUSES)
+    qs = _client_order_queryset().filter(
+        client=client, order_status__in=CLIENT_VISIBLE_ORDER_STATUSES
+    )
     if order_status:
         qs = qs.filter(order_status=order_status)
     if service_request_id:
@@ -174,7 +247,12 @@ def list_my_order_tasks(
     milestone_id: Optional[int] = Query(None),
 ):
     client = _get_client_profile(request.user)
-    get_object_or_404(_client_order_queryset(), id=order_id, client=client, order_status__in=CLIENT_VISIBLE_ORDER_STATUSES)
+    get_object_or_404(
+        _client_order_queryset(),
+        id=order_id,
+        client=client,
+        order_status__in=CLIENT_VISIBLE_ORDER_STATUSES,
+    )
     tasks = _client_task_queryset().filter(order_id=order_id)
     if status:
         tasks = tasks.filter(status=status)
@@ -192,7 +270,12 @@ def list_my_order_deliverables(
     deliverable_type: Optional[str] = Query(None),
 ):
     client = _get_client_profile(request.user)
-    get_object_or_404(_client_order_queryset(), id=order_id, client=client, order_status__in=CLIENT_VISIBLE_ORDER_STATUSES)
+    get_object_or_404(
+        _client_order_queryset(),
+        id=order_id,
+        client=client,
+        order_status__in=CLIENT_VISIBLE_ORDER_STATUSES,
+    )
     deliverables = _client_deliverable_queryset().filter(order_id=order_id)
     if status:
         deliverables = deliverables.filter(status=status)
@@ -201,33 +284,69 @@ def list_my_order_deliverables(
     return deliverables.order_by("-created_at")
 
 
-@router.get("/orders/{order_id}/deliverables/{deliverable_id}", response={200: ServiceDeliverableOut, 404: MessageSchema})
+@router.get(
+    "/orders/{order_id}/deliverables/{deliverable_id}",
+    response={200: ServiceDeliverableOut, 404: MessageSchema},
+)
 def get_my_order_deliverable(request, order_id: int, deliverable_id: int):
     client = _get_client_profile(request.user)
-    get_object_or_404(_client_order_queryset(), id=order_id, client=client, order_status__in=CLIENT_VISIBLE_ORDER_STATUSES)
-    deliverable = get_object_or_404(_client_deliverable_queryset(), id=deliverable_id, order_id=order_id)
+    get_object_or_404(
+        _client_order_queryset(),
+        id=order_id,
+        client=client,
+        order_status__in=CLIENT_VISIBLE_ORDER_STATUSES,
+    )
+    deliverable = get_object_or_404(
+        _client_deliverable_queryset(), id=deliverable_id, order_id=order_id
+    )
     return 200, deliverable
 
 
-@router.post("/orders/{order_id}/deliverables/{deliverable_id}/approve", response={200: ServiceDeliverableOut, 400: MessageSchema, 404: MessageSchema})
+@router.post(
+    "/orders/{order_id}/deliverables/{deliverable_id}/approve",
+    response={200: ServiceDeliverableOut, 400: MessageSchema, 404: MessageSchema},
+)
 def approve_my_order_deliverable(request, order_id: int, deliverable_id: int):
     try:
         client = _get_client_profile(request.user)
-        order = get_object_or_404(_client_order_queryset(), id=order_id, client=client, order_status__in=CLIENT_VISIBLE_ORDER_STATUSES)
-        obj = get_object_or_404(_client_deliverable_queryset(), id=deliverable_id, order=order)
-        order_services.approve_order_deliverable(order, obj, user=request.user, client_mode=True)
+        order = get_object_or_404(
+            _client_order_queryset(),
+            id=order_id,
+            client=client,
+            order_status__in=CLIENT_VISIBLE_ORDER_STATUSES,
+        )
+        obj = get_object_or_404(
+            _client_deliverable_queryset(), id=deliverable_id, order=order
+        )
+        order_services.approve_order_deliverable(
+            order, obj, user=request.user, client_mode=True
+        )
         return 200, _client_deliverable_queryset().get(id=obj.id)
     except (ValidationError, IntegrityError) as e:
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.post("/orders/{order_id}/deliverables/{deliverable_id}/reject", response={200: ServiceDeliverableOut, 400: MessageSchema, 404: MessageSchema})
-def reject_my_order_deliverable(request, order_id: int, deliverable_id: int, payload: ServiceDeliverableActionIn):
+@router.post(
+    "/orders/{order_id}/deliverables/{deliverable_id}/reject",
+    response={200: ServiceDeliverableOut, 400: MessageSchema, 404: MessageSchema},
+)
+def reject_my_order_deliverable(
+    request, order_id: int, deliverable_id: int, payload: ServiceDeliverableActionIn
+):
     try:
         client = _get_client_profile(request.user)
-        order = get_object_or_404(_client_order_queryset(), id=order_id, client=client, order_status__in=CLIENT_VISIBLE_ORDER_STATUSES)
-        obj = get_object_or_404(_client_deliverable_queryset(), id=deliverable_id, order=order)
-        order_services.reject_order_deliverable(order, obj, reason=payload.reason, user=request.user, client_mode=True)
+        order = get_object_or_404(
+            _client_order_queryset(),
+            id=order_id,
+            client=client,
+            order_status__in=CLIENT_VISIBLE_ORDER_STATUSES,
+        )
+        obj = get_object_or_404(
+            _client_deliverable_queryset(), id=deliverable_id, order=order
+        )
+        order_services.reject_order_deliverable(
+            order, obj, reason=payload.reason, user=request.user, client_mode=True
+        )
         return 200, _client_deliverable_queryset().get(id=obj.id)
     except (ValidationError, IntegrityError) as e:
         return 400, {"detail": _validation_detail(e)}

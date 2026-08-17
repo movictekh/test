@@ -50,7 +50,9 @@ class FinanceAccount(models.Model):
             if not self.bank_name:
                 errors["bank_name"] = "Bank name is required for bank accounts."
             if not self.account_number:
-                errors["account_number"] = "Account number is required for bank accounts."
+                errors["account_number"] = (
+                    "Account number is required for bank accounts."
+                )
             if not self.account_name:
                 errors["account_name"] = "Account name is required for bank accounts."
             if errors:

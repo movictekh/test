@@ -1,12 +1,15 @@
-from ninja import Schema
-from typing import List, Optional
 from decimal import Decimal
+from typing import List, Optional
+
+from ninja import Schema
+
 
 class BudgetIn(Schema):
     branch_id: int
     department_id: int
     fiscal_period: str
     amount: Decimal
+
 
 class BudgetUpdateIn(Schema):
     branch_id: Optional[int] = None
@@ -15,14 +18,15 @@ class BudgetUpdateIn(Schema):
     amount: Optional[Decimal] = None
     current_spend: Optional[Decimal] = None
 
+
 class BudgetOut(Schema):
     id: int
-    branch_name: str 
+    branch_name: str
     department_name: str
     fiscal_period: str
     amount: Decimal
-    current_spend: Decimal = Decimal('0.00')
-    remaining_budget: Decimal 
+    current_spend: Decimal = Decimal("0.00")
+    remaining_budget: Decimal
 
     @staticmethod
     def resolve_branch_name(obj):

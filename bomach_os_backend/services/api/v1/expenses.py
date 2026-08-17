@@ -1,16 +1,17 @@
 from typing import List
-from ninja import Router
-from django.shortcuts import get_object_or_404
+
+from django.core.exceptions import ValidationError
 from django.db.models import Q, Sum
 from django.http import Http404
-from ninja.pagination import paginate, LimitOffsetPagination
-from django.core.exceptions import ValidationError
+from django.shortcuts import get_object_or_404
+from ninja import Router
+from ninja.errors import HttpError
+from ninja.pagination import LimitOffsetPagination, paginate
 
 from services.api.schema.expense_schemas import ExpenseIn, ExpenseOut, ExpenseUpdate
 from services.api.schema.others import MessageSchema
 from services.models.expenses import Expense
 from user.utils.perm import require_permission
-from ninja.errors import HttpError
 
 router = Router(tags=["Expenses"])
 
@@ -24,10 +25,10 @@ def list_expenses(
     category: str = None,
     user_id: int = None,
     department_id: int = None,
-    search: str = None
+    search: str = None,
 ):
     """List all expenses with optional filtering."""
-    expenses = Expense.objects.select_related('department').all()
+    expenses = Expense.objects.select_related("department").all()
 
     if status:
         expenses = expenses.filter(status=status)
@@ -38,9 +39,7 @@ def list_expenses(
     if department_id:
         expenses = expenses.filter(department_id=department_id)
     if search:
-        expenses = expenses.filter(
-            Q(description__icontains=search)
-        )
+        expenses = expenses.filter(Q(description__icontains=search))
 
     return expenses
 
@@ -55,9 +54,9 @@ def create_expense(request, payload: ExpenseIn):
         expense.refresh_from_db()
         return 201, expense
     except ValidationError as e:
-        return 400, {'detail': e.messages[0]}
+        return 400, {"detail": e.messages[0]}
     except Exception as e:
-        return 400, {'detail': str(e)}
+        return 400, {"detail": str(e)}
 
 
 @router.get("/{expense_id}", response=ExpenseOut)
@@ -67,7 +66,9 @@ def get_expense(request, expense_id: int):
     return get_object_or_404(Expense, id=expense_id)
 
 
-@router.put("/{expense_id}", response={200: ExpenseOut, 400: MessageSchema, 404: MessageSchema})
+@router.put(
+    "/{expense_id}", response={200: ExpenseOut, 400: MessageSchema, 404: MessageSchema}
+)
 @require_permission("expenses", "update")
 def update_expense(request, expense_id: int, payload: ExpenseUpdate):
     """Update an existing expense."""
@@ -78,12 +79,15 @@ def update_expense(request, expense_id: int, payload: ExpenseUpdate):
         expense.save()
         return 200, expense
     except ValidationError as e:
-        return 400, {'detail': e.messages[0]}
+        return 400, {"detail": e.messages[0]}
     except Exception as e:
-        return 400, {'detail': str(e)}
+        return 400, {"detail": str(e)}
 
 
-@router.delete("/{expense_id}", response={200: MessageSchema, 400: MessageSchema, 404: MessageSchema})
+@router.delete(
+    "/{expense_id}",
+    response={200: MessageSchema, 400: MessageSchema, 404: MessageSchema},
+)
 @require_permission("expenses", "delete")
 def delete_expense(request, expense_id: int):
     """Delete an expense."""
@@ -92,9 +96,9 @@ def delete_expense(request, expense_id: int):
         expense.delete()
         return 200, {"detail": "Expense deleted successfully"}
     except ValidationError as e:
-        return 400, {'detail': e.messages[0]}
+        return 400, {"detail": e.messages[0]}
     except Exception as e:
-        return 400, {'detail': str(e)}
+        return 400, {"detail": str(e)}
 
 
 @router.get("/user/{user_id}/expenses", response=List[ExpenseOut])
@@ -104,11 +108,11 @@ def get_user_expenses(request, user_id: int):
     expenses = Expense.objects.filter(user_id=user_id)
     return expenses
 
-@router.post("/{expense_id}/approve", response={
-    200: ExpenseOut,
-    404: MessageSchema,
-    400: MessageSchema
-})
+
+@router.post(
+    "/{expense_id}/approve",
+    response={200: ExpenseOut, 404: MessageSchema, 400: MessageSchema},
+)
 @require_permission("expenses", "approve")
 def approve_expense(request, expense_id: int):
     """Approve an expense."""
@@ -121,7 +125,6 @@ def approve_expense(request, expense_id: int):
         if expense.user == request.user:
             return 400, {"detail": "Invalid request"}
 
-
         expense.status = Expense.STATUS.APPROVED
         expense.save()
 
@@ -133,11 +136,11 @@ def approve_expense(request, expense_id: int):
     except Exception as e:
         return 400, {"detail": str(e)}
 
-@router.post("/{expense_id}/reject", response={
-    200: ExpenseOut,
-    404: MessageSchema,
-    400: MessageSchema
-})
+
+@router.post(
+    "/{expense_id}/reject",
+    response={200: ExpenseOut, 404: MessageSchema, 400: MessageSchema},
+)
 @require_permission("expenses", "reject")
 def reject_expense(request, expense_id: int):
     """Reject an expense."""
@@ -149,7 +152,6 @@ def reject_expense(request, expense_id: int):
 
         if expense.user == request.user:
             return 400, {"detail": "Invalid request"}
-
 
         expense.status = Expense.STATUS.REJECTED
         expense.save()

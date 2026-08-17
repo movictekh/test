@@ -1,39 +1,49 @@
-from typing import Optional, List
-from django.db.models import Q
-from django.shortcuts import get_object_or_404
-from django.http import Http404
+from typing import List, Optional
+
 from django.core.exceptions import ValidationError
+from django.db.models import Q
+from django.http import Http404
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from ninja import Router, Query
-from ninja.pagination import paginate, LimitOffsetPagination
-from user.api.schemas.others import MessageSchema
-from user.models.drawing_bank import DrawingBank
+from ninja import Query, Router
+from ninja.pagination import LimitOffsetPagination, paginate
+
 from user.api.schemas.drawing_bank import (
     DrawingBankCreateSchema,
-    DrawingBankUpdateSchema,
-    DrawingBankRejectSchema,
     DrawingBankFullResponseSchema,
     DrawingBankListResponseSchema,
+    DrawingBankRejectSchema,
     DrawingBankStatsSchema,
+    DrawingBankUpdateSchema,
 )
+from user.api.schemas.others import MessageSchema
+from user.models.drawing_bank import DrawingBank
 from user.utils.perm import require_permission
 
 drawing_bank_api = Router(tags=["Drawing Bank"])
 
-@drawing_bank_api.get("/stats", response={200: DrawingBankStatsSchema, 400: MessageSchema})
+
+@drawing_bank_api.get(
+    "/stats", response={200: DrawingBankStatsSchema, 400: MessageSchema}
+)
 def get_drawing_bank_stats(request):
     try:
         drawings = DrawingBank.objects.filter(employee=request.user)
         return 200, {
             "total_submissions": drawings.count(),
-            "pending_approval": drawings.filter(status=DrawingBank.STATUS.PENDING).count(),
+            "pending_approval": drawings.filter(
+                status=DrawingBank.STATUS.PENDING
+            ).count(),
             "approved": drawings.filter(status=DrawingBank.STATUS.APPROVED).count(),
             "rejected": drawings.filter(status=DrawingBank.STATUS.REJECTED).count(),
         }
     except Exception as e:
         return 400, {"detail": str(e)}
 
-@drawing_bank_api.post("", response={201: DrawingBankFullResponseSchema, 400: MessageSchema})
+
+@drawing_bank_api.post(
+    "", response={201: DrawingBankFullResponseSchema, 400: MessageSchema}
+)
 @require_permission("drawings", "create")
 def create_drawing(request, payload: DrawingBankCreateSchema):
     try:
@@ -42,7 +52,7 @@ def create_drawing(request, payload: DrawingBankCreateSchema):
             title=payload.title,
             building_category=payload.building_category,
             drawing_file=payload.drawing_file,
-            file_name=payload.file_name or '',
+            file_name=payload.file_name or "",
             file_size_mb=payload.file_size_mb,
             description=payload.description,
             tags=payload.tags or [],
@@ -56,11 +66,15 @@ def create_drawing(request, payload: DrawingBankCreateSchema):
         return 400, {"detail": str(e)}
 
 
-@drawing_bank_api.get("/{id}", response={200: DrawingBankFullResponseSchema, 404: MessageSchema})
+@drawing_bank_api.get(
+    "/{id}", response={200: DrawingBankFullResponseSchema, 404: MessageSchema}
+)
 @require_permission("drawings", "view")
 def get_drawing(request, id: int):
     try:
-        drawing = DrawingBank.objects.select_related('employee', 'approved_by').get(id=id)
+        drawing = DrawingBank.objects.select_related("employee", "approved_by").get(
+            id=id
+        )
         if drawing.employee != request.user:
             return 404, {"detail": "Drawing not found."}
         return 200, drawing
@@ -68,7 +82,9 @@ def get_drawing(request, id: int):
         return 404, {"detail": "Drawing not found."}
 
 
-@drawing_bank_api.get("", response={200: List[DrawingBankListResponseSchema], 400: MessageSchema})
+@drawing_bank_api.get(
+    "", response={200: List[DrawingBankListResponseSchema], 400: MessageSchema}
+)
 @paginate(LimitOffsetPagination, page_size=10)
 @require_permission("drawings", "list")
 def get_drawings(
@@ -88,29 +104,34 @@ def get_drawings(
 
     if search:
         filters &= (
-            Q(title__icontains=search) |
-            Q(description__icontains=search) |
-            Q(file_name__icontains=search)
+            Q(title__icontains=search)
+            | Q(description__icontains=search)
+            | Q(file_name__icontains=search)
         )
 
     if tag:
         filters &= Q(tags__contains=[tag])
 
-    drawings = DrawingBank.objects.filter(filters).select_related(
-        'employee', 'approved_by'
-    ).order_by('-created_at')
+    drawings = (
+        DrawingBank.objects.filter(filters)
+        .select_related("employee", "approved_by")
+        .order_by("-created_at")
+    )
     return drawings
 
 
-@drawing_bank_api.put("/{id}", response={
-    200: DrawingBankFullResponseSchema,
-    400: MessageSchema,
-    404: MessageSchema
-})
+@drawing_bank_api.put(
+    "/{id}",
+    response={
+        200: DrawingBankFullResponseSchema,
+        400: MessageSchema,
+        404: MessageSchema,
+    },
+)
 @require_permission("drawings", "update")
 def update_drawing(request, id: int, payload: DrawingBankUpdateSchema):
     try:
-        drawing = DrawingBank.objects.select_related('employee').get(id=id)
+        drawing = DrawingBank.objects.select_related("employee").get(id=id)
         if drawing.employee != request.user:
             return 404, {"detail": "Drawing not found."}
 
@@ -124,7 +145,7 @@ def update_drawing(request, id: int, payload: DrawingBankUpdateSchema):
         # Reset to pending if previously rejected and now being updated
         if drawing.status == DrawingBank.STATUS.REJECTED:
             drawing.status = DrawingBank.STATUS.PENDING
-            drawing.rejection_reason = ''
+            drawing.rejection_reason = ""
 
         drawing.full_clean()
         drawing.save()
@@ -137,7 +158,9 @@ def update_drawing(request, id: int, payload: DrawingBankUpdateSchema):
         return 400, {"detail": str(e)}
 
 
-@drawing_bank_api.delete("/{id}", response={200: MessageSchema, 404: MessageSchema, 400: MessageSchema})
+@drawing_bank_api.delete(
+    "/{id}", response={200: MessageSchema, 404: MessageSchema, 400: MessageSchema}
+)
 @require_permission("drawings", "delete")
 def delete_drawing(request, id: int):
     try:
@@ -156,12 +179,15 @@ def delete_drawing(request, id: int):
         return 400, {"detail": str(e)}
 
 
-@drawing_bank_api.post("/{id}/approve", response={
-    200: DrawingBankFullResponseSchema,
-    403: MessageSchema,
-    404: MessageSchema,
-    400: MessageSchema
-})
+@drawing_bank_api.post(
+    "/{id}/approve",
+    response={
+        200: DrawingBankFullResponseSchema,
+        403: MessageSchema,
+        404: MessageSchema,
+        400: MessageSchema,
+    },
+)
 @require_permission("drawings", "approve")
 def approve_drawing(request, id: int):
     try:
@@ -183,12 +209,15 @@ def approve_drawing(request, id: int):
         return 400, {"detail": str(e)}
 
 
-@drawing_bank_api.post("/{id}/reject", response={
-    200: DrawingBankFullResponseSchema,
-    403: MessageSchema,
-    404: MessageSchema,
-    400: MessageSchema
-})
+@drawing_bank_api.post(
+    "/{id}/reject",
+    response={
+        200: DrawingBankFullResponseSchema,
+        403: MessageSchema,
+        404: MessageSchema,
+        400: MessageSchema,
+    },
+)
 @require_permission("drawings", "reject")
 def reject_drawing(request, id: int, payload: DrawingBankRejectSchema):
     try:
@@ -209,8 +238,9 @@ def reject_drawing(request, id: int, payload: DrawingBankRejectSchema):
         return 400, {"detail": str(e)}
 
 
-
-@drawing_bank_api.post("/{id}/download", response={200: MessageSchema, 404: MessageSchema})
+@drawing_bank_api.post(
+    "/{id}/download", response={200: MessageSchema, 404: MessageSchema}
+)
 @require_permission("drawings", "download")
 def track_download(request, id: int):
     try:
@@ -220,7 +250,7 @@ def track_download(request, id: int):
             return 400, {"detail": "Only approved drawings can be downloaded."}
 
         drawing.download_count += 1
-        drawing.save(update_fields=['download_count'])
+        drawing.save(update_fields=["download_count"])
         return 200, {"detail": "Download recorded."}
     except Http404:
         return 404, {"detail": "Drawing not found."}

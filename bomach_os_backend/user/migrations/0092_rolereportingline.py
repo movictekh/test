@@ -8,29 +8,134 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('user', '0091_rolekpimetric_employeekpirecord_and_more'),
+        ("user", "0091_rolekpimetric_employeekpirecord_and_more"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='RoleReportingLine',
+            name="RoleReportingLine",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='When this record was created')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text='When this record was last updated')),
-                ('relationship_type', models.CharField(choices=[('direct', 'Direct'), ('dotted_line', 'Dotted Line'), ('escalation', 'Escalation')], default='direct', max_length=30)),
-                ('sequence', models.PositiveIntegerField(default=1, validators=[django.core.validators.MinValueValidator(1)])),
-                ('is_active', models.BooleanField(default=True)),
-                ('branch', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='role_reporting_lines', to='user.branch')),
-                ('department', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='role_reporting_lines', to='user.department')),
-                ('reports_to_role', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='reporting_lines_to', to='user.role')),
-                ('role', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='reporting_lines', to='user.role')),
-                ('unit', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='role_reporting_lines', to='user.unit')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, help_text="When this record was created"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, help_text="When this record was last updated"
+                    ),
+                ),
+                (
+                    "relationship_type",
+                    models.CharField(
+                        choices=[
+                            ("direct", "Direct"),
+                            ("dotted_line", "Dotted Line"),
+                            ("escalation", "Escalation"),
+                        ],
+                        default="direct",
+                        max_length=30,
+                    ),
+                ),
+                (
+                    "sequence",
+                    models.PositiveIntegerField(
+                        default=1,
+                        validators=[django.core.validators.MinValueValidator(1)],
+                    ),
+                ),
+                ("is_active", models.BooleanField(default=True)),
+                (
+                    "branch",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="role_reporting_lines",
+                        to="user.branch",
+                    ),
+                ),
+                (
+                    "department",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="role_reporting_lines",
+                        to="user.department",
+                    ),
+                ),
+                (
+                    "reports_to_role",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="reporting_lines_to",
+                        to="user.role",
+                    ),
+                ),
+                (
+                    "role",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="reporting_lines",
+                        to="user.role",
+                    ),
+                ),
+                (
+                    "unit",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="role_reporting_lines",
+                        to="user.unit",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['sequence', 'id'],
-                'indexes': [models.Index(fields=['role', 'sequence'], name='user_rolere_role_id_bdcd8f_idx'), models.Index(fields=['role', 'relationship_type', 'is_active'], name='user_rolere_role_id_e78ec8_idx'), models.Index(fields=['role', 'reports_to_role'], name='user_rolere_role_id_8d76b1_idx'), models.Index(fields=['branch', 'department', 'unit'], name='user_rolere_branch__aaebfa_idx')],
-                'constraints': [models.UniqueConstraint(fields=('role', 'reports_to_role', 'relationship_type', 'branch', 'department', 'unit'), name='uniq_role_reporting_line_edge')],
+                "ordering": ["sequence", "id"],
+                "indexes": [
+                    models.Index(
+                        fields=["role", "sequence"],
+                        name="user_rolere_role_id_bdcd8f_idx",
+                    ),
+                    models.Index(
+                        fields=["role", "relationship_type", "is_active"],
+                        name="user_rolere_role_id_e78ec8_idx",
+                    ),
+                    models.Index(
+                        fields=["role", "reports_to_role"],
+                        name="user_rolere_role_id_8d76b1_idx",
+                    ),
+                    models.Index(
+                        fields=["branch", "department", "unit"],
+                        name="user_rolere_branch__aaebfa_idx",
+                    ),
+                ],
+                "constraints": [
+                    models.UniqueConstraint(
+                        fields=(
+                            "role",
+                            "reports_to_role",
+                            "relationship_type",
+                            "branch",
+                            "department",
+                            "unit",
+                        ),
+                        name="uniq_role_reporting_line_edge",
+                    )
+                ],
             },
         ),
     ]

@@ -1,21 +1,23 @@
 from typing import List, Optional
-from django.shortcuts import get_object_or_404
-from django.db.models import Q
+
 from django.core.exceptions import ValidationError
-from ninja import Router, Query
-from hr.models import TrainingProgram
+from django.db.models import Q
+from django.shortcuts import get_object_or_404
+from ninja import Query, Router
+from ninja.pagination import LimitOffsetPagination, paginate
+
 from hr.api.schemas import (
-    TrainingProgramCreateSchema,
-    TrainingProgramUpdateSchema,
-    TrainingProgramResponseSchema,
-    TrainingProgramListSchema,
-    TrainingProgramFilterSchema,
     MessageSchema,
+    TrainingProgramCreateSchema,
+    TrainingProgramFilterSchema,
+    TrainingProgramListSchema,
+    TrainingProgramResponseSchema,
+    TrainingProgramUpdateSchema,
 )
-from ninja.pagination import paginate, LimitOffsetPagination
+from hr.models import TrainingProgram
 from user.utils.perm import require_permission
 
-router = Router(tags=['Training Programs'])
+router = Router(tags=["Training Programs"])
 
 
 @router.post("/", response={201: TrainingProgramResponseSchema, 400: MessageSchema})
@@ -26,7 +28,7 @@ def create_training_program(request, payload: TrainingProgramCreateSchema):
         program = TrainingProgram.objects.create(**payload.model_dump())
         return 201, program
     except ValidationError as e:
-        return 400, {'detail': e.messages[0]}
+        return 400, {"detail": e.messages[0]}
 
 
 @router.get("/", response=List[TrainingProgramListSchema])
@@ -35,7 +37,7 @@ def create_training_program(request, payload: TrainingProgramCreateSchema):
 def list_training_programs(
     request,
     search: Optional[str] = Query(None, description="Search by program name"),
-    filters: TrainingProgramFilterSchema = Query(...)
+    filters: TrainingProgramFilterSchema = Query(...),
 ):
     """List all training programs with search and filters"""
     programs = TrainingProgram.objects.all()
@@ -75,9 +77,13 @@ def get_training_program(request, program_id: int):
     return program
 
 
-@router.put("/{program_id}", response={200: TrainingProgramResponseSchema, 400: MessageSchema})
+@router.put(
+    "/{program_id}", response={200: TrainingProgramResponseSchema, 400: MessageSchema}
+)
 @require_permission("training_programs", "update")
-def update_training_program(request, program_id: int, payload: TrainingProgramUpdateSchema):
+def update_training_program(
+    request, program_id: int, payload: TrainingProgramUpdateSchema
+):
     """Update a training program"""
     try:
         program = get_object_or_404(TrainingProgram, id=program_id)
@@ -85,13 +91,15 @@ def update_training_program(request, program_id: int, payload: TrainingProgramUp
         update_data = payload.model_dump(exclude_unset=True)
 
         # Validate date logic if both dates are being updated
-        if 'start_date' in update_data and 'end_date' in update_data:
-            if update_data['end_date'] < update_data['start_date']:
-                raise ValueError('End date must be after start date')
-        elif 'start_date' in update_data and update_data['start_date'] > program.end_date:
-            raise ValueError('Start date cannot be after current end date')
-        elif 'end_date' in update_data and update_data['end_date'] < program.start_date:
-            raise ValueError('End date cannot be before current start date')
+        if "start_date" in update_data and "end_date" in update_data:
+            if update_data["end_date"] < update_data["start_date"]:
+                raise ValueError("End date must be after start date")
+        elif (
+            "start_date" in update_data and update_data["start_date"] > program.end_date
+        ):
+            raise ValueError("Start date cannot be after current end date")
+        elif "end_date" in update_data and update_data["end_date"] < program.start_date:
+            raise ValueError("End date cannot be before current start date")
 
         for attr, value in update_data.items():
             setattr(program, attr, value)
@@ -99,17 +107,20 @@ def update_training_program(request, program_id: int, payload: TrainingProgramUp
         program.save()
         return 200, program
     except ValidationError as e:
-        return 400, {'detail': e.messages[0]}
+        return 400, {"detail": e.messages[0]}
 
 
-@router.patch("/{program_id}/status", response={200: TrainingProgramResponseSchema, 400: MessageSchema})
+@router.patch(
+    "/{program_id}/status",
+    response={200: TrainingProgramResponseSchema, 400: MessageSchema},
+)
 @require_permission("training_programs", "update")
 def update_training_program_status(request, program_id: int, status: str = Query(...)):
     """Update only the status of a training program"""
     try:
         program = get_object_or_404(TrainingProgram, id=program_id)
 
-        valid_statuses = ['pending', 'in_progress', 'completed', 'cancelled']
+        valid_statuses = ["pending", "in_progress", "completed", "cancelled"]
         if status not in valid_statuses:
             raise ValueError(f'Status must be one of: {", ".join(valid_statuses)}')
 
@@ -117,7 +128,7 @@ def update_training_program_status(request, program_id: int, status: str = Query
         program.save()
         return 200, program
     except ValidationError as e:
-        return 400, {'detail': e.messages[0]}
+        return 400, {"detail": e.messages[0]}
 
 
 @router.delete("/{program_id}", response={204: None, 400: MessageSchema})
@@ -129,4 +140,4 @@ def delete_training_program(request, program_id: int):
         program.delete()
         return 204, None
     except ValidationError as e:
-        return 400, {'detail': e.messages[0]}
+        return 400, {"detail": e.messages[0]}

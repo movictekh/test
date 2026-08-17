@@ -8,7 +8,6 @@ from typing import List
 import requests
 from django.conf import settings
 
-
 logger = logging.getLogger(__name__)
 
 COSINE_DISTANCE_THRESHOLD = 0.6
@@ -57,13 +56,9 @@ def _response_payload(response) -> dict:
     try:
         payload = response.json()
     except (TypeError, ValueError):
-        raise FaceServiceBadGateway(
-            "Face service returned malformed JSON"
-        ) from None
+        raise FaceServiceBadGateway("Face service returned malformed JSON") from None
     if not isinstance(payload, dict):
-        raise FaceServiceBadGateway(
-            "Face service returned an invalid response"
-        )
+        raise FaceServiceBadGateway("Face service returned an invalid response")
     return payload
 
 
@@ -108,9 +103,7 @@ def extract_embedding(image_data: str) -> List[float]:
         raise InvalidFaceImage("Face image is too large")
 
     if response.status_code in {429, 503}:
-        raise FaceServiceUnavailable(
-            "Face verification service is unavailable"
-        )
+        raise FaceServiceUnavailable("Face verification service is unavailable")
 
     logger.error(
         "Face service returned unexpected status %s",

@@ -1,29 +1,29 @@
 """
 Workflow engine: evaluates rules against trigger events and executes actions.
 """
+
 from decimal import Decimal
 
 from user.models.workflow_rule import WorkflowRule, WorkflowRuleLog
 
-
 OPERATORS = {
-    'eq': lambda a, b: str(a) == str(b),
-    'neq': lambda a, b: str(a) != str(b),
-    'gt': lambda a, b: float(a) > float(b),
-    'gte': lambda a, b: float(a) >= float(b),
-    'lt': lambda a, b: float(a) < float(b),
-    'lte': lambda a, b: float(a) <= float(b),
-    'in': lambda a, b: str(a) in [str(v) for v in b],
-    'contains': lambda a, b: str(b) in str(a),
+    "eq": lambda a, b: str(a) == str(b),
+    "neq": lambda a, b: str(a) != str(b),
+    "gt": lambda a, b: float(a) > float(b),
+    "gte": lambda a, b: float(a) >= float(b),
+    "lt": lambda a, b: float(a) < float(b),
+    "lte": lambda a, b: float(a) <= float(b),
+    "in": lambda a, b: str(a) in [str(v) for v in b],
+    "contains": lambda a, b: str(b) in str(a),
 }
 
 
 def _evaluate_conditions(conditions, instance):
     """Check if all conditions match the instance. AND logic."""
     for condition in conditions:
-        field = condition.get('field', '')
-        operator = condition.get('operator', 'eq')
-        expected = condition.get('value', '')
+        field = condition.get("field", "")
+        operator = condition.get("operator", "eq")
+        expected = condition.get("value", "")
 
         actual = getattr(instance, field, None)
         if actual is None:
@@ -43,21 +43,23 @@ def _execute_notification(action_config, trigger_event, instance):
     """Create Notification records for specified recipients."""
     from user.models.notification import Notification
 
-    recipient_ids = action_config.get('recipient_ids', [])
-    title = action_config.get('title', f'Workflow: {trigger_event}')
-    message = action_config.get('message', f'An automated action was triggered by {trigger_event}.')
+    recipient_ids = action_config.get("recipient_ids", [])
+    title = action_config.get("title", f"Workflow: {trigger_event}")
+    message = action_config.get(
+        "message", f"An automated action was triggered by {trigger_event}."
+    )
 
     for user_id in recipient_ids:
         Notification.objects.create(
             user_id=user_id,
             title=title,
             message=message,
-            notification_type='system',
-            link=action_config.get('link', ''),
+            notification_type="system",
+            link=action_config.get("link", ""),
             metadata={
-                'trigger_event': trigger_event,
-                'object_type': type(instance).__name__,
-                'object_id': instance.pk,
+                "trigger_event": trigger_event,
+                "object_type": type(instance).__name__,
+                "object_id": instance.pk,
             },
         )
 
@@ -79,11 +81,11 @@ def evaluate_workflow_rules(trigger_event, instance):
     for rule in rules:
         conditions_met = _evaluate_conditions(rule.conditions, instance)
         action_executed = False
-        error_message = ''
+        error_message = ""
 
         if conditions_met:
             try:
-                if rule.action_type == 'send_notification':
+                if rule.action_type == "send_notification":
                     _execute_notification(rule.action_config, trigger_event, instance)
                 action_executed = True
             except Exception as e:

@@ -1,18 +1,37 @@
 """Core Service catalogue, Service CRUD, publishing and subservice endpoints."""
 
 from typing import Any, Dict, List
+
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.shortcuts import get_object_or_404
 from ninja import Router
 from ninja.pagination import LimitOffsetPagination, paginate
+
 from domains.service_operations import selectors as domain_selectors
+from domains.service_operations.models import (
+    Service,
+    ServiceBranchActivation,
+    ServiceCategory,
+    ServicePricingConfig,
+    ServiceRequestForm,
+    ServiceSubService,
+    ServiceWorkflow,
+)
 from domains.service_operations.services import catalogue as domain_services
 from services.api.schema.others import MessageSchema
-from ..schemas.catalogue import ServiceCoreOut, ServiceCreateSchema, ServicePublishIn, ServiceSubServiceBulkReplace, ServiceSubServiceIn, ServiceSubServiceUpdate, ServiceUpdateSchema
-from domains.service_operations.models import Service, ServiceBranchActivation, ServiceCategory, ServicePricingConfig, ServiceRequestForm, ServiceSubService, ServiceWorkflow
 from user.models.role import Role
 from user.utils.perm import require_permission
+
+from ..schemas.catalogue import (
+    ServiceCoreOut,
+    ServiceCreateSchema,
+    ServicePublishIn,
+    ServiceSubServiceBulkReplace,
+    ServiceSubServiceIn,
+    ServiceSubServiceUpdate,
+    ServiceUpdateSchema,
+)
 from ._catalogue_support import (
     _current_user_id,
     _serialize_catalogue_card,
@@ -22,11 +41,14 @@ from ._catalogue_support import (
     _validation_detail,
 )
 
-
 router = Router(tags=["Services"])
 
 
-@router.get("/catalogue", response=List[Dict[str, Any]], operation_id="services_api_v1_services_list_service_catalogue")
+@router.get(
+    "/catalogue",
+    response=List[Dict[str, Any]],
+    operation_id="services_api_v1_services_list_service_catalogue",
+)
 @paginate(LimitOffsetPagination, page_size=10)
 @require_permission("services", "list")
 def list_service_catalogue(
@@ -50,14 +72,22 @@ def list_service_catalogue(
     return [_serialize_catalogue_card(service) for service in services]
 
 
-@router.get("/catalogue/{service_id}", response=Dict[str, Any], operation_id="services_api_v1_services_get_service_catalogue_detail")
+@router.get(
+    "/catalogue/{service_id}",
+    response=Dict[str, Any],
+    operation_id="services_api_v1_services_get_service_catalogue_detail",
+)
 @require_permission("services", "view")
 def get_service_catalogue_detail(request, service_id: int):
     service = get_object_or_404(domain_selectors.service_queryset(), id=service_id)
     return _serialize_catalogue_detail(service)
 
 
-@router.get("", response=List[ServiceCoreOut], operation_id="services_api_v1_services_list_services")
+@router.get(
+    "",
+    response=List[ServiceCoreOut],
+    operation_id="services_api_v1_services_list_services",
+)
 @paginate(LimitOffsetPagination, page_size=10)
 @require_permission("services", "list")
 def list_services(
@@ -83,15 +113,29 @@ def list_services(
     return [_serialize_service_core(service) for service in services]
 
 
-@router.post("", response={201: ServiceCoreOut, 400: MessageSchema}, operation_id="services_api_v1_services_create_service")
+@router.post(
+    "",
+    response={201: ServiceCoreOut, 400: MessageSchema},
+    operation_id="services_api_v1_services_create_service",
+)
 @require_permission("services", "create")
 def create_service(request, payload: ServiceCreateSchema):
     try:
         if payload.status:
-            domain_services.ensure_choice(payload.status, Service.STATUS_CHOICES, "status")
+            domain_services.ensure_choice(
+                payload.status, Service.STATUS_CHOICES, "status"
+            )
         if payload.fulfillment_mode:
-            domain_services.ensure_choice(payload.fulfillment_mode, Service.FULFILLMENT_MODE_CHOICES, "fulfillment_mode")
-        domain_services.ensure_choice(payload.client_visibility, Service.CLIENT_VISIBILITY_CHOICES, "client_visibility")
+            domain_services.ensure_choice(
+                payload.fulfillment_mode,
+                Service.FULFILLMENT_MODE_CHOICES,
+                "fulfillment_mode",
+            )
+        domain_services.ensure_choice(
+            payload.client_visibility,
+            Service.CLIENT_VISIBILITY_CHOICES,
+            "client_visibility",
+        )
         get_object_or_404(ServiceCategory, id=payload.category_id)
         if payload.owner_role_id:
             get_object_or_404(Role, id=payload.owner_role_id)
@@ -111,19 +155,31 @@ def create_service(request, payload: ServiceCreateSchema):
             client_visibility=payload.client_visibility,
             created_by_id=_current_user_id(request, payload.created_by_id),
         )
-        return 201, _serialize_service_core(Service.objects.select_related("category", "owner_role", "created_by").get(id=service.id))
+        return 201, _serialize_service_core(
+            Service.objects.select_related("category", "owner_role", "created_by").get(
+                id=service.id
+            )
+        )
     except (ValidationError, IntegrityError) as e:
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.get("/{service_id}", response=ServiceCoreOut, operation_id="services_api_v1_services_get_service")
+@router.get(
+    "/{service_id}",
+    response=ServiceCoreOut,
+    operation_id="services_api_v1_services_get_service",
+)
 @require_permission("services", "view")
 def get_service(request, service_id: int):
     service = get_object_or_404(domain_selectors.service_queryset(), id=service_id)
     return _serialize_service_core(service)
 
 
-@router.put("/{service_id}", response={200: ServiceCoreOut, 400: MessageSchema, 404: MessageSchema}, operation_id="services_api_v1_services_update_service")
+@router.put(
+    "/{service_id}",
+    response={200: ServiceCoreOut, 400: MessageSchema, 404: MessageSchema},
+    operation_id="services_api_v1_services_update_service",
+)
 @require_permission("services", "update")
 def update_service(request, service_id: int, payload: ServiceUpdateSchema):
     try:
@@ -134,7 +190,9 @@ def update_service(request, service_id: int, payload: ServiceUpdateSchema):
                 choices = getattr(Service, f"{field_name.upper()}_CHOICES", None)
                 if field_name == "status":
                     choices = Service.STATUS_CHOICES
-                domain_services.ensure_choice(update_data[field_name], choices, field_name)
+                domain_services.ensure_choice(
+                    update_data[field_name], choices, field_name
+                )
         if "category_id" in update_data and update_data["category_id"]:
             get_object_or_404(ServiceCategory, id=update_data["category_id"])
         if "owner_role_id" in update_data and update_data["owner_role_id"]:
@@ -149,12 +207,19 @@ def update_service(request, service_id: int, payload: ServiceUpdateSchema):
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.delete("/{service_id}", response={200: MessageSchema, 400: MessageSchema, 404: MessageSchema}, operation_id="services_api_v1_services_delete_service")
+@router.delete(
+    "/{service_id}",
+    response={200: MessageSchema, 400: MessageSchema, 404: MessageSchema},
+    operation_id="services_api_v1_services_delete_service",
+)
 @require_permission("services", "delete")
 def delete_service(request, service_id: int):
     try:
         service = get_object_or_404(Service, id=service_id)
-        if service.status == "draft" and domain_selectors.service_dependents_count(service) == 0:
+        if (
+            service.status == "draft"
+            and domain_selectors.service_dependents_count(service) == 0
+        ):
             service.delete()
             return 200, {"detail": "Service deleted successfully"}
         service.status = "inactive"
@@ -164,36 +229,69 @@ def delete_service(request, service_id: int):
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.post("/{service_id}/publish", response={200: Dict[str, Any], 400: MessageSchema, 404: MessageSchema}, operation_id="services_api_v1_services_publish_service")
+@router.post(
+    "/{service_id}/publish",
+    response={200: Dict[str, Any], 400: MessageSchema, 404: MessageSchema},
+    operation_id="services_api_v1_services_publish_service",
+)
 @require_permission("services", "update")
 def publish_service(request, service_id: int, payload: ServicePublishIn):
     try:
         with transaction.atomic():
             service = get_object_or_404(Service, id=service_id)
-            domain_services.ensure_choice(payload.status, Service.STATUS_CHOICES, "status")
+            domain_services.ensure_choice(
+                payload.status, Service.STATUS_CHOICES, "status"
+            )
             if payload.client_visibility:
-                domain_services.ensure_choice(payload.client_visibility, Service.CLIENT_VISIBILITY_CHOICES, "client_visibility")
+                domain_services.ensure_choice(
+                    payload.client_visibility,
+                    Service.CLIENT_VISIBILITY_CHOICES,
+                    "client_visibility",
+                )
 
             request_form = (
-                get_object_or_404(ServiceRequestForm, id=payload.request_form_id, service=service)
-                if payload.request_form_id else service.active_request_form
+                get_object_or_404(
+                    ServiceRequestForm, id=payload.request_form_id, service=service
+                )
+                if payload.request_form_id
+                else service.active_request_form
             )
             pricing_config = (
-                get_object_or_404(ServicePricingConfig, id=payload.pricing_config_id, service=service)
-                if payload.pricing_config_id else service.active_pricing_config
+                get_object_or_404(
+                    ServicePricingConfig, id=payload.pricing_config_id, service=service
+                )
+                if payload.pricing_config_id
+                else service.active_pricing_config
             )
             workflow = (
-                get_object_or_404(ServiceWorkflow, id=payload.workflow_id, service=service)
-                if payload.workflow_id else service.active_workflow
+                get_object_or_404(
+                    ServiceWorkflow, id=payload.workflow_id, service=service
+                )
+                if payload.workflow_id
+                else service.active_workflow
             )
 
             if payload.status == "active":
                 if not request_form:
-                    raise ValidationError({"request_form": "An active request form is required before publishing."})
+                    raise ValidationError(
+                        {
+                            "request_form": "An active request form is required before publishing."
+                        }
+                    )
                 if not pricing_config:
-                    raise ValidationError({"pricing_config": "An active pricing config is required before publishing."})
-                if not ServiceBranchActivation.objects.filter(service=service, status="active").exists():
-                    raise ValidationError({"branch_activations": "At least one active branch is required before publishing."})
+                    raise ValidationError(
+                        {
+                            "pricing_config": "An active pricing config is required before publishing."
+                        }
+                    )
+                if not ServiceBranchActivation.objects.filter(
+                    service=service, status="active"
+                ).exists():
+                    raise ValidationError(
+                        {
+                            "branch_activations": "At least one active branch is required before publishing."
+                        }
+                    )
 
             if request_form:
                 domain_services.activate_request_form(service, request_form)
@@ -212,46 +310,77 @@ def publish_service(request, service_id: int, payload: ServicePublishIn):
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.get("/{service_id}/subservices", response=List[Dict[str, Any]], operation_id="services_api_v1_services_list_subservices")
+@router.get(
+    "/{service_id}/subservices",
+    response=List[Dict[str, Any]],
+    operation_id="services_api_v1_services_list_subservices",
+)
 @require_permission("service_subservices", "list")
 def list_subservices(request, service_id: int):
     get_object_or_404(Service, id=service_id)
-    return [_serialize_subservice(item) for item in ServiceSubService.objects.filter(service_id=service_id)]
+    return [
+        _serialize_subservice(item)
+        for item in ServiceSubService.objects.filter(service_id=service_id)
+    ]
 
 
-@router.put("/{service_id}/subservices", response={200: List[Dict[str, Any]], 400: MessageSchema}, operation_id="services_api_v1_services_replace_subservices")
+@router.put(
+    "/{service_id}/subservices",
+    response={200: List[Dict[str, Any]], 400: MessageSchema},
+    operation_id="services_api_v1_services_replace_subservices",
+)
 @require_permission("service_subservices", "update")
-def replace_subservices(request, service_id: int, payload: ServiceSubServiceBulkReplace):
+def replace_subservices(
+    request, service_id: int, payload: ServiceSubServiceBulkReplace
+):
     try:
         service = get_object_or_404(Service, id=service_id)
-        codes = [item.code or item.name.lower().replace(" ", "-") for item in payload.subservices]
+        codes = [
+            item.code or item.name.lower().replace(" ", "-")
+            for item in payload.subservices
+        ]
         if len(codes) != len(set(codes)):
-            raise ValidationError({"code": "Subservice codes must be unique within a service."})
+            raise ValidationError(
+                {"code": "Subservice codes must be unique within a service."}
+            )
         with transaction.atomic():
             ServiceSubService.objects.filter(service=service).delete()
             rows = []
             for index, item in enumerate(payload.subservices):
-                rows.append(ServiceSubService(
-                    service=service,
-                    code=item.code or item.name.lower().replace(" ", "-"),
-                    name=item.name,
-                    description=item.description or "",
-                    status=item.status,
-                    default_sla_days=item.default_sla_days,
-                    sort_order=item.sort_order if item.sort_order is not None else index,
-                ))
+                rows.append(
+                    ServiceSubService(
+                        service=service,
+                        code=item.code or item.name.lower().replace(" ", "-"),
+                        name=item.name,
+                        description=item.description or "",
+                        status=item.status,
+                        default_sla_days=item.default_sla_days,
+                        sort_order=(
+                            item.sort_order if item.sort_order is not None else index
+                        ),
+                    )
+                )
             ServiceSubService.objects.bulk_create(rows)
-        return 200, [_serialize_subservice(item) for item in ServiceSubService.objects.filter(service=service)]
+        return 200, [
+            _serialize_subservice(item)
+            for item in ServiceSubService.objects.filter(service=service)
+        ]
     except (ValidationError, IntegrityError) as e:
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.post("/{service_id}/subservices", response={201: Dict[str, Any], 400: MessageSchema}, operation_id="services_api_v1_services_create_subservice")
+@router.post(
+    "/{service_id}/subservices",
+    response={201: Dict[str, Any], 400: MessageSchema},
+    operation_id="services_api_v1_services_create_subservice",
+)
 @require_permission("service_subservices", "create")
 def create_subservice(request, service_id: int, payload: ServiceSubServiceIn):
     try:
         service = get_object_or_404(Service, id=service_id)
-        domain_services.ensure_choice(payload.status, ServiceSubService.STATUS_CHOICES, "status")
+        domain_services.ensure_choice(
+            payload.status, ServiceSubService.STATUS_CHOICES, "status"
+        )
         subservice = ServiceSubService.objects.create(
             service=service,
             code=payload.code or payload.name.lower().replace(" ", "-"),
@@ -266,14 +395,24 @@ def create_subservice(request, service_id: int, payload: ServiceSubServiceIn):
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.put("/{service_id}/subservices/{subservice_id}", response={200: Dict[str, Any], 400: MessageSchema, 404: MessageSchema}, operation_id="services_api_v1_services_update_subservice")
+@router.put(
+    "/{service_id}/subservices/{subservice_id}",
+    response={200: Dict[str, Any], 400: MessageSchema, 404: MessageSchema},
+    operation_id="services_api_v1_services_update_subservice",
+)
 @require_permission("service_subservices", "update")
-def update_subservice(request, service_id: int, subservice_id: int, payload: ServiceSubServiceUpdate):
+def update_subservice(
+    request, service_id: int, subservice_id: int, payload: ServiceSubServiceUpdate
+):
     try:
-        subservice = get_object_or_404(ServiceSubService, id=subservice_id, service_id=service_id)
+        subservice = get_object_or_404(
+            ServiceSubService, id=subservice_id, service_id=service_id
+        )
         update_data = payload.dict(exclude_unset=True)
         if update_data.get("status"):
-            domain_services.ensure_choice(update_data["status"], ServiceSubService.STATUS_CHOICES, "status")
+            domain_services.ensure_choice(
+                update_data["status"], ServiceSubService.STATUS_CHOICES, "status"
+            )
         for attr, value in update_data.items():
             setattr(subservice, attr, value)
         subservice.save()
@@ -282,13 +421,98 @@ def update_subservice(request, service_id: int, subservice_id: int, payload: Ser
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.delete("/{service_id}/subservices/{subservice_id}", response={200: MessageSchema, 404: MessageSchema}, operation_id="services_api_v1_services_delete_subservice")
+@router.delete(
+    "/{service_id}/subservices/{subservice_id}",
+    response={200: MessageSchema, 404: MessageSchema},
+    operation_id="services_api_v1_services_delete_subservice",
+)
 @require_permission("service_subservices", "delete")
 def delete_subservice(request, service_id: int, subservice_id: int):
-    subservice = get_object_or_404(ServiceSubService, id=subservice_id, service_id=service_id)
+    subservice = get_object_or_404(
+        ServiceSubService, id=subservice_id, service_id=service_id
+    )
     if subservice.status == "draft":
         subservice.delete()
         return 200, {"detail": "Subservice deleted successfully"}
     subservice.status = "inactive"
     subservice.save(update_fields=["status", "updated_at"])
     return 200, {"detail": "Subservice marked inactive successfully"}
+
+
+# --------------------------------------------------------------------------
+# Service categories
+# --------------------------------------------------------------------------
+
+from typing import List
+
+from django.core.exceptions import ValidationError
+from django.shortcuts import get_object_or_404
+from ninja import Router
+from ninja.pagination import LimitOffsetPagination, paginate
+
+from domains.service_operations.models import ServiceCategory
+from services.api.schema.others import MessageSchema
+from user.utils.perm import require_permission
+
+from ..schemas.lifecycle import ServiceCategoryIn, ServiceCategoryOut
+
+categories_router = Router(tags=["Categories"])
+
+
+@categories_router.get("", response=List[ServiceCategoryOut])
+@paginate(LimitOffsetPagination, page_size=10)
+@require_permission("categories", "list")
+def list_categories(request):
+    return ServiceCategory.objects.all()
+
+
+@categories_router.post("", response={201: ServiceCategoryOut, 400: MessageSchema})
+@require_permission("categories", "create")
+def create_category(request, payload: ServiceCategoryIn):
+    try:
+        category = ServiceCategory.objects.create(**payload.dict())
+        return 201, category
+    except ValidationError as e:
+        return 400, {"detail": e.messages[0]}
+    except Exception as e:
+        return 400, {"detail": str(e)}
+
+
+@categories_router.get("/{category_id}", response=ServiceCategoryOut)
+@require_permission("categories", "view")
+def get_category(request, category_id: int):
+    return get_object_or_404(ServiceCategory, id=category_id)
+
+
+@categories_router.put(
+    "/{category_id}",
+    response={200: ServiceCategoryOut, 400: MessageSchema, 404: MessageSchema},
+)
+@require_permission("categories", "update")
+def update_category(request, category_id: int, payload: ServiceCategoryIn):
+    try:
+        category = get_object_or_404(ServiceCategory, id=category_id)
+        for attr, value in payload.dict().items():
+            setattr(category, attr, value)
+        category.save()
+        return 200, category
+    except ValidationError as e:
+        return 400, {"detail": e.messages[0]}
+    except Exception as e:
+        return 400, {"detail": str(e)}
+
+
+@categories_router.delete(
+    "/{category_id}",
+    response={200: MessageSchema, 400: MessageSchema, 404: MessageSchema},
+)
+@require_permission("categories", "delete")
+def delete_category(request, category_id: int):
+    try:
+        category = get_object_or_404(ServiceCategory, id=category_id)
+        category.delete()
+        return 200, {"detail": "Category deleted successfully"}
+    except ValidationError as e:
+        return 400, {"detail": e.messages[0]}
+    except Exception as e:
+        return 400, {"detail": str(e)}

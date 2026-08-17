@@ -1,15 +1,20 @@
 from typing import List
-from ninja import Router
-from django.shortcuts import get_object_or_404
-from django.db.models import Q, Count
-from ninja.pagination import paginate, LimitOffsetPagination
-from django.core.exceptions import ValidationError
 
-from services.api.schema.property_schemas import PropertyIn, PropertyOut, PropertyUpdate, PropertyStatsOut
+from django.core.exceptions import ValidationError
+from django.db.models import Count, Q
+from django.shortcuts import get_object_or_404
+from ninja import Router
+from ninja.pagination import LimitOffsetPagination, paginate
+
 from services.api.schema.others import MessageSchema
+from services.api.schema.property_schemas import (
+    PropertyIn,
+    PropertyOut,
+    PropertyStatsOut,
+    PropertyUpdate,
+)
 from services.models.property import Property
 from user.utils.perm import require_permission
-
 
 router = Router(tags=["Properties"])
 
@@ -19,13 +24,13 @@ router = Router(tags=["Properties"])
 def get_property_stats(request):
     """Get property statistics for dashboard."""
     total = Property.objects.count()
-    available = Property.objects.filter(status='available').count()
-    reserved = Property.objects.filter(status='reserved').count()
-    sold_rented = Property.objects.filter(Q(status='sold') | Q(status='rented')).count()
+    available = Property.objects.filter(status="available").count()
+    reserved = Property.objects.filter(status="reserved").count()
+    sold_rented = Property.objects.filter(Q(status="sold") | Q(status="rented")).count()
 
-    for_sale = Property.objects.filter(category='sale').count()
-    for_rent = Property.objects.filter(category='rent').count()
-    for_lease = Property.objects.filter(category='lease').count()
+    for_sale = Property.objects.filter(category="sale").count()
+    for_rent = Property.objects.filter(category="rent").count()
+    for_lease = Property.objects.filter(category="lease").count()
 
     return {
         "total_properties": total,
@@ -34,7 +39,7 @@ def get_property_stats(request):
         "sold_rented": sold_rented,
         "for_sale": for_sale,
         "for_rent": for_rent,
-        "for_lease": for_lease
+        "for_lease": for_lease,
     }
 
 
@@ -46,7 +51,7 @@ def list_properties(
     category: str = None,
     status: str = None,
     client_id: int = None,
-    search: str = None
+    search: str = None,
 ):
     """List all properties with optional filtering."""
     properties = Property.objects.all()
@@ -59,9 +64,9 @@ def list_properties(
         properties = properties.filter(client_id=client_id)
     if search:
         properties = properties.filter(
-            Q(name__icontains=search) |
-            Q(location__icontains=search) |
-            Q(description__icontains=search)
+            Q(name__icontains=search)
+            | Q(location__icontains=search)
+            | Q(description__icontains=search)
         )
 
     return properties
@@ -75,9 +80,9 @@ def create_property(request, payload: PropertyIn):
         property = Property.objects.create(**payload.dict())
         return 201, property
     except ValidationError as e:
-        return 400, {'detail': e.messages[0]}
+        return 400, {"detail": e.messages[0]}
     except Exception as e:
-        return 400, {'detail': str(e)}
+        return 400, {"detail": str(e)}
 
 
 @router.get("/{property_id}", response=PropertyOut)
@@ -87,7 +92,10 @@ def get_property(request, property_id: int):
     return get_object_or_404(Property, id=property_id)
 
 
-@router.put("/{property_id}", response={200: PropertyOut, 400: MessageSchema, 404: MessageSchema})
+@router.put(
+    "/{property_id}",
+    response={200: PropertyOut, 400: MessageSchema, 404: MessageSchema},
+)
 @require_permission("properties", "update")
 def update_property(request, property_id: int, payload: PropertyUpdate):
     """Update an existing property."""
@@ -98,12 +106,15 @@ def update_property(request, property_id: int, payload: PropertyUpdate):
         property.save()
         return 200, property
     except ValidationError as e:
-        return 400, {'detail': e.messages[0]}
+        return 400, {"detail": e.messages[0]}
     except Exception as e:
-        return 400, {'detail': str(e)}
+        return 400, {"detail": str(e)}
 
 
-@router.delete("/{property_id}", response={200: MessageSchema, 400: MessageSchema, 404: MessageSchema})
+@router.delete(
+    "/{property_id}",
+    response={200: MessageSchema, 400: MessageSchema, 404: MessageSchema},
+)
 @require_permission("properties", "delete")
 def delete_property(request, property_id: int):
     """Delete a property."""
@@ -112,9 +123,9 @@ def delete_property(request, property_id: int):
         property.delete()
         return 200, {"detail": "Property deleted successfully"}
     except ValidationError as e:
-        return 400, {'detail': e.messages[0]}
+        return 400, {"detail": e.messages[0]}
     except Exception as e:
-        return 400, {'detail': str(e)}
+        return 400, {"detail": str(e)}
 
 
 @router.get("/client/{client_id}/properties", response=List[PropertyOut])

@@ -1,16 +1,17 @@
-from ninja import Router, Query
-from ninja.pagination import paginate, LimitOffsetPagination
-from django.db.models import Q
-from django.core.exceptions import ValidationError
 from typing import List, Optional
 
-from user.api.schemas.others import MessageSchema
+from django.core.exceptions import ValidationError
+from django.db.models import Q
+from ninja import Query, Router
+from ninja.pagination import LimitOffsetPagination, paginate
+
 from user.api.schemas.announcement import (
-    AnnouncementCreateSchema,
-    AnnouncementUpdateSchema,
-    AnnouncementSchema,
     AnnouncementChoicesSchema,
+    AnnouncementCreateSchema,
+    AnnouncementSchema,
+    AnnouncementUpdateSchema,
 )
+from user.api.schemas.others import MessageSchema
 from user.models.announcement import Announcement
 from user.models.branch import Branch
 from user.models.roles import Department
@@ -43,7 +44,11 @@ def list_announcements(
     is_active: Optional[bool] = Query(None),
     search: Optional[str] = Query(None),
 ):
-    qs = Announcement.objects.prefetch_related('branches', 'departments').select_related('created_by').all()
+    qs = (
+        Announcement.objects.prefetch_related("branches", "departments")
+        .select_related("created_by")
+        .all()
+    )
 
     if branch_id is not None:
         # Include announcements that target this specific branch OR have no branch restrictions
@@ -51,7 +56,9 @@ def list_announcements(
 
     if department_id is not None:
         # Include announcements that target this specific department OR have no department restrictions
-        qs = qs.filter(Q(departments__id=department_id) | Q(departments__isnull=True)).distinct()
+        qs = qs.filter(
+            Q(departments__id=department_id) | Q(departments__isnull=True)
+        ).distinct()
 
     if announcement_type:
         qs = qs.filter(announcement_type=announcement_type)
@@ -64,9 +71,9 @@ def list_announcements(
 
     if search:
         qs = qs.filter(
-            Q(title__icontains=search) |
-            Q(content__icontains=search) |
-            Q(announcement_id__icontains=search)
+            Q(title__icontains=search)
+            | Q(content__icontains=search)
+            | Q(announcement_id__icontains=search)
         )
 
     return qs
@@ -76,7 +83,11 @@ def list_announcements(
 @require_permission("announcements", "view")
 def get_announcement(request, id: int):
     try:
-        ann = Announcement.objects.prefetch_related('branches', 'departments').select_related('created_by').get(id=id)
+        ann = (
+            Announcement.objects.prefetch_related("branches", "departments")
+            .select_related("created_by")
+            .get(id=id)
+        )
         return 200, ann
     except Announcement.DoesNotExist:
         return 404, {"detail": "Announcement not found"}
@@ -120,16 +131,20 @@ def create_announcement(request, payload: AnnouncementCreateSchema):
         return 400, {"detail": str(e)}
 
 
-@announcement_api.put("/{id}", response={200: AnnouncementSchema, 400: MessageSchema, 404: MessageSchema})
+@announcement_api.put(
+    "/{id}", response={200: AnnouncementSchema, 400: MessageSchema, 404: MessageSchema}
+)
 @require_permission("announcements", "update")
 def update_announcement(request, id: int, payload: AnnouncementUpdateSchema):
     try:
-        ann = Announcement.objects.prefetch_related('branches', 'departments').get(id=id)
+        ann = Announcement.objects.prefetch_related("branches", "departments").get(
+            id=id
+        )
         data = payload.dict(exclude_unset=True)
 
         # Handle M2M separately
-        branch_ids = data.pop('branch_ids', None)
-        department_ids = data.pop('department_ids', None)
+        branch_ids = data.pop("branch_ids", None)
+        department_ids = data.pop("department_ids", None)
 
         # Update scalar fields
         for field, value in data.items():
@@ -165,7 +180,9 @@ def update_announcement(request, id: int, payload: AnnouncementUpdateSchema):
         return 400, {"detail": str(e)}
 
 
-@announcement_api.delete("/{id}", response={200: MessageSchema, 400: MessageSchema, 404: MessageSchema})
+@announcement_api.delete(
+    "/{id}", response={200: MessageSchema, 400: MessageSchema, 404: MessageSchema}
+)
 @require_permission("announcements", "delete")
 def delete_announcement(request, id: int):
     try:

@@ -2,13 +2,13 @@ from django.db import migrations
 
 
 def forwards(apps, schema_editor):
-    ServiceOrder = apps.get_model('services', 'ServiceOrder')
-    ServiceRequest = apps.get_model('services', 'ServiceRequest')
+    ServiceOrder = apps.get_model("services", "ServiceOrder")
+    ServiceRequest = apps.get_model("services", "ServiceRequest")
     # Backfill branch from service_request for existing orders
     orders = ServiceOrder.objects.filter(
         branch__isnull=True,
         service_request__isnull=False,
-    ).select_related('service_request')
+    ).select_related("service_request")
     for order in orders:
         if order.service_request and order.service_request_id:
             sr = ServiceRequest.objects.filter(id=order.service_request_id).first()
@@ -23,7 +23,7 @@ def backwards(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('services', '0033_serviceorder_branch'),
+        ("services", "0033_serviceorder_branch"),
     ]
 
     operations = [

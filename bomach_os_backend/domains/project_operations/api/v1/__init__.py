@@ -2,29 +2,30 @@
 
 from ninja import NinjaAPI
 
-from .routers import contracts
-from .routers import dashboard
-from .routers import milestones
-from .routers import my_tasks
-from .routers import projects
-from .routers import site_equipment
-from .routers import tasks
-from .routers import timelines
-from .routers import worksites
+from .routers.contracts import router as contracts_router
+from .routers.execution import (
+    my_tasks_router,
+    site_equipment_router,
+    tasks_router,
+    worksites_router,
+)
+from .routers.planning import milestone_router, timeline_router
+from .routers.projects import dashboard_router
+from .routers.projects import router as projects_router
 
 
 def register_project_operations_v1(api: NinjaAPI) -> None:
     """Register version 1 of the Project Operations HTTP API."""
 
-    api.add_router("/dashboard", dashboard.router)
-    api.add_router("/projects", projects.router)
-    api.add_router("/tasks", tasks.router)
-    api.add_router("/my-tasks", my_tasks.router)
-    api.add_router("/worksites", worksites.router)
-    api.add_router("/contracts", contracts.router)
-    api.add_router("/timelines", timelines.router)
-    api.add_router("/milestones", milestones.router)
-    api.add_router("/site-equipment", site_equipment.router)
+    api.add_router("/dashboard", dashboard_router)
+    api.add_router("/projects", projects_router)
+    api.add_router("/tasks", tasks_router)
+    api.add_router("/my-tasks", my_tasks_router)
+    api.add_router("/worksites", worksites_router)
+    api.add_router("/contracts", contracts_router)
+    api.add_router("/timelines", timeline_router)
+    api.add_router("/milestones", milestone_router)
+    api.add_router("/site-equipment", site_equipment_router)
 
 
 __all__ = ["register_project_operations_v1"]

@@ -1,13 +1,15 @@
-from ninja import Schema
-from typing import Optional, List
 from datetime import datetime
 from decimal import Decimal
+from typing import List, Optional
 
+from ninja import Schema
 
 # ============== Inventory Item Schemas ==============
 
+
 class CreateInventoryItemRequest(Schema):
     """Schema for creating a new inventory item"""
+
     item_name: str
     quantity: Decimal
     quantity_used: Optional[Decimal] = None
@@ -18,6 +20,7 @@ class CreateInventoryItemRequest(Schema):
 
 class UpdateInventoryItemRequest(Schema):
     """Schema for updating an inventory item"""
+
     item_name: Optional[str] = None
     quantity: Optional[Decimal] = None
     quantity_used: Optional[Decimal] = None
@@ -28,6 +31,7 @@ class UpdateInventoryItemRequest(Schema):
 
 class InventoryItemResponse(Schema):
     """Schema for inventory item response"""
+
     id: int
     item_name: str
     quantity: Decimal

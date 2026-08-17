@@ -1,7 +1,8 @@
-from ninja import Schema
-from typing import Optional, List, Dict, Any
 from datetime import date, datetime, time
 from decimal import Decimal
+from typing import Any, Dict, List, Optional
+
+from ninja import Schema
 from pydantic import field_validator
 
 

@@ -9,7 +9,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from ninja import Router
-from ninja.pagination import paginate, LimitOffsetPagination
+from ninja.pagination import LimitOffsetPagination, paginate
 
 from services.api.schema.content_schemas import (
     ContentCalendarBriefIn,
@@ -27,7 +27,6 @@ from services.models.marketing_campaign import CampaignAsset, MarketingCampaign
 from user.models.branch import Branch
 from user.models.employee import Employee
 from user.utils.perm import require_permission, scope_queryset
-
 
 router = Router(tags=["Content"])
 
@@ -178,7 +177,9 @@ def _serialize_media_asset(asset, detail=False):
         "campaign_id": asset.campaign_id,
         "campaign_name": asset.campaign.name if asset.campaign else "",
         "campaign_asset_id": asset.campaign_asset_id,
-        "campaign_asset_name": asset.campaign_asset.name if asset.campaign_asset else "",
+        "campaign_asset_name": (
+            asset.campaign_asset.name if asset.campaign_asset else ""
+        ),
         "calendar_item_id": asset.calendar_item_id,
         "calendar_item_title": asset.calendar_item.title if asset.calendar_item else "",
         "content_id": asset.content_id,
@@ -189,16 +190,34 @@ def _serialize_media_asset(asset, detail=False):
         "icon": MEDIA_ICONS.get(asset.asset_type, MEDIA_ICONS["other"]),
         "color": DIVISION_COLORS.get(asset.division, "#6B7280"),
         "uploaded_by_id": asset.uploaded_by_id,
-        "uploaded_by_name": asset.uploaded_by.get_full_name() if asset.uploaded_by else "",
+        "uploaded_by_name": (
+            asset.uploaded_by.get_full_name() if asset.uploaded_by else ""
+        ),
         "created_at": asset.created_at,
         "updated_at": asset.updated_at,
     }
     if detail:
         row["links"] = {
-            "campaign": {"id": asset.campaign_id, "name": row["campaign_name"]} if asset.campaign else None,
-            "campaign_asset": {"id": asset.campaign_asset_id, "name": row["campaign_asset_name"]} if asset.campaign_asset else None,
-            "calendar_item": {"id": asset.calendar_item_id, "title": row["calendar_item_title"]} if asset.calendar_item else None,
-            "content": {"id": asset.content_id, "title": row["content_title"]} if asset.content else None,
+            "campaign": (
+                {"id": asset.campaign_id, "name": row["campaign_name"]}
+                if asset.campaign
+                else None
+            ),
+            "campaign_asset": (
+                {"id": asset.campaign_asset_id, "name": row["campaign_asset_name"]}
+                if asset.campaign_asset
+                else None
+            ),
+            "calendar_item": (
+                {"id": asset.calendar_item_id, "title": row["calendar_item_title"]}
+                if asset.calendar_item
+                else None
+            ),
+            "content": (
+                {"id": asset.content_id, "title": row["content_title"]}
+                if asset.content
+                else None
+            ),
         }
     return row
 
@@ -266,9 +285,18 @@ def _media_summary(assets):
 
 def _media_metadata():
     return {
-        "asset_types": [{"value": value, "label": label} for value, label in MediaLibraryAsset.ASSET_TYPE_CHOICES],
-        "statuses": [{"value": value, "label": label} for value, label in MediaLibraryAsset.STATUS_CHOICES],
-        "divisions": [{"value": value, "label": label} for value, label in MediaLibraryAsset.DIVISION_CHOICES],
+        "asset_types": [
+            {"value": value, "label": label}
+            for value, label in MediaLibraryAsset.ASSET_TYPE_CHOICES
+        ],
+        "statuses": [
+            {"value": value, "label": label}
+            for value, label in MediaLibraryAsset.STATUS_CHOICES
+        ],
+        "divisions": [
+            {"value": value, "label": label}
+            for value, label in MediaLibraryAsset.DIVISION_CHOICES
+        ],
     }
 
 
@@ -283,17 +311,41 @@ def _resolve_media_relations(data):
     relations = {}
 
     if branch_id is not missing:
-        relations["branch"] = Branch.objects.filter(id=branch_id).first() if branch_id else None
+        relations["branch"] = (
+            Branch.objects.filter(id=branch_id).first() if branch_id else None
+        )
     if owner_id is not missing:
-        relations["owner"] = Employee.objects.filter(id=owner_id).first() if owner_id else None
+        relations["owner"] = (
+            Employee.objects.filter(id=owner_id).first() if owner_id else None
+        )
     if campaign_id is not missing:
-        relations["campaign"] = MarketingCampaign.objects.filter(id=campaign_id).first() if campaign_id else None
+        relations["campaign"] = (
+            MarketingCampaign.objects.filter(id=campaign_id).first()
+            if campaign_id
+            else None
+        )
     if campaign_asset_id is not missing:
-        relations["campaign_asset"] = CampaignAsset.objects.select_related("campaign", "content").filter(id=campaign_asset_id).first() if campaign_asset_id else None
+        relations["campaign_asset"] = (
+            CampaignAsset.objects.select_related("campaign", "content")
+            .filter(id=campaign_asset_id)
+            .first()
+            if campaign_asset_id
+            else None
+        )
     if calendar_item_id is not missing:
-        relations["calendar_item"] = ContentCalendarItem.objects.select_related("campaign", "campaign_asset", "content").filter(id=calendar_item_id).first() if calendar_item_id else None
+        relations["calendar_item"] = (
+            ContentCalendarItem.objects.select_related(
+                "campaign", "campaign_asset", "content"
+            )
+            .filter(id=calendar_item_id)
+            .first()
+            if calendar_item_id
+            else None
+        )
     if content_id is not missing:
-        relations["content"] = Content.objects.filter(id=content_id).first() if content_id else None
+        relations["content"] = (
+            Content.objects.filter(id=content_id).first() if content_id else None
+        )
 
     campaign_asset = relations.get("campaign_asset")
     calendar_item = relations.get("calendar_item")
@@ -308,7 +360,11 @@ def _resolve_media_relations(data):
     if campaign_asset:
         campaign = relations.get("campaign")
         if campaign and campaign.id != campaign_asset.campaign_id:
-            raise ValidationError({"campaign_asset_id": "Campaign asset does not belong to the selected campaign."})
+            raise ValidationError(
+                {
+                    "campaign_asset_id": "Campaign asset does not belong to the selected campaign."
+                }
+            )
         relations["campaign"] = campaign_asset.campaign
         if not relations.get("content"):
             relations["content"] = campaign_asset.content
@@ -331,7 +387,11 @@ def _sync_media_to_campaign_asset(asset):
 
 def _effective_status(item, today=None):
     today = today or timezone.localdate()
-    if item.status not in TERMINAL_CALENDAR_STATUSES and item.due_date and item.due_date < today:
+    if (
+        item.status not in TERMINAL_CALENDAR_STATUSES
+        and item.due_date
+        and item.due_date < today
+    ):
         return "overdue"
     return item.status
 
@@ -434,7 +494,9 @@ def _filter_calendar_items(
     )
     if status:
         if status == "overdue":
-            items = items.exclude(status__in=TERMINAL_CALENDAR_STATUSES).filter(due_date__lt=timezone.localdate())
+            items = items.exclude(status__in=TERMINAL_CALENDAR_STATUSES).filter(
+                due_date__lt=timezone.localdate()
+            )
         else:
             items = items.filter(status=status)
     if platform:
@@ -459,11 +521,13 @@ def _filter_calendar_items(
 
 
 def _content_only_rows(start, end, status=None, platform=None, search=None):
-    contents = Content.objects.select_related("author").filter(
-        calendar_items__isnull=True
-    ).filter(
-        Q(scheduled_date__date__gte=start, scheduled_date__date__lte=end)
-        | Q(published_date__date__gte=start, published_date__date__lte=end)
+    contents = (
+        Content.objects.select_related("author")
+        .filter(calendar_items__isnull=True)
+        .filter(
+            Q(scheduled_date__date__gte=start, scheduled_date__date__lte=end)
+            | Q(published_date__date__gte=start, published_date__date__lte=end)
+        )
     )
     if status:
         if status == "overdue":
@@ -482,24 +546,40 @@ def _content_only_rows(start, end, status=None, platform=None, search=None):
 
 
 def _calendar_response(rows, start, end, filters):
-    rows = sorted(rows, key=lambda row: (str(row["calendar_date"] or ""), row["sort_order"], row["title"]))
+    rows = sorted(
+        rows,
+        key=lambda row: (
+            str(row["calendar_date"] or ""),
+            row["sort_order"],
+            row["title"],
+        ),
+    )
     week_days = []
     current = start
     while current <= end:
         day_rows = [row for row in rows if row["calendar_date"] == current]
-        week_days.append({
-            "date": current,
-            "weekday": current.strftime("%a"),
-            "is_today": current == timezone.localdate(),
-            "items": day_rows,
-        })
+        week_days.append(
+            {
+                "date": current,
+                "weekday": current.strftime("%a"),
+                "is_today": current == timezone.localdate(),
+                "items": day_rows,
+            }
+        )
         current += timedelta(days=1)
 
     total = len(rows)
     published = len([row for row in rows if row["effective_status"] == "published"])
     overdue = len([row for row in rows if row["effective_status"] == "overdue"])
     scheduled = len([row for row in rows if row["effective_status"] == "scheduled"])
-    in_progress = len([row for row in rows if row["effective_status"] in {"briefed", "in_progress", "in_review", "approved"}])
+    in_progress = len(
+        [
+            row
+            for row in rows
+            if row["effective_status"]
+            in {"briefed", "in_progress", "in_review", "approved"}
+        ]
+    )
 
     return {
         "period": {"start": start, "end": end},
@@ -516,11 +596,26 @@ def _calendar_response(rows, start, end, filters):
         "days": week_days,
         "rows": rows,
         "metadata": {
-            "statuses": [{"value": value, "label": label} for value, label in ContentCalendarItem.STATUS_CHOICES],
-            "formats": [{"value": value, "label": label} for value, label in ContentCalendarItem.FORMAT_CHOICES],
-            "platforms": [{"value": value, "label": label} for value, label in ContentCalendarItem.PLATFORM_CHOICES],
-            "divisions": [{"value": value, "label": label} for value, label in ContentCalendarItem.DIVISION_CHOICES],
-            "funnel_stages": [{"value": value, "label": label} for value, label in ContentCalendarItem.FUNNEL_STAGE_CHOICES],
+            "statuses": [
+                {"value": value, "label": label}
+                for value, label in ContentCalendarItem.STATUS_CHOICES
+            ],
+            "formats": [
+                {"value": value, "label": label}
+                for value, label in ContentCalendarItem.FORMAT_CHOICES
+            ],
+            "platforms": [
+                {"value": value, "label": label}
+                for value, label in ContentCalendarItem.PLATFORM_CHOICES
+            ],
+            "divisions": [
+                {"value": value, "label": label}
+                for value, label in ContentCalendarItem.DIVISION_CHOICES
+            ],
+            "funnel_stages": [
+                {"value": value, "label": label}
+                for value, label in ContentCalendarItem.FUNNEL_STAGE_CHOICES
+            ],
         },
     }
 
@@ -533,13 +628,23 @@ def _apply_calendar_relations(data):
     content_id = data.pop("content_id", missing)
     relations = {}
     if branch_id is not missing:
-        relations["branch"] = Branch.objects.filter(id=branch_id).first() if branch_id else None
+        relations["branch"] = (
+            Branch.objects.filter(id=branch_id).first() if branch_id else None
+        )
     if owner_id is not missing:
-        relations["owner"] = Employee.objects.filter(id=owner_id).first() if owner_id else None
+        relations["owner"] = (
+            Employee.objects.filter(id=owner_id).first() if owner_id else None
+        )
     if campaign_id is not missing:
-        relations["campaign"] = MarketingCampaign.objects.filter(id=campaign_id).first() if campaign_id else None
+        relations["campaign"] = (
+            MarketingCampaign.objects.filter(id=campaign_id).first()
+            if campaign_id
+            else None
+        )
     if content_id is not missing:
-        relations["content"] = Content.objects.filter(id=content_id).first() if content_id else None
+        relations["content"] = (
+            Content.objects.filter(id=content_id).first() if content_id else None
+        )
     return data, relations
 
 
@@ -555,7 +660,9 @@ def _sync_campaign_asset(item, actor=None):
         "owner": item.owner,
         "owner_name": item.owner_name,
         "due_date": item.due_date,
-        "status": CAMPAIGN_ASSET_STATUS_BY_CALENDAR_STATUS.get(_effective_status(item), "briefed"),
+        "status": CAMPAIGN_ASSET_STATUS_BY_CALENDAR_STATUS.get(
+            _effective_status(item), "briefed"
+        ),
         "description": item.description,
         "specifications": item.specifications,
         "approval_notes": item.approval_notes,
@@ -604,8 +711,15 @@ def get_content_calendar(
         search=search,
     )
     rows = [_serialize_calendar_item(item) for item in items]
-    if not any([division, owner_id, campaign_id, branch_id]) and getattr(request, "_perm_scope", "company") == "company":
-        rows.extend(_content_only_rows(start, end, status=status, platform=platform, search=search))
+    if (
+        not any([division, owner_id, campaign_id, branch_id])
+        and getattr(request, "_perm_scope", "company") == "company"
+    ):
+        rows.extend(
+            _content_only_rows(
+                start, end, status=status, platform=platform, search=search
+            )
+        )
     return _calendar_response(
         rows,
         start,
@@ -655,20 +769,35 @@ def export_content_calendar(
     )
     buffer = StringIO()
     writer = csv.writer(buffer)
-    writer.writerow(["Title", "Format", "Platform", "Division", "Owner", "Status", "Due", "Scheduled", "Published", "Campaign"])
+    writer.writerow(
+        [
+            "Title",
+            "Format",
+            "Platform",
+            "Division",
+            "Owner",
+            "Status",
+            "Due",
+            "Scheduled",
+            "Published",
+            "Campaign",
+        ]
+    )
     for row in calendar["rows"]:
-        writer.writerow([
-            row["title"],
-            row["format"],
-            row["platform"],
-            row["division"],
-            row["owner_name"],
-            row["effective_status"],
-            row["due_date"],
-            row["scheduled_at"],
-            row["published_at"],
-            row["campaign_name"],
-        ])
+        writer.writerow(
+            [
+                row["title"],
+                row["format"],
+                row["platform"],
+                row["division"],
+                row["owner_name"],
+                row["effective_status"],
+                row["due_date"],
+                row["scheduled_at"],
+                row["published_at"],
+                row["campaign_name"],
+            ]
+        )
     response = HttpResponse(buffer.getvalue(), content_type="text/csv")
     response["Content-Disposition"] = 'attachment; filename="content-calendar.csv"'
     return response
@@ -679,7 +808,9 @@ def export_content_calendar(
 def create_content_calendar_brief(request, payload: ContentCalendarBriefIn):
     try:
         data, relations = _apply_calendar_relations(payload.dict())
-        item = ContentCalendarItem.objects.create(created_by=request.user, **relations, **data)
+        item = ContentCalendarItem.objects.create(
+            created_by=request.user, **relations, **data
+        )
         _sync_campaign_asset(item, actor=request.user)
         item.refresh_from_db()
         return 201, _serialize_calendar_item(item)
@@ -689,9 +820,14 @@ def create_content_calendar_brief(request, payload: ContentCalendarBriefIn):
         return 400, {"detail": str(e)}
 
 
-@router.patch("/calendar/briefs/{item_id}", response={200: dict, 400: MessageSchema, 404: MessageSchema})
+@router.patch(
+    "/calendar/briefs/{item_id}",
+    response={200: dict, 400: MessageSchema, 404: MessageSchema},
+)
 @require_permission("content", "update")
-def update_content_calendar_brief(request, item_id: int, payload: ContentCalendarBriefUpdate):
+def update_content_calendar_brief(
+    request, item_id: int, payload: ContentCalendarBriefUpdate
+):
     try:
         item = get_object_or_404(ContentCalendarItem, id=item_id)
         data, relations = _apply_calendar_relations(payload.dict(exclude_unset=True))
@@ -708,9 +844,14 @@ def update_content_calendar_brief(request, item_id: int, payload: ContentCalenda
         return 400, {"detail": str(e)}
 
 
-@router.post("/calendar/briefs/{item_id}/publish", response={200: dict, 400: MessageSchema, 404: MessageSchema})
+@router.post(
+    "/calendar/briefs/{item_id}/publish",
+    response={200: dict, 400: MessageSchema, 404: MessageSchema},
+)
 @require_permission("content", "update")
-def publish_content_calendar_brief(request, item_id: int, payload: ContentCalendarPublishIn):
+def publish_content_calendar_brief(
+    request, item_id: int, payload: ContentCalendarPublishIn
+):
     try:
         item = get_object_or_404(ContentCalendarItem, id=item_id)
         data = payload.dict()
@@ -720,7 +861,11 @@ def publish_content_calendar_brief(request, item_id: int, payload: ContentCalend
             "title": item.title,
             "content_type": CONTENT_TYPE_BY_FORMAT.get(item.format, "social_media"),
             "status": "published",
-            "platform": item.platform if item.platform in dict(Content.PLATFORM_CHOICES) else "website",
+            "platform": (
+                item.platform
+                if item.platform in dict(Content.PLATFORM_CHOICES)
+                else "website"
+            ),
             "body": data.get("body") or item.description,
             "excerpt": data.get("excerpt") or item.call_to_action,
             "featured_image": data.get("featured_image"),
@@ -749,7 +894,10 @@ def publish_content_calendar_brief(request, item_id: int, payload: ContentCalend
         item.save(update_fields=["content", "status", "published_at", "updated_at"])
         _sync_campaign_asset(item, actor=request.user)
         item.refresh_from_db()
-        return 200, {"calendar_item": _serialize_calendar_item(item), "content_id": content.id}
+        return 200, {
+            "calendar_item": _serialize_calendar_item(item),
+            "content_id": content.id,
+        }
     except ValidationError as e:
         return 400, {"detail": _validation_detail(e)}
     except Exception as e:
@@ -835,20 +983,34 @@ def export_media_library(
     )
     buffer = StringIO()
     writer = csv.writer(buffer)
-    writer.writerow(["Title", "Asset Type", "Division", "Owner", "Size", "Status", "Campaign", "Content", "File URL"])
+    writer.writerow(
+        [
+            "Title",
+            "Asset Type",
+            "Division",
+            "Owner",
+            "Size",
+            "Status",
+            "Campaign",
+            "Content",
+            "File URL",
+        ]
+    )
     for asset in assets[:500]:
         row = _serialize_media_asset(asset)
-        writer.writerow([
-            row["title"],
-            row["asset_type"],
-            row["division"],
-            row["owner_name"],
-            row["display_size"],
-            row["status"],
-            row["campaign_name"],
-            row["content_title"],
-            row["file_url"],
-        ])
+        writer.writerow(
+            [
+                row["title"],
+                row["asset_type"],
+                row["division"],
+                row["owner_name"],
+                row["display_size"],
+                row["status"],
+                row["campaign_name"],
+                row["content_title"],
+                row["file_url"],
+            ]
+        )
     response = HttpResponse(buffer.getvalue(), content_type="text/csv")
     response["Content-Disposition"] = 'attachment; filename="media-library.csv"'
     return response
@@ -859,7 +1021,9 @@ def export_media_library(
 def create_media_library_asset(request, payload: MediaLibraryAssetIn):
     try:
         data, relations = _resolve_media_relations(payload.dict())
-        asset = MediaLibraryAsset.objects.create(uploaded_by=request.user, **relations, **data)
+        asset = MediaLibraryAsset.objects.create(
+            uploaded_by=request.user, **relations, **data
+        )
         _sync_media_to_campaign_asset(asset)
         asset.refresh_from_db()
         return 201, _serialize_media_asset(asset, detail=True)
@@ -869,16 +1033,23 @@ def create_media_library_asset(request, payload: MediaLibraryAssetIn):
         return 400, {"detail": str(e)}
 
 
-@router.get("/media-library/assets/{asset_id}", response={200: dict, 404: MessageSchema})
+@router.get(
+    "/media-library/assets/{asset_id}", response={200: dict, 404: MessageSchema}
+)
 @require_permission("content", "view")
 def get_media_library_asset(request, asset_id: int):
     asset = get_object_or_404(_media_queryset(request), id=asset_id)
     return 200, _serialize_media_asset(asset, detail=True)
 
 
-@router.patch("/media-library/assets/{asset_id}", response={200: dict, 400: MessageSchema, 404: MessageSchema})
+@router.patch(
+    "/media-library/assets/{asset_id}",
+    response={200: dict, 400: MessageSchema, 404: MessageSchema},
+)
 @require_permission("content", "update")
-def update_media_library_asset(request, asset_id: int, payload: MediaLibraryAssetUpdate):
+def update_media_library_asset(
+    request, asset_id: int, payload: MediaLibraryAssetUpdate
+):
     try:
         asset = get_object_or_404(_media_queryset(request), id=asset_id)
         data, relations = _resolve_media_relations(payload.dict(exclude_unset=True))
@@ -905,7 +1076,7 @@ def list_content(
     platform: str = None,
     author_id: int = None,
     is_featured: bool = None,
-    search: str = None
+    search: str = None,
 ):
     """List all content with optional filtering."""
     contents = Content.objects.all()
@@ -922,10 +1093,10 @@ def list_content(
         contents = contents.filter(is_featured=is_featured)
     if search:
         contents = contents.filter(
-            Q(title__icontains=search) |
-            Q(body__icontains=search) |
-            Q(excerpt__icontains=search) |
-            Q(tags__icontains=search)
+            Q(title__icontains=search)
+            | Q(body__icontains=search)
+            | Q(excerpt__icontains=search)
+            | Q(tags__icontains=search)
         )
 
     return contents
@@ -939,9 +1110,9 @@ def create_content(request, payload: ContentIn):
         content = Content.objects.create(**payload.dict())
         return 201, content
     except ValidationError as e:
-        return 400, {'detail': e.messages[0]}
+        return 400, {"detail": e.messages[0]}
     except Exception as e:
-        return 400, {'detail': str(e)}
+        return 400, {"detail": str(e)}
 
 
 @router.get("/{content_id}", response=ContentOut)
@@ -951,7 +1122,9 @@ def get_content(request, content_id: int):
     return get_object_or_404(Content, id=content_id)
 
 
-@router.put("/{content_id}", response={200: ContentOut, 400: MessageSchema, 404: MessageSchema})
+@router.put(
+    "/{content_id}", response={200: ContentOut, 400: MessageSchema, 404: MessageSchema}
+)
 @require_permission("content", "update")
 def update_content(request, content_id: int, payload: ContentUpdate):
     """Update existing content."""
@@ -962,12 +1135,15 @@ def update_content(request, content_id: int, payload: ContentUpdate):
         content.save()
         return 200, content
     except ValidationError as e:
-        return 400, {'detail': e.messages[0]}
+        return 400, {"detail": e.messages[0]}
     except Exception as e:
-        return 400, {'detail': str(e)}
+        return 400, {"detail": str(e)}
 
 
-@router.delete("/{content_id}", response={200: MessageSchema, 400: MessageSchema, 404: MessageSchema})
+@router.delete(
+    "/{content_id}",
+    response={200: MessageSchema, 400: MessageSchema, 404: MessageSchema},
+)
 @require_permission("content", "delete")
 def delete_content(request, content_id: int):
     """Delete content."""
@@ -976,9 +1152,9 @@ def delete_content(request, content_id: int):
         content.delete()
         return 200, {"detail": "Content deleted successfully"}
     except ValidationError as e:
-        return 400, {'detail': e.messages[0]}
+        return 400, {"detail": e.messages[0]}
     except Exception as e:
-        return 400, {'detail': str(e)}
+        return 400, {"detail": str(e)}
 
 
 @router.get("/slug/{slug}", response=ContentOut)
@@ -1006,7 +1182,10 @@ def get_platform_content(request, platform: str):
     return contents
 
 
-@router.post("/{content_id}/increment-views", response={200: ContentOut, 400: MessageSchema, 404: MessageSchema})
+@router.post(
+    "/{content_id}/increment-views",
+    response={200: ContentOut, 400: MessageSchema, 404: MessageSchema},
+)
 def increment_views(request, content_id: int):
     """Increment view count for content."""
     try:
@@ -1014,12 +1193,15 @@ def increment_views(request, content_id: int):
         content.increment_views()
         return 200, content
     except ValidationError as e:
-        return 400, {'detail': e.messages[0]}
+        return 400, {"detail": e.messages[0]}
     except Exception as e:
-        return 400, {'detail': str(e)}
+        return 400, {"detail": str(e)}
 
 
-@router.post("/{content_id}/increment-likes", response={200: ContentOut, 400: MessageSchema, 404: MessageSchema})
+@router.post(
+    "/{content_id}/increment-likes",
+    response={200: ContentOut, 400: MessageSchema, 404: MessageSchema},
+)
 def increment_likes(request, content_id: int):
     """Increment like count for content."""
     try:
@@ -1027,12 +1209,15 @@ def increment_likes(request, content_id: int):
         content.increment_likes()
         return 200, content
     except ValidationError as e:
-        return 400, {'detail': e.messages[0]}
+        return 400, {"detail": e.messages[0]}
     except Exception as e:
-        return 400, {'detail': str(e)}
+        return 400, {"detail": str(e)}
 
 
-@router.post("/{content_id}/increment-shares", response={200: ContentOut, 400: MessageSchema, 404: MessageSchema})
+@router.post(
+    "/{content_id}/increment-shares",
+    response={200: ContentOut, 400: MessageSchema, 404: MessageSchema},
+)
 def increment_shares(request, content_id: int):
     """Increment share count for content."""
     try:
@@ -1040,12 +1225,15 @@ def increment_shares(request, content_id: int):
         content.increment_shares()
         return 200, content
     except ValidationError as e:
-        return 400, {'detail': e.messages[0]}
+        return 400, {"detail": e.messages[0]}
     except Exception as e:
-        return 400, {'detail': str(e)}
+        return 400, {"detail": str(e)}
 
 
-@router.post("/{content_id}/increment-comments", response={200: ContentOut, 400: MessageSchema, 404: MessageSchema})
+@router.post(
+    "/{content_id}/increment-comments",
+    response={200: ContentOut, 400: MessageSchema, 404: MessageSchema},
+)
 def increment_comments(request, content_id: int):
     """Increment comment count for content."""
     try:
@@ -1053,9 +1241,9 @@ def increment_comments(request, content_id: int):
         content.increment_comments()
         return 200, content
     except ValidationError as e:
-        return 400, {'detail': e.messages[0]}
+        return 400, {"detail": e.messages[0]}
     except Exception as e:
-        return 400, {'detail': str(e)}
+        return 400, {"detail": str(e)}
 
 
 @router.get("/scheduled/upcoming", response=List[ContentOut])
@@ -1064,8 +1252,8 @@ def increment_comments(request, content_id: int):
 def get_upcoming_scheduled_content(request):
     """Get upcoming scheduled content."""
     from django.utils import timezone
+
     contents = Content.objects.filter(
-        status='scheduled',
-        scheduled_date__gte=timezone.now()
-    ).order_by('scheduled_date')
+        status="scheduled", scheduled_date__gte=timezone.now()
+    ).order_by("scheduled_date")
     return contents

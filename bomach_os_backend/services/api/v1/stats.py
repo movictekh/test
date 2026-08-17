@@ -1,10 +1,9 @@
 from ninja import Router
 
 from services.api.schema.schemas import ServiceStatsOut
-from user.utils.perm import require_permission
 from services.models.payment import Invoice
 from services.models.service import Quote, Service, ServiceOrder
-
+from user.utils.perm import require_permission
 
 router = Router()
 

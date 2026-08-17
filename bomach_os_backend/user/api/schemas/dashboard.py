@@ -1,5 +1,7 @@
-from ninja import Schema
 from typing import List, Optional
+
+from ninja import Schema
+
 
 class PerformanceScorecardSchema(Schema):
     overall_score: int
@@ -7,9 +9,11 @@ class PerformanceScorecardSchema(Schema):
     punctuality_score: int
     rank_text: str  # e.g., "Rank #3 of 12 in IT"
 
+
 class DepartmentRankingSchema(Schema):
     rank: int
     total_members: int
+
 
 class DashboardSummarySchema(Schema):
     full_name: str
@@ -17,6 +21,7 @@ class DashboardSummarySchema(Schema):
     department_name: str
     scorecard: PerformanceScorecardSchema
     ranking: DepartmentRankingSchema
+
 
 class WorkReportScoreSchema(Schema):
     work_report_score: int
@@ -31,6 +36,7 @@ class PunctualityScoreSchema(Schema):
     late_days: int
     absent_days: int
     punctuality_score: int
+
 
 class ScorecardDetailSchema(Schema):
     full_name: str

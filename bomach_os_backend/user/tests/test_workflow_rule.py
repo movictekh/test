@@ -1,27 +1,32 @@
 import json
-from decimal import Decimal
 from datetime import timedelta
+from decimal import Decimal
 
 from django.test import TestCase
 from django.utils import timezone
 
-from user.models.user import User
+from services.models.service import Quote, Service, ServiceCategory, ServiceOrder
 from user.models.employee import Employee
-from user.models.role import Role
-from user.models.workflow_rule import WorkflowRule, WorkflowRuleLog
 from user.models.notification import Notification
-from services.models.service import Quote, ServiceOrder, Service, ServiceCategory
-from user.services.workflow_engine import evaluate_workflow_rules, _evaluate_conditions
+from user.models.role import Role
+from user.models.user import User
+from user.models.workflow_rule import WorkflowRule, WorkflowRuleLog
 from user.services.jwt_service import JWTService
+from user.services.workflow_engine import _evaluate_conditions, evaluate_workflow_rules
 
 
 class WorkflowRuleAPITests(TestCase):
     def create_user_with_employee(self, email, username, employee_id, role=None):
         user = User.objects.create_user(
-            email=email, username=username, password="password123",
+            email=email,
+            username=username,
+            password="password123",
         )
         return Employee.objects.create(
-            user=user, employee_id=employee_id, is_active=True, role=role,
+            user=user,
+            employee_id=employee_id,
+            is_active=True,
+            role=role,
         )
 
     def create_role(self, name, permissions):
@@ -32,17 +37,26 @@ class WorkflowRuleAPITests(TestCase):
         return {"HTTP_AUTHORIZATION": f"Bearer {token}"}
 
     def setUp(self):
-        self.role = self.create_role("WF Admin", {
-            "workflow_rules": ["create", "view", "list", "update", "delete"],
-        })
+        self.role = self.create_role(
+            "WF Admin",
+            {
+                "workflow_rules": ["create", "view", "list", "update", "delete"],
+            },
+        )
         self.employee = self.create_user_with_employee(
-            "wf@test.com", "wfuser", "EMP-WF-001", role=self.role,
+            "wf@test.com",
+            "wfuser",
+            "EMP-WF-001",
+            role=self.role,
         )
         self.headers = self.auth_headers(self.employee)
 
         self.no_role = self.create_role("No WF", {"workflow_rules": []})
         self.no_emp = self.create_user_with_employee(
-            "nowf@test.com", "nowf", "EMP-WF-002", role=self.no_role,
+            "nowf@test.com",
+            "nowf",
+            "EMP-WF-002",
+            role=self.no_role,
         )
         self.no_headers = self.auth_headers(self.no_emp)
 
@@ -65,7 +79,9 @@ class WorkflowRuleAPITests(TestCase):
             name="Order Completed Notification",
             description="Notify when order is completed",
             trigger_event="service_order_status_changed",
-            conditions=[{"field": "order_status", "operator": "eq", "value": "completed"}],
+            conditions=[
+                {"field": "order_status", "operator": "eq", "value": "completed"}
+            ],
             action_type="send_notification",
             action_config={
                 "recipient_ids": [self.employee.user_id],
@@ -81,14 +97,18 @@ class WorkflowRuleAPITests(TestCase):
 
     def post(self, path, data=None):
         return self.client.post(
-            path, data=json.dumps(data) if data else None,
-            content_type="application/json", **self.headers,
+            path,
+            data=json.dumps(data) if data else None,
+            content_type="application/json",
+            **self.headers,
         )
 
     def put(self, path, data=None):
         return self.client.put(
-            path, data=json.dumps(data) if data else None,
-            content_type="application/json", **self.headers,
+            path,
+            data=json.dumps(data) if data else None,
+            content_type="application/json",
+            **self.headers,
         )
 
     def delete(self, path):
@@ -121,7 +141,9 @@ class WorkflowRuleAPITests(TestCase):
         self.assertEqual(data["count"], 1)
 
     def test_list_rules_filter_trigger(self):
-        response = self.get("/api/v1/workflow-rules/?trigger_event=quote_status_changed")
+        response = self.get(
+            "/api/v1/workflow-rules/?trigger_event=quote_status_changed"
+        )
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data["count"], 0)
@@ -142,16 +164,19 @@ class WorkflowRuleAPITests(TestCase):
     # --- Create ---
 
     def test_create_rule(self):
-        response = self.post("/api/v1/workflow-rules/", {
-            "name": "Quote Sent Notification",
-            "trigger_event": "quote_status_changed",
-            "conditions": [{"field": "status", "operator": "eq", "value": "sent"}],
-            "action_type": "send_notification",
-            "action_config": {
-                "recipient_ids": [self.employee.user_id],
-                "title": "Quote Sent",
+        response = self.post(
+            "/api/v1/workflow-rules/",
+            {
+                "name": "Quote Sent Notification",
+                "trigger_event": "quote_status_changed",
+                "conditions": [{"field": "status", "operator": "eq", "value": "sent"}],
+                "action_type": "send_notification",
+                "action_config": {
+                    "recipient_ids": [self.employee.user_id],
+                    "title": "Quote Sent",
+                },
             },
-        })
+        )
         self.assertEqual(response.status_code, 201)
         data = response.json()
         self.assertEqual(data["name"], "Quote Sent Notification")
@@ -160,9 +185,12 @@ class WorkflowRuleAPITests(TestCase):
     # --- Update ---
 
     def test_update_rule(self):
-        response = self.put(f"/api/v1/workflow-rules/{self.rule.id}", {
-            "is_active": False,
-        })
+        response = self.put(
+            f"/api/v1/workflow-rules/{self.rule.id}",
+            {
+                "is_active": False,
+            },
+        )
         self.assertEqual(response.status_code, 200)
         self.rule.refresh_from_db()
         self.assertFalse(self.rule.is_active)
@@ -183,7 +211,8 @@ class WorkflowRuleAPITests(TestCase):
 
     def test_no_permission(self):
         response = self.client.get(
-            "/api/v1/workflow-rules/", **self.no_headers,
+            "/api/v1/workflow-rules/",
+            **self.no_headers,
         )
         self.assertEqual(response.status_code, 403)
 
@@ -191,7 +220,9 @@ class WorkflowRuleAPITests(TestCase):
 class WorkflowEngineTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
-            email="engine@test.com", username="engine", password="pass123",
+            email="engine@test.com",
+            username="engine",
+            password="pass123",
         )
         self.category, _ = ServiceCategory.objects.get_or_create(
             name=ServiceCategory.CategoryChoices.CONSTRUCTION,
@@ -206,11 +237,15 @@ class WorkflowEngineTests(TestCase):
             created_by=self.user,
         )
         self.client_user = User.objects.create_user(
-            email="engineclient@test.com", username="engineclient", password="pass123",
+            email="engineclient@test.com",
+            username="engineclient",
+            password="pass123",
         )
         from user.models.client import Client
+
         self.client_obj = Client.objects.create(
-            user=self.client_user, phone="+2348000000001",
+            user=self.client_user,
+            phone="+2348000000001",
         )
 
     def _create_order(self, status="pending_mobilisation"):
@@ -238,7 +273,9 @@ class WorkflowEngineTests(TestCase):
         rule = WorkflowRule.objects.create(
             name="Test Rule",
             trigger_event="service_order_status_changed",
-            conditions=[{"field": "order_status", "operator": "eq", "value": "completed"}],
+            conditions=[
+                {"field": "order_status", "operator": "eq", "value": "completed"}
+            ],
             action_type="send_notification",
             action_config={
                 "recipient_ids": [self.user.id],
@@ -265,7 +302,9 @@ class WorkflowEngineTests(TestCase):
         rule = WorkflowRule.objects.create(
             name="Test Rule",
             trigger_event="service_order_status_changed",
-            conditions=[{"field": "order_status", "operator": "eq", "value": "completed"}],
+            conditions=[
+                {"field": "order_status", "operator": "eq", "value": "completed"}
+            ],
             action_type="send_notification",
             action_config={"recipient_ids": [self.user.id], "title": "Done"},
             is_active=True,

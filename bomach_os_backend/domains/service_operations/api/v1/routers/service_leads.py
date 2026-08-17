@@ -6,11 +6,11 @@ from django.shortcuts import get_object_or_404
 from ninja import Router
 from ninja.pagination import LimitOffsetPagination, paginate
 
-from services.api.schema.others import MessageSchema
-from ..schemas.lifecycle import ServiceLeadIn, ServiceLeadOut, ServiceLeadUpdate
 from domains.service_operations.models import ServiceLead
+from services.api.schema.others import MessageSchema
 from user.utils.perm import require_permission
 
+from ..schemas.lifecycle import ServiceLeadIn, ServiceLeadOut, ServiceLeadUpdate
 
 router = Router(tags=["Service Leads"])
 
@@ -20,7 +20,7 @@ router = Router(tags=["Service Leads"])
 @require_permission("service_leads", "list")
 def list_leads(request, status: str = None, client_id: int = None, search: str = None):
     """List all service leads with optional filtering."""
-    leads = ServiceLead.objects.select_related('service', 'service__category').all()
+    leads = ServiceLead.objects.select_related("service", "service__category").all()
 
     if status:
         leads = leads.filter(status=status)
@@ -40,9 +40,9 @@ def create_lead(request, payload: ServiceLeadIn):
         lead = ServiceLead.objects.create(**payload.dict())
         return 201, lead
     except ValidationError as e:
-        return 400, {'detail': e.messages[0]}
+        return 400, {"detail": e.messages[0]}
     except Exception as e:
-        return 400, {'detail': str(e)}
+        return 400, {"detail": str(e)}
 
 
 @router.get("/{lead_id}", response=ServiceLeadOut)
@@ -50,12 +50,14 @@ def create_lead(request, payload: ServiceLeadIn):
 def get_lead(request, lead_id: int):
     """Get a specific service lead by ID."""
     return get_object_or_404(
-        ServiceLead.objects.select_related('service', 'service__category'),
+        ServiceLead.objects.select_related("service", "service__category"),
         id=lead_id,
     )
 
 
-@router.put("/{lead_id}", response={200: ServiceLeadOut, 400: MessageSchema, 404: MessageSchema})
+@router.put(
+    "/{lead_id}", response={200: ServiceLeadOut, 400: MessageSchema, 404: MessageSchema}
+)
 @require_permission("service_leads", "update")
 def update_lead(request, lead_id: int, payload: ServiceLeadUpdate):
     """Update an existing service lead."""
@@ -66,12 +68,14 @@ def update_lead(request, lead_id: int, payload: ServiceLeadUpdate):
         lead.save()
         return 200, lead
     except ValidationError as e:
-        return 400, {'detail': e.messages[0]}
+        return 400, {"detail": e.messages[0]}
     except Exception as e:
-        return 400, {'detail': str(e)}
+        return 400, {"detail": str(e)}
 
 
-@router.delete("/{lead_id}", response={200: MessageSchema, 400: MessageSchema, 404: MessageSchema})
+@router.delete(
+    "/{lead_id}", response={200: MessageSchema, 400: MessageSchema, 404: MessageSchema}
+)
 @require_permission("service_leads", "delete")
 def delete_lead(request, lead_id: int):
     """Delete a service lead."""
@@ -80,6 +84,6 @@ def delete_lead(request, lead_id: int):
         lead.delete()
         return 200, {"detail": "Lead deleted successfully"}
     except ValidationError as e:
-        return 400, {'detail': e.messages[0]}
+        return 400, {"detail": e.messages[0]}
     except Exception as e:
-        return 400, {'detail': str(e)}
+        return 400, {"detail": str(e)}

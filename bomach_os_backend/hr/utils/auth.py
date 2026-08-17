@@ -5,11 +5,12 @@ This module provides Django Ninja compatible authentication classes
 that verify tokens with the main auth backend.
 """
 
-from typing import Optional, Any
-from ninja.security import HttpBearer
-from django.http import HttpRequest
+from typing import Any, Optional
 
-from .auth_client import get_auth_client, AuthClient
+from django.http import HttpRequest
+from ninja.security import HttpBearer
+
+from .auth_client import AuthClient, get_auth_client
 
 
 class AuthBearer(HttpBearer):
@@ -51,9 +52,9 @@ class AuthBearer(HttpBearer):
             # Fetch employee data for context
             employee_data = client.get_employee_info(str(user_id), token)
             if employee_data:
-                request.employee_id = employee_data.get('employee_id', '')
+                request.employee_id = employee_data.get("employee_id", "")
             else:
-                request.employee_id = ''
+                request.employee_id = ""
 
             return user_id
         return None
@@ -87,7 +88,7 @@ class AuthBearerWithUser(HttpBearer):
 
         if success and user_data:
             request.user_data = user_data
-            request.user_id = user_data.get('id')
+            request.user_id = user_data.get("id")
             # Store token for downstream calls
             request.auth_token = token
             return user_data
@@ -116,8 +117,8 @@ optional_auth = OptionalAuthBearer()
 
 def get_token_from_request(request: HttpRequest) -> Optional[str]:
     """Extract bearer token from request headers."""
-    auth_header = request.headers.get('Authorization', '')
-    if auth_header.startswith('Bearer '):
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header.startswith("Bearer "):
         return auth_header[7:]
     return None
 

@@ -1,5 +1,6 @@
 import json
 import logging
+
 import requests
 from django.conf import settings
 from django.template.loader import render_to_string
@@ -80,9 +81,7 @@ def send_two_factor_code_email(recipient: str, first_name: str, code: str):
         "first_name": first_name,
         "code": code,
     }
-    html_content = render_to_string(
-        "email_template/two_factor_code.html", context
-    )
+    html_content = render_to_string("email_template/two_factor_code.html", context)
     return _send_email(
         recipient=recipient,
         name=first_name,
@@ -197,9 +196,7 @@ def send_client_welcome_email(
         "login_url": login_url,
         "password_setup_url": password_setup_url,
     }
-    html_content = render_to_string(
-        "email_template/client_welcome_email.html", context
-    )
+    html_content = render_to_string("email_template/client_welcome_email.html", context)
     return _send_email(
         recipient=recipient,
         name=client_name,

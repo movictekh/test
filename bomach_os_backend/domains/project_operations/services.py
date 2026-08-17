@@ -11,7 +11,6 @@ from user.utils.send_email import (
 
 from .models import Milestone, Project, Task
 
-
 VALID_TASK_STATUSES = {status for status, _label in Task.STATUS_CHOICES}
 
 
@@ -112,9 +111,7 @@ def _send_task_assignment_notifications(*, task, assigned_by_user):
 
     for employee in task.assigned_to.select_related("user").all():
         due_date = (
-            task.due_date.strftime("%B %d, %Y")
-            if task.due_date
-            else "No due date"
+            task.due_date.strftime("%B %d, %Y") if task.due_date else "No due date"
         )
 
         if employee.is_associate():

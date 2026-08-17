@@ -1,30 +1,39 @@
-from decimal import Decimal
 from datetime import timedelta
+from decimal import Decimal
 
-from django.test import TestCase, Client as DjangoClient
+from django.test import Client as DjangoClient
+from django.test import TestCase
 from django.utils import timezone
 
 from services.models.feedback import ClientFeedback
 from services.models.service import (
-    Service, ServiceCategory, ServiceOrder,
+    Service,
+    ServiceCategory,
+    ServiceOrder,
 )
 from user.models.client import Client as CustomerClient
-from user.models.user import User
 from user.models.employee import Employee
 from user.models.role import Role
-from user.tests.helpers import RoleAPITestMixin
+from user.models.user import User
 from user.services.jwt_service import JWTService
+from user.tests.helpers import RoleAPITestMixin
 
 
 class FeedbackAPITests(RoleAPITestMixin, TestCase):
 
     def setUp(self):
         self.client = DjangoClient()
-        self.role = self.create_role("Feedback Admin", {
-            "feedback": ["create", "view", "list", "update", "delete"],
-        })
+        self.role = self.create_role(
+            "Feedback Admin",
+            {
+                "feedback": ["create", "view", "list", "update", "delete"],
+            },
+        )
         self.employee = self.create_user_with_employee(
-            "admin@test.com", "admin", "EMP-FB-001", role=self.role,
+            "admin@test.com",
+            "admin",
+            "EMP-FB-001",
+            role=self.role,
         )
         self.headers = self.auth_headers(self.employee)
 
@@ -35,7 +44,9 @@ class FeedbackAPITests(RoleAPITestMixin, TestCase):
             password="password123",
         )
         self.customer = CustomerClient.objects.create(
-            user=self.client_user, phone="+2348012345678", company_name="Test Corp",
+            user=self.client_user,
+            phone="+2348012345678",
+            company_name="Test Corp",
         )
 
         # Create service
@@ -121,7 +132,8 @@ class FeedbackAPITests(RoleAPITestMixin, TestCase):
 
     def test_get_feedback(self):
         response = self.client.get(
-            f"/api/v1/feedback/{self.feedback.id}", **self.headers,
+            f"/api/v1/feedback/{self.feedback.id}",
+            **self.headers,
         )
         self.assertEqual(response.status_code, 200)
         data = response.json()
@@ -145,7 +157,8 @@ class FeedbackAPITests(RoleAPITestMixin, TestCase):
     def test_delete_feedback(self):
         fb = self._create_feedback()
         response = self.client.delete(
-            f"/api/v1/feedback/{fb.id}", **self.headers,
+            f"/api/v1/feedback/{fb.id}",
+            **self.headers,
         )
         self.assertEqual(response.status_code, 200)
         self.assertFalse(
@@ -190,7 +203,8 @@ class FeedbackAPITests(RoleAPITestMixin, TestCase):
 
     def test_filter_by_status(self):
         response = self.client.get(
-            "/api/v1/feedback?status=closed", **self.headers,
+            "/api/v1/feedback?status=closed",
+            **self.headers,
         )
         self.assertEqual(response.status_code, 200)
         data = response.json()
@@ -199,13 +213,15 @@ class FeedbackAPITests(RoleAPITestMixin, TestCase):
 
     def test_filter_by_type(self):
         response = self.client.get(
-            "/api/v1/feedback?feedback_type=milestone", **self.headers,
+            "/api/v1/feedback?feedback_type=milestone",
+            **self.headers,
         )
         self.assertEqual(response.status_code, 200)
 
     def test_search_by_client_name(self):
         response = self.client.get(
-            "/api/v1/feedback?search=Test+Corp", **self.headers,
+            "/api/v1/feedback?search=Test+Corp",
+            **self.headers,
         )
         self.assertEqual(response.status_code, 200)
         data = response.json()
@@ -213,7 +229,8 @@ class FeedbackAPITests(RoleAPITestMixin, TestCase):
 
     def test_filter_by_rating_min(self):
         response = self.client.get(
-            "/api/v1/feedback?rating_min=4", **self.headers,
+            "/api/v1/feedback?rating_min=4",
+            **self.headers,
         )
         self.assertEqual(response.status_code, 200)
         data = response.json()
@@ -281,7 +298,10 @@ class FeedbackAPITests(RoleAPITestMixin, TestCase):
     def test_no_permission_list(self):
         role = self.create_role("Read Only", {"feedback": []})
         emp = self.create_user_with_employee(
-            "readonly@test.com", "readonly", "EMP-FB-RO", role=role,
+            "readonly@test.com",
+            "readonly",
+            "EMP-FB-RO",
+            role=role,
         )
         headers = self.auth_headers(emp)
         response = self.client.get("/api/v1/feedback", **headers)
@@ -290,7 +310,10 @@ class FeedbackAPITests(RoleAPITestMixin, TestCase):
     def test_no_permission_create(self):
         role = self.create_role("No Create", {"feedback": ["view"]})
         emp = self.create_user_with_employee(
-            "nocreate@test.com", "nocreate", "EMP-FB-NC", role=role,
+            "nocreate@test.com",
+            "nocreate",
+            "EMP-FB-NC",
+            role=role,
         )
         headers = self.auth_headers(emp)
         payload = {

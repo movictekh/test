@@ -1,16 +1,18 @@
 from typing import List
-from ninja import Router
-from ninja.pagination import paginate, LimitOffsetPagination
-from django.shortcuts import get_object_or_404
+
 from django.core.exceptions import ValidationError
-from hr.models.disciplinary_case import DisciplinaryCase
+from django.shortcuts import get_object_or_404
+from ninja import Router
+from ninja.pagination import LimitOffsetPagination, paginate
+
+from hr.api.schemas import MessageSchema
 from hr.api.schemas.disciplinary_case import (
-    DisciplinaryCaseSchema,
     DisciplinaryCaseCreateSchema,
+    DisciplinaryCaseSchema,
     DisciplinaryCaseUpdateSchema,
 )
-from hr.api.schemas import MessageSchema
-from user.utils.perm import require_permission, scope_queryset, check_obj_permission
+from hr.models.disciplinary_case import DisciplinaryCase
+from user.utils.perm import check_obj_permission, require_permission, scope_queryset
 
 router = Router(tags=["Disciplinary Cases"])
 
@@ -23,9 +25,9 @@ def create_disciplinary_case(request, payload: DisciplinaryCaseCreateSchema):
         case = DisciplinaryCase.objects.create(**data)
         return 201, case
     except ValidationError as e:
-        return 400, {'detail': e.messages[0]}
+        return 400, {"detail": e.messages[0]}
     except Exception as e:
-        return 400, {'detail': str(e)}
+        return 400, {"detail": str(e)}
 
 
 @router.get("/", response=List[DisciplinaryCaseSchema])
@@ -44,9 +46,13 @@ def list_disciplinary_cases(
         qs = qs.filter(action_type=action_type)
     if violation_category:
         qs = qs.filter(violation_category=violation_category)
-    qs = scope_queryset(request, qs, owner_field="employee__user",
-                        branch_field="employee__branch",
-                        department_field="employee__department")
+    qs = scope_queryset(
+        request,
+        qs,
+        owner_field="employee__user",
+        branch_field="employee__branch",
+        department_field="employee__department",
+    )
     return qs
 
 
@@ -70,7 +76,7 @@ def update_disciplinary_case(
         case.save()
         return 200, case
     except ValidationError as e:
-        return 400, {'detail': e.messages[0]}
+        return 400, {"detail": e.messages[0]}
 
 
 @router.delete("/{case_id}", response={200: MessageSchema, 400: MessageSchema})
@@ -81,4 +87,4 @@ def delete_disciplinary_case(request, case_id: int):
         case.delete()
         return 200, {"detail": "Deleted successfully"}
     except ValidationError as e:
-        return 400, {'detail': e.messages[0]}
+        return 400, {"detail": e.messages[0]}

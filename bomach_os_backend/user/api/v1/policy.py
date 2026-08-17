@@ -1,15 +1,16 @@
-from ninja import Router, Query
-from ninja.pagination import paginate, LimitOffsetPagination
-from django.db.models import Q
-from django.core.exceptions import ValidationError
 from typing import List, Optional
+
+from django.core.exceptions import ValidationError
+from django.db.models import Q
+from ninja import Query, Router
+from ninja.pagination import LimitOffsetPagination, paginate
 
 from user.api.schemas.others import MessageSchema
 from user.api.schemas.policy import (
-    PolicyCreateSchema,
-    PolicyUpdateSchema,
-    PolicySchema,
     PolicyChoicesSchema,
+    PolicyCreateSchema,
+    PolicySchema,
+    PolicyUpdateSchema,
 )
 from user.models.policy import Policy
 from user.models.roles import Department
@@ -22,7 +23,7 @@ policy_api = Router(tags=["Policies"])
 def get_policy_choices(request):
     return {
         "categories": [{"value": v, "label": l} for v, l in Policy.CATEGORY_CHOICES],
-        "statuses":   [{"value": v, "label": l} for v, l in Policy.STATUS_CHOICES],
+        "statuses": [{"value": v, "label": l} for v, l in Policy.STATUS_CHOICES],
     }
 
 
@@ -36,9 +37,11 @@ def list_policies(
     department_id: Optional[int] = Query(None),
     search: Optional[str] = Query(None),
 ):
-    qs = Policy.objects.prefetch_related('departments').select_related(
-        'created_by', 'last_updated_by'
-    ).all()
+    qs = (
+        Policy.objects.prefetch_related("departments")
+        .select_related("created_by", "last_updated_by")
+        .all()
+    )
 
     if category:
         qs = qs.filter(category=category)
@@ -53,9 +56,9 @@ def list_policies(
 
     if search:
         qs = qs.filter(
-            Q(title__icontains=search) |
-            Q(content__icontains=search) |
-            Q(policy_id__icontains=search)
+            Q(title__icontains=search)
+            | Q(content__icontains=search)
+            | Q(policy_id__icontains=search)
         )
 
     return qs
@@ -65,9 +68,11 @@ def list_policies(
 @require_permission("policies", "view")
 def get_policy(request, policy_id: int):
     try:
-        policy = Policy.objects.prefetch_related('departments').select_related(
-            'created_by', 'last_updated_by'
-        ).get(id=policy_id)
+        policy = (
+            Policy.objects.prefetch_related("departments")
+            .select_related("created_by", "last_updated_by")
+            .get(id=policy_id)
+        )
         return 200, policy
     except Policy.DoesNotExist:
         return 404, {"detail": "Policy not found"}
@@ -105,14 +110,16 @@ def create_policy(request, payload: PolicyCreateSchema):
         return 400, {"detail": str(e)}
 
 
-@policy_api.put("/{policy_id}", response={200: PolicySchema, 400: MessageSchema, 404: MessageSchema})
+@policy_api.put(
+    "/{policy_id}", response={200: PolicySchema, 400: MessageSchema, 404: MessageSchema}
+)
 @require_permission("policies", "update")
 def update_policy(request, policy_id: int, payload: PolicyUpdateSchema):
     try:
-        policy = Policy.objects.prefetch_related('departments').get(id=policy_id)
+        policy = Policy.objects.prefetch_related("departments").get(id=policy_id)
         data = payload.dict(exclude_unset=True)
 
-        department_ids = data.pop('department_ids', None)
+        department_ids = data.pop("department_ids", None)
 
         for field, value in data.items():
             setattr(policy, field, value)
@@ -141,12 +148,15 @@ def update_policy(request, policy_id: int, payload: PolicyUpdateSchema):
         return 400, {"detail": str(e)}
 
 
-@policy_api.delete("/{policy_id}", response={200: MessageSchema, 400: MessageSchema, 404: MessageSchema})
+@policy_api.delete(
+    "/{policy_id}",
+    response={200: MessageSchema, 400: MessageSchema, 404: MessageSchema},
+)
 @require_permission("policies", "delete")
 def archive_policy(request, policy_id: int):
     try:
         policy = Policy.objects.get(id=policy_id)
-        policy.status = 'archived'
+        policy.status = "archived"
         policy.last_updated_by = request.user
         policy.save()
         return 200, {"detail": "Policy archived successfully"}

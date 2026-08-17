@@ -1,16 +1,17 @@
-from datetime import datetime, date
+from datetime import date, datetime
 from decimal import Decimal
-from typing import Optional, List
+from typing import List, Optional
+
 from ninja import Schema
 
-
 # --- Request Schemas ---
+
 
 class DrawingBankCreateSchema(Schema):
     title: str
     building_category: str
     drawing_file: str
-    file_name: Optional[str] = ''
+    file_name: Optional[str] = ""
     file_size_mb: Optional[Decimal] = None
     description: str
     tags: Optional[List[str]] = []
@@ -31,6 +32,7 @@ class DrawingBankRejectSchema(Schema):
 
 
 # --- Response Schemas ---
+
 
 class DrawingBankBaseResponse(Schema):
     id: int
@@ -53,7 +55,10 @@ class DrawingBankBaseResponse(Schema):
 
     @staticmethod
     def resolve_employee_name(obj):
-        return f"{obj.employee.first_name} {obj.employee.last_name}".strip() or obj.employee.username
+        return (
+            f"{obj.employee.first_name} {obj.employee.last_name}".strip()
+            or obj.employee.username
+        )
 
 
 class DrawingBankListResponseSchema(DrawingBankBaseResponse):
@@ -73,7 +78,10 @@ class DrawingBankListResponseSchema(DrawingBankBaseResponse):
     @staticmethod
     def resolve_approved_by_name(obj):
         if obj.approved_by:
-            return f"{obj.approved_by.first_name} {obj.approved_by.last_name}".strip() or obj.approved_by.username
+            return (
+                f"{obj.approved_by.first_name} {obj.approved_by.last_name}".strip()
+                or obj.approved_by.username
+            )
         return None
 
 
@@ -96,7 +104,10 @@ class DrawingBankFullResponseSchema(DrawingBankBaseResponse):
     @staticmethod
     def resolve_approved_by_name(obj):
         if obj.approved_by:
-            return f"{obj.approved_by.first_name} {obj.approved_by.last_name}".strip() or obj.approved_by.username
+            return (
+                f"{obj.approved_by.first_name} {obj.approved_by.last_name}".strip()
+                or obj.approved_by.username
+            )
         return None
 
 

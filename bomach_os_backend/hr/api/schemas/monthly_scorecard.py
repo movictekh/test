@@ -1,7 +1,8 @@
-from ninja import Schema
-from typing import Optional, List
 from datetime import datetime
 from decimal import Decimal
+from typing import List, Optional
+
+from ninja import Schema
 
 
 class ScorecardGenerateSchema(Schema):

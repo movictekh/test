@@ -18,7 +18,9 @@ def validation_detail(exc):
     return exc.messages[0] if getattr(exc, "messages", None) else str(exc)
 
 
-def log_request_activity(service_request, activity_type, note, created_by=None, next_action=""):
+def log_request_activity(
+    service_request, activity_type, note, created_by=None, next_action=""
+):
     if not service_request:
         return
     ServiceRequestActivity.objects.create(
@@ -35,13 +37,19 @@ def get_active_finance_account(account_id):
     return get_object_or_404(FinanceAccount, id=account_id, is_active=True)
 
 
-def create_confirmed_payment_from_submission(submission, reviewed_by, finance_account_id=None):
+def create_confirmed_payment_from_submission(
+    submission, reviewed_by, finance_account_id=None
+):
     with transaction.atomic():
-        submission = PaymentSubmission.objects.select_for_update().select_related(
-            "invoice",
-            "invoice__service_request",
-            "finance_account",
-        ).get(id=submission.id)
+        submission = (
+            PaymentSubmission.objects.select_for_update()
+            .select_related(
+                "invoice",
+                "invoice__service_request",
+                "finance_account",
+            )
+            .get(id=submission.id)
+        )
         if submission.status != PaymentSubmission.STATUS.PENDING:
             raise ValidationError("This submission has already been reviewed.")
 
@@ -49,7 +57,9 @@ def create_confirmed_payment_from_submission(submission, reviewed_by, finance_ac
         if finance_account_id:
             finance_account = get_active_finance_account(finance_account_id)
         if not finance_account:
-            raise ValidationError("A finance account is required to approve this payment.")
+            raise ValidationError(
+                "A finance account is required to approve this payment."
+            )
 
         invoice = Invoice.objects.select_for_update().get(id=submission.invoice_id)
         if submission.amount > invoice.balance:
@@ -61,7 +71,8 @@ def create_confirmed_payment_from_submission(submission, reviewed_by, finance_ac
             amount=submission.amount,
             payment_method=submission.payment_method,
             payment_date=submission.payment_date,
-            transaction_reference=submission.transaction_reference or submission.reference,
+            transaction_reference=submission.transaction_reference
+            or submission.reference,
             finance_account=finance_account,
             proof_of_payment=submission.proof_of_payment,
             notes=f"Confirmed from submission {submission.reference}. {submission.notes}".strip(),
@@ -108,13 +119,25 @@ def reject_payment_submission(submission, reviewed_by, rejection_reason):
     submission.reviewed_by = reviewed_by
     submission.reviewed_at = timezone.now()
     submission.rejection_reason = rejection_reason
-    submission.save(update_fields=["status", "reviewed_by", "reviewed_at", "rejection_reason", "updated_at"])
+    submission.save(
+        update_fields=[
+            "status",
+            "reviewed_by",
+            "reviewed_at",
+            "rejection_reason",
+            "updated_at",
+        ]
+    )
     return submission
 
 
-def review_payment_submission(submission, reviewed_by, status, finance_account_id=None, rejection_reason=""):
+def review_payment_submission(
+    submission, reviewed_by, status, finance_account_id=None, rejection_reason=""
+):
     if status == PaymentSubmission.STATUS.CONFIRMED:
-        return create_confirmed_payment_from_submission(submission, reviewed_by, finance_account_id)
+        return create_confirmed_payment_from_submission(
+            submission, reviewed_by, finance_account_id
+        )
     if status == PaymentSubmission.STATUS.REJECTED:
         return reject_payment_submission(submission, reviewed_by, rejection_reason)
     raise ValidationError("Unsupported review status.")

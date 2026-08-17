@@ -1,7 +1,8 @@
-from ninja import Schema
 from datetime import date, datetime
-from typing import Optional
 from decimal import Decimal
+from typing import Optional
+
+from ninja import Schema
 from pydantic import Field
 
 

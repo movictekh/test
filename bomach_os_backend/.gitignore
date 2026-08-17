@@ -179,3 +179,7 @@ bomach_os_backend/
 
 # Codex
 .codex
+
+# Local formatting/editor config
+pyproject.toml
+.vscode/

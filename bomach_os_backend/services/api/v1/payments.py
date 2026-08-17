@@ -1,15 +1,15 @@
 from typing import List
-from ninja import Router
-from django.shortcuts import get_object_or_404
+
 from django.core.exceptions import ValidationError
+from django.shortcuts import get_object_or_404
+from ninja import Router
+from ninja.pagination import LimitOffsetPagination, paginate
 
-from services.api.schema.schemas import PaymentIn, PaymentOut
-from services.api.schema.others import MessageSchema
-from services.models.payment import Payment
-from ninja.pagination import paginate, LimitOffsetPagination
-from user.utils.perm import require_permission
 from finance.services import get_active_finance_account
-
+from services.api.schema.others import MessageSchema
+from services.api.schema.schemas import PaymentIn, PaymentOut
+from services.models.payment import Payment
+from user.utils.perm import require_permission
 
 router = Router(tags=["Payments"])
 
@@ -37,9 +37,9 @@ def create_payment(request, payload: PaymentIn):
         payment = Payment.objects.create(**data)
         return 201, payment
     except ValidationError as e:
-        return 400, {'detail': e.messages[0]}
+        return 400, {"detail": e.messages[0]}
     except Exception as e:
-        return 400, {'detail': str(e)}
+        return 400, {"detail": str(e)}
 
 
 @router.get("/{payment_id}", response=PaymentOut)
@@ -48,7 +48,10 @@ def get_payment(request, payment_id: int):
     return get_object_or_404(Payment, id=payment_id)
 
 
-@router.delete("/{payment_id}", response={200: MessageSchema, 400: MessageSchema, 404: MessageSchema})
+@router.delete(
+    "/{payment_id}",
+    response={200: MessageSchema, 400: MessageSchema, 404: MessageSchema},
+)
 @require_permission("payments", "delete")
 def delete_payment(request, payment_id: int):
     try:
@@ -56,6 +59,6 @@ def delete_payment(request, payment_id: int):
         payment.delete()
         return 200, {"detail": "Payment deleted successfully"}
     except ValidationError as e:
-        return 400, {'detail': e.messages[0]}
+        return 400, {"detail": e.messages[0]}
     except Exception as e:
-        return 400, {'detail': str(e)}
+        return 400, {"detail": str(e)}

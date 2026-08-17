@@ -1,7 +1,9 @@
-from ninja import Schema, Field
-from typing import Optional, List
 from datetime import date
+from typing import List, Optional
+
+from ninja import Field, Schema
 from pydantic import validator
+
 
 class PerformanceReviewCreateSchema(Schema):
     employee_id: int
@@ -14,11 +16,12 @@ class PerformanceReviewCreateSchema(Schema):
     feedback: Optional[str] = None
     employee_comment: Optional[str] = None
 
-    @validator('overall_rating')
+    @validator("overall_rating")
     def validate_rating(cls, v):
         if not 1 <= v <= 5:
-            raise ValueError('Rating must be between 1 and 5')
+            raise ValueError("Rating must be between 1 and 5")
         return v
+
 
 class PerformanceReviewUpdateSchema(Schema):
     review_date: Optional[date] = None
@@ -29,11 +32,12 @@ class PerformanceReviewUpdateSchema(Schema):
     feedback: Optional[str] = None
     employee_comment: Optional[str] = None
 
-    @validator('overall_rating')
+    @validator("overall_rating")
     def validate_rating(cls, v):
         if v is not None and not 1 <= v <= 5:
-            raise ValueError('Rating must be between 1 and 5')
+            raise ValueError("Rating must be between 1 and 5")
         return v
+
 
 class PerformanceReviewResponseSchema(Schema):
     employee_id: int
@@ -56,6 +60,7 @@ class PerformanceReviewResponseSchema(Schema):
     @staticmethod
     def resolve_updated_at(obj):
         return obj.updated_at.isoformat()
+
 
 class PerformanceReviewFilterSchema(Schema):
     employee_id: Optional[int] = None

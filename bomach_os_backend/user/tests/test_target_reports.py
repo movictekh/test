@@ -23,7 +23,9 @@ class TargetReportAPITests(RoleAPITestMixin, TestCase):
             contact_phone="+2348012345678",
         )
 
-    def create_target(self, employee, target_value="100.00", start_offset=-1, end_offset=1):
+    def create_target(
+        self, employee, target_value="100.00", start_offset=-1, end_offset=1
+    ):
         today = timezone.localdate()
         return EmployeeTarget.objects.create(
             employee=employee,
@@ -39,7 +41,9 @@ class TargetReportAPITests(RoleAPITestMixin, TestCase):
             is_active=True,
         )
 
-    def submit_report(self, employee, target, value="25.00", summary="Completed target work."):
+    def submit_report(
+        self, employee, target, value="25.00", summary="Completed target work."
+    ):
         return self.client.post(
             "/api/v1/target-reports/",
             data=json.dumps(
@@ -125,7 +129,9 @@ class TargetReportAPITests(RoleAPITestMixin, TestCase):
         target.refresh_from_db()
         self.assertEqual(target.get_approved_progress_value(), Decimal("100.00"))
         self.assertTrue(target.get_is_completed())
-        self.assertEqual(self.submit_report(self.employee, target, "1.00").status_code, 400)
+        self.assertEqual(
+            self.submit_report(self.employee, target, "1.00").status_code, 400
+        )
 
     def test_pending_and_rejected_reports_do_not_inflate_progress(self):
         target = self.create_target(self.employee)
@@ -134,7 +140,9 @@ class TargetReportAPITests(RoleAPITestMixin, TestCase):
 
         duplicate_response = self.submit_report(self.employee, target, "10.00")
         self.assertEqual(duplicate_response.status_code, 400)
-        self.assertIn("submitted report already exists", duplicate_response.json()["detail"])
+        self.assertIn(
+            "submitted report already exists", duplicate_response.json()["detail"]
+        )
 
         empty_rejection = self.client.post(
             f"/api/v1/target-reports/{report_id}/reject",
@@ -166,8 +174,12 @@ class TargetReportAPITests(RoleAPITestMixin, TestCase):
 
     def test_submission_validates_owner_value_period_and_current_role(self):
         target = self.create_target(self.employee)
-        self.assertEqual(self.submit_report(self.employee, target, "0.00").status_code, 400)
-        self.assertEqual(self.submit_report(self.employee, target, "101.00").status_code, 400)
+        self.assertEqual(
+            self.submit_report(self.employee, target, "0.00").status_code, 400
+        )
+        self.assertEqual(
+            self.submit_report(self.employee, target, "101.00").status_code, 400
+        )
 
         other_employee = self.create_user_with_employee(
             email="other-target-owner@example.com",
@@ -177,10 +189,16 @@ class TargetReportAPITests(RoleAPITestMixin, TestCase):
         )
         other_employee.branch = self.lagos
         other_employee.save(update_fields=["branch"])
-        self.assertEqual(self.submit_report(other_employee, target, "10.00").status_code, 400)
+        self.assertEqual(
+            self.submit_report(other_employee, target, "10.00").status_code, 400
+        )
 
-        expired_target = self.create_target(self.employee, start_offset=-3, end_offset=-1)
-        self.assertEqual(self.submit_report(self.employee, expired_target, "10.00").status_code, 400)
+        expired_target = self.create_target(
+            self.employee, start_offset=-3, end_offset=-1
+        )
+        self.assertEqual(
+            self.submit_report(self.employee, expired_target, "10.00").status_code, 400
+        )
 
         stale_target = self.create_target(self.employee)
         replacement_role = self.create_role(
@@ -189,7 +207,9 @@ class TargetReportAPITests(RoleAPITestMixin, TestCase):
         )
         self.employee.role = replacement_role
         self.employee.save(update_fields=["role"])
-        self.assertEqual(self.submit_report(self.employee, stale_target, "10.00").status_code, 400)
+        self.assertEqual(
+            self.submit_report(self.employee, stale_target, "10.00").status_code, 400
+        )
 
     def test_approval_is_permission_based_branch_scoped_and_not_self_service(self):
         self.employee_role.permissions["target_reports"].append("approve")
@@ -266,7 +286,9 @@ class TargetReportAPITests(RoleAPITestMixin, TestCase):
 
     def test_report_lists_are_owner_and_branch_scoped(self):
         target = self.create_target(self.employee)
-        report = self.submit_report(self.employee, target, "20.00", "Qualified leads.").json()
+        report = self.submit_report(
+            self.employee, target, "20.00", "Qualified leads."
+        ).json()
 
         own_response = self.client.get(
             f"/api/v1/target-reports/me?employee_target_id={target.id}&status=submitted&search=leads",

@@ -1,10 +1,11 @@
-from ninja import Schema
-from typing import Optional, List
 from datetime import date, datetime
 from decimal import Decimal
+from typing import List, Optional
 
+from ninja import Schema
 
 # ============== Choice Schema ==============
+
 
 class ChoiceSchema(Schema):
     value: str
@@ -17,6 +18,7 @@ class EstateInvoiceChoicesSchema(Schema):
 
 
 # ============== Invoice Item Schemas ==============
+
 
 class InvoiceItemCreateSchema(Schema):
     property_id: int
@@ -53,8 +55,10 @@ class InvoiceItemSchema(Schema):
 
 # ============== Invoice Schemas ==============
 
+
 class ApproverCreateSchema(Schema):
     """Schema for specifying an approver when creating an invoice."""
+
     user_id: int
     step: int
     step_name: str
@@ -62,13 +66,13 @@ class ApproverCreateSchema(Schema):
 
 class InvoiceCreateSchema(Schema):
     client_id: int
-    invoice_type: str = 'full-payment'
+    invoice_type: str = "full-payment"
     installment_spread_months: Optional[int] = None
     reserve_fee_amount: Optional[Decimal] = None
     issue_date: date
     due_date: date
-    tax_rate: Decimal = Decimal('7.50')
-    notes: Optional[str] = ''
+    tax_rate: Decimal = Decimal("7.50")
+    notes: Optional[str] = ""
     items: List[InvoiceItemCreateSchema] = []
     # approvers: Optional[List[ApproverCreateSchema]] = None
 
@@ -114,7 +118,7 @@ class InvoiceSchema(Schema):
 
     property_count: int
     items: List[InvoiceItemSchema] = []
-    approvals: List['ApprovalSchema'] = []
+    approvals: List["ApprovalSchema"] = []
 
     sort_code: Optional[str] = None
     bank_name: Optional[str] = None
@@ -140,14 +144,19 @@ class InvoiceSchema(Schema):
 
     @staticmethod
     def resolve_items(obj):
-        return list(obj.estate_invoice_items.select_related('property', 'property__estate').all())
+        return list(
+            obj.estate_invoice_items.select_related(
+                "property", "property__estate"
+            ).all()
+        )
 
     @staticmethod
     def resolve_approvals(obj):
-        return list(obj.approvals.select_related('decided_by').all())
+        return list(obj.approvals.select_related("decided_by").all())
 
 
 # ============== Approval Schemas ==============
+
 
 class ApprovalSchema(Schema):
     id: int
@@ -178,10 +187,11 @@ class ApprovalSchema(Schema):
 
 class ApprovalDecisionSchema(Schema):
     decision: str  # 'approved' or 'rejected'
-    comment: Optional[str] = ''
+    comment: Optional[str] = ""
 
 
 # ============== Payment Schema ==============
+
 
 class RecordPaymentSchema(Schema):
     amount: Decimal

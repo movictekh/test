@@ -8,43 +8,210 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('services', '0016_campaignpostanalysis_campaignasset_campaigndecision_and_more'),
-        ('user', '0093_employeetargetreport'),
+        (
+            "services",
+            "0016_campaignpostanalysis_campaignasset_campaigndecision_and_more",
+        ),
+        ("user", "0093_employeetargetreport"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='ContentCalendarItem',
+            name="ContentCalendarItem",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title', models.CharField(max_length=255)),
-                ('format', models.CharField(choices=[('video', 'Video'), ('graphic', 'Graphic'), ('carousel', 'Carousel'), ('text_image', 'Text + Image'), ('email', 'Email'), ('whatsapp_template', 'WhatsApp Template'), ('blog_article', 'Blog / Article'), ('radio_script', 'Radio Script'), ('billboard_artwork', 'Billboard Artwork'), ('other', 'Other')], default='other', max_length=40)),
-                ('platform', models.CharField(choices=[('instagram', 'Instagram'), ('facebook', 'Facebook'), ('tiktok', 'TikTok'), ('whatsapp', 'WhatsApp'), ('linkedin', 'LinkedIn'), ('website', 'Website'), ('youtube', 'YouTube'), ('email', 'Email'), ('multiple', 'Multiple'), ('other', 'Other')], default='multiple', max_length=40)),
-                ('division', models.CharField(blank=True, choices=[('real_estate', 'Real Estate'), ('engineering', 'Engineering'), ('surveying', 'Land Surveying'), ('benji', 'Benji'), ('ict', 'ICT / Tech'), ('agriculture', 'Agriculture')], max_length=30)),
-                ('owner_name', models.CharField(blank=True, max_length=120)),
-                ('status', models.CharField(choices=[('briefed', 'Briefed'), ('in_progress', 'In Progress'), ('in_review', 'In Review'), ('approved', 'Approved'), ('scheduled', 'Scheduled'), ('published', 'Published'), ('overdue', 'Overdue'), ('archived', 'Archived')], default='briefed', max_length=20)),
-                ('due_date', models.DateField(blank=True, null=True)),
-                ('scheduled_at', models.DateTimeField(blank=True, null=True)),
-                ('published_at', models.DateTimeField(blank=True, null=True)),
-                ('funnel_stage', models.CharField(blank=True, choices=[('awareness', 'Awareness'), ('discovery', 'Discovery'), ('evaluation', 'Evaluation'), ('intent', 'Intent'), ('purchase', 'Purchase'), ('loyalty', 'Loyalty')], max_length=30)),
-                ('description', models.TextField(blank=True)),
-                ('call_to_action', models.CharField(blank=True, max_length=255)),
-                ('specifications', models.TextField(blank=True)),
-                ('approval_notes', models.TextField(blank=True)),
-                ('sort_order', models.PositiveIntegerField(default=0)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('branch', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='content_calendar_items', to='user.branch')),
-                ('campaign', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='content_calendar_items', to='services.marketingcampaign')),
-                ('campaign_asset', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='content_calendar_items', to='services.campaignasset')),
-                ('content', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='calendar_items', to='services.content')),
-                ('created_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='created_content_calendar_items', to=settings.AUTH_USER_MODEL)),
-                ('owner', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='content_calendar_items', to='user.employee')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("title", models.CharField(max_length=255)),
+                (
+                    "format",
+                    models.CharField(
+                        choices=[
+                            ("video", "Video"),
+                            ("graphic", "Graphic"),
+                            ("carousel", "Carousel"),
+                            ("text_image", "Text + Image"),
+                            ("email", "Email"),
+                            ("whatsapp_template", "WhatsApp Template"),
+                            ("blog_article", "Blog / Article"),
+                            ("radio_script", "Radio Script"),
+                            ("billboard_artwork", "Billboard Artwork"),
+                            ("other", "Other"),
+                        ],
+                        default="other",
+                        max_length=40,
+                    ),
+                ),
+                (
+                    "platform",
+                    models.CharField(
+                        choices=[
+                            ("instagram", "Instagram"),
+                            ("facebook", "Facebook"),
+                            ("tiktok", "TikTok"),
+                            ("whatsapp", "WhatsApp"),
+                            ("linkedin", "LinkedIn"),
+                            ("website", "Website"),
+                            ("youtube", "YouTube"),
+                            ("email", "Email"),
+                            ("multiple", "Multiple"),
+                            ("other", "Other"),
+                        ],
+                        default="multiple",
+                        max_length=40,
+                    ),
+                ),
+                (
+                    "division",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("real_estate", "Real Estate"),
+                            ("engineering", "Engineering"),
+                            ("surveying", "Land Surveying"),
+                            ("benji", "Benji"),
+                            ("ict", "ICT / Tech"),
+                            ("agriculture", "Agriculture"),
+                        ],
+                        max_length=30,
+                    ),
+                ),
+                ("owner_name", models.CharField(blank=True, max_length=120)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("briefed", "Briefed"),
+                            ("in_progress", "In Progress"),
+                            ("in_review", "In Review"),
+                            ("approved", "Approved"),
+                            ("scheduled", "Scheduled"),
+                            ("published", "Published"),
+                            ("overdue", "Overdue"),
+                            ("archived", "Archived"),
+                        ],
+                        default="briefed",
+                        max_length=20,
+                    ),
+                ),
+                ("due_date", models.DateField(blank=True, null=True)),
+                ("scheduled_at", models.DateTimeField(blank=True, null=True)),
+                ("published_at", models.DateTimeField(blank=True, null=True)),
+                (
+                    "funnel_stage",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("awareness", "Awareness"),
+                            ("discovery", "Discovery"),
+                            ("evaluation", "Evaluation"),
+                            ("intent", "Intent"),
+                            ("purchase", "Purchase"),
+                            ("loyalty", "Loyalty"),
+                        ],
+                        max_length=30,
+                    ),
+                ),
+                ("description", models.TextField(blank=True)),
+                ("call_to_action", models.CharField(blank=True, max_length=255)),
+                ("specifications", models.TextField(blank=True)),
+                ("approval_notes", models.TextField(blank=True)),
+                ("sort_order", models.PositiveIntegerField(default=0)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "branch",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="content_calendar_items",
+                        to="user.branch",
+                    ),
+                ),
+                (
+                    "campaign",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="content_calendar_items",
+                        to="services.marketingcampaign",
+                    ),
+                ),
+                (
+                    "campaign_asset",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="content_calendar_items",
+                        to="services.campaignasset",
+                    ),
+                ),
+                (
+                    "content",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="calendar_items",
+                        to="services.content",
+                    ),
+                ),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="created_content_calendar_items",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "owner",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="content_calendar_items",
+                        to="user.employee",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['due_date', 'sort_order', '-created_at'],
-                'indexes': [models.Index(fields=['status', 'due_date'], name='services_co_status_d0ae3b_idx'), models.Index(fields=['platform'], name='services_co_platfor_a9da2b_idx'), models.Index(fields=['division'], name='services_co_divisio_c59628_idx'), models.Index(fields=['owner', 'due_date'], name='services_co_owner_i_43a232_idx'), models.Index(fields=['campaign'], name='services_co_campaig_46f240_idx'), models.Index(fields=['branch', 'division'], name='services_co_branch__873200_idx')],
+                "ordering": ["due_date", "sort_order", "-created_at"],
+                "indexes": [
+                    models.Index(
+                        fields=["status", "due_date"],
+                        name="services_co_status_d0ae3b_idx",
+                    ),
+                    models.Index(
+                        fields=["platform"], name="services_co_platfor_a9da2b_idx"
+                    ),
+                    models.Index(
+                        fields=["division"], name="services_co_divisio_c59628_idx"
+                    ),
+                    models.Index(
+                        fields=["owner", "due_date"],
+                        name="services_co_owner_i_43a232_idx",
+                    ),
+                    models.Index(
+                        fields=["campaign"], name="services_co_campaig_46f240_idx"
+                    ),
+                    models.Index(
+                        fields=["branch", "division"],
+                        name="services_co_branch__873200_idx",
+                    ),
+                ],
             },
         ),
     ]

@@ -1,8 +1,9 @@
-from django.db import models
-from django.core.exceptions import ValidationError
 from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.db import models
 
 from user.models.user import User
+
 from .base import BaseModel
 
 
@@ -32,21 +33,17 @@ class AuditLog(BaseModel):
         ADD_LEAD = "add_lead", "Add Lead"
 
     audit_type = models.CharField(
-        max_length=100,
-        choices=AuditType.choices,
-        help_text="Audit type"
+        max_length=100, choices=AuditType.choices, help_text="Audit type"
     )
 
     audit_status = models.CharField(
         max_length=100,
         choices=AuditStatus.choices,
         default=AuditStatus.INFO,
-        help_text="Audit status"
+        help_text="Audit status",
     )
 
-    activity = models.TextField(
-        help_text="Detailed description of the event"
-    )
+    activity = models.TextField(help_text="Detailed description of the event")
 
     user = models.ForeignKey(
         User,
@@ -54,19 +51,17 @@ class AuditLog(BaseModel):
         null=True,
         blank=True,
         related_name="audit_logs",
-        help_text="User who performed the action"
+        help_text="User who performed the action",
     )
 
     ip_address = models.GenericIPAddressField(
-        null=True,
-        blank=True,
-        help_text="IP address of the request"
+        null=True, blank=True, help_text="IP address of the request"
     )
 
     metadata = models.JSONField(
         default=dict,
         blank=True,
-        help_text="Additional context about the event (e.g. affected record name/id)"
+        help_text="Additional context about the event (e.g. affected record name/id)",
     )
 
     class Meta:
@@ -83,12 +78,20 @@ class AuditLog(BaseModel):
         super().clean()
         valid_types = [choice[0] for choice in self.AuditType.choices]
         if self.audit_type and (self.audit_type not in valid_types):
-            raise ValidationError({'audit_type': f"Invalid audit type. Must be one of: {', '.join(valid_types)}"})
+            raise ValidationError(
+                {
+                    "audit_type": f"Invalid audit type. Must be one of: {', '.join(valid_types)}"
+                }
+            )
         valid_statuses = [choice[0] for choice in self.AuditStatus.choices]
         if self.audit_status and (self.audit_status not in valid_statuses):
-            raise ValidationError({'audit_status': f"Invalid audit status. Must be one of: {', '.join(valid_statuses)}"})
+            raise ValidationError(
+                {
+                    "audit_status": f"Invalid audit status. Must be one of: {', '.join(valid_statuses)}"
+                }
+            )
         if not self.activity or not self.activity.strip():
-            raise ValidationError({'activity': "Activity description cannot be blank."})
+            raise ValidationError({"activity": "Activity description cannot be blank."})
 
     def save(self, *args, **kwargs):
         self.full_clean()

@@ -1,7 +1,8 @@
-from ninja import Schema
-from typing import Optional, List
 from datetime import date, datetime
 from decimal import Decimal
+from typing import List, Optional
+
+from ninja import Schema
 
 
 class ExpenseIn(Schema):
@@ -27,9 +28,11 @@ class ExpenseUpdate(Schema):
     status: Optional[str] = None
     attachment: Optional[str] = None
 
+
 class DepartmentOut(Schema):
     id: int
     name: str
+
 
 class ExpenseOut(Schema):
     id: int
@@ -43,4 +46,3 @@ class ExpenseOut(Schema):
     attachment: Optional[str] = None
     created_at: datetime
     updated_at: datetime
-

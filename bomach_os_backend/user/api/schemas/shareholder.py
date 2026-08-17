@@ -1,11 +1,13 @@
-from ninja import Schema
-from typing import Optional, List
 from datetime import date, datetime
 from decimal import Decimal
+from typing import List, Optional
+
+from ninja import Schema
 
 
 class ShareholderCreateSchema(Schema):
     """Schema for creating a shareholder / board member"""
+
     # User info
     email: str
     password: Optional[str] = None
@@ -29,6 +31,7 @@ class ShareholderCreateSchema(Schema):
 
 class ShareholderUpdateSchema(Schema):
     """Schema for updating a shareholder / board member"""
+
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     gender: Optional[str] = None
@@ -48,6 +51,7 @@ class ShareholderUpdateSchema(Schema):
 
 class ShareholderSchema(Schema):
     """Schema for shareholder response"""
+
     id: int
     shareholder_id: str
     user_id: int
@@ -93,6 +97,7 @@ class ShareholderSchema(Schema):
 
 class BoardCompositionSchema(Schema):
     """Schema for per-title breakdown in summary"""
+
     title: str
     title_display: str
     count: int
@@ -100,6 +105,7 @@ class BoardCompositionSchema(Schema):
 
 class ShareholderSummarySchema(Schema):
     """Schema for shareholder summary/overview"""
+
     total_shareholders: int
     active_shareholders: int
     total_share_percentage: Decimal

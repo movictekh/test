@@ -8,9 +8,17 @@ from django.core.exceptions import ValidationError
 from django.db.models import Prefetch, Q
 from django.shortcuts import get_object_or_404
 from ninja.errors import HttpError
-from domains.service_operations.models import Invoice
-from domains.service_operations.models import Quote, ServiceDeliverable, ServiceExecutionTask, ServiceOrder, ServiceOrderActivity, ServiceOrderMilestone, ServiceRequest
 
+from domains.service_operations.models import (
+    Invoice,
+    Quote,
+    ServiceDeliverable,
+    ServiceExecutionTask,
+    ServiceOrder,
+    ServiceOrderActivity,
+    ServiceOrderMilestone,
+    ServiceRequest,
+)
 
 CLIENT_ACTIVITY_TYPES = {"document_received", "email", "whatsapp", "internal_note"}
 
@@ -18,10 +26,23 @@ CLIENT_ACTIVITY_TYPES = {"document_received", "email", "whatsapp", "internal_not
 CLIENT_VISIBLE_QUOTE_STATUSES = {"sent", "accepted", "rejected"}
 
 
-CLIENT_VISIBLE_INVOICE_STATUSES = {"sent", "viewed", "partially_paid", "paid", "overdue"}
+CLIENT_VISIBLE_INVOICE_STATUSES = {
+    "sent",
+    "viewed",
+    "partially_paid",
+    "paid",
+    "overdue",
+}
 
 
-CLIENT_VISIBLE_ORDER_STATUSES = {"pending_mobilisation", "active", "quality_review", "awaiting_client", "completed", "on_hold"}
+CLIENT_VISIBLE_ORDER_STATUSES = {
+    "pending_mobilisation",
+    "active",
+    "quality_review",
+    "awaiting_client",
+    "completed",
+    "on_hold",
+}
 
 
 def _validation_detail(exc):
@@ -107,12 +128,16 @@ def _client_order_queryset():
     ).prefetch_related(
         Prefetch(
             "milestones",
-            queryset=ServiceOrderMilestone.objects.filter(client_visible=True).order_by("sort_order", "id"),
+            queryset=ServiceOrderMilestone.objects.filter(client_visible=True).order_by(
+                "sort_order", "id"
+            ),
             to_attr="client_visible_milestones",
         ),
         Prefetch(
             "activities",
-            queryset=ServiceOrderActivity.objects.filter(visibility="internal_client").order_by("-created_at"),
+            queryset=ServiceOrderActivity.objects.filter(
+                visibility="internal_client"
+            ).order_by("-created_at"),
             to_attr="client_visible_activities",
         ),
     )
@@ -215,21 +240,28 @@ def _serialize_request(obj, include_detail=False):
         "updated_at": obj.updated_at,
     }
     if include_detail:
-        row.update({
-            "service_lead_id": obj.service_lead_id,
-            "crm_lead_id": obj.crm_lead_id,
-            "request_form_id": obj.request_form_id,
-            "request_form_version": obj.request_form_version,
-            "pricing_config_id": obj.pricing_config_id,
-            "pricing_config_version": obj.pricing_config_version,
-            "workflow_id": obj.workflow_id,
-            "workflow_version": obj.workflow_version,
-            "answers_snapshot": obj.answers_snapshot,
-            "form_snapshot": obj.form_snapshot,
-            "answers": [_serialize_answer(answer) for answer in obj.answers.all()],
-            "attachments": [_serialize_attachment(attachment) for attachment in obj.attachments.all()],
-            "activities": [_serialize_activity(activity) for activity in obj.activities.all()],
-        })
+        row.update(
+            {
+                "service_lead_id": obj.service_lead_id,
+                "crm_lead_id": obj.crm_lead_id,
+                "request_form_id": obj.request_form_id,
+                "request_form_version": obj.request_form_version,
+                "pricing_config_id": obj.pricing_config_id,
+                "pricing_config_version": obj.pricing_config_version,
+                "workflow_id": obj.workflow_id,
+                "workflow_version": obj.workflow_version,
+                "answers_snapshot": obj.answers_snapshot,
+                "form_snapshot": obj.form_snapshot,
+                "answers": [_serialize_answer(answer) for answer in obj.answers.all()],
+                "attachments": [
+                    _serialize_attachment(attachment)
+                    for attachment in obj.attachments.all()
+                ],
+                "activities": [
+                    _serialize_activity(activity) for activity in obj.activities.all()
+                ],
+            }
+        )
     return row
 
 
@@ -261,10 +293,6 @@ def _serialize_request_form(form):
     }
 
 
-
-
-
-
 def _quote_queryset():
     return Quote.objects.select_related(
         "client",
@@ -293,12 +321,6 @@ def _invoice_queryset():
     ).prefetch_related("items", "payments", "submissions")
 
 
-
-
-
-
-
-
 def _get_client_profile(user):
     try:
         return user.client_profile
@@ -310,13 +332,27 @@ def _get_staff_object_or_404(request, request_id):
     obj = get_object_or_404(_request_queryset(), id=request_id)
     branch_ids = getattr(request, "_perm_branch_ids", [])
     if branch_ids and obj.branch_id not in branch_ids:
-        raise HttpError(403, "You do not have permission to access this service request.")
+        raise HttpError(
+            403, "You do not have permission to access this service request."
+        )
     return obj
 
 
-def _apply_filters(qs, status=None, priority=None, service_id=None, branch_id=None,
-                   owner_id=None, client_id=None, source=None, date_from=None,
-                   date_to=None, due_from=None, due_to=None, search=None):
+def _apply_filters(
+    qs,
+    status=None,
+    priority=None,
+    service_id=None,
+    branch_id=None,
+    owner_id=None,
+    client_id=None,
+    source=None,
+    date_from=None,
+    date_to=None,
+    due_from=None,
+    due_to=None,
+    search=None,
+):
     if status:
         qs = qs.filter(status=status)
     if priority:
@@ -353,5 +389,3 @@ def _apply_filters(qs, status=None, priority=None, service_id=None, branch_id=No
             | Q(source_reference__icontains=search)
         )
     return qs
-
-

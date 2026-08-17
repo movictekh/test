@@ -1,9 +1,10 @@
-from django.db import models
+from decimal import Decimal
+
 from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator, MinValueValidator
+from django.db import models
 
 from user.models.base import BaseModel
-from decimal import Decimal
 
 
 class Estate(BaseModel):
@@ -16,25 +17,25 @@ class Estate(BaseModel):
     )
 
     ESTATE_TYPE_CHOICES = [
-        ('residential', 'Residential'),
-        ('commercial', 'Commercial'),
-        ('industrial', 'Industrial'),
-        ('mixed_use', 'Mixed Use'),
-        ('land', 'Land'),
+        ("residential", "Residential"),
+        ("commercial", "Commercial"),
+        ("industrial", "Industrial"),
+        ("mixed_use", "Mixed Use"),
+        ("land", "Land"),
     ]
 
     ESTATE_STATUS_CHOICES = [
-        ('available', 'Available'),
-        ('sold_out', 'Sold Out'),
-        ('under_development', 'Under Development'),
-        ('coming_soon', 'Coming Soon'),
+        ("available", "Available"),
+        ("sold_out", "Sold Out"),
+        ("under_development", "Under Development"),
+        ("coming_soon", "Coming Soon"),
     ]
 
     AREA_UNIT_CHOICES = [
-        ('sqm', 'Square Meters'),
-        ('hectares', 'Hectares'),
-        ('acres', 'Acres'),
-        ('sqft', 'Square Feet'),
+        ("sqm", "Square Meters"),
+        ("hectares", "Hectares"),
+        ("acres", "Acres"),
+        ("sqft", "Square Feet"),
     ]
 
     # Basic Information
@@ -70,7 +71,7 @@ class Estate(BaseModel):
     country_code = models.CharField(
         max_length=3,
         blank=True,
-        default='',
+        default="",
         verbose_name="Country Code",
         help_text="ISO 3166-1 alpha-3 code",
     )
@@ -107,7 +108,7 @@ class Estate(BaseModel):
     )
     zoning_information = models.TextField(
         blank=True,
-        default='',
+        default="",
         verbose_name="Zoning Information",
     )
 
@@ -129,13 +130,13 @@ class Estate(BaseModel):
     price_per_sqm = models.DecimalField(
         max_digits=15,
         decimal_places=2,
-        validators=[MinValueValidator(Decimal('0.00'))],
+        validators=[MinValueValidator(Decimal("0.00"))],
         verbose_name="Price per Square Meter (amount/sqm)",
     )
     available_plot_sizes = models.CharField(
         max_length=500,
         blank=True,
-        default='',
+        default="",
         verbose_name="Available Plot Sizes (sqm)",
         help_text="Comma-separated sizes e.g. 500, 600, 1000",
     )
@@ -144,7 +145,7 @@ class Estate(BaseModel):
         decimal_places=2,
         null=True,
         blank=True,
-        validators=[MinValueValidator(Decimal('0.00'))],
+        validators=[MinValueValidator(Decimal("0.00"))],
         verbose_name="Min Price - Other Properties",
     )
     max_price_other_properties = models.DecimalField(
@@ -152,7 +153,7 @@ class Estate(BaseModel):
         decimal_places=2,
         null=True,
         blank=True,
-        validators=[MinValueValidator(Decimal('0.00'))],
+        validators=[MinValueValidator(Decimal("0.00"))],
         verbose_name="Max Price - Other Properties",
     )
     estate_status = models.CharField(
@@ -165,13 +166,13 @@ class Estate(BaseModel):
         decimal_places=2,
         null=True,
         blank=True,
-        validators=[MinValueValidator(Decimal('0.00'))],
+        validators=[MinValueValidator(Decimal("0.00"))],
         verbose_name="Total Area",
     )
     area_unit = models.CharField(
         max_length=20,
         choices=AREA_UNIT_CHOICES,
-        default='sqm',
+        default="sqm",
         verbose_name="Area Unit",
     )
 
@@ -201,7 +202,7 @@ class Estate(BaseModel):
         decimal_places=2,
         null=True,
         blank=True,
-        validators=[MinValueValidator(Decimal('0.00'))],
+        validators=[MinValueValidator(Decimal("0.00"))],
         verbose_name="Legal Fee",
     )
 
@@ -210,7 +211,7 @@ class Estate(BaseModel):
         decimal_places=2,
         null=True,
         blank=True,
-        validators=[MinValueValidator(Decimal('0.00'))],
+        validators=[MinValueValidator(Decimal("0.00"))],
         verbose_name="Development Fee",
     )
 
@@ -219,19 +220,18 @@ class Estate(BaseModel):
         decimal_places=2,
         null=True,
         blank=True,
-        validators=[MinValueValidator(Decimal('0.00'))],
+        validators=[MinValueValidator(Decimal("0.00"))],
         verbose_name="Receipt Fee",
     )
-
 
     class Meta:
         verbose_name = "Estate"
         verbose_name_plural = "Estates"
-        ordering = ['-created_at']
+        ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=['estate_code']),
-            models.Index(fields=['estate_type']),
-            models.Index(fields=['estate_status']),
+            models.Index(fields=["estate_code"]),
+            models.Index(fields=["estate_type"]),
+            models.Index(fields=["estate_status"]),
         ]
 
     def __str__(self):
@@ -240,50 +240,65 @@ class Estate(BaseModel):
     def clean(self):
         super().clean()
         if not self.estate_name or not self.estate_name.strip():
-            raise ValidationError({'estate_name': "Estate name cannot be blank."})
+            raise ValidationError({"estate_name": "Estate name cannot be blank."})
         if not self.estate_code or not self.estate_code.strip():
-            raise ValidationError({'estate_code': "Estate code cannot be blank."})
+            raise ValidationError({"estate_code": "Estate code cannot be blank."})
         valid_types = [c[0] for c in self.ESTATE_TYPE_CHOICES]
         if self.estate_type and self.estate_type not in valid_types:
-            raise ValidationError({'estate_type': f"Invalid type. Must be one of: {', '.join(valid_types)}"})
+            raise ValidationError(
+                {
+                    "estate_type": f"Invalid type. Must be one of: {', '.join(valid_types)}"
+                }
+            )
         valid_statuses = [c[0] for c in self.ESTATE_STATUS_CHOICES]
         if self.estate_status and self.estate_status not in valid_statuses:
-            raise ValidationError({'estate_status': f"Invalid status. Must be one of: {', '.join(valid_statuses)}"})
+            raise ValidationError(
+                {
+                    "estate_status": f"Invalid status. Must be one of: {', '.join(valid_statuses)}"
+                }
+            )
         if self.min_price_other_properties and self.max_price_other_properties:
             if self.min_price_other_properties > self.max_price_other_properties:
-                raise ValidationError({'min_price_other_properties': "Min price cannot exceed max price."})
+                raise ValidationError(
+                    {"min_price_other_properties": "Min price cannot exceed max price."}
+                )
 
     def save(self, *args, **kwargs):
-        if not kwargs.get('update_fields'):
+        if not kwargs.get("update_fields"):
             self.full_clean()
         super().save(*args, **kwargs)
 
 
 class EstateDocument(BaseModel):
     """Documents and files for an estate (maps, layouts, images, etc.)"""
+
     estate = models.ForeignKey(
         Estate,
         on_delete=models.CASCADE,
-        related_name='documents',
+        related_name="documents",
         verbose_name="Estate",
     )
     file = models.FileField(
-        upload_to='estates/documents/',
-        validators=[FileExtensionValidator(allowed_extensions=['pdf', 'png', 'jpg', 'jpeg', 'doc', 'docx'])],
+        upload_to="estates/documents/",
+        validators=[
+            FileExtensionValidator(
+                allowed_extensions=["pdf", "png", "jpg", "jpeg", "doc", "docx"]
+            )
+        ],
         verbose_name="File",
         help_text="PDF, Image (PNG, JPG), or Document (DOC, DOCX). Max size 10MB.",
     )
     caption = models.CharField(
         max_length=255,
         blank=True,
-        default='',
+        default="",
         verbose_name="Caption",
     )
 
     class Meta:
         verbose_name = "Estate Document"
         verbose_name_plural = "Estate Documents"
-        ordering = ['created_at']
+        ordering = ["created_at"]
 
     def __str__(self):
         return f"Document for {self.estate.estate_name}"
@@ -293,11 +308,11 @@ class Property(BaseModel):
     """Model for individual properties within an estate (plots, residential, commercial)"""
 
     owner = models.ForeignKey(
-        'user.User',
+        "user.User",
         on_delete=models.PROTECT,
         null=True,
         blank=True,
-        related_name='properties',
+        related_name="properties",
         verbose_name="Owner",
     )
 
@@ -308,43 +323,43 @@ class Property(BaseModel):
     )
 
     PROPERTY_TYPE_CHOICES = [
-        ('plot', 'Plot of Land'),
-        ('residential', 'Residential Building'),
-        ('commercial', 'Commercial Building'),
+        ("plot", "Plot of Land"),
+        ("residential", "Residential Building"),
+        ("commercial", "Commercial Building"),
     ]
 
     PROPERTY_STATUS_CHOICES = [
-        ('not-for-sale', 'Not for Sale'),
-        ('available', 'Available'),
-        ('reserved', 'Reserved'),
-        ('sold', 'Sold'),
-        ('hold', 'Hold'),
+        ("not-for-sale", "Not for Sale"),
+        ("available", "Available"),
+        ("reserved", "Reserved"),
+        ("sold", "Sold"),
+        ("hold", "Hold"),
     ]
 
     RESIDENTIAL_TYPE_CHOICES = [
-        ('house', 'House'),
-        ('villa', 'Villa'),
-        ('apartment', 'Apartment'),
-        ('townhouse', 'Townhouse'),
-        ('duplex', 'Duplex'),
-        ('bungalow', 'Bungalow'),
-        ('penthouse', 'Penthouse'),
+        ("house", "House"),
+        ("villa", "Villa"),
+        ("apartment", "Apartment"),
+        ("townhouse", "Townhouse"),
+        ("duplex", "Duplex"),
+        ("bungalow", "Bungalow"),
+        ("penthouse", "Penthouse"),
     ]
 
     COMMERCIAL_TYPE_CHOICES = [
-        ('office', 'Office'),
-        ('retail', 'Retail Space'),
-        ('warehouse', 'Warehouse'),
-        ('shopping_mall', 'Shopping Mall'),
-        ('hotel', 'Hotel'),
-        ('mixed_use', 'Mixed Use'),
+        ("office", "Office"),
+        ("retail", "Retail Space"),
+        ("warehouse", "Warehouse"),
+        ("shopping_mall", "Shopping Mall"),
+        ("hotel", "Hotel"),
+        ("mixed_use", "Mixed Use"),
     ]
 
     AREA_UNIT_CHOICES = [
-        ('sqft', 'Square Feet'),
-        ('sqm', 'Square Meters'),
-        ('acres', 'Acres'),
-        ('hectares', 'Hectares'),
+        ("sqft", "Square Feet"),
+        ("sqm", "Square Meters"),
+        ("acres", "Acres"),
+        ("hectares", "Hectares"),
     ]
 
     # --- Common fields (all property types) ---
@@ -353,7 +368,7 @@ class Property(BaseModel):
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name='properties',
+        related_name="properties",
         verbose_name="Estate",
     )
     property_type = models.CharField(
@@ -369,7 +384,7 @@ class Property(BaseModel):
     price = models.DecimalField(
         max_digits=15,
         decimal_places=2,
-        validators=[MinValueValidator(Decimal('0.01'))],
+        validators=[MinValueValidator(Decimal("0.01"))],
         verbose_name="Price",
     )
 
@@ -381,13 +396,13 @@ class Property(BaseModel):
     )
     description = models.TextField(
         blank=True,
-        default='',
+        default="",
         verbose_name="Description",
     )
     status = models.CharField(
         max_length=20,
         choices=PROPERTY_STATUS_CHOICES,
-        default='available',
+        default="available",
         verbose_name="Status",
     )
 
@@ -401,7 +416,7 @@ class Property(BaseModel):
     client_name = models.CharField(
         max_length=255,
         blank=True,
-        default='',
+        default="",
         verbose_name="Client / Reservation Holder",
         help_text="Free-form name of the client or reservation holder for this property.",
     )
@@ -410,13 +425,13 @@ class Property(BaseModel):
         decimal_places=2,
         null=True,
         blank=True,
-        validators=[MinValueValidator(Decimal('0.01'))],
+        validators=[MinValueValidator(Decimal("0.01"))],
         verbose_name="Plot Size",
     )
     plot_size_unit = models.CharField(
         max_length=20,
         choices=AREA_UNIT_CHOICES,
-        default='acres',
+        default="acres",
         blank=True,
         verbose_name="Plot Size Unit",
     )
@@ -426,7 +441,7 @@ class Property(BaseModel):
         max_length=50,
         choices=RESIDENTIAL_TYPE_CHOICES,
         blank=True,
-        default='',
+        default="",
         verbose_name="Residential Building Type",
     )
     bedrooms = models.PositiveIntegerField(
@@ -449,7 +464,7 @@ class Property(BaseModel):
         decimal_places=2,
         null=True,
         blank=True,
-        validators=[MinValueValidator(Decimal('0.01'))],
+        validators=[MinValueValidator(Decimal("0.01"))],
         verbose_name="Total Area (sqft)",
     )
 
@@ -458,7 +473,7 @@ class Property(BaseModel):
         max_length=50,
         choices=COMMERCIAL_TYPE_CHOICES,
         blank=True,
-        default='',
+        default="",
         verbose_name="Commercial Building Type",
     )
     total_area_commercial = models.DecimalField(
@@ -466,7 +481,7 @@ class Property(BaseModel):
         decimal_places=2,
         null=True,
         blank=True,
-        validators=[MinValueValidator(Decimal('0.01'))],
+        validators=[MinValueValidator(Decimal("0.01"))],
         verbose_name="Total Area (sqft)",
     )
     number_of_floors = models.PositiveIntegerField(
@@ -488,17 +503,17 @@ class Property(BaseModel):
     class Meta:
         verbose_name = "Property"
         verbose_name_plural = "Properties"
-        ordering = ['property_name']
+        ordering = ["property_name"]
         indexes = [
-            models.Index(fields=['estate', 'status']),
-            models.Index(fields=['property_type']),
-            models.Index(fields=['estate', 'plot_number']),
+            models.Index(fields=["estate", "status"]),
+            models.Index(fields=["property_type"]),
+            models.Index(fields=["estate", "plot_number"]),
         ]
         constraints = [
             models.UniqueConstraint(
-                fields=['estate', 'property_name'],
+                fields=["estate", "property_name"],
                 condition=models.Q(estate__isnull=False),
-                name='unique_property_name_per_estate',
+                name="unique_property_name_per_estate",
             ),
         ]
 
@@ -509,86 +524,117 @@ class Property(BaseModel):
 
     @property
     def building_type(self):
-        if self.property_type == 'residential':
+        if self.property_type == "residential":
             return self.building_type_residential
-        elif self.property_type == 'commercial':
+        elif self.property_type == "commercial":
             return self.building_type_commercial
-        return ''
+        return ""
 
     @property
     def total_area(self):
-        if self.property_type == 'residential':
+        if self.property_type == "residential":
             return self.total_area_residential
-        elif self.property_type == 'commercial':
+        elif self.property_type == "commercial":
             return self.total_area_commercial
         return None
 
     @property
     def floors(self):
-        if self.property_type == 'residential':
+        if self.property_type == "residential":
             return self.floors_residential
-        elif self.property_type == 'commercial':
+        elif self.property_type == "commercial":
             return self.number_of_floors
         return None
 
     def clean(self):
         super().clean()
         if not self.property_name or not self.property_name.strip():
-            raise ValidationError({'property_name': "Property name cannot be blank."})
+            raise ValidationError({"property_name": "Property name cannot be blank."})
 
-        if self.property_type == 'plot':
+        if self.property_type == "plot":
             if not self.plot_size or self.plot_size <= 0:
-                raise ValidationError({'plot_size': "Plot size must be greater than zero."})
+                raise ValidationError(
+                    {"plot_size": "Plot size must be greater than zero."}
+                )
 
-        elif self.property_type == 'residential':
+        elif self.property_type == "residential":
             if not self.building_type_residential:
-                raise ValidationError({'building_type_residential': "Building type is required for residential properties."})
+                raise ValidationError(
+                    {
+                        "building_type_residential": "Building type is required for residential properties."
+                    }
+                )
             if not self.bedrooms:
-                raise ValidationError({'bedrooms': "Number of bedrooms is required for residential properties."})
+                raise ValidationError(
+                    {
+                        "bedrooms": "Number of bedrooms is required for residential properties."
+                    }
+                )
             if not self.bathrooms:
-                raise ValidationError({'bathrooms': "Number of bathrooms is required for residential properties."})
+                raise ValidationError(
+                    {
+                        "bathrooms": "Number of bathrooms is required for residential properties."
+                    }
+                )
             if not self.total_area_residential or self.total_area_residential <= 0:
-                raise ValidationError({'total_area_residential': "Total area is required for residential properties."})
+                raise ValidationError(
+                    {
+                        "total_area_residential": "Total area is required for residential properties."
+                    }
+                )
 
-        elif self.property_type == 'commercial':
+        elif self.property_type == "commercial":
             if not self.building_type_commercial:
-                raise ValidationError({'building_type_commercial': "Building type is required for commercial properties."})
+                raise ValidationError(
+                    {
+                        "building_type_commercial": "Building type is required for commercial properties."
+                    }
+                )
             if not self.total_area_commercial or self.total_area_commercial <= 0:
-                raise ValidationError({'total_area_commercial': "Total area is required for commercial properties."})
+                raise ValidationError(
+                    {
+                        "total_area_commercial": "Total area is required for commercial properties."
+                    }
+                )
             if not self.number_of_floors:
-                raise ValidationError({'number_of_floors': "Number of floors is required for commercial properties."})
+                raise ValidationError(
+                    {
+                        "number_of_floors": "Number of floors is required for commercial properties."
+                    }
+                )
 
     def save(self, *args, **kwargs):
-        if not kwargs.get('update_fields'):
+        if not kwargs.get("update_fields"):
             self.full_clean()
         super().save(*args, **kwargs)
 
 
 class PropertyImage(BaseModel):
     """Images for a property"""
+
     property = models.ForeignKey(
         Property,
         on_delete=models.CASCADE,
-        related_name='images',
+        related_name="images",
         verbose_name="Property",
     )
     image = models.FileField(
-        upload_to='estates/properties/images/',
-        validators=[FileExtensionValidator(allowed_extensions=['png', 'jpg', 'jpeg'])],
+        upload_to="estates/properties/images/",
+        validators=[FileExtensionValidator(allowed_extensions=["png", "jpg", "jpeg"])],
         verbose_name="Image",
         help_text="PNG, JPG up to 10MB",
     )
     caption = models.CharField(
         max_length=255,
         blank=True,
-        default='',
+        default="",
         verbose_name="Caption",
     )
 
     class Meta:
         verbose_name = "Property Image"
         verbose_name_plural = "Property Images"
-        ordering = ['created_at']
+        ordering = ["created_at"]
 
     def __str__(self):
         return f"Image for {self.property.property_name}"

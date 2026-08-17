@@ -1,11 +1,10 @@
 # your_app/api.py
-from typing import List , Dict , Any
+from typing import Any, Dict, List
 
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
 from ninja import Router
 from ninja.errors import HttpError
-from user.models.user import User
 
 from user.api.schemas import (
     MessageOut,
@@ -14,23 +13,24 @@ from user.api.schemas import (
     SOPIn,
     SOPOut,
 )
-from user.models import Department, Responsibility, SOP, Unit
-
+from user.models import SOP, Department, Responsibility, Unit
+from user.models.user import User
 
 # =============================================================================
 #  BASE ROUTER (Shared functionality)
 # =============================================================================
 
+
 class BaseSOPRouter:
     """Base class for SOP routers with common CRUD operations."""
-    
+
     def __init__(self, parent_field: str):
         self.parent_field = parent_field
-    
+
     def get_queryset(self, request, parent_id: int):
         """Override in subclasses to provide filtered queryset."""
         raise NotImplementedError
-    
+
     def create_sop(self, request, parent_id: int, payload: SOPIn):
         """Override in subclasses to handle creation logic."""
         raise NotImplementedError
@@ -54,10 +54,9 @@ def list_department_sops(request, dept_id: int):
 def create_department_sop(request, dept_id: int, payload: SOPIn):
     """Create a new SOP for a department."""
     department = get_object_or_404(Department, id=dept_id)
-    
+
     sop = SOP.objects.create(
         department=department,
-        
         **payload.dict(),
     )
     return sop
@@ -75,10 +74,10 @@ def update_department_sop(request, dept_id: int, sop_id: int, payload: SOPIn):
     """Update an existing department SOP."""
     department = get_object_or_404(Department, id=dept_id)
     sop = get_object_or_404(SOP, id=sop_id, department=department)
-    
+
     for field, value in payload.dict(exclude_unset=True).items():
         setattr(sop, field, value)
-    
+
     sop.updated_by = request.user
     sop.save()
     return sop
@@ -89,12 +88,14 @@ def delete_department_sop(request, dept_id: int, sop_id: int):
     """Delete a department SOP."""
     department = get_object_or_404(Department, id=dept_id)
     sop = get_object_or_404(SOP, id=sop_id, department=department)
-    
+
     sop.delete()
     return {"message": "Department SOP deleted successfully", "success": True}
 
 
-@dept_router.get("/{dept_id}/sops/priority/{priority}", response={200: List[SOPOut], 404: MessageOut})
+@dept_router.get(
+    "/{dept_id}/sops/priority/{priority}", response={200: List[SOPOut], 404: MessageOut}
+)
 def filter_sops_by_priority(request, dept_id: int, priority: str):
     """Filter department SOPs by priority level."""
     department = get_object_or_404(Department, id=dept_id)
@@ -119,7 +120,7 @@ def list_unit_sops(request, unit_id: int):
 def create_unit_sop(request, unit_id: int, payload: SOPIn):
     """Create a new SOP for a unit."""
     unit = get_object_or_404(Unit, id=unit_id)
-    
+
     sop = SOP.objects.create(
         unit=unit,
         department=unit.department,  # Optional: inherit from unit
@@ -140,10 +141,10 @@ def update_unit_sop(request, unit_id: int, sop_id: int, payload: SOPIn):
     """Update an existing unit SOP."""
     unit = get_object_or_404(Unit, id=unit_id)
     sop = get_object_or_404(SOP, id=sop_id, unit=unit)
-    
+
     for field, value in payload.dict(exclude_unset=True).items():
         setattr(sop, field, value)
-    
+
     sop.updated_by = request.user
     sop.save()
     return sop
@@ -154,7 +155,7 @@ def delete_unit_sop(request, unit_id: int, sop_id: int):
     """Delete a unit SOP."""
     unit = get_object_or_404(Unit, id=unit_id)
     sop = get_object_or_404(SOP, id=sop_id, unit=unit)
-    
+
     sop.delete()
     return {"message": "Unit SOP deleted successfully", "success": True}
 
@@ -166,7 +167,9 @@ def delete_unit_sop(request, unit_id: int, sop_id: int):
 resp_router = Router(tags=["Core Responsibilities"])
 
 
-@resp_router.get("/my/{user_id}", response={200: List[ResponsibilityOut], 404: MessageOut})
+@resp_router.get(
+    "/my/{user_id}", response={200: List[ResponsibilityOut], 404: MessageOut}
+)
 def list_my_responsibilities(request, user_id: int):
     """List all responsibilities for the authenticated user."""
     return Responsibility.objects.filter(user=user_id).order_by("priority", "title")
@@ -183,20 +186,24 @@ def create_my_responsibility(request, user_id: int, payload: ResponsibilityIn):
     return responsibility
 
 
-@resp_router.get("/my/sop/{resp_id}", response={200: ResponsibilityOut, 404: MessageOut})
+@resp_router.get(
+    "/my/sop/{resp_id}", response={200: ResponsibilityOut, 404: MessageOut}
+)
 def get_my_responsibility(request, resp_id: int):
     """Retrieve a specific responsibility belonging to the user."""
     return get_object_or_404(Responsibility, id=resp_id)
 
 
-@resp_router.put("/edit/sop/{resp_id}", response={200: ResponsibilityOut, 404: MessageOut})
+@resp_router.put(
+    "/edit/sop/{resp_id}", response={200: ResponsibilityOut, 404: MessageOut}
+)
 def update_my_responsibility(request, resp_id: int, payload: ResponsibilityIn):
     """Update an existing responsibility."""
     responsibility = get_object_or_404(Responsibility, id=resp_id)
-    
+
     for field, value in payload.dict(exclude_unset=True).items():
         setattr(responsibility, field, value)
-    
+
     responsibility.save()
     return responsibility
 
@@ -205,7 +212,7 @@ def update_my_responsibility(request, resp_id: int, payload: ResponsibilityIn):
 def delete_my_responsibility(request, resp_id: int):
     """Delete a responsibility."""
     responsibility = get_object_or_404(Responsibility, id=resp_id)
-    
+
     responsibility.delete()
     return {"message": "Responsibility deleted successfully", "success": True}
 
@@ -217,11 +224,13 @@ def delete_my_responsibility(request, resp_id: int):
 sop_dashboard_router = Router(tags=["Dashboard"])
 
 
-@sop_dashboard_router.get("/summary/{user_id}", response={200: Dict[str, Any], 404: MessageOut})
+@sop_dashboard_router.get(
+    "/summary/{user_id}", response={200: Dict[str, Any], 404: MessageOut}
+)
 def get_dashboard_summary(request, user_id: int):
     """Get summary statistics for the dashboard."""
     user_responsibilities = Responsibility.objects.filter(user=user_id)
-    
+
     return {
         "user": {
             "username": request.user.username,
@@ -236,7 +245,9 @@ def get_dashboard_summary(request, user_id: int):
             },
             "by_category": {
                 category: user_responsibilities.filter(category=category).count()
-                for category in user_responsibilities.values_list("category", flat=True).distinct()
+                for category in user_responsibilities.values_list(
+                    "category", flat=True
+                ).distinct()
             },
         },
         "recent_updates": list(
@@ -246,28 +257,39 @@ def get_dashboard_summary(request, user_id: int):
         ),
     }
 
+
 @sop_dashboard_router.get("/recent-activity", response={200: Dict[str, Any]})
 def get_recent_activity(request):
     # Assuming User model has related fields
-    user_departments = request.user.department_set.all() if hasattr(request.user, 'department_set') else []
-    user_units = request.user.unit_set.all() if hasattr(request.user, 'unit_set') else []
-    
+    user_departments = (
+        request.user.department_set.all()
+        if hasattr(request.user, "department_set")
+        else []
+    )
+    user_units = (
+        request.user.unit_set.all() if hasattr(request.user, "unit_set") else []
+    )
+
     recent_sops = SOP.objects.filter(
-        models.Q(department__in=user_departments) |
-        models.Q(unit__in=user_units)
+        models.Q(department__in=user_departments) | models.Q(unit__in=user_units)
     ).order_by("-updated_at")[:5]
-    
-    recent_responsibilities = Responsibility.objects.filter(
-        user=request.user
-    ).order_by("-updated_at")[:5]
-    
+
+    recent_responsibilities = Responsibility.objects.filter(user=request.user).order_by(
+        "-updated_at"
+    )[:5]
+
     return {
         "recent_sops": [
             {"id": s.id, "title": s.title, "type": "sop", "updated_at": s.updated_at}
             for s in recent_sops
         ],
         "recent_responsibilities": [
-            {"id": r.id, "title": r.title, "type": "responsibility", "updated_at": r.updated_at}
+            {
+                "id": r.id,
+                "title": r.title,
+                "type": "responsibility",
+                "updated_at": r.updated_at,
+            }
             for r in recent_responsibilities
         ],
     }

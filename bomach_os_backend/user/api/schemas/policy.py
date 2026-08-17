@@ -1,6 +1,7 @@
-from ninja import Schema
-from typing import Optional, List
 from datetime import date, datetime
+from typing import List, Optional
+
+from ninja import Schema
 
 
 class PolicyDepartmentSchema(Schema):
@@ -12,8 +13,8 @@ class PolicyCreateSchema(Schema):
     title: str
     category: str
     content: str
-    version: str = '1.0'
-    status: str = 'draft'
+    version: str = "1.0"
+    status: str = "draft"
     effective_date: date
     review_date: Optional[date] = None
     # IDs of applicable departments — omit or pass [] to apply to all departments
@@ -74,13 +75,19 @@ class PolicySchema(Schema):
     @staticmethod
     def resolve_created_by_name(obj):
         if obj.created_by:
-            return f"{obj.created_by.first_name} {obj.created_by.last_name}".strip() or obj.created_by.email
+            return (
+                f"{obj.created_by.first_name} {obj.created_by.last_name}".strip()
+                or obj.created_by.email
+            )
         return None
 
     @staticmethod
     def resolve_last_updated_by_name(obj):
         if obj.last_updated_by:
-            return f"{obj.last_updated_by.first_name} {obj.last_updated_by.last_name}".strip() or obj.last_updated_by.email
+            return (
+                f"{obj.last_updated_by.first_name} {obj.last_updated_by.last_name}".strip()
+                or obj.last_updated_by.email
+            )
         return None
 
 

@@ -1,5 +1,6 @@
-from ninja import Schema
 from decimal import Decimal
+
+from ninja import Schema
 
 
 class KPISchema(Schema):

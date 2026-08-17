@@ -1,9 +1,10 @@
 """Service Operations catalogue models."""
 
-from django.db import models
+from decimal import Decimal
+
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
-from decimal import Decimal
+from django.db import models
 
 
 class ServiceFieldType(models.TextChoices):
@@ -29,16 +30,17 @@ class ServiceCategory(models.Model):
         CIVIL_ENGINEERING = "civil_engineering", "Civil Engineering"
         MECHANICAL_ENGINEERING = "mechanical_engineering", "Mechanical Engineering"
         ELECTRICAL_ENGINEERING = "electrical_engineering", "Electrical Engineering"
-        ENVIRONMENTAL_ENGINEERING = "environmental_engineering", "Environmental Engineering"
+        ENVIRONMENTAL_ENGINEERING = (
+            "environmental_engineering",
+            "Environmental Engineering",
+        )
         PROJECT_MANAGEMENT = "project_management", "Project Management"
         PROPERTY_SALE_RENT = "property_sale_rent", "Property Sale/Rent"
         MAINTENANCE = "maintenance", "Maintenance & Technical Support"
         OTHERS = "others", "Others"
 
     name = models.CharField(
-        max_length=100,
-        choices=CategoryChoices.choices,
-        unique=True
+        max_length=100, choices=CategoryChoices.choices, unique=True
     )
 
     description = models.TextField(blank=True)
@@ -46,9 +48,9 @@ class ServiceCategory(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        app_label = 'services'
+        app_label = "services"
         verbose_name_plural = "Service Categories"
-        ordering = ['name']
+        ordering = ["name"]
 
     def __str__(self):
         return self.name
@@ -57,12 +59,14 @@ class ServiceCategory(models.Model):
         super().clean()
         valid_values = self.CategoryChoices.values
         if self.name not in valid_values:
-            raise ValidationError({
-                "name": (
-                    f"'{self.name}' is not a valid category. "
-                    f"Valid options are: {', '.join(valid_values)}."
-                )
-            })
+            raise ValidationError(
+                {
+                    "name": (
+                        f"'{self.name}' is not a valid category. "
+                        f"Valid options are: {', '.join(valid_values)}."
+                    )
+                }
+            )
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -71,40 +75,44 @@ class ServiceCategory(models.Model):
 
 class Service(models.Model):
     STATUS_CHOICES = [
-        ('active', 'Active'),
-        ('inactive', 'Inactive'),
-        ('draft', 'Draft'),
-        ('paused', 'Paused'),
+        ("active", "Active"),
+        ("inactive", "Inactive"),
+        ("draft", "Draft"),
+        ("paused", "Paused"),
     ]
 
     CLIENT_VISIBILITY_CHOICES = [
-        ('visible', 'Visible in Catalogue'),
-        ('internal', 'Internal Only'),
-        ('hidden', 'Hidden'),
+        ("visible", "Visible in Catalogue"),
+        ("internal", "Internal Only"),
+        ("hidden", "Hidden"),
     ]
 
     FULFILLMENT_MODE_CHOICES = [
-        ('quick_order', 'Quick Service Order'),
-        ('managed_case', 'Managed Service Case'),
-        ('project_worksite', 'Project & Worksite'),
-        ('transaction_allocation', 'Transaction & Allocation'),
-        ('supply_order', 'Supply Order'),
+        ("quick_order", "Quick Service Order"),
+        ("managed_case", "Managed Service Case"),
+        ("project_worksite", "Project & Worksite"),
+        ("transaction_allocation", "Transaction & Allocation"),
+        ("supply_order", "Supply Order"),
     ]
 
     name = models.CharField(max_length=255)
     code = models.CharField(max_length=50, unique=True, null=True, blank=True)
-    category = models.ForeignKey(ServiceCategory, on_delete=models.PROTECT, related_name='services')
+    category = models.ForeignKey(
+        ServiceCategory, on_delete=models.PROTECT, related_name="services"
+    )
     division = models.CharField(max_length=100, blank=True)
     description = models.TextField()
-    base_price = models.DecimalField(max_digits=15, decimal_places=2, validators=[MinValueValidator(Decimal('0.00'))])
+    base_price = models.DecimalField(
+        max_digits=15, decimal_places=2, validators=[MinValueValidator(Decimal("0.00"))]
+    )
     delivery_time = models.CharField(max_length=100, help_text="e.g., '3-5 weeks'")
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="active")
     owner_role = models.ForeignKey(
-        'user.Role',
+        "user.Role",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='owned_services',
+        related_name="owned_services",
     )
     default_sla_days = models.PositiveIntegerField(default=0)
     fulfillment_mode = models.CharField(
@@ -115,40 +123,40 @@ class Service(models.Model):
     client_visibility = models.CharField(
         max_length=20,
         choices=CLIENT_VISIBILITY_CHOICES,
-        default='visible',
+        default="visible",
     )
     active_request_form = models.ForeignKey(
-        'ServiceRequestForm',
+        "ServiceRequestForm",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='active_for_services',
+        related_name="active_for_services",
     )
     active_pricing_config = models.ForeignKey(
-        'ServicePricingConfig',
+        "ServicePricingConfig",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='active_for_services',
+        related_name="active_for_services",
     )
     active_workflow = models.ForeignKey(
-        'ServiceWorkflow',
+        "ServiceWorkflow",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='active_for_services',
+        related_name="active_for_services",
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(
-        'user.User',
+        "user.User",
         on_delete=models.PROTECT,
-        related_name='created_services',
+        related_name="created_services",
     )
 
     class Meta:
-        app_label = 'services'
-        ordering = ['-created_at']
+        app_label = "services"
+        ordering = ["-created_at"]
 
     def __str__(self):
         return self.name
@@ -156,30 +164,34 @@ class Service(models.Model):
 
 class ServiceSubService(models.Model):
     STATUS_CHOICES = [
-        ('active', 'Active'),
-        ('inactive', 'Inactive'),
-        ('draft', 'Draft'),
-        ('paused', 'Paused'),
+        ("active", "Active"),
+        ("inactive", "Inactive"),
+        ("draft", "Draft"),
+        ("paused", "Paused"),
     ]
 
-    service = models.ForeignKey(Service, on_delete=models.CASCADE, related_name='subservices')
+    service = models.ForeignKey(
+        Service, on_delete=models.CASCADE, related_name="subservices"
+    )
     code = models.CharField(max_length=50)
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="active")
     default_sla_days = models.PositiveIntegerField(default=0)
     sort_order = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        app_label = 'services'
-        ordering = ['sort_order', 'name']
+        app_label = "services"
+        ordering = ["sort_order", "name"]
         constraints = [
-            models.UniqueConstraint(fields=['service', 'code'], name='unique_subservice_code_per_service'),
+            models.UniqueConstraint(
+                fields=["service", "code"], name="unique_subservice_code_per_service"
+            ),
         ]
         indexes = [
-            models.Index(fields=['service', 'status']),
+            models.Index(fields=["service", "status"]),
         ]
 
     def __str__(self):
@@ -188,37 +200,42 @@ class ServiceSubService(models.Model):
 
 class ServiceRequestForm(models.Model):
     STATUS_CHOICES = [
-        ('draft', 'Draft'),
-        ('active', 'Active'),
-        ('archived', 'Archived'),
+        ("draft", "Draft"),
+        ("active", "Active"),
+        ("archived", "Archived"),
     ]
 
-    service = models.ForeignKey(Service, on_delete=models.CASCADE, related_name='request_forms')
+    service = models.ForeignKey(
+        Service, on_delete=models.CASCADE, related_name="request_forms"
+    )
     name = models.CharField(max_length=255)
     version = models.PositiveIntegerField(default=1)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="draft")
     is_active = models.BooleanField(default=False)
     created_by = models.ForeignKey(
-        'user.User',
+        "user.User",
         on_delete=models.PROTECT,
-        related_name='created_service_request_forms',
+        related_name="created_service_request_forms",
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        app_label = 'services'
-        ordering = ['service', '-version']
+        app_label = "services"
+        ordering = ["service", "-version"]
         constraints = [
-            models.UniqueConstraint(fields=['service', 'version'], name='unique_request_form_version_per_service'),
             models.UniqueConstraint(
-                fields=['service'],
+                fields=["service", "version"],
+                name="unique_request_form_version_per_service",
+            ),
+            models.UniqueConstraint(
+                fields=["service"],
                 condition=models.Q(is_active=True),
-                name='unique_active_request_form_per_service',
+                name="unique_active_request_form_per_service",
             ),
         ]
         indexes = [
-            models.Index(fields=['service', 'status']),
+            models.Index(fields=["service", "status"]),
         ]
 
     def __str__(self):
@@ -226,7 +243,9 @@ class ServiceRequestForm(models.Model):
 
 
 class ServiceRequestField(models.Model):
-    form = models.ForeignKey(ServiceRequestForm, on_delete=models.CASCADE, related_name='fields')
+    form = models.ForeignKey(
+        ServiceRequestForm, on_delete=models.CASCADE, related_name="fields"
+    )
     key = models.SlugField(max_length=100)
     label = models.CharField(max_length=255)
     field_type = models.CharField(max_length=20, choices=ServiceFieldType.choices)
@@ -240,10 +259,12 @@ class ServiceRequestField(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        app_label = 'services'
-        ordering = ['sort_order', 'id']
+        app_label = "services"
+        ordering = ["sort_order", "id"]
         constraints = [
-            models.UniqueConstraint(fields=['form', 'key'], name='unique_request_field_key_per_form'),
+            models.UniqueConstraint(
+                fields=["form", "key"], name="unique_request_field_key_per_form"
+            ),
         ]
 
     def __str__(self):
@@ -252,20 +273,22 @@ class ServiceRequestField(models.Model):
 
 class ServicePricingConfig(models.Model):
     STATUS_CHOICES = [
-        ('draft', 'Draft'),
-        ('active', 'Active'),
-        ('archived', 'Archived'),
+        ("draft", "Draft"),
+        ("active", "Active"),
+        ("archived", "Archived"),
     ]
 
     PRICING_TYPE_CHOICES = [
-        ('fixed', 'Fixed'),
-        ('unit_rate', 'Unit Rate'),
-        ('area_rate', 'Area Rate'),
-        ('percentage', 'Percentage'),
-        ('formula', 'Formula'),
+        ("fixed", "Fixed"),
+        ("unit_rate", "Unit Rate"),
+        ("area_rate", "Area Rate"),
+        ("percentage", "Percentage"),
+        ("formula", "Formula"),
     ]
 
-    service = models.ForeignKey(Service, on_delete=models.CASCADE, related_name='pricing_configs')
+    service = models.ForeignKey(
+        Service, on_delete=models.CASCADE, related_name="pricing_configs"
+    )
     name = models.CharField(max_length=255)
     version = models.PositiveIntegerField(default=1)
     pricing_type = models.CharField(max_length=20, choices=PRICING_TYPE_CHOICES)
@@ -273,44 +296,53 @@ class ServicePricingConfig(models.Model):
     tax_rate = models.DecimalField(
         max_digits=5,
         decimal_places=2,
-        default=Decimal('0.00'),
-        validators=[MinValueValidator(Decimal('0.00'))],
+        default=Decimal("0.00"),
+        validators=[MinValueValidator(Decimal("0.00"))],
     )
     deposit_percent = models.DecimalField(
         max_digits=5,
         decimal_places=2,
-        default=Decimal('0.00'),
-        validators=[MinValueValidator(Decimal('0.00')), MaxValueValidator(Decimal('100.00'))],
+        default=Decimal("0.00"),
+        validators=[
+            MinValueValidator(Decimal("0.00")),
+            MaxValueValidator(Decimal("100.00")),
+        ],
     )
     discount_approval_threshold_percent = models.DecimalField(
         max_digits=5,
         decimal_places=2,
-        default=Decimal('0.00'),
-        validators=[MinValueValidator(Decimal('0.00')), MaxValueValidator(Decimal('100.00'))],
+        default=Decimal("0.00"),
+        validators=[
+            MinValueValidator(Decimal("0.00")),
+            MaxValueValidator(Decimal("100.00")),
+        ],
     )
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="draft")
     is_active = models.BooleanField(default=False)
     created_by = models.ForeignKey(
-        'user.User',
+        "user.User",
         on_delete=models.PROTECT,
-        related_name='created_service_pricing_configs',
+        related_name="created_service_pricing_configs",
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        app_label = 'services'
-        ordering = ['service', '-version']
+        app_label = "services"
+        ordering = ["service", "-version"]
         constraints = [
-            models.UniqueConstraint(fields=['service', 'version'], name='unique_pricing_config_version_per_service'),
             models.UniqueConstraint(
-                fields=['service'],
+                fields=["service", "version"],
+                name="unique_pricing_config_version_per_service",
+            ),
+            models.UniqueConstraint(
+                fields=["service"],
                 condition=models.Q(is_active=True),
-                name='unique_active_pricing_config_per_service',
+                name="unique_active_pricing_config_per_service",
             ),
         ]
         indexes = [
-            models.Index(fields=['service', 'status']),
+            models.Index(fields=["service", "status"]),
         ]
 
     def __str__(self):
@@ -318,7 +350,9 @@ class ServicePricingConfig(models.Model):
 
 
 class ServicePricingField(models.Model):
-    pricing_config = models.ForeignKey(ServicePricingConfig, on_delete=models.CASCADE, related_name='fields')
+    pricing_config = models.ForeignKey(
+        ServicePricingConfig, on_delete=models.CASCADE, related_name="fields"
+    )
     key = models.SlugField(max_length=100)
     label = models.CharField(max_length=255)
     field_type = models.CharField(max_length=20, choices=ServiceFieldType.choices)
@@ -331,10 +365,13 @@ class ServicePricingField(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        app_label = 'services'
-        ordering = ['sort_order', 'id']
+        app_label = "services"
+        ordering = ["sort_order", "id"]
         constraints = [
-            models.UniqueConstraint(fields=['pricing_config', 'key'], name='unique_pricing_field_key_per_config'),
+            models.UniqueConstraint(
+                fields=["pricing_config", "key"],
+                name="unique_pricing_field_key_per_config",
+            ),
         ]
 
     def __str__(self):
@@ -343,37 +380,42 @@ class ServicePricingField(models.Model):
 
 class ServiceWorkflow(models.Model):
     STATUS_CHOICES = [
-        ('draft', 'Draft'),
-        ('active', 'Active'),
-        ('archived', 'Archived'),
+        ("draft", "Draft"),
+        ("active", "Active"),
+        ("archived", "Archived"),
     ]
 
-    service = models.ForeignKey(Service, on_delete=models.CASCADE, related_name='workflows')
+    service = models.ForeignKey(
+        Service, on_delete=models.CASCADE, related_name="workflows"
+    )
     name = models.CharField(max_length=255)
     version = models.PositiveIntegerField(default=1)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="draft")
     is_active = models.BooleanField(default=False)
     created_by = models.ForeignKey(
-        'user.User',
+        "user.User",
         on_delete=models.PROTECT,
-        related_name='created_service_workflows',
+        related_name="created_service_workflows",
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        app_label = 'services'
-        ordering = ['service', '-version']
+        app_label = "services"
+        ordering = ["service", "-version"]
         constraints = [
-            models.UniqueConstraint(fields=['service', 'version'], name='unique_workflow_version_per_service'),
             models.UniqueConstraint(
-                fields=['service'],
+                fields=["service", "version"],
+                name="unique_workflow_version_per_service",
+            ),
+            models.UniqueConstraint(
+                fields=["service"],
                 condition=models.Q(is_active=True),
-                name='unique_active_workflow_per_service',
+                name="unique_active_workflow_per_service",
             ),
         ]
         indexes = [
-            models.Index(fields=['service', 'status']),
+            models.Index(fields=["service", "status"]),
         ]
 
     def __str__(self):
@@ -381,14 +423,16 @@ class ServiceWorkflow(models.Model):
 
 
 class ServiceWorkflowStage(models.Model):
-    workflow = models.ForeignKey(ServiceWorkflow, on_delete=models.CASCADE, related_name='stages')
+    workflow = models.ForeignKey(
+        ServiceWorkflow, on_delete=models.CASCADE, related_name="stages"
+    )
     name = models.CharField(max_length=255)
     owner_role = models.ForeignKey(
-        'user.Role',
+        "user.Role",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='owned_service_workflow_stages',
+        related_name="owned_service_workflow_stages",
     )
     sla_days = models.PositiveIntegerField(default=0)
     requires_approval = models.BooleanField(default=False)
@@ -399,10 +443,10 @@ class ServiceWorkflowStage(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        app_label = 'services'
-        ordering = ['sort_order', 'id']
+        app_label = "services"
+        ordering = ["sort_order", "id"]
         indexes = [
-            models.Index(fields=['workflow', 'sort_order']),
+            models.Index(fields=["workflow", "sort_order"]),
         ]
 
     def __str__(self):
@@ -411,15 +455,19 @@ class ServiceWorkflowStage(models.Model):
 
 class ServiceBranchActivation(models.Model):
     STATUS_CHOICES = [
-        ('draft', 'Draft'),
-        ('active', 'Active'),
-        ('paused', 'Paused'),
-        ('inactive', 'Inactive'),
+        ("draft", "Draft"),
+        ("active", "Active"),
+        ("paused", "Paused"),
+        ("inactive", "Inactive"),
     ]
 
-    service = models.ForeignKey(Service, on_delete=models.CASCADE, related_name='branch_activations')
-    branch = models.ForeignKey('user.Branch', on_delete=models.CASCADE, related_name='service_activations')
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    service = models.ForeignKey(
+        Service, on_delete=models.CASCADE, related_name="branch_activations"
+    )
+    branch = models.ForeignKey(
+        "user.Branch", on_delete=models.CASCADE, related_name="service_activations"
+    )
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="draft")
     client_visible = models.BooleanField(default=True)
     capacity = models.PositiveIntegerField(null=True, blank=True)
     activated_at = models.DateTimeField(null=True, blank=True)
@@ -427,14 +475,16 @@ class ServiceBranchActivation(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        app_label = 'services'
-        ordering = ['service', 'branch']
+        app_label = "services"
+        ordering = ["service", "branch"]
         constraints = [
-            models.UniqueConstraint(fields=['service', 'branch'], name='unique_service_branch_activation'),
+            models.UniqueConstraint(
+                fields=["service", "branch"], name="unique_service_branch_activation"
+            ),
         ]
         indexes = [
-            models.Index(fields=['branch', 'status']),
-            models.Index(fields=['service', 'status']),
+            models.Index(fields=["branch", "status"]),
+            models.Index(fields=["service", "status"]),
         ]
 
     def __str__(self):

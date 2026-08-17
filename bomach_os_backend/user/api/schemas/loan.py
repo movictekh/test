@@ -1,7 +1,9 @@
-from ninja import Schema
-from decimal import Decimal
 from datetime import date, datetime
+from decimal import Decimal
 from typing import Optional
+
+from ninja import Schema
+
 
 class LoanCreateSchema(Schema):
     loan_amount: Decimal
@@ -11,6 +13,7 @@ class LoanCreateSchema(Schema):
     emergency_contact_phone: str
     attachment: str
 
+
 class LoanUpdateSchema(Schema):
     loan_amount: Optional[Decimal] = None
     repayment_date: Optional[date] = None
@@ -18,6 +21,7 @@ class LoanUpdateSchema(Schema):
     emergency_contact_name: Optional[str] = None
     emergency_contact_phone: Optional[str] = None
     attachment: Optional[str] = None
+
 
 class LoanBaseResponse(Schema):
     loan_amount: str
@@ -38,12 +42,15 @@ class LoanBaseResponse(Schema):
     @staticmethod
     def resolve_employee_name(obj):
         # user = obj.employee
-        return f"{obj.employee.first_name} {obj.employee.last_name}".strip() or obj.employee.username
+        return (
+            f"{obj.employee.first_name} {obj.employee.last_name}".strip()
+            or obj.employee.username
+        )
 
     @staticmethod
     def resolve_job_title(obj):
         user = obj.employee
-        profile = getattr(user, 'employee_profile', None)
+        profile = getattr(user, "employee_profile", None)
         return profile.designation if profile else "N/A"
 
 
@@ -57,4 +64,3 @@ class LoanFullResponseSchema(LoanBaseResponse):
     emergency_contact_phone: str
     attachment: str
     created_at: datetime
-

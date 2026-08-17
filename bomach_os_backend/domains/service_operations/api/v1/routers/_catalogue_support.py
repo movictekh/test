@@ -111,7 +111,9 @@ def _serialize_pricing_config(config, include_fields=True):
         "updated_at": config.updated_at,
     }
     if include_fields:
-        row["fields"] = [_serialize_pricing_field(field) for field in config.fields.all()]
+        row["fields"] = [
+            _serialize_pricing_field(field) for field in config.fields.all()
+        ]
     return row
 
 
@@ -144,7 +146,9 @@ def _serialize_workflow(workflow, include_stages=True):
         "updated_at": workflow.updated_at,
     }
     if include_stages:
-        row["stages"] = [_serialize_workflow_stage(stage) for stage in workflow.stages.all()]
+        row["stages"] = [
+            _serialize_workflow_stage(stage) for stage in workflow.stages.all()
+        ]
     return row
 
 
@@ -194,51 +198,66 @@ def _serialize_service_core(service):
 
 def _serialize_catalogue_card(service):
     row = _serialize_service_core(service)
-    row.update({
-        "active_request_form": (
-            _serialize_request_form(service.active_request_form, include_fields=False)
-            if service.active_request_form else None
-        ),
-        "active_pricing_config": (
-            _serialize_pricing_config(service.active_pricing_config, include_fields=False)
-            if service.active_pricing_config else None
-        ),
-        "active_workflow": (
-            _serialize_workflow(service.active_workflow, include_stages=False)
-            if service.active_workflow else None
-        ),
-        "active_branches": [
-            _serialize_branch_activation(activation)
-            for activation in service.branch_activations.all()
-            if activation.status == "active"
-        ],
-    })
+    row.update(
+        {
+            "active_request_form": (
+                _serialize_request_form(
+                    service.active_request_form, include_fields=False
+                )
+                if service.active_request_form
+                else None
+            ),
+            "active_pricing_config": (
+                _serialize_pricing_config(
+                    service.active_pricing_config, include_fields=False
+                )
+                if service.active_pricing_config
+                else None
+            ),
+            "active_workflow": (
+                _serialize_workflow(service.active_workflow, include_stages=False)
+                if service.active_workflow
+                else None
+            ),
+            "active_branches": [
+                _serialize_branch_activation(activation)
+                for activation in service.branch_activations.all()
+                if activation.status == "active"
+            ],
+        }
+    )
     return row
 
 
 def _serialize_catalogue_detail(service):
     row = _serialize_catalogue_card(service)
-    row.update({
-        "subservices": [_serialize_subservice(item) for item in service.subservices.all()],
-        "request_forms": [
-            _serialize_request_form(form, include_fields=True)
-            for form in service.request_forms.all()
-        ],
-        "pricing_configs": [
-            _serialize_pricing_config(config, include_fields=True)
-            for config in service.pricing_configs.all()
-        ],
-        "workflows": [
-            _serialize_workflow(workflow, include_stages=True)
-            for workflow in service.workflows.all()
-        ],
-        "branch_activations": [
-            _serialize_branch_activation(activation)
-            for activation in service.branch_activations.all()
-        ],
-    })
+    row.update(
+        {
+            "subservices": [
+                _serialize_subservice(item) for item in service.subservices.all()
+            ],
+            "request_forms": [
+                _serialize_request_form(form, include_fields=True)
+                for form in service.request_forms.all()
+            ],
+            "pricing_configs": [
+                _serialize_pricing_config(config, include_fields=True)
+                for config in service.pricing_configs.all()
+            ],
+            "workflows": [
+                _serialize_workflow(workflow, include_stages=True)
+                for workflow in service.workflows.all()
+            ],
+            "branch_activations": [
+                _serialize_branch_activation(activation)
+                for activation in service.branch_activations.all()
+            ],
+        }
+    )
     return row
 
 
 def _workflow_queryset():
-    return ServiceWorkflow.objects.select_related("service", "created_by").prefetch_related("stages__owner_role")
+    return ServiceWorkflow.objects.select_related(
+        "service", "created_by"
+    ).prefetch_related("stages__owner_role")

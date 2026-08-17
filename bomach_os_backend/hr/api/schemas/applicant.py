@@ -1,7 +1,9 @@
 from datetime import datetime
-from typing import Optional
 from decimal import Decimal
+from typing import Optional
+
 from pydantic import BaseModel, Field
+
 from .job_posting import JobPostingListItemSchema
 
 
@@ -29,6 +31,7 @@ class ApplicantCreateSchema(BaseModel):
 
 class ApplicantUpdateSchema(BaseModel):
     """Schema for updating an applicant"""
+
     first_name: Optional[str] = Field(None, min_length=1, max_length=100)
     last_name: Optional[str] = Field(None, min_length=1, max_length=100)
     email: Optional[str] = None
@@ -41,7 +44,6 @@ class ApplicantUpdateSchema(BaseModel):
     portolio_url: Optional[str] = None
     notes: Optional[str] = None
 
-
     address: Optional[str] = None
     current_job_title: Optional[str] = None
     years_of_experience: Optional[int] = None
@@ -53,11 +55,13 @@ class ApplicantUpdateSchema(BaseModel):
 
 class ApplicantStatusUpdateSchema(BaseModel):
     """Schema for updating applicant status"""
+
     status: str
 
 
 class ApplicantMinimalSchema(BaseModel):
     """Minimal schema for applicant (used in nested responses)"""
+
     id: int
     first_name: str
     last_name: str
@@ -69,6 +73,7 @@ class ApplicantMinimalSchema(BaseModel):
 
 class ApplicantResponseSchema(BaseModel):
     """Schema for applicant response"""
+
     id: int
     first_name: str
     last_name: str
@@ -89,13 +94,14 @@ class ApplicantResponseSchema(BaseModel):
     source: Optional[str] = None
     expected_salary: Optional[Decimal] = None
     notes: Optional[str] = None
-    
+
     class Config:
         from_attributes = True
 
 
 class ApplicantListItemSchema(BaseModel):
     """Schema for applicant in list view (minimal data)"""
+
     id: int
     first_name: str
     last_name: str
@@ -112,7 +118,6 @@ class ApplicantListItemSchema(BaseModel):
     institution_name: Optional[str] = None
     source: Optional[str] = None
     expected_salary: Optional[Decimal] = None
-
 
     class Config:
         from_attributes = True

@@ -10,23 +10,45 @@ from ninja import Query, Router
 from ninja.errors import HttpError
 from ninja.pagination import LimitOffsetPagination, paginate
 
-from services.api.schema.others import MessageSchema
-from ..schemas.lifecycle import InvoiceIn, InvoiceOut, InvoiceSendIn, InvoiceUpdate, ServiceOrderFromInvoiceIn, ServiceOrderOut
-from domains.service_operations.models import Invoice, InvoiceItem
-from domains.service_operations.models import ServiceRequestActivity
+from domains.service_operations.models import (
+    Invoice,
+    InvoiceItem,
+    ServiceRequestActivity,
+)
+from domains.service_operations.services import invoices as invoice_services
 from domains.service_operations.services.orders import create_order_from_invoice
-from user.api.schemas.client_service import PaymentSubmissionResponseSchema, ReviewPaymentSchema
+from finance.services import (
+    handle_payment_exception,
+)
+from finance.services import review_payment_submission as review_submission_payment
+from services.api.schema.others import MessageSchema
+from user.api.schemas.client_service import (
+    PaymentSubmissionResponseSchema,
+    ReviewPaymentSchema,
+)
 from user.models.client_service import PaymentSubmission
 from user.utils.perm import require_permission, scope_queryset
-from finance.services import handle_payment_exception, review_payment_submission as review_submission_payment
 
-from domains.service_operations.services import invoices as invoice_services
-
+from ..schemas.lifecycle import (
+    InvoiceIn,
+    InvoiceOut,
+    InvoiceSendIn,
+    InvoiceUpdate,
+    ServiceOrderFromInvoiceIn,
+    ServiceOrderOut,
+)
 
 router = Router(tags=["Invoices"])
 
 EDITABLE_STATUSES = {"draft", "sent"}
-ACTIVE_INVOICE_STATUSES = {"draft", "sent", "viewed", "partially_paid", "paid", "overdue"}
+ACTIVE_INVOICE_STATUSES = {
+    "draft",
+    "sent",
+    "viewed",
+    "partially_paid",
+    "paid",
+    "overdue",
+}
 
 
 def _validation_detail(exc):
@@ -53,7 +75,9 @@ def _invoice_queryset():
     ).prefetch_related("items", "payments", "submissions")
 
 
-def _log_request_activity(service_request, activity_type, note, created_by=None, next_action=""):
+def _log_request_activity(
+    service_request, activity_type, note, created_by=None, next_action=""
+):
     if not service_request:
         return
     ServiceRequestActivity.objects.create(
@@ -129,7 +153,9 @@ def list_invoices(
     service_request_id: Optional[int] = Query(None),
     search: Optional[str] = Query(None),
 ):
-    invoices = scope_queryset(request, _invoice_queryset(), branch_field="service_request__branch_id")
+    invoices = scope_queryset(
+        request, _invoice_queryset(), branch_field="service_request__branch_id"
+    )
     if status:
         invoices = invoices.filter(status=status)
     if client_id:
@@ -147,9 +173,12 @@ def list_invoices(
 @require_permission("service_invoices", "create")
 def create_invoice(request, payload: InvoiceIn):
     try:
-        i=invoice_services.create_invoice(payload,user=request.user); return 201,_invoice_queryset().get(id=i.id)
-    except (ValidationError,IntegrityError) as e: return 400,{"detail":_validation_detail(e)}
-    except Exception as e: return 400,{"detail":str(e)}
+        i = invoice_services.create_invoice(payload, user=request.user)
+        return 201, _invoice_queryset().get(id=i.id)
+    except (ValidationError, IntegrityError) as e:
+        return 400, {"detail": _validation_detail(e)}
+    except Exception as e:
+        return 400, {"detail": str(e)}
 
 
 @router.get("/payment-submissions", response=List[PaymentSubmissionResponseSchema])
@@ -165,7 +194,9 @@ def list_payment_submissions(
         "invoice__service_request",
         "invoice__service_request__branch",
     )
-    submissions = scope_queryset(request, submissions, branch_field="invoice__service_request__branch_id")
+    submissions = scope_queryset(
+        request, submissions, branch_field="invoice__service_request__branch_id"
+    )
     if status:
         submissions = submissions.filter(status=status)
     if invoice_id:
@@ -173,12 +204,23 @@ def list_payment_submissions(
     return submissions.order_by("-created_at")
 
 
-@router.post("/payment-submissions/{submission_id}/review", response={200: PaymentSubmissionResponseSchema, 400: MessageSchema, 404: MessageSchema})
+@router.post(
+    "/payment-submissions/{submission_id}/review",
+    response={
+        200: PaymentSubmissionResponseSchema,
+        400: MessageSchema,
+        404: MessageSchema,
+    },
+)
 @require_permission("payments", "create")
-def review_payment_submission(request, submission_id: int, payload: ReviewPaymentSchema):
+def review_payment_submission(
+    request, submission_id: int, payload: ReviewPaymentSchema
+):
     try:
         submission = get_object_or_404(
-            PaymentSubmission.objects.select_related("invoice", "invoice__service_request"),
+            PaymentSubmission.objects.select_related(
+                "invoice", "invoice__service_request"
+            ),
             id=submission_id,
         )
         reviewed = review_submission_payment(
@@ -188,30 +230,49 @@ def review_payment_submission(request, submission_id: int, payload: ReviewPaymen
             finance_account_id=payload.finance_account_id,
             rejection_reason=payload.rejection_reason,
         )
-        return 200, PaymentSubmission.objects.select_related("invoice").get(id=reviewed.id)
+        return 200, PaymentSubmission.objects.select_related("invoice").get(
+            id=reviewed.id
+        )
     except Exception as e:
         return 400, handle_payment_exception(e)
 
 
-@router.post("/{invoice_id}/send", response={200: InvoiceOut, 400: MessageSchema, 404: MessageSchema})
+@router.post(
+    "/{invoice_id}/send",
+    response={200: InvoiceOut, 400: MessageSchema, 404: MessageSchema},
+)
 @require_permission("service_invoices", "update")
 def send_invoice(request, invoice_id: int, payload: InvoiceSendIn):
     try:
-        i=get_object_or_404(_invoice_queryset(),id=invoice_id); invoice_services.send_invoice(i,payload,user=request.user); return 200,_invoice_queryset().get(id=i.id)
-    except (ValidationError,IntegrityError) as e: return 400,{"detail":_validation_detail(e)}
+        i = get_object_or_404(_invoice_queryset(), id=invoice_id)
+        invoice_services.send_invoice(i, payload, user=request.user)
+        return 200, _invoice_queryset().get(id=i.id)
+    except (ValidationError, IntegrityError) as e:
+        return 400, {"detail": _validation_detail(e)}
 
 
-@router.post("/{invoice_id}/cancel", response={200: InvoiceOut, 400: MessageSchema, 404: MessageSchema})
+@router.post(
+    "/{invoice_id}/cancel",
+    response={200: InvoiceOut, 400: MessageSchema, 404: MessageSchema},
+)
 @require_permission("service_invoices", "update")
 def cancel_invoice(request, invoice_id: int):
-    i=get_object_or_404(Invoice,id=invoice_id)
-    try: invoice_services.cancel_invoice(i); return 200,_invoice_queryset().get(id=i.id)
-    except ValidationError as e: return 400,{"detail":_validation_detail(e)}
+    i = get_object_or_404(Invoice, id=invoice_id)
+    try:
+        invoice_services.cancel_invoice(i)
+        return 200, _invoice_queryset().get(id=i.id)
+    except ValidationError as e:
+        return 400, {"detail": _validation_detail(e)}
 
 
-@router.post("/{invoice_id}/service-order", response={201: ServiceOrderOut, 400: MessageSchema, 404: MessageSchema})
+@router.post(
+    "/{invoice_id}/service-order",
+    response={201: ServiceOrderOut, 400: MessageSchema, 404: MessageSchema},
+)
 @require_permission("orders", "create")
-def create_service_order_from_invoice(request, invoice_id: int, payload: ServiceOrderFromInvoiceIn):
+def create_service_order_from_invoice(
+    request, invoice_id: int, payload: ServiceOrderFromInvoiceIn
+):
     try:
         invoice = get_object_or_404(
             _invoice_queryset(),
@@ -219,9 +280,16 @@ def create_service_order_from_invoice(request, invoice_id: int, payload: Service
         )
         branch_ids = getattr(request, "_perm_branch_ids", [])
         if branch_ids:
-            branch_id = invoice.service_request.branch_id if invoice.service_request_id else None
+            branch_id = (
+                invoice.service_request.branch_id
+                if invoice.service_request_id
+                else None
+            )
             if branch_id not in branch_ids:
-                raise HttpError(403, "You do not have permission to create an order for this invoice.")
+                raise HttpError(
+                    403,
+                    "You do not have permission to create an order for this invoice.",
+                )
         order = create_order_from_invoice(
             invoice,
             created_by=request.user,
@@ -249,23 +317,36 @@ def get_invoice(request, invoice_id: int):
     return get_object_or_404(_invoice_queryset(), id=invoice_id)
 
 
-@router.patch("/{invoice_id}", response={200: InvoiceOut, 400: MessageSchema, 404: MessageSchema})
+@router.patch(
+    "/{invoice_id}", response={200: InvoiceOut, 400: MessageSchema, 404: MessageSchema}
+)
 @require_permission("service_invoices", "update")
 def update_invoice(request, invoice_id: int, payload: InvoiceUpdate):
     try:
-        i=get_object_or_404(Invoice,id=invoice_id); invoice_services.update_invoice(i,payload); return 200,_invoice_queryset().get(id=i.id)
-    except (ValidationError,IntegrityError) as e: return 400,{"detail":_validation_detail(e)}
+        i = get_object_or_404(Invoice, id=invoice_id)
+        invoice_services.update_invoice(i, payload)
+        return 200, _invoice_queryset().get(id=i.id)
+    except (ValidationError, IntegrityError) as e:
+        return 400, {"detail": _validation_detail(e)}
 
 
-@router.put("/{invoice_id}", response={200: InvoiceOut, 400: MessageSchema, 404: MessageSchema})
+@router.put(
+    "/{invoice_id}", response={200: InvoiceOut, 400: MessageSchema, 404: MessageSchema}
+)
 @require_permission("service_invoices", "update")
 def replace_invoice(request, invoice_id: int, payload: InvoiceUpdate):
     return update_invoice(request, invoice_id, payload)
 
 
-@router.delete("/{invoice_id}", response={200: MessageSchema, 400: MessageSchema, 404: MessageSchema})
+@router.delete(
+    "/{invoice_id}",
+    response={200: MessageSchema, 400: MessageSchema, 404: MessageSchema},
+)
 @require_permission("service_invoices", "delete")
 def delete_invoice(request, invoice_id: int):
-    i=get_object_or_404(Invoice,id=invoice_id)
-    try: invoice_services.delete_invoice(i); return 200,{"detail":"Invoice deleted successfully"}
-    except ValidationError as e: return 400,{"detail":_validation_detail(e)}
+    i = get_object_or_404(Invoice, id=invoice_id)
+    try:
+        invoice_services.delete_invoice(i)
+        return 200, {"detail": "Invoice deleted successfully"}
+    except ValidationError as e:
+        return 400, {"detail": _validation_detail(e)}
