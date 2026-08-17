@@ -50,20 +50,24 @@ from hr.api.v1.performance_reviews import router as performance_reviews_router
 from hr.api.v1.training_programs import router as training_programs_router
 from hr.api.v1.work_reports import router as work_reports_router
 
-# Services routers
+# Marketing & Sales API v1
+from domains.marketing_sales.api.v1 import (
+    campaigns_router as svc_marketing_router,
+    csrc_router as svc_csrc,
+    funnel_router as svc_funnel,
+    leads_router as svc_leads_router,
+    marketing_router as svc_marketing_cc,
+    pipeline_router as svc_pipeline,
+    revenue_execution_router as svc_revenue_execution_router,
+)
+
+# Remaining legacy Services routers
 from services.api.v1 import budgets as svc_budgets
 from services.api.v1 import content as svc_content
-from services.api.v1 import csrc_router as svc_csrc
 from services.api.v1 import documents as svc_documents
 from services.api.v1 import expenses as svc_expenses
-from services.api.v1 import funnel_router as svc_funnel
-from services.api.v1 import leads as svc_leads
-from services.api.v1 import marketing_campaigns as svc_marketing
-from services.api.v1 import marketing_router as svc_marketing_cc
 from services.api.v1 import payments as svc_payments
-from services.api.v1 import pipeline_router as svc_pipeline
 from services.api.v1 import property as svc_property
-from services.api.v1 import revenue_execution as svc_revenue_execution
 from services.api.v1 import stats as svc_stats
 from user.api.v1.announcement import announcement_api as announcement_router
 from user.api.v1.approval import approval_api as approval_router
@@ -204,15 +208,15 @@ api.add_router("/reports", svc_reports_router)
 api.add_router("/services", svc_service_configuration_router)
 api.add_router("/services", svc_service_branch_activation_router)
 api.add_router("/services", svc_services_router)
-api.add_router("/leads", svc_leads.router)
+api.add_router("/leads", svc_leads_router)
 api.add_router("/service-leads", svc_service_leads_router)
 api.add_router("/quotes", svc_quotes_router)
 api.add_router("/orders", svc_orders_router)
 api.add_router("/invoices", svc_invoices_router)
-api.add_router("/marketing-campaigns", svc_marketing.router)
+api.add_router("/marketing-campaigns", svc_marketing_router)
 api.add_router("/payments", svc_payments.router)
 api.add_router("/properties", svc_property.router)
-api.add_router("/revenue-execution", svc_revenue_execution.router)
+api.add_router("/revenue-execution", svc_revenue_execution_router)
 api.add_router("/stats", svc_stats.router)
 
 # === Finance routers ===
