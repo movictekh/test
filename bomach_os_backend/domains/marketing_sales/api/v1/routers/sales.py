@@ -34,6 +34,16 @@ from domains.marketing_sales.services.funnel import (
     record_status_funnel_event,
 )
 from domains.marketing_sales.models.sales import Lead, LeadActivity
+from domains.marketing_sales.selectors.sales import (
+    _activity_queryset,
+    _apply_lead_filters,
+    _lead_queryset,
+    _lead_value_sum,
+)
+from domains.marketing_sales.services.sales import (
+    _apply_activity_effects,
+    _apply_lead_payload,
+)
 from user.utils.perm import require_permission, scope_queryset
 
 leads_router = Router(tags=["Marketing Leads"])
@@ -46,113 +56,6 @@ def _validation_detail(exc):
             for field, messages in exc.message_dict.items()
         )
     return exc.messages[0] if getattr(exc, "messages", None) else str(exc)
-
-
-def _lead_queryset(request):
-    leads = Lead.objects.select_related(
-        "campaign",
-        "referral_partner",
-        "branch",
-        "assigned_to",
-        "assigned_to__user",
-        "created_by",
-    )
-    return scope_queryset(request, leads, branch_field="branch_id")
-
-
-def _apply_lead_payload(lead, payload_data, actor=None):
-    previous_status = lead.status
-    for attr, value in payload_data.items():
-        setattr(lead, attr, value)
-
-    if lead.status != "new" and not lead.first_contact_at:
-        lead.first_contact_at = timezone.now()
-    if lead.first_contact_at and not lead.first_response_at:
-        lead.first_response_at = lead.first_contact_at
-
-    lead.refresh_sla_status()
-    lead.refresh_score()
-    lead.full_clean()
-    lead.save()
-    if "status" in payload_data and previous_status != lead.status:
-        record_status_funnel_event(
-            lead,
-            from_status=previous_status,
-            to_status=lead.status,
-            actor=actor,
-        )
-    return lead
-
-
-def _activity_queryset(lead):
-    return lead.activities.select_related("created_by")
-
-
-def _apply_lead_filters(
-    leads,
-    status=None,
-    division=None,
-    source=None,
-    campaign_id=None,
-    assigned_to_id=None,
-    branch_id=None,
-    priority=None,
-    sla=None,
-    search=None,
-    date_from=None,
-    date_to=None,
-):
-    now = timezone.now()
-
-    if status:
-        leads = leads.filter(status=status)
-    if division:
-        leads = leads.filter(division=division)
-    if source:
-        leads = leads.filter(source=source)
-    if campaign_id:
-        leads = leads.filter(campaign_id=campaign_id)
-    if assigned_to_id:
-        leads = leads.filter(assigned_to_id=assigned_to_id)
-    if branch_id:
-        leads = leads.filter(branch_id=branch_id)
-    if priority == "hot":
-        leads = leads.filter(score__gte=75)
-    elif priority == "warm":
-        leads = leads.filter(score__gte=50, score__lt=75)
-    elif priority == "nurture":
-        leads = leads.filter(score__lt=50)
-    if sla == "breach":
-        leads = leads.filter(
-            status="new",
-            first_contact_at__isnull=True,
-            created_at__lt=now - timedelta(minutes=30),
-        )
-    elif sla == "safe":
-        leads = leads.exclude(
-            status="new",
-            first_contact_at__isnull=True,
-            created_at__lt=now - timedelta(minutes=30),
-        )
-    if search:
-        leads = leads.filter(
-            Q(full_name__icontains=search)
-            | Q(phone__icontains=search)
-            | Q(email__icontains=search)
-            | Q(source__icontains=search)
-            | Q(division__icontains=search)
-            | Q(notes__icontains=search)
-        )
-    if date_from:
-        leads = leads.filter(created_at__date__gte=date_from)
-    if date_to:
-        leads = leads.filter(created_at__date__lte=date_to)
-    return leads
-
-
-def _lead_value_sum(leads):
-    total = leads.aggregate(total=Sum("estimated_value"))["total"] or Decimal("0.00")
-    return total.quantize(Decimal("0.01"))
 
 
 def _pipeline_card(lead):
@@ -202,45 +105,6 @@ def _activity_timeline_item(activity):
         ),
         "created_at": activity.created_at,
     }
-
-
-def _apply_activity_effects(lead, payload_data):
-    update_fields = []
-    to_status = payload_data.get("to_status")
-
-    if payload_data.get("next_action"):
-        lead.next_action = payload_data["next_action"]
-        update_fields.append("next_action")
-    if payload_data.get("next_follow_up_at"):
-        lead.next_follow_up_at = payload_data["next_follow_up_at"]
-        update_fields.append("next_follow_up_at")
-    if to_status:
-        lead.status = to_status
-        update_fields.append("status")
-
-    is_contact_activity = payload_data.get("activity_type") != "internal_note"
-    if (to_status and to_status != "new") or is_contact_activity:
-        if not lead.first_contact_at:
-            lead.first_contact_at = timezone.now()
-            update_fields.append("first_contact_at")
-        if not lead.first_response_at:
-            lead.first_response_at = lead.first_contact_at or timezone.now()
-            update_fields.append("first_response_at")
-
-    if (
-        to_status in ["contacted", "qualified", "proposal_sent", "negotiation"]
-        or is_contact_activity
-    ):
-        lead.last_contact_at = timezone.now()
-        update_fields.append("last_contact_at")
-
-    if update_fields:
-        lead.refresh_sla_status()
-        lead.refresh_score()
-        update_fields.extend(["sla_status", "score", "score_breakdown"])
-        update_fields.append("updated_at")
-        lead.full_clean()
-        lead.save(update_fields=list(dict.fromkeys(update_fields)))
 
 
 @leads_router.get("/summary", response=LeadSummarySchema)
