@@ -10,7 +10,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from ninja import Router
 
-from services.api.schema.crm_schemas import (
+from domains.marketing_sales.api.v1.schemas.sales import (
     ActivityScorecardRowSchema,
     DailyActionCompleteSchema,
     DailyActionInstanceOutSchema,

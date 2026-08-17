@@ -16,12 +16,12 @@ from django.http import HttpResponse
 from django.utils import timezone
 from ninja import Router
 
-from services.api.schema.crm_schemas import (
+from domains.marketing_sales.api.v1.schemas.sales import (
     BranchPerformanceSchema,
     ChannelMetricsSchema,
     MarketingOverviewSchema,
 )
-from services.api.schema.marketing_campaign_schemas import (
+from domains.marketing_sales.api.v1.schemas.marketing import (
     EmailMarketingAudienceRequest,
     EmailMarketingSendRequest,
     MarketingMeetingActionIn,
@@ -40,7 +40,7 @@ from services.api.schema.marketing_campaign_schemas import (
     TraditionalMediaPlacementIn,
     TraditionalMediaPlacementUpdate,
 )
-from services.funnel_events import record_initial_funnel_event
+from domains.marketing_sales.services.funnel import record_initial_funnel_event
 from services.models.content import ContentCalendarItem
 from services.models.crm import FunnelLead, Lead, LeadActivity
 from services.models.marketing_campaign import (

@@ -12,7 +12,7 @@ from django.utils import timezone
 from ninja import Router
 from ninja.pagination import LimitOffsetPagination, paginate
 
-from services.api.schema.marketing_campaign_schemas import (
+from domains.marketing_sales.api.v1.schemas.marketing import (
     CampaignAssetIn,
     CampaignAssetUpdate,
     CampaignDecisionIn,

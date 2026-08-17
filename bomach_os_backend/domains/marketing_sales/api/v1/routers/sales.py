@@ -17,7 +17,7 @@ from django.utils import timezone
 from ninja import Router
 from ninja.pagination import LimitOffsetPagination, paginate
 
-from services.api.schema.crm_schemas import (
+from domains.marketing_sales.api.v1.schemas.sales import (
     LeadActivityCreateSchema,
     LeadActivityOutSchema,
     LeadActivityUpdateSchema,
@@ -29,7 +29,7 @@ from services.api.schema.crm_schemas import (
     LeadUpdateSchema,
 )
 from services.api.schema.others import MessageSchema
-from services.funnel_events import (
+from domains.marketing_sales.services.funnel import (
     record_initial_funnel_event,
     record_status_funnel_event,
 )
@@ -693,7 +693,7 @@ from django.utils import timezone
 from ninja import Router
 from ninja.pagination import LimitOffsetPagination, paginate
 
-from services.api.schema.crm_schemas import (
+from domains.marketing_sales.api.v1.schemas.sales import (
     ConversionBreakdownSchema,
     DropOffAlertSchema,
     FunnelLeadListSchema,
@@ -851,7 +851,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from ninja import Router
 
-from services.api.schema.crm_schemas import (
+from domains.marketing_sales.api.v1.schemas.sales import (
     CreateDealSchema,
     DealListSchema,
     MoveDealStageSchema,
@@ -1047,7 +1047,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from ninja import Router
 
-from services.api.schema.crm_schemas import (
+from domains.marketing_sales.api.v1.schemas.sales import (
     AssignAgentSchema,
     CreateFollowUpSchema,
     CreateInquirySchema,
