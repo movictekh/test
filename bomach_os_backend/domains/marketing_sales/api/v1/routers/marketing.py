@@ -42,8 +42,8 @@ from domains.marketing_sales.api.v1.schemas.marketing import (
 )
 from domains.marketing_sales.services.funnel import record_initial_funnel_event
 from services.models.content import ContentCalendarItem
-from services.models.crm import FunnelLead, Lead, LeadActivity
-from services.models.marketing_campaign import (
+from domains.marketing_sales.models.sales import FunnelLead, Lead, LeadActivity
+from domains.marketing_sales.models.marketing import (
     CampaignDecision,
     EmailMarketingCampaign,
     EmailMarketingRecipient,

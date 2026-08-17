@@ -42,20 +42,22 @@ from domains.marketing_sales.api.v1.schemas.sales import (
     TurnaroundPlanUpdateSchema,
 )
 from services.api.schema.others import MessageSchema
-from services.models.crm import (
-    FUNNEL_STAGE_ORDER,
+from domains.marketing_sales.models.revenue_execution import (
     DailyActionInstance,
     DailyActionTemplate,
     DailyExecutionDay,
+    RevenueKeyResult,
+    RevenueObjective,
+    TurnaroundAction,
+    TurnaroundPlan,
+)
+from domains.marketing_sales.models.sales import (
+    FUNNEL_STAGE_ORDER,
     Lead,
     LeadActivity,
     LeadFunnelEvent,
-    RevenueKeyResult,
-    RevenueObjective,
     SalesPlaybook,
     SalesPlaybookObjection,
-    TurnaroundAction,
-    TurnaroundPlan,
 )
 from user.models.branch import Branch
 from user.models.employee import Employee

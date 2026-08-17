@@ -1,6 +1,6 @@
 from django.utils import timezone
 
-from services.models.crm import (
+from domains.marketing_sales.models.sales import (
     TERMINAL_LEAD_STATUSES,
     Lead,
     LeadFunnelEvent,

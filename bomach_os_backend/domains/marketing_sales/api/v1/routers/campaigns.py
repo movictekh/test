@@ -31,8 +31,8 @@ from domains.marketing_sales.api.v1.schemas.marketing import (
     MarketingCampaignUpdate,
 )
 from services.api.schema.others import MessageSchema
-from services.models.crm import FUNNEL_STAGE_ORDER, Lead, LeadFunnelEvent
-from services.models.marketing_campaign import (
+from domains.marketing_sales.models.sales import FUNNEL_STAGE_ORDER, Lead, LeadFunnelEvent
+from domains.marketing_sales.models.marketing import (
     CampaignAsset,
     CampaignDecision,
     CampaignExpense,

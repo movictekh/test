@@ -33,7 +33,7 @@ from domains.marketing_sales.services.funnel import (
     record_initial_funnel_event,
     record_status_funnel_event,
 )
-from services.models.crm import Lead, LeadActivity
+from domains.marketing_sales.models.sales import Lead, LeadActivity
 from user.utils.perm import require_permission, scope_queryset
 
 leads_router = Router(tags=["Marketing Leads"])
@@ -700,7 +700,7 @@ from domains.marketing_sales.api.v1.schemas.sales import (
     FunnelStageSummarySchema,
     FunnelSummarySchema,
 )
-from services.models.crm import FunnelLead, FunnelSnapshot, FunnelStage
+from domains.marketing_sales.models.sales import FunnelLead, FunnelSnapshot, FunnelStage
 from user.utils.perm import require_permission
 
 funnel_router = Router(tags=["Funnel Engine"])
@@ -861,7 +861,7 @@ from domains.marketing_sales.api.v1.schemas.sales import (
     PipelineSummarySchema,
     UpdateDealSchema,
 )
-from services.models.crm import Deal, PipelineStage
+from domains.marketing_sales.models.sales import Deal, PipelineStage
 from user.models.branch import Branch
 from user.models.employee import Employee
 from user.utils.perm import require_permission
@@ -1058,7 +1058,7 @@ from domains.marketing_sales.api.v1.schemas.sales import (
     UpdateInquirySchema,
     UpdateInquiryStatusSchema,
 )
-from services.models.crm import FollowUp, Inquiry
+from domains.marketing_sales.models.sales import FollowUp, Inquiry
 from user.models.branch import Branch
 from user.models.employee import Employee
 from user.utils.perm import require_permission
