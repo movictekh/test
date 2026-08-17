@@ -1,9 +1,11 @@
 from decimal import Decimal
+
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
 from django.db.models import Max, Q
 from django.utils import timezone
+
 from domains.marketing_sales.models.marketing import MarketingCampaign
 from user.models.base import BaseModel
 from user.models.branch import Branch

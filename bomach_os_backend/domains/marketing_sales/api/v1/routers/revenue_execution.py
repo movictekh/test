@@ -41,7 +41,14 @@ from domains.marketing_sales.api.v1.schemas.sales import (
     TurnaroundPlanOutSchema,
     TurnaroundPlanUpdateSchema,
 )
-from services.api.schema.others import MessageSchema
+from domains.marketing_sales.constants import (
+    DIAGNOSIS_CARDS,
+    FUNNEL_CORRECTIVE_ACTIONS,
+    FUNNEL_STAGE_LABELS,
+    LEAD_SCORING_MODEL,
+    MANAGEMENT_RHYTHM,
+    QUALIFICATION_CHECKLIST,
+)
 from domains.marketing_sales.models.revenue_execution import (
     DailyActionInstance,
     DailyActionTemplate,
@@ -59,6 +66,137 @@ from domains.marketing_sales.models.sales import (
     SalesPlaybook,
     SalesPlaybookObjection,
 )
+from domains.marketing_sales.presenters import _revenue_decimal_pct as _decimal_pct
+from domains.marketing_sales.presenters import _revenue_employee_name as _employee_name
+from domains.marketing_sales.presenters import (
+    _revenue_lead_control_rows as _lead_control_rows,
+)
+from domains.marketing_sales.presenters import (
+    _revenue_lead_sla_status as _lead_sla_status,
+)
+from domains.marketing_sales.presenters import _revenue_money_display as _money_display
+from domains.marketing_sales.presenters import _revenue_pct as _pct
+from domains.marketing_sales.presenters import (
+    _revenue_playbook_objection_row as _playbook_objection_row,
+)
+from domains.marketing_sales.presenters import _revenue_playbook_row as _playbook_row
+from domains.marketing_sales.presenters import (
+    _revenue_progress_color as _progress_color,
+)
+from domains.marketing_sales.presenters import (
+    _revenue_recommended_action as _recommended_action,
+)
+from domains.marketing_sales.presenters import _revenue_role_label as _role_label
+from domains.marketing_sales.presenters import (
+    _revenue_turnaround_end_date as _turnaround_end_date,
+)
+from domains.marketing_sales.presenters import (
+    _revenue_validation_detail as _validation_detail,
+)
+from domains.marketing_sales.selectors.sales import (
+    _revenue_action_queryset as _action_queryset,
+)
+from domains.marketing_sales.selectors.sales import (
+    _revenue_activity_queryset as _activity_queryset,
+)
+from domains.marketing_sales.selectors.sales import (
+    _revenue_cohort_lead_ids as _cohort_lead_ids,
+)
+from domains.marketing_sales.selectors.sales import (
+    _revenue_completion_counts as _completion_counts,
+)
+from domains.marketing_sales.selectors.sales import _revenue_date_bounds as _date_bounds
+from domains.marketing_sales.selectors.sales import (
+    _revenue_day_queryset as _day_queryset,
+)
+from domains.marketing_sales.selectors.sales import _revenue_decimal_sum as _decimal_sum
+from domains.marketing_sales.selectors.sales import (
+    _revenue_eligible_revenue_employees as _eligible_revenue_employees,
+)
+from domains.marketing_sales.selectors.sales import (
+    _revenue_forecast_payload as _forecast_payload,
+)
+from domains.marketing_sales.selectors.sales import (
+    _revenue_funnel_data_quality as _funnel_data_quality,
+)
+from domains.marketing_sales.selectors.sales import (
+    _revenue_funnel_event_queryset as _funnel_event_queryset,
+)
+from domains.marketing_sales.selectors.sales import (
+    _revenue_key_result_queryset as _key_result_queryset,
+)
+from domains.marketing_sales.selectors.sales import (
+    _revenue_lead_control_kpis as _lead_control_kpis,
+)
+from domains.marketing_sales.selectors.sales import (
+    _revenue_lead_queryset as _lead_queryset,
+)
+from domains.marketing_sales.selectors.sales import (
+    _revenue_lead_value_sum as _lead_value_sum,
+)
+from domains.marketing_sales.selectors.sales import (
+    _revenue_objective_queryset as _objective_queryset,
+)
+from domains.marketing_sales.selectors.sales import _revenue_okr_counts as _okr_counts
+from domains.marketing_sales.selectors.sales import (
+    _revenue_period_bounds as _period_bounds,
+)
+from domains.marketing_sales.selectors.sales import (
+    _revenue_playbook_objection_queryset as _playbook_objection_queryset,
+)
+from domains.marketing_sales.selectors.sales import (
+    _revenue_playbook_queryset as _playbook_queryset,
+)
+from domains.marketing_sales.selectors.sales import (
+    _revenue_revenue_target_value as _revenue_target_value,
+)
+from domains.marketing_sales.selectors.sales import (
+    _revenue_stage_lead_sets as _stage_lead_sets,
+)
+from domains.marketing_sales.selectors.sales import (
+    _revenue_template_queryset as _template_queryset,
+)
+from domains.marketing_sales.selectors.sales import (
+    _revenue_transition_leaks as _transition_leaks,
+)
+from domains.marketing_sales.selectors.sales import (
+    _revenue_turnaround_action_queryset as _turnaround_action_queryset,
+)
+from domains.marketing_sales.selectors.sales import (
+    _revenue_turnaround_detail as _turnaround_detail,
+)
+from domains.marketing_sales.selectors.sales import (
+    _revenue_turnaround_plan_queryset as _turnaround_plan_queryset,
+)
+from domains.marketing_sales.selectors.sales import (
+    _revenue_weighted_forecast_value as _weighted_forecast_value,
+)
+from domains.marketing_sales.services.sales import (
+    _revenue_activate_turnaround_plan as _activate_turnaround_plan,
+)
+from domains.marketing_sales.services.sales import (
+    _revenue_apply_action_payload as _apply_action_payload,
+)
+from domains.marketing_sales.services.sales import (
+    _revenue_apply_key_result_payload as _apply_key_result_payload,
+)
+from domains.marketing_sales.services.sales import (
+    _revenue_apply_objective_payload as _apply_objective_payload,
+)
+from domains.marketing_sales.services.sales import (
+    _revenue_apply_template_payload as _apply_template_payload,
+)
+from domains.marketing_sales.services.sales import (
+    _revenue_apply_turnaround_action_payload as _apply_turnaround_action_payload,
+)
+from domains.marketing_sales.services.sales import (
+    _revenue_apply_turnaround_plan_payload as _apply_turnaround_plan_payload,
+)
+from domains.marketing_sales.services.sales import _revenue_open_day as _open_day
+from domains.marketing_sales.services.sales import (
+    _revenue_seed_turnaround_actions as _seed_turnaround_actions,
+)
+from services.api.schema.others import MessageSchema
 from user.models.branch import Branch
 from user.models.employee import Employee
 from user.models.role_targets import (
@@ -69,1391 +207,6 @@ from user.models.role_targets import (
 from user.utils.perm import require_permission, scope_queryset
 
 revenue_execution_router = Router(tags=["Revenue Execution"])
-
-
-TURNAROUND_DEFAULT_ACTIONS = [
-    {
-        "phase": "stabilise",
-        "title": "Clean CRM: owners, stages, sources, values and next actions",
-        "owner_text": "Analytics + Sales",
-        "week_start": 1,
-        "week_end": 1,
-    },
-    {
-        "phase": "stabilise",
-        "title": "Launch lead-response SLA dashboard and escalation",
-        "owner_text": "CSRC Lead",
-        "week_start": 1,
-        "week_end": 1,
-    },
-    {
-        "phase": "stabilise",
-        "title": "Define MQL, SQL, opportunity, won and lost criteria",
-        "owner_text": "Marketing Manager",
-        "week_start": 2,
-        "week_end": 2,
-    },
-    {
-        "phase": "stabilise",
-        "title": "Stop campaigns with no traceable leads or revenue signal",
-        "owner_text": "Digital Marketer",
-        "week_start": 2,
-        "week_end": 2,
-    },
-    {
-        "phase": "standardise",
-        "title": "Roll out division-specific discovery and objection playbooks",
-        "owner_text": "Sales Lead",
-        "week_start": 3,
-        "week_end": 3,
-    },
-    {
-        "phase": "standardise",
-        "title": "Introduce 7-touch follow-up cadence with next-action automation",
-        "owner_text": "CRM Admin",
-        "week_start": 3,
-        "week_end": 4,
-    },
-    {
-        "phase": "standardise",
-        "title": "Start weekly call review, role-play and coaching scorecard",
-        "owner_text": "Marketing Manager",
-        "week_start": 4,
-        "week_end": 4,
-    },
-    {
-        "phase": "standardise",
-        "title": "Link every content brief to funnel stage and CTA",
-        "owner_text": "Content Director",
-        "week_start": 5,
-        "week_end": 5,
-    },
-    {
-        "phase": "standardise",
-        "title": "Implement multi-touch campaign attribution and cost controls",
-        "owner_text": "Analytics Officer",
-        "week_start": 6,
-        "week_end": 6,
-    },
-    {
-        "phase": "scale",
-        "title": "Scale top two channels and stop bottom-quartile spend",
-        "owner_text": "CEO + Digital",
-        "week_start": 7,
-        "week_end": 8,
-    },
-    {
-        "phase": "scale",
-        "title": "Launch referral, loyalty and dormant-lead reactivation engine",
-        "owner_text": "CSRC + Partnerships",
-        "week_start": 8,
-        "week_end": 9,
-    },
-    {
-        "phase": "scale",
-        "title": "Automate reports, reminders, summaries and approvals",
-        "owner_text": "Bomach OS Team",
-        "week_start": 10,
-        "week_end": 10,
-    },
-    {
-        "phase": "scale",
-        "title": "Quarterly performance review, role reset and incentive calibration",
-        "owner_text": "CEO + HR",
-        "week_start": 13,
-        "week_end": 13,
-    },
-]
-
-TURNAROUND_PHASES = [
-    ("stabilise", "Stabilise", "Weeks 1-2"),
-    ("standardise", "Standardise", "Weeks 3-6"),
-    ("scale", "Scale", "Weeks 7-13"),
-]
-
-TURNAROUND_PERFORMANCE_CONTRACTS = [
-    {
-        "role": "Marketing Manager",
-        "outcome_metrics": "Qualified pipeline, conversion, revenue forecast, ROI",
-        "minimum_operating_standard": "Weekly forecast accuracy >=80%; zero unowned red actions",
-    },
-    {
-        "role": "CSRC",
-        "outcome_metrics": "Response speed, qualification quality, handoff completeness",
-        "minimum_operating_standard": "95% within SLA; 100% required fields before handoff",
-    },
-    {
-        "role": "Sales Representative",
-        "outcome_metrics": "Quality conversations, meetings, proposals, wins, revenue",
-        "minimum_operating_standard": "100% active leads with next action; weekly coaching participation",
-    },
-    {
-        "role": "Digital Marketer",
-        "outcome_metrics": "Qualified leads, cost per qualified lead, influenced pipeline",
-        "minimum_operating_standard": "No channel scaled without source and conversion evidence",
-    },
-    {
-        "role": "Content & Media",
-        "outcome_metrics": "On-time content, funnel coverage, leads/revenue influenced",
-        "minimum_operating_standard": "At least 40% of output supports evaluation, intent or loyalty",
-    },
-    {
-        "role": "Business Development",
-        "outcome_metrics": "Target accounts, partner pipeline, meetings, revenue",
-        "minimum_operating_standard": "Named-account plan and partner-sourced opportunity target",
-    },
-]
-
-TURNAROUND_GOVERNANCE_RULES = [
-    "No lead without source, owner, stage and next action.",
-    "No campaign without objective, audience, budget, tracking and stop/scale rule.",
-    "No content brief without funnel stage, CTA and accountable owner.",
-    "No weekly report without decisions, owners and deadlines.",
-    "No incentive based only on activity; reward verified revenue contribution and customer outcome.",
-    "Underperformance triggers diagnosis, coaching plan and review date, not endless verbal warnings.",
-]
-
-TURNAROUND_EVIDENCE = [
-    {
-        "source": "Salesforce - State of Sales",
-        "title": "Automate non-selling work",
-        "description": "Sales teams lose time to administration, data entry and prospecting. Bomach OS should automate summaries, assignments, reminders and approvals.",
-        "url": "https://www.salesforce.com/sales/state-of-sales/",
-    },
-    {
-        "source": "Harvard Business Review",
-        "title": "Speed-to-lead matters",
-        "description": "Faster response to online leads is associated with a much greater chance of qualification, so response time must be visible and escalated.",
-        "url": "https://hbr.org/2011/03/the-short-life-of-online-sales-leads",
-    },
-    {
-        "source": "HubSpot Knowledge Base",
-        "title": "Separate lifecycle, status and deal stages",
-        "description": "Lifecycle stage, lead status and deal stages answer different operational questions and should not be collapsed into one field.",
-        "url": "https://knowledge.hubspot.com/records/use-lifecycle-stages",
-    },
-    {
-        "source": "HubSpot Playbooks",
-        "title": "Standardise conversations and notes",
-        "description": "Interactive playbooks help teams ask consistent questions and keep structured notes during customer conversations.",
-        "url": "https://knowledge.hubspot.com/playbooks/use-playbooks",
-    },
-    {
-        "source": "Google Analytics",
-        "title": "Use attribution paths",
-        "description": "Attribution paths preserve conversion credit across touchpoints instead of treating every sale as a single-source outcome.",
-        "url": "https://support.google.com/analytics/answer/10596866",
-    },
-    {
-        "source": "WhatsApp Business",
-        "title": "Build permission-based conversational commerce",
-        "description": "Use rapid response, useful templates, segmentation and opt-out controls rather than indiscriminate broadcasts.",
-        "url": "https://whatsappbusiness.com/products/create-ads-that-click-to-whatsapp/",
-    },
-    {
-        "source": "DataReportal - Digital Nigeria",
-        "title": "Operate mobile-first",
-        "description": "Nigeria's large social-media audience reinforces the need for mobile-first creative, messaging and measurement.",
-        "url": "https://datareportal.com/reports/digital-2026-nigeria",
-    },
-    {
-        "source": "NDPC + ARCON",
-        "title": "Make compliance part of workflow",
-        "description": "Consent, withdrawal rights, claims evidence and advertising approval should be captured before campaigns go live.",
-        "url": "https://ndpc.gov.ng/",
-    },
-]
-
-MANAGEMENT_RHYTHM = [
-    {
-        "time": "9:00 AM",
-        "name": "Revenue huddle",
-        "focus": "Red metrics, top deals, blockers and commitments",
-    },
-    {
-        "time": "1:00 PM",
-        "name": "Pipeline control",
-        "focus": "SLA breaches, next actions and campaign quality",
-    },
-    {
-        "time": "5:00 PM",
-        "name": "Close-out",
-        "focus": "Results, misses, learning and tomorrow’s first actions",
-    },
-    {
-        "time": "Friday 4 PM",
-        "name": "Executive review",
-        "focus": "Forecast, ROI, people decisions and resource shifts",
-    },
-]
-
-DIAGNOSIS_CARDS = [
-    {
-        "key": "lead_response",
-        "title": "Lead response",
-        "copy": "Inbound leads wait too long or are not acknowledged consistently.",
-        "route": "lead-control",
-        "status": "bad",
-        "action": "Install SLA queue, auto-assignment and escalation.",
-    },
-    {
-        "key": "crm_discipline",
-        "title": "CRM discipline",
-        "copy": "Stages, values and next actions are not consistently updated.",
-        "route": "lead-control",
-        "status": "bad",
-        "action": "Make required fields and daily pipeline hygiene mandatory.",
-    },
-    {
-        "key": "qualification",
-        "title": "Qualification",
-        "copy": "Activity is mistaken for sales readiness.",
-        "route": "playbooks",
-        "status": "warn",
-        "action": "Use agreed MQL/SQL criteria and discovery questions.",
-    },
-    {
-        "key": "sales_capability",
-        "title": "Sales capability",
-        "copy": "Staff need structured practice, feedback and deal coaching.",
-        "route": "coaching",
-        "status": "bad",
-        "action": "Weekly call review, role-play and individual skill plans.",
-    },
-    {
-        "key": "content_to_revenue",
-        "title": "Content-to-revenue",
-        "copy": "Content is measured by posts and reach rather than influenced revenue.",
-        "route": "content-studio",
-        "status": "warn",
-        "action": "Brief by funnel stage, CTA and revenue signal.",
-    },
-    {
-        "key": "management_cadence",
-        "title": "Management cadence",
-        "copy": "Reports arrive after problems are already old.",
-        "route": "daily-execution",
-        "status": "warn",
-        "action": "Use daily leading indicators and weekly outcome review.",
-    },
-]
-
-LEAD_SCORING_MODEL = [
-    {
-        "points": 40,
-        "name": "Customer fit",
-        "copy": "Division match, location, budget, authority and service suitability.",
-    },
-    {
-        "points": 30,
-        "name": "Purchase intent",
-        "copy": "Inspection request, proposal request, payment question or decision deadline.",
-    },
-    {
-        "points": 20,
-        "name": "Engagement",
-        "copy": "Replies, calls, brochure views, event attendance and repeat visits.",
-    },
-    {
-        "points": 10,
-        "name": "Timing",
-        "copy": "Ready now, within 30 days, 90 days, or long-term nurture.",
-    },
-]
-
-QUALIFICATION_CHECKLIST = [
-    {"label": "Problem / need recorded", "status": "required"},
-    {"label": "Budget or ability to pay verified", "status": "required"},
-    {"label": "Decision-maker / authority identified", "status": "before_sql"},
-    {"label": "Purchase timeline recorded", "status": "before_sql"},
-    {"label": "Required service / product fit confirmed", "status": "before_sql"},
-    {"label": "Next decision event and date scheduled", "status": "before_sql"},
-]
-
-LEAD_STATUS_FORECAST_WEIGHTS = {
-    "new": Decimal("0.05"),
-    "contacted": Decimal("0.10"),
-    "qualified": Decimal("0.30"),
-    "proposal_sent": Decimal("0.50"),
-    "negotiation": Decimal("0.70"),
-    "won": Decimal("1.00"),
-    "dormant": Decimal("0.05"),
-}
-
-FORECAST_SCENARIOS = {
-    "conservative": {
-        "label": "Conservative",
-        "factor": Decimal("0.72"),
-        "description": "Discounts weighted pipeline for execution risk.",
-    },
-    "base": {
-        "label": "Base",
-        "factor": Decimal("1.00"),
-        "description": "Uses current lead status weights without adjustment.",
-    },
-    "stretch": {
-        "label": "Stretch",
-        "factor": Decimal("1.28"),
-        "description": "Assumes improved follow-up discipline and conversion.",
-    },
-}
-FORECAST_DEFAULT_TARGET = Decimal("150000000.00")
-FORECAST_STAGE_AGE_LIMIT_DAYS = 14
-
-FUNNEL_STAGE_LABELS = {
-    "discovery": "Discovery",
-    "evaluation": "Evaluation",
-    "intent": "Intent",
-    "purchase": "Purchase",
-    "loyalty": "Loyalty",
-}
-
-FUNNEL_LEAK_FIXES = {
-    ("discovery", "evaluation"): {
-        "copy": "Leads are not becoming qualified opportunities.",
-        "fix": "Tighten response quality, qualification fields, and handoff criteria.",
-    },
-    ("evaluation", "intent"): {
-        "copy": "Qualified leads are not booking inspections, meetings or demos.",
-        "fix": "Add proof, urgency and an agreed next event before ending qualification.",
-    },
-    ("intent", "purchase"): {
-        "copy": "Meetings happen but proposals and decisions stall.",
-        "fix": "Use proposal follow-up cadence, decision map and manager deal reviews.",
-    },
-    ("purchase", "loyalty"): {
-        "copy": "Closed clients are not consistently producing referrals or repeat business.",
-        "fix": "Trigger onboarding, satisfaction check and referral ask at defined milestones.",
-    },
-}
-
-FUNNEL_CORRECTIVE_ACTIONS = [
-    {
-        "id": "l1",
-        "title": "Enforce 15-minute human-response target for paid leads",
-        "owner": "CSRC Lead",
-        "due": "Today",
-        "done": False,
-    },
-    {
-        "id": "l2",
-        "title": "Require qualification fields before sales handoff",
-        "owner": "Marketing Manager",
-        "due": "16 Jul",
-        "done": False,
-    },
-    {
-        "id": "l3",
-        "title": "Create inspection/proposal follow-up cadence",
-        "owner": "Sales Lead",
-        "due": "17 Jul",
-        "done": False,
-    },
-    {
-        "id": "l4",
-        "title": "Build proof content for evaluation and intent stages",
-        "owner": "Content Director",
-        "due": "20 Jul",
-        "done": False,
-    },
-]
-
-
-def _validation_detail(exc):
-    if hasattr(exc, "message_dict"):
-        return "; ".join(
-            f"{field}: {', '.join(messages)}"
-            for field, messages in exc.message_dict.items()
-        )
-    return exc.messages[0] if getattr(exc, "messages", None) else str(exc)
-
-
-def _employee_name(employee):
-    return employee.user.get_full_name() if employee else None
-
-
-def _role_label(employee):
-    if not employee:
-        return "Unassigned"
-    if employee.role:
-        return employee.role.name
-    if employee.designation:
-        return employee.designation
-    return employee.user.get_full_name() or employee.employee_id
-
-
-def _day_queryset(request):
-    qs = DailyExecutionDay.objects.select_related(
-        "branch", "opened_by"
-    ).prefetch_related(
-        "actions",
-        "actions__owner",
-        "actions__owner__user",
-        "actions__completed_by",
-        "actions__template",
-    )
-    return scope_queryset(request, qs, branch_field="branch_id")
-
-
-def _template_queryset(request):
-    qs = DailyActionTemplate.objects.select_related(
-        "branch", "default_owner", "default_owner__user", "created_by"
-    )
-    return scope_queryset(request, qs, branch_field="branch_id")
-
-
-def _action_queryset(request):
-    qs = DailyActionInstance.objects.select_related(
-        "day",
-        "day__branch",
-        "template",
-        "owner",
-        "owner__user",
-        "completed_by",
-    )
-    return scope_queryset(request, qs, branch_field="day__branch_id")
-
-
-def _lead_queryset(request):
-    qs = Lead.objects.select_related(
-        "assigned_to", "assigned_to__user", "assigned_to__role", "branch"
-    )
-    return scope_queryset(request, qs, branch_field="branch_id")
-
-
-def _activity_queryset(request):
-    qs = LeadActivity.objects.select_related(
-        "lead",
-        "lead__assigned_to",
-        "lead__assigned_to__user",
-        "lead__assigned_to__role",
-        "created_by",
-    )
-    return scope_queryset(request, qs, branch_field="lead__branch_id")
-
-
-def _turnaround_plan_queryset(request):
-    qs = TurnaroundPlan.objects.select_related(
-        "branch",
-        "primary_owner",
-        "primary_owner__user",
-        "created_by",
-    ).prefetch_related(
-        "actions",
-        "actions__owner",
-        "actions__owner__user",
-        "actions__completed_by",
-    )
-    return scope_queryset(request, qs, branch_field="branch_id")
-
-
-def _turnaround_action_queryset(request):
-    qs = TurnaroundAction.objects.select_related(
-        "plan",
-        "plan__branch",
-        "owner",
-        "owner__user",
-        "completed_by",
-    )
-    return scope_queryset(request, qs, branch_field="plan__branch_id")
-
-
-def _objective_queryset(request):
-    qs = RevenueObjective.objects.select_related(
-        "branch",
-        "owner",
-        "owner__user",
-        "created_by",
-    ).prefetch_related(
-        "key_results",
-        "key_results__linked_employee_target",
-        "key_results__linked_kpi_record",
-    )
-    return scope_queryset(request, qs, branch_field="branch_id")
-
-
-def _key_result_queryset(request):
-    qs = RevenueKeyResult.objects.select_related(
-        "objective",
-        "objective__branch",
-        "linked_employee_target",
-        "linked_kpi_record",
-    )
-    return scope_queryset(request, qs, branch_field="objective__branch_id")
-
-
-def _playbook_queryset(request):
-    qs = SalesPlaybook.objects.select_related("branch", "created_by").prefetch_related(
-        "objections"
-    )
-    branch_ids = getattr(request, "_perm_branch_ids", [])
-    if branch_ids:
-        return qs.filter(Q(branch_id__in=branch_ids) | Q(branch__isnull=True))
-    return qs
-
-
-def _playbook_objection_queryset(request):
-    qs = SalesPlaybookObjection.objects.select_related("playbook", "playbook__branch")
-    branch_ids = getattr(request, "_perm_branch_ids", [])
-    if branch_ids:
-        return qs.filter(
-            Q(playbook__branch_id__in=branch_ids) | Q(playbook__branch__isnull=True)
-        )
-    return qs
-
-
-def _funnel_event_queryset(request):
-    qs = LeadFunnelEvent.objects.select_related(
-        "lead",
-        "branch",
-        "campaign",
-        "actor",
-    )
-    return scope_queryset(request, qs, branch_field="branch_id")
-
-
-def _date_bounds(day):
-    start = timezone.make_aware(datetime.combine(day, time.min))
-    end = timezone.make_aware(datetime.combine(day, time.max))
-    return start, end
-
-
-def _period_bounds(period_start=None, period_end=None):
-    today = timezone.localdate()
-    start = period_start or today.replace(day=1)
-    end = period_end or today
-    return start, end
-
-
-def _decimal_sum(queryset, field_name):
-    total = queryset.aggregate(total=Sum(field_name))["total"] or Decimal("0.00")
-    return (
-        total.quantize(Decimal("0.01"))
-        if isinstance(total, Decimal)
-        else Decimal(total).quantize(Decimal("0.01"))
-    )
-
-
-def _decimal_pct(numerator, denominator):
-    if not denominator:
-        return Decimal("0.00")
-    numerator = Decimal(str(numerator or "0.00"))
-    denominator = Decimal(str(denominator))
-    return min(
-        (numerator / denominator) * Decimal("100.00"), Decimal("100.00")
-    ).quantize(Decimal("0.01"))
-
-
-def _playbook_objection_row(objection):
-    return {
-        "id": objection.id,
-        "playbook_id": objection.playbook_id,
-        "objection": objection.objection,
-        "response": objection.response,
-        "sort_order": objection.sort_order,
-        "is_active": objection.is_active,
-        "created_at": objection.created_at,
-        "updated_at": objection.updated_at,
-    }
-
-
-def _playbook_row(playbook, include_objections=False):
-    row = {
-        "id": playbook.id,
-        "title": playbook.title,
-        "division": playbook.division,
-        "division_display": playbook.get_division_display(),
-        "stage": playbook.stage,
-        "stage_display": playbook.get_stage_display(),
-        "persona": playbook.persona,
-        "persona_display": playbook.get_persona_display(),
-        "objective": playbook.objective,
-        "opening_script": playbook.opening_script,
-        "questions": playbook.questions,
-        "proof_to_use": playbook.proof_to_use,
-        "primary_cta": playbook.primary_cta,
-        "exit_criteria": playbook.exit_criteria,
-        "status": playbook.status,
-        "branch_id": playbook.branch_id,
-        "branch_name": playbook.branch.branch_name if playbook.branch else None,
-        "created_by_id": playbook.created_by_id,
-        "sort_order": playbook.sort_order,
-        "created_at": playbook.created_at,
-        "updated_at": playbook.updated_at,
-    }
-    if include_objections:
-        row["objections"] = [
-            _playbook_objection_row(objection)
-            for objection in playbook.objections.all()
-            if objection.is_active
-        ]
-    return row
-
-
-def _money_display(value):
-    value = Decimal(value or "0.00")
-    if value >= Decimal("1000000000"):
-        return f"₦{(value / Decimal('1000000000')).quantize(Decimal('0.1'))}B"
-    if value >= Decimal("1000000"):
-        millions = value / Decimal("1000000")
-        display = (
-            millions.quantize(Decimal("0.1"))
-            if value % Decimal("1000000")
-            else millions.quantize(Decimal("1"))
-        )
-        return f"₦{display}M"
-    if value >= Decimal("1000"):
-        return f"₦{(value / Decimal('1000')).quantize(Decimal('1'))}K"
-    return f"₦{value.quantize(Decimal('1'))}"
-
-
-def _scenario_factor(scenario):
-    return FORECAST_SCENARIOS.get(scenario or "base", FORECAST_SCENARIOS["base"])[
-        "factor"
-    ]
-
-
-def _normalized_scenario(scenario):
-    return scenario if scenario in FORECAST_SCENARIOS else "base"
-
-
-def _weighted_forecast_value(leads, factor=Decimal("1.00")):
-    weighted = Decimal("0.00")
-    for row in leads.values("status").annotate(total=Sum("estimated_value")):
-        weighted += (
-            row["total"] or Decimal("0.00")
-        ) * LEAD_STATUS_FORECAST_WEIGHTS.get(
-            row["status"],
-            Decimal("0.00"),
-        )
-    return (weighted * factor).quantize(Decimal("0.01"))
-
-
-def _revenue_target_value(start, end, branch_id=None):
-    revenue_targets = EmployeeTarget.objects.filter(
-        period_start__lte=end,
-        period_end__gte=start,
-        title__icontains="revenue",
-        is_active=True,
-    )
-    if branch_id:
-        revenue_targets = revenue_targets.filter(employee__branch_id=branch_id)
-    return _decimal_sum(revenue_targets, "target_value") or FORECAST_DEFAULT_TARGET
-
-
-def _quality_control_status(value):
-    if value is None:
-        return "unsupported"
-    if value >= Decimal("80.00"):
-        return "ok"
-    if value >= Decimal("60.00"):
-        return "warn"
-    return "red"
-
-
-def _forecast_quality_controls(active_leads, now=None):
-    now = now or timezone.now()
-    total = active_leads.count()
-    value_pct = _decimal_pct(
-        active_leads.filter(estimated_value__gt=Decimal("0.00")).count(),
-        total,
-    )
-    next_action_pct = _decimal_pct(
-        active_leads.exclude(next_action="")
-        .filter(next_follow_up_at__isnull=False)
-        .count(),
-        total,
-    )
-    stage_age_pct = _decimal_pct(
-        active_leads.filter(
-            updated_at__gte=now - timedelta(days=FORECAST_STAGE_AGE_LIMIT_DAYS)
-        ).count(),
-        total,
-    )
-    supported_values = [value_pct, next_action_pct, stage_age_pct]
-    confidence = (
-        sum(supported_values, Decimal("0.00")) / Decimal(len(supported_values))
-        if supported_values
-        else Decimal("0.00")
-    ).quantize(Decimal("0.01"))
-
-    controls = [
-        {
-            "key": "value_present",
-            "label": "All opportunities have value",
-            "supported": True,
-            "value": value_pct,
-            "display_value": f"{value_pct}%",
-            "status": _quality_control_status(value_pct),
-        },
-        {
-            "key": "next_action_scheduled",
-            "label": "Next action scheduled",
-            "supported": True,
-            "value": next_action_pct,
-            "display_value": f"{next_action_pct}%",
-            "status": _quality_control_status(next_action_pct),
-        },
-        {
-            "key": "stage_age_within_limit",
-            "label": "Stage-age within limit",
-            "supported": True,
-            "value": stage_age_pct,
-            "display_value": f"{stage_age_pct}%",
-            "status": _quality_control_status(stage_age_pct),
-            "limit_days": FORECAST_STAGE_AGE_LIMIT_DAYS,
-        },
-        {
-            "key": "close_date_verified",
-            "label": "Close date verified",
-            "supported": False,
-            "value": None,
-            "display_value": "Not tracked",
-            "status": "unsupported",
-            "reason": "Revenue execution leads do not have expected close dates yet.",
-        },
-        {
-            "key": "decision_maker_recorded",
-            "label": "Decision-maker recorded",
-            "supported": False,
-            "value": None,
-            "display_value": "Not tracked",
-            "status": "unsupported",
-            "reason": "Lead 360 does not have a structured decision-maker field yet.",
-        },
-    ]
-    return controls, confidence
-
-
-def _forecast_division_rows(active_leads, factor):
-    rows = []
-    for division_key, division_label in Lead.DIVISION_CHOICES:
-        division_leads = active_leads.filter(division=division_key)
-        opportunity_count = division_leads.count()
-        if not opportunity_count:
-            continue
-        pipeline_value = _decimal_sum(division_leads, "estimated_value")
-        weighted_forecast = _weighted_forecast_value(division_leads, factor=factor)
-        rows.append(
-            {
-                "division": division_key,
-                "division_label": division_label,
-                "opportunities": opportunity_count,
-                "pipeline": pipeline_value,
-                "display_pipeline": _money_display(pipeline_value),
-                "weighted_forecast": weighted_forecast,
-                "display_weighted_forecast": _money_display(weighted_forecast),
-                "target": None,
-                "target_gap": None,
-                "display_target_gap": "Not allocated",
-            }
-        )
-    return rows
-
-
-def _forecast_methodology():
-    return {
-        "source": "lead",
-        "source_label": "Lead-derived forecast",
-        "status_weights": [
-            {
-                "status": status,
-                "label": label,
-                "weight": LEAD_STATUS_FORECAST_WEIGHTS.get(status, Decimal("0.00")),
-            }
-            for status, label in Lead.STATUS_CHOICES
-        ],
-        "limitations": [
-            "This slice does not use the legacy Deal pipeline module.",
-            "Expected close dates are not tracked on revenue execution leads.",
-            "Decision-maker and close-date confidence controls are reported as unsupported.",
-            "Division-level target gaps are not calculated until targets are allocated by division.",
-        ],
-    }
-
-
-def _forecast_payload(
-    request,
-    period_start=None,
-    period_end=None,
-    branch_id=None,
-    division=None,
-    scenario="base",
-):
-    start, end = _period_bounds(period_start, period_end)
-    scenario_key = _normalized_scenario(scenario)
-    factor = _scenario_factor(scenario_key)
-
-    leads = _lead_queryset(request)
-    if branch_id:
-        leads = leads.filter(branch_id=branch_id)
-    if division:
-        leads = leads.filter(division=division)
-    active_leads = leads.filter(status__in=Lead.ACTIVE_STATUSES)
-
-    target = _revenue_target_value(start, end, branch_id=branch_id)
-    unweighted_pipeline = _decimal_sum(active_leads, "estimated_value")
-    weighted_forecast = _weighted_forecast_value(active_leads, factor=factor)
-    base_weighted_forecast = _weighted_forecast_value(active_leads)
-    target_gap = max(target - weighted_forecast, Decimal("0.00"))
-    pipeline_coverage = (
-        (unweighted_pipeline / target).quantize(Decimal("0.01"))
-        if target
-        else Decimal("0.00")
-    )
-    quality_controls, forecast_confidence = _forecast_quality_controls(active_leads)
-
-    return {
-        "period": {"start": start, "end": end},
-        "filters": {
-            "branch_id": branch_id,
-            "division": division,
-            "scenario": scenario_key,
-        },
-        "hero": {
-            "weighted_forecast": weighted_forecast,
-            "display_weighted_forecast": _money_display(weighted_forecast),
-            "base_weighted_forecast": base_weighted_forecast,
-            "target": target,
-            "display_target": _money_display(target),
-            "progress_percentage": _decimal_pct(weighted_forecast, target),
-            "target_gap": target_gap,
-            "display_target_gap": _money_display(target_gap),
-            "scenario": scenario_key,
-            "scenario_label": FORECAST_SCENARIOS[scenario_key]["label"],
-            "target_scope": "overall",
-        },
-        "kpi_cards": [
-            {
-                "key": "unweighted_pipeline",
-                "label": "Unweighted pipeline",
-                "value": unweighted_pipeline,
-                "display_value": _money_display(unweighted_pipeline),
-                "foot": "All active opportunity values",
-            },
-            {
-                "key": "pipeline_coverage",
-                "label": "Pipeline coverage",
-                "value": pipeline_coverage,
-                "display_value": f"{pipeline_coverage}×",
-                "foot": "Target operating range: 3×–4×",
-            },
-            {
-                "key": "forecast_confidence",
-                "label": "Forecast confidence",
-                "value": forecast_confidence,
-                "display_value": f"{forecast_confidence}%",
-                "foot": "Based only on supported data-quality controls",
-            },
-            {
-                "key": "target_gap",
-                "label": "Target gap",
-                "value": target_gap,
-                "display_value": _money_display(target_gap),
-                "foot": "Additional weighted forecast required",
-            },
-        ],
-        "quality_controls": quality_controls,
-        "division_rows": _forecast_division_rows(active_leads, factor),
-        "scenario_options": [
-            {
-                "key": key,
-                "label": option["label"],
-                "factor": option["factor"],
-                "description": option["description"],
-                "active": key == scenario_key,
-            }
-            for key, option in FORECAST_SCENARIOS.items()
-        ],
-        "methodology": _forecast_methodology(),
-    }
-
-
-def _progress_color(progress):
-    if progress >= Decimal("90.00"):
-        return "#059669"
-    if progress >= Decimal("60.00"):
-        return "#D97706"
-    return "#DC2626"
-
-
-def _apply_template_payload(template, payload_data):
-    for attr, value in payload_data.items():
-        setattr(template, attr, value)
-    template.full_clean()
-    template.save()
-    return template
-
-
-def _apply_action_payload(action, payload_data):
-    for attr, value in payload_data.items():
-        setattr(action, attr, value)
-    action.full_clean()
-    action.save()
-    return action
-
-
-def _templates_for_day(request, branch_id):
-    templates = _template_queryset(request).filter(is_active=True)
-    if branch_id:
-        return templates.filter(Q(branch_id=branch_id) | Q(branch__isnull=True))
-    return templates.filter(branch__isnull=True)
-
-
-def _ensure_action_instances(day, templates):
-    existing_template_ids = set(
-        day.actions.exclude(template__isnull=True).values_list("template_id", flat=True)
-    )
-    created = []
-
-    for template in templates:
-        if template.id in existing_template_ids:
-            continue
-        created.append(
-            DailyActionInstance(
-                day=day,
-                template=template,
-                title=template.title,
-                description=template.description,
-                owner=template.default_owner,
-                severity=template.severity,
-                sort_order=template.sort_order,
-            )
-        )
-
-    if created:
-        DailyActionInstance.objects.bulk_create(created)
-
-
-def _open_day(request, target_date, branch_id=None, force_rebuild=False):
-    branch = None
-    if branch_id:
-        branch = get_object_or_404(Branch, id=branch_id)
-
-    day, _ = DailyExecutionDay.objects.get_or_create(
-        date=target_date,
-        branch=branch,
-        defaults={"opened_by": request.user},
-    )
-    templates = _templates_for_day(request, branch_id)
-    if force_rebuild or not day.actions.exists():
-        _ensure_action_instances(day, templates)
-    return get_object_or_404(_day_queryset(request), id=day.id)
-
-
-def _completion_counts(day):
-    total = day.actions.count()
-    completed = day.actions.filter(status="completed").count()
-    open_count = total - completed
-    completion_pct = round((completed / total) * 100) if total else 0
-    return total, completed, open_count, completion_pct
-
-
-def _lead_sla_status(lead, now=None):
-    now = now or timezone.now()
-    if lead.first_response_at or lead.first_contact_at:
-        return "completed"
-    due_at = lead.first_response_due_at
-    if not due_at and lead.created_at:
-        due_at = lead.created_at + timezone.timedelta(
-            minutes=Lead.DEFAULT_FIRST_RESPONSE_MINUTES
-        )
-    if due_at and now > due_at:
-        return "breached"
-    if due_at and now + timezone.timedelta(minutes=5) >= due_at:
-        return "due_now"
-    return "safe"
-
-
-def _recommended_action(lead, sla_status):
-    if sla_status == "breached":
-        return "Contact immediately and log the first response"
-    if sla_status == "due_now":
-        return "Contact now before the SLA breaches"
-    if lead.score >= 75:
-        return "Manager review and next action required today"
-    if not lead.next_action:
-        return "Create a dated next action"
-    return lead.next_action
-
-
-def _lead_control_rows(leads, now, limit):
-    rows = []
-    for lead in leads[:limit]:
-        sla_status = _lead_sla_status(lead, now)
-        age_days = (now - lead.created_at).days if lead.created_at else 0
-        rows.append(
-            {
-                "id": lead.id,
-                "lead": lead.full_name,
-                "lead_meta": f"{lead.get_source_display()} · {lead.get_division_display()} · {lead.estimated_value}",
-                "source": lead.source,
-                "source_display": lead.get_source_display(),
-                "division": lead.division,
-                "division_display": lead.get_division_display(),
-                "status": lead.status,
-                "status_display": lead.get_status_display(),
-                "score": lead.score,
-                "priority": lead.priority,
-                "stage": lead.status,
-                "stage_label": lead.get_status_display(),
-                "age_days": age_days,
-                "next_action": lead.next_action
-                or _recommended_action(lead, sla_status),
-                "sla_status": sla_status,
-                "sla_label": (
-                    "Breach"
-                    if sla_status == "breached"
-                    else "Due now" if sla_status == "due_now" else "Safe"
-                ),
-                "owner": _employee_name(lead.assigned_to) or "Unassigned",
-                "actions": [
-                    {"label": "Open", "action": "open"},
-                    (
-                        {"label": "Contact", "action": "contact"}
-                        if sla_status in ["breached", "due_now"] or lead.status == "new"
-                        else None
-                    ),
-                ],
-            }
-        )
-        rows[-1]["actions"] = [action for action in rows[-1]["actions"] if action]
-    return rows
-
-
-def _lead_control_kpis(leads, now):
-    active_leads = list(leads.filter(status__in=Lead.ACTIVE_STATUSES))
-    return [
-        {
-            "key": "new_uncontacted",
-            "label": "New & uncontacted",
-            "value": len(
-                [
-                    lead
-                    for lead in active_leads
-                    if lead.status == "new"
-                    and not lead.first_contact_at
-                    and not lead.first_response_at
-                ]
-            ),
-            "foot": "Require immediate acknowledgement",
-            "icon": "ti-user-exclamation",
-            "bg": "#FEE2E2",
-            "color": "#991B1B",
-        },
-        {
-            "key": "sla_breaches",
-            "label": "SLA breaches",
-            "value": len(
-                [
-                    lead
-                    for lead in active_leads
-                    if _lead_sla_status(lead, now) == "breached"
-                ]
-            ),
-            "foot": "Escalate to manager",
-            "icon": "ti-alarm",
-            "bg": "#FEF3C7",
-            "color": "#92400E",
-        },
-        {
-            "key": "hot_leads",
-            "label": "Hot leads",
-            "value": len([lead for lead in active_leads if lead.score >= 75]),
-            "foot": "Score 75+",
-            "icon": "ti-flame",
-            "bg": "#FCE7F3",
-            "color": "#9D174D",
-        },
-        {
-            "key": "stale_opportunities",
-            "label": "Stale opportunities",
-            "value": len([lead for lead in active_leads if lead.is_stale]),
-            "foot": "12+ days without meaningful progress",
-            "icon": "ti-hourglass-empty",
-            "bg": "#DBEAFE",
-            "color": "#1E40AF",
-        },
-    ]
-
-
-def _eligible_revenue_employees(request, branch_id=None):
-    role_filter = (
-        Q(role__name__icontains="revenue")
-        | Q(role__name__icontains="sales")
-        | Q(role__name__icontains="marketing")
-        | Q(role__name__icontains="business development")
-        | Q(designation__icontains="revenue")
-        | Q(designation__icontains="sales")
-        | Q(designation__icontains="marketing")
-        | Q(designation__icontains="business development")
-        | Q(designation__icontains="customer relations")
-    )
-    employees = (
-        Employee.objects.select_related("user", "role", "branch")
-        .filter(
-            is_active=True,
-            employment_status="active",
-        )
-        .filter(role_filter)
-    )
-
-    branch_ids = getattr(request, "_perm_branch_ids", [])
-    if branch_ids:
-        employees = employees.filter(branch_id__in=branch_ids)
-    if branch_id:
-        employees = employees.filter(Q(branch_id=branch_id) | Q(branch__isnull=True))
-    return employees.order_by("branch_id", "employee_id", "id")
-
-
-def _okr_counts(objectives):
-    counts = {"on_track": 0, "at_risk": 0, "off_track": 0}
-    for objective in objectives:
-        status = objective.track_status
-        counts[status] = counts.get(status, 0) + 1
-    return counts
-
-
-def _apply_objective_payload(objective, payload_data):
-    for attr, value in payload_data.items():
-        setattr(objective, attr, value)
-    objective.full_clean()
-    objective.save()
-    return objective
-
-
-def _apply_key_result_payload(key_result, payload_data):
-    for attr, value in payload_data.items():
-        setattr(key_result, attr, value)
-    key_result.full_clean()
-    key_result.save()
-    return key_result
-
-
-def _pct(part, whole):
-    if not whole:
-        return 0.0
-    return round((part / whole) * 100, 2)
-
-
-def _first_events_by_lead(events):
-    first_events = {}
-    for event in events.order_by("lead_id", "occurred_at", "id"):
-        first_events.setdefault(event.lead_id, event)
-    return first_events
-
-
-def _cohort_lead_ids(events, start, end):
-    first_events = _first_events_by_lead(events)
-    return {
-        lead_id
-        for lead_id, event in first_events.items()
-        if start <= event.occurred_at.date() <= end
-    }
-
-
-def _stage_lead_sets(events, cohort_ids):
-    return {
-        stage: set(
-            events.filter(lead_id__in=cohort_ids, to_stage=stage)
-            .values_list("lead_id", flat=True)
-            .distinct()
-        )
-        for stage in FUNNEL_STAGE_ORDER
-    }
-
-
-def _funnel_data_quality(events, cohort_ids):
-    cohort_events = events.filter(lead_id__in=cohort_ids)
-    total = cohort_events.count()
-    backfilled = sum(1 for event in cohort_events if event.metadata.get("backfilled"))
-    event_based = total - backfilled
-    missing_transition_count = 0
-    for lead_id in cohort_ids:
-        reached = set(
-            cohort_events.filter(lead_id=lead_id)
-            .exclude(to_stage="")
-            .values_list("to_stage", flat=True)
-        )
-        if len(reached) <= 1:
-            missing_transition_count += 1
-    real_ratio = (event_based / total) if total else 0
-    if total == 0 or real_ratio < 0.5:
-        confidence = "partial"
-    elif real_ratio < 0.8:
-        confidence = "medium"
-    else:
-        confidence = "high"
-    return {
-        "event_based_count": event_based,
-        "backfilled_count": backfilled,
-        "missing_transition_count": missing_transition_count,
-        "confidence": confidence,
-    }
-
-
-def _lead_value_sum(leads, lead_ids):
-    return leads.filter(id__in=lead_ids).aggregate(total=Sum("estimated_value"))[
-        "total"
-    ] or Decimal("0.00")
-
-
-def _transition_leaks(stage_sets, leads):
-    leaks = []
-    for index, from_stage in enumerate(FUNNEL_STAGE_ORDER[:-1]):
-        to_stage = FUNNEL_STAGE_ORDER[index + 1]
-        current = stage_sets[from_stage]
-        progressed = stage_sets[to_stage]
-        lost_ids = current - progressed
-        entered = len(current)
-        progressed_count = len(progressed & current)
-        loss_pct = round(100 - _pct(progressed_count, entered), 2) if entered else 0.0
-        copy = FUNNEL_LEAK_FIXES[(from_stage, to_stage)]["copy"]
-        fix = FUNNEL_LEAK_FIXES[(from_stage, to_stage)]["fix"]
-        leaks.append(
-            {
-                "transition": f"{FUNNEL_STAGE_LABELS[from_stage]} → {FUNNEL_STAGE_LABELS[to_stage]}",
-                "from_stage": from_stage,
-                "to_stage": to_stage,
-                "entered": entered,
-                "progressed": progressed_count,
-                "lost": len(lost_ids),
-                "loss_pct": loss_pct,
-                "revenue_impact": _lead_value_sum(leads, lost_ids),
-                "copy": copy,
-                "fix": fix,
-            }
-        )
-    return sorted(
-        leaks, key=lambda row: (row["loss_pct"], row["revenue_impact"]), reverse=True
-    )
-
-
-def _turnaround_end_date(start_date):
-    return start_date + timedelta(weeks=13) - timedelta(days=1)
-
-
-def _seed_turnaround_actions(plan):
-    actions = [
-        TurnaroundAction(
-            plan=plan,
-            sort_order=index + 1,
-            **action,
-        )
-        for index, action in enumerate(TURNAROUND_DEFAULT_ACTIONS)
-    ]
-    TurnaroundAction.objects.bulk_create(actions)
-
-
-def _phase_summary(plan):
-    actions = list(
-        plan.actions.select_related("owner", "owner__user", "completed_by").order_by(
-            "sort_order", "week_start", "created_at"
-        )
-    )
-    grouped = []
-    for phase, title, period in TURNAROUND_PHASES:
-        phase_actions = [action for action in actions if action.phase == phase]
-        total = len(phase_actions)
-        completed = len(
-            [action for action in phase_actions if action.status == "completed"]
-        )
-        grouped.append(
-            {
-                "phase": phase,
-                "title": title,
-                "period": period,
-                "total_actions": total,
-                "completed_actions": completed,
-                "completion_pct": round((completed / total) * 100) if total else 0,
-                "actions": phase_actions,
-            }
-        )
-    return grouped
-
-
-def _turnaround_kpis(plan):
-    total = plan.total_actions
-    completed = plan.completed_actions
-    current_phase = plan.current_phase.replace("_", " ").title()
-    owner_name = _employee_name(plan.primary_owner) or "Marketing Manager"
-    return [
-        {
-            "label": "Plan completion",
-            "value": f"{plan.completion_pct}%",
-            "foot": f"{completed} of {total} actions",
-        },
-        {
-            "label": "Current phase",
-            "value": current_phase,
-            "foot": f"{plan.start_date} to {plan.end_date}",
-        },
-        {
-            "label": "Primary owner",
-            "value": owner_name,
-            "foot": "CEO removes blockers",
-        },
-        {
-            "label": "Success test",
-            "value": "Revenue + discipline",
-            "foot": "Not activity volume alone",
-        },
-    ]
-
-
-def _turnaround_detail(plan):
-    return {
-        "plan": plan,
-        "kpis": _turnaround_kpis(plan),
-        "roadmap": _phase_summary(plan),
-        "performance_contracts": TURNAROUND_PERFORMANCE_CONTRACTS,
-        "governance_rules": [
-            {"sequence": index + 1, "rule": rule}
-            for index, rule in enumerate(TURNAROUND_GOVERNANCE_RULES)
-        ],
-        "evidence": TURNAROUND_EVIDENCE,
-    }
-
-
-def _activate_turnaround_plan(plan):
-    active_qs = TurnaroundPlan.objects.filter(status="active")
-    if plan.branch_id:
-        active_qs = active_qs.filter(branch_id=plan.branch_id)
-    else:
-        active_qs = active_qs.filter(branch__isnull=True)
-    active_qs.exclude(id=plan.id).update(status="archived")
-    plan.status = "active"
-    plan.full_clean()
-    plan.save()
-    return plan
-
-
-def _apply_turnaround_plan_payload(plan, payload_data):
-    activate = payload_data.get("status") == "active"
-    for attr, value in payload_data.items():
-        setattr(plan, attr, value)
-    if plan.start_date and not plan.end_date:
-        plan.end_date = _turnaround_end_date(plan.start_date)
-    plan.full_clean()
-    plan.save()
-    if activate:
-        plan = _activate_turnaround_plan(plan)
-    return plan
-
-
-def _apply_turnaround_action_payload(action, payload_data):
-    for attr, value in payload_data.items():
-        setattr(action, attr, value)
-    if "status" in payload_data:
-        if action.status == "completed" and not action.completed_at:
-            action.completed_at = timezone.now()
-        elif action.status == "open":
-            action.completed_at = None
-            action.completed_by = None
-            action.completion_note = ""
-    action.full_clean()
-    action.save()
-    return action
 
 
 @revenue_execution_router.get("/funnel-audit")
@@ -1470,7 +223,6 @@ def get_funnel_audit(
     start, end = _period_bounds(period_start, period_end)
     events = _funnel_event_queryset(request)
     leads = _lead_queryset(request)
-
     if branch_id:
         events = events.filter(branch_id=branch_id)
         leads = leads.filter(branch_id=branch_id)
@@ -1483,14 +235,12 @@ def get_funnel_audit(
     if campaign_id:
         events = events.filter(campaign_id=campaign_id)
         leads = leads.filter(campaign_id=campaign_id)
-
     cohort_ids = _cohort_lead_ids(events, start, end)
     cohort_events = events.filter(lead_id__in=cohort_ids)
     cohort_leads = leads.filter(id__in=cohort_ids)
     stage_sets = _stage_lead_sets(events, cohort_ids)
     leaks = _transition_leaks(stage_sets, cohort_leads)
     largest_leak = leaks[0]["to_stage"] if leaks else None
-
     funnel = []
     previous_stage = None
     for stage in FUNNEL_STAGE_ORDER:
@@ -1510,7 +260,6 @@ def get_funnel_audit(
             }
         )
         previous_stage = stage
-
     division_conversion = []
     for division_key, division_label in Lead.DIVISION_CHOICES:
         division_lead_ids = set(
@@ -1535,7 +284,6 @@ def get_funnel_audit(
                 ),
             }
         )
-
     return {
         "period": {"start": start, "end": end},
         "filters": {
@@ -1564,7 +312,6 @@ def get_command_center(
     target_date = date or timezone.localdate()
     start, end = _period_bounds(period_start, period_end)
     now = timezone.now()
-
     leads = _lead_queryset(request)
     if branch_id:
         leads = leads.filter(branch_id=branch_id)
@@ -1574,16 +321,13 @@ def get_command_center(
         status="won", updated_at__date__gte=start, updated_at__date__lte=end
     )
     revenue_closed = _decimal_sum(won_leads, "estimated_value")
-
     weighted_forecast = _weighted_forecast_value(active_leads)
-
     qualified_pipeline = _decimal_sum(
         active_leads.filter(status__in=["qualified", "proposal_sent", "negotiation"]),
         "estimated_value",
     )
     ninety_day_target = _revenue_target_value(start, end, branch_id=branch_id)
     target_achievement = _decimal_pct(revenue_closed, ninety_day_target)
-
     day = _day_queryset(request).filter(date=target_date, branch_id=branch_id).first()
     total_actions, completed_actions, open_actions, completion_pct = (
         _completion_counts(day) if day else (0, 0, 0, 0)
@@ -1595,12 +339,11 @@ def get_command_center(
         .count()
     )
     follow_up_compliance = (
-        round((leads_with_next_action / active_count) * 100, 2) if active_count else 0.0
+        round(leads_with_next_action / active_count * 100, 2) if active_count else 0.0
     )
     sla_breaches = sum(
-        1 for lead in active_leads if _lead_sla_status(lead, now) == "breached"
+        (1 for lead in active_leads if _lead_sla_status(lead, now) == "breached")
     )
-
     health_score = round(
         (
             float(target_achievement)
@@ -1610,7 +353,6 @@ def get_command_center(
         )
         / 4
     )
-
     if sla_breaches or follow_up_compliance < 80:
         primary_constraint = "Follow-up discipline"
     elif qualified_pipeline < ninety_day_target:
@@ -1619,7 +361,6 @@ def get_command_center(
         primary_constraint = "Daily execution"
     else:
         primary_constraint = "Forecast quality"
-
     priorities = []
     if day:
         for action in day.actions.select_related("owner", "owner__user").order_by(
@@ -1635,7 +376,6 @@ def get_command_center(
                     "done": action.status == "completed",
                 }
             )
-
     qualified_count = period_leads.filter(
         status__in=["qualified", "proposal_sent", "negotiation", "won"]
     ).count()
@@ -1663,21 +403,21 @@ def get_command_center(
             "name": "Evaluation",
             "number": qualified_count,
             "rate_label": "Qualified",
-            "drop_label": f"{round((qualified_count / period_leads.count()) * 100, 1) if period_leads.count() else 0}% from prior",
+            "drop_label": f"{(round(qualified_count / period_leads.count() * 100, 1) if period_leads.count() else 0)}% from prior",
         },
         {
             "stage": "intent",
             "name": "Intent",
             "number": intent_count,
             "rate_label": "Meetings",
-            "drop_label": f"{round((intent_count / qualified_count) * 100, 1) if qualified_count else 0}% from prior",
+            "drop_label": f"{(round(intent_count / qualified_count * 100, 1) if qualified_count else 0)}% from prior",
         },
         {
             "stage": "purchase",
             "name": "Purchase",
             "number": won_count,
             "rate_label": "Won",
-            "drop_label": f"{round((won_count / intent_count) * 100, 1) if intent_count else 0}% from prior",
+            "drop_label": f"{(round(won_count / intent_count * 100, 1) if intent_count else 0)}% from prior",
         },
         {
             "stage": "loyalty",
@@ -1687,7 +427,6 @@ def get_command_center(
             "drop_label": "Not tracked in this slice",
         },
     ]
-
     team_snapshot = []
     for employee_id in (
         active_leads.exclude(assigned_to__isnull=True)
@@ -1702,7 +441,7 @@ def get_command_center(
             .filter(next_follow_up_at__isnull=False)
             .count()
         )
-        score = round((owned_with_next_action / total) * 100) if total else 0
+        score = round(owned_with_next_action / total * 100) if total else 0
         team_snapshot.append(
             {
                 "role": _role_label(employee),
@@ -1717,7 +456,6 @@ def get_command_center(
                 ),
             }
         )
-
     forecast_gap = max(ninety_day_target - weighted_forecast, Decimal("0.00"))
     executive_risks = [
         {
@@ -1749,7 +487,6 @@ def get_command_center(
             "severity": "yellow",
         },
     ]
-
     return {
         "date": target_date,
         "period": {"start": start, "end": end},
@@ -1882,10 +619,13 @@ def export_forecast(
                 row["display_target_gap"],
             ]
         )
-
     csv_body = "\n".join(
-        ",".join(f'"{str(value).replace(chr(34), chr(34) + chr(34))}"' for value in row)
-        for row in rows
+        (
+            ",".join(
+                (f'"{str(value).replace(chr(34), chr(34) + chr(34))}"' for value in row)
+            )
+            for row in rows
+        )
     )
     response = HttpResponse(csv_body, content_type="text/csv")
     response["Content-Disposition"] = (
@@ -1908,10 +648,7 @@ def get_lead_control(
     now = timezone.now()
     limit = min(max(limit, 1), 250)
     requested_filter = filter or "all"
-    filter_aliases = {
-        "sla_breaches": "breach",
-        "reactivation": "reactivate",
-    }
+    filter_aliases = {"sla_breaches": "breach", "reactivation": "reactivate"}
     normalized_filter = filter_aliases.get(requested_filter, requested_filter)
     base_leads = _lead_queryset(request)
     if branch_id:
@@ -1929,7 +666,6 @@ def get_lead_control(
             | Q(division__icontains=search)
             | Q(notes__icontains=search)
         )
-
     filtered = base_leads
     if normalized_filter == "breach":
         ids = [
@@ -1951,7 +687,6 @@ def get_lead_control(
         filtered = base_leads.filter(
             Q(status="lost") | Q(status="contacted") | Q(status="dormant")
         )
-
     filtered = filtered.order_by("-score", "next_follow_up_at", "-created_at")
     return {
         "kpi_cards": _lead_control_kpis(base_leads, now),
@@ -1967,8 +702,7 @@ def get_lead_control(
 @require_permission("revenue_execution", "update")
 def auto_assign_leads(request, branch_id: int = None, limit: int = 250):
     leads = _lead_queryset(request).filter(
-        assigned_to__isnull=True,
-        status__in=Lead.ACTIVE_STATUSES,
+        assigned_to__isnull=True, status__in=Lead.ACTIVE_STATUSES
     )
     if branch_id:
         leads = leads.filter(branch_id=branch_id)
@@ -1976,7 +710,6 @@ def auto_assign_leads(request, branch_id: int = None, limit: int = 250):
         leads.order_by("branch_id", "created_at", "id")[: min(max(limit, 1), 500)]
     )
     assigned_count = 0
-
     eligible_by_branch = {}
     company_pool = list(
         _eligible_revenue_employees(request, branch_id=None).filter(branch__isnull=True)
@@ -1998,7 +731,6 @@ def auto_assign_leads(request, branch_id: int = None, limit: int = 250):
         lead.full_clean()
         lead.save(update_fields=["assigned_to", "updated_at"])
         assigned_count += 1
-
     return {
         "assigned_count": assigned_count,
         "skipped_count": len(leads) - assigned_count,
@@ -2034,20 +766,15 @@ def repair_next_actions(request, branch_id: int = None, limit: int = 500):
     return {"repaired_count": repaired_count, "skipped_count": 0}
 
 
-@revenue_execution_router.get("/playbooks/current", response={200: dict, 404: MessageSchema})
+@revenue_execution_router.get(
+    "/playbooks/current", response={200: dict, 404: MessageSchema}
+)
 @require_permission("revenue_execution", "view")
 def get_current_sales_playbook(
-    request,
-    division: str,
-    stage: str,
-    persona: str,
-    branch_id: int = None,
+    request, division: str, stage: str, persona: str, branch_id: int = None
 ):
     playbooks = _playbook_queryset(request).filter(
-        division=division,
-        stage=stage,
-        persona=persona,
-        status="active",
+        division=division, stage=stage, persona=persona, status="active"
     )
     playbook = None
     if branch_id:
@@ -2063,10 +790,13 @@ def get_current_sales_playbook(
             .first()
         )
     if not playbook:
-        return 404, {
-            "detail": "No active sales playbook found for this division, stage and persona."
-        }
-    return 200, _playbook_row(playbook, include_objections=True)
+        return (
+            404,
+            {
+                "detail": "No active sales playbook found for this division, stage and persona."
+            },
+        )
+    return (200, _playbook_row(playbook, include_objections=True))
 
 
 @revenue_execution_router.get("/playbooks")
@@ -2129,18 +859,20 @@ def create_sales_playbook(request, payload: SalesPlaybookCreateSchema):
         playbook = SalesPlaybook(created_by=request.user, **data)
         playbook.full_clean()
         playbook.save()
-        return 201, _playbook_row(playbook, include_objections=True)
+        return (201, _playbook_row(playbook, include_objections=True))
     except ValidationError as e:
-        return 400, {"detail": _validation_detail(e)}
+        return (400, {"detail": _validation_detail(e)})
     except Exception as e:
-        return 400, {"detail": str(e)}
+        return (400, {"detail": str(e)})
 
 
-@revenue_execution_router.get("/playbooks/{playbook_id}", response={200: dict, 404: MessageSchema})
+@revenue_execution_router.get(
+    "/playbooks/{playbook_id}", response={200: dict, 404: MessageSchema}
+)
 @require_permission("revenue_execution", "view")
 def get_sales_playbook(request, playbook_id: int):
     playbook = get_object_or_404(_playbook_queryset(request), id=playbook_id)
-    return 200, _playbook_row(playbook, include_objections=True)
+    return (200, _playbook_row(playbook, include_objections=True))
 
 
 @revenue_execution_router.patch(
@@ -2160,11 +892,11 @@ def update_sales_playbook(
             setattr(playbook, field, value)
         playbook.full_clean()
         playbook.save()
-        return 200, _playbook_row(playbook, include_objections=True)
+        return (200, _playbook_row(playbook, include_objections=True))
     except ValidationError as e:
-        return 400, {"detail": _validation_detail(e)}
+        return (400, {"detail": _validation_detail(e)})
     except Exception as e:
-        return 400, {"detail": str(e)}
+        return (400, {"detail": str(e)})
 
 
 @revenue_execution_router.delete(
@@ -2176,7 +908,7 @@ def archive_sales_playbook(request, playbook_id: int):
     playbook.status = "archived"
     playbook.full_clean()
     playbook.save(update_fields=["status", "updated_at"])
-    return 200, {"detail": "Sales playbook archived successfully."}
+    return (200, {"detail": "Sales playbook archived successfully."})
 
 
 @revenue_execution_router.post(
@@ -2192,11 +924,11 @@ def create_sales_playbook_objection(
         objection = SalesPlaybookObjection(playbook=playbook, **payload.dict())
         objection.full_clean()
         objection.save()
-        return 201, _playbook_objection_row(objection)
+        return (201, _playbook_objection_row(objection))
     except ValidationError as e:
-        return 400, {"detail": _validation_detail(e)}
+        return (400, {"detail": _validation_detail(e)})
     except Exception as e:
-        return 400, {"detail": str(e)}
+        return (400, {"detail": str(e)})
 
 
 @revenue_execution_router.patch(
@@ -2215,11 +947,11 @@ def update_sales_playbook_objection(
             setattr(objection, field, value)
         objection.full_clean()
         objection.save()
-        return 200, _playbook_objection_row(objection)
+        return (200, _playbook_objection_row(objection))
     except ValidationError as e:
-        return 400, {"detail": _validation_detail(e)}
+        return (400, {"detail": _validation_detail(e)})
     except Exception as e:
-        return 400, {"detail": str(e)}
+        return (400, {"detail": str(e)})
 
 
 @revenue_execution_router.delete(
@@ -2234,7 +966,7 @@ def deactivate_sales_playbook_objection(request, objection_id: int):
     objection.is_active = False
     objection.full_clean()
     objection.save(update_fields=["is_active", "updated_at"])
-    return 200, {"detail": "Sales playbook objection deactivated successfully."}
+    return (200, {"detail": "Sales playbook objection deactivated successfully."})
 
 
 @revenue_execution_router.get("/okrs")
@@ -2279,18 +1011,20 @@ def list_okrs(
     }
 
 
-@revenue_execution_router.post("/okrs", response={201: RevenueObjectiveOutSchema, 400: MessageSchema})
+@revenue_execution_router.post(
+    "/okrs", response={201: RevenueObjectiveOutSchema, 400: MessageSchema}
+)
 @require_permission("revenue_execution", "create")
 def create_okr(request, payload: RevenueObjectiveCreateSchema):
     try:
         objective = RevenueObjective(created_by=request.user, **payload.dict())
         objective.full_clean()
         objective.save()
-        return 201, get_object_or_404(_objective_queryset(request), id=objective.id)
+        return (201, get_object_or_404(_objective_queryset(request), id=objective.id))
     except ValidationError as e:
-        return 400, {"detail": _validation_detail(e)}
+        return (400, {"detail": _validation_detail(e)})
     except Exception as e:
-        return 400, {"detail": str(e)}
+        return (400, {"detail": str(e)})
 
 
 @revenue_execution_router.post(
@@ -2306,11 +1040,11 @@ def create_key_result(
         key_result = RevenueKeyResult(objective=objective, **payload.dict())
         key_result.full_clean()
         key_result.save()
-        return 201, get_object_or_404(_key_result_queryset(request), id=key_result.id)
+        return (201, get_object_or_404(_key_result_queryset(request), id=key_result.id))
     except ValidationError as e:
-        return 400, {"detail": _validation_detail(e)}
+        return (400, {"detail": _validation_detail(e)})
     except Exception as e:
-        return 400, {"detail": str(e)}
+        return (400, {"detail": str(e)})
 
 
 @revenue_execution_router.patch(
@@ -2323,13 +1057,14 @@ def update_key_result(
 ):
     try:
         key_result = get_object_or_404(_key_result_queryset(request), id=key_result_id)
-        return 200, _apply_key_result_payload(
-            key_result, payload.dict(exclude_unset=True)
+        return (
+            200,
+            _apply_key_result_payload(key_result, payload.dict(exclude_unset=True)),
         )
     except ValidationError as e:
-        return 400, {"detail": _validation_detail(e)}
+        return (400, {"detail": _validation_detail(e)})
     except Exception as e:
-        return 400, {"detail": str(e)}
+        return (400, {"detail": str(e)})
 
 
 @revenue_execution_router.patch(
@@ -2340,13 +1075,14 @@ def update_key_result(
 def update_okr(request, objective_id: int, payload: RevenueObjectiveUpdateSchema):
     try:
         objective = get_object_or_404(_objective_queryset(request), id=objective_id)
-        return 200, _apply_objective_payload(
-            objective, payload.dict(exclude_unset=True)
+        return (
+            200,
+            _apply_objective_payload(objective, payload.dict(exclude_unset=True)),
         )
     except ValidationError as e:
-        return 400, {"detail": _validation_detail(e)}
+        return (400, {"detail": _validation_detail(e)})
     except Exception as e:
-        return 400, {"detail": str(e)}
+        return (400, {"detail": str(e)})
 
 
 @revenue_execution_router.get("/targets/summary")
@@ -2370,7 +1106,6 @@ def get_targets_summary(
             "role_target_template",
         ).filter(period_start__lte=end, period_end__gte=start, is_active=True)
     )
-
     if period:
         templates = templates.filter(period=period)
         targets = targets.filter(period=period)
@@ -2379,11 +1114,9 @@ def get_targets_summary(
         targets = targets.filter(role_id=role_id)
     if branch_id:
         targets = targets.filter(employee__branch_id=branch_id)
-
     branch_ids = getattr(request, "_perm_branch_ids", [])
     if branch_ids:
         targets = targets.filter(employee__branch_id__in=branch_ids)
-
     target_rows = []
     for target in targets.order_by("employee__employee_id", "sequence", "id"):
         progress_value = target.get_approved_progress_value()
@@ -2403,7 +1136,6 @@ def get_targets_summary(
                 "editable": True,
             }
         )
-
     existing_template_ids = {
         row["template_id"] for row in target_rows if row["template_id"]
     }
@@ -2425,9 +1157,8 @@ def get_targets_summary(
                 "editable": True,
             }
         )
-
-    total_target_value = sum((row["target"] or Decimal("0.00")) for row in target_rows)
-    total_actual_value = sum((row["actual"] or Decimal("0.00")) for row in target_rows)
+    total_target_value = sum((row["target"] or Decimal("0.00") for row in target_rows))
+    total_actual_value = sum((row["actual"] or Decimal("0.00") for row in target_rows))
     return {
         "period": {"start": start, "end": end, "period": period},
         "target_rows": target_rows,
@@ -2442,7 +1173,9 @@ def get_targets_summary(
     }
 
 
-@revenue_execution_router.get("/turnaround/plans", response=List[TurnaroundPlanOutSchema])
+@revenue_execution_router.get(
+    "/turnaround/plans", response=List[TurnaroundPlanOutSchema]
+)
 @require_permission("revenue_execution", "list")
 def list_turnaround_plans(request, status: str = None, branch_id: int = None):
     plans = _turnaround_plan_queryset(request)
@@ -2462,17 +1195,16 @@ def create_turnaround_plan(request, payload: TurnaroundPlanCreateSchema):
         data = payload.dict()
         if not data.get("end_date"):
             data["end_date"] = _turnaround_end_date(data["start_date"])
-
         with transaction.atomic():
             plan = TurnaroundPlan(created_by=request.user, **data)
             plan.full_clean()
             plan.save()
             _seed_turnaround_actions(plan)
-        return 201, get_object_or_404(_turnaround_plan_queryset(request), id=plan.id)
+        return (201, get_object_or_404(_turnaround_plan_queryset(request), id=plan.id))
     except ValidationError as e:
-        return 400, {"detail": _validation_detail(e)}
+        return (400, {"detail": _validation_detail(e)})
     except Exception as e:
-        return 400, {"detail": str(e)}
+        return (400, {"detail": str(e)})
 
 
 @revenue_execution_router.get(
@@ -2488,8 +1220,8 @@ def get_active_turnaround_plan(request, branch_id: int = None):
         plans = plans.filter(branch__isnull=True)
     plan = plans.first()
     if not plan:
-        return 404, {"detail": "No active turnaround plan found."}
-    return 200, _turnaround_detail(plan)
+        return (404, {"detail": "No active turnaround plan found."})
+    return (200, _turnaround_detail(plan))
 
 
 @revenue_execution_router.get(
@@ -2499,7 +1231,7 @@ def get_active_turnaround_plan(request, branch_id: int = None):
 @require_permission("revenue_execution", "view")
 def get_turnaround_plan(request, plan_id: int):
     plan = get_object_or_404(_turnaround_plan_queryset(request), id=plan_id)
-    return 200, _turnaround_detail(plan)
+    return (200, _turnaround_detail(plan))
 
 
 @revenue_execution_router.patch(
@@ -2510,13 +1242,14 @@ def get_turnaround_plan(request, plan_id: int):
 def update_turnaround_plan(request, plan_id: int, payload: TurnaroundPlanUpdateSchema):
     try:
         plan = get_object_or_404(_turnaround_plan_queryset(request), id=plan_id)
-        return 200, _apply_turnaround_plan_payload(
-            plan, payload.dict(exclude_unset=True)
+        return (
+            200,
+            _apply_turnaround_plan_payload(plan, payload.dict(exclude_unset=True)),
         )
     except ValidationError as e:
-        return 400, {"detail": _validation_detail(e)}
+        return (400, {"detail": _validation_detail(e)})
     except Exception as e:
-        return 400, {"detail": str(e)}
+        return (400, {"detail": str(e)})
 
 
 @revenue_execution_router.post(
@@ -2527,11 +1260,11 @@ def update_turnaround_plan(request, plan_id: int, payload: TurnaroundPlanUpdateS
 def activate_turnaround_plan(request, plan_id: int):
     try:
         plan = get_object_or_404(_turnaround_plan_queryset(request), id=plan_id)
-        return 200, _activate_turnaround_plan(plan)
+        return (200, _activate_turnaround_plan(plan))
     except ValidationError as e:
-        return 400, {"detail": _validation_detail(e)}
+        return (400, {"detail": _validation_detail(e)})
     except Exception as e:
-        return 400, {"detail": str(e)}
+        return (400, {"detail": str(e)})
 
 
 @revenue_execution_router.post(
@@ -2545,11 +1278,11 @@ def close_turnaround_plan(request, plan_id: int):
         plan.status = "closed"
         plan.full_clean()
         plan.save()
-        return 200, plan
+        return (200, plan)
     except ValidationError as e:
-        return 400, {"detail": _validation_detail(e)}
+        return (400, {"detail": _validation_detail(e)})
     except Exception as e:
-        return 400, {"detail": str(e)}
+        return (400, {"detail": str(e)})
 
 
 @revenue_execution_router.patch(
@@ -2562,13 +1295,14 @@ def update_turnaround_action(
 ):
     try:
         action = get_object_or_404(_turnaround_action_queryset(request), id=action_id)
-        return 200, _apply_turnaround_action_payload(
-            action, payload.dict(exclude_unset=True)
+        return (
+            200,
+            _apply_turnaround_action_payload(action, payload.dict(exclude_unset=True)),
         )
     except ValidationError as e:
-        return 400, {"detail": _validation_detail(e)}
+        return (400, {"detail": _validation_detail(e)})
     except Exception as e:
-        return 400, {"detail": str(e)}
+        return (400, {"detail": str(e)})
 
 
 @revenue_execution_router.post(
@@ -2587,11 +1321,11 @@ def complete_turnaround_action(
         action.completion_note = payload.completion_note or ""
         action.full_clean()
         action.save()
-        return 200, action
+        return (200, action)
     except ValidationError as e:
-        return 400, {"detail": _validation_detail(e)}
+        return (400, {"detail": _validation_detail(e)})
     except Exception as e:
-        return 400, {"detail": str(e)}
+        return (400, {"detail": str(e)})
 
 
 @revenue_execution_router.post(
@@ -2608,11 +1342,11 @@ def reopen_turnaround_action(request, action_id: int):
         action.completion_note = ""
         action.full_clean()
         action.save()
-        return 200, action
+        return (200, action)
     except ValidationError as e:
-        return 400, {"detail": _validation_detail(e)}
+        return (400, {"detail": _validation_detail(e)})
     except Exception as e:
-        return 400, {"detail": str(e)}
+        return (400, {"detail": str(e)})
 
 
 @revenue_execution_router.get("/turnaround/plans/{plan_id}/export")
@@ -2635,10 +1369,13 @@ def export_turnaround_plan(request, plan_id: int):
                 action.get_status_display(),
             ]
         )
-
     csv_body = "\n".join(
-        ",".join(f'"{str(value).replace(chr(34), chr(34) + chr(34))}"' for value in row)
-        for row in rows
+        (
+            ",".join(
+                (f'"{str(value).replace(chr(34), chr(34) + chr(34))}"' for value in row)
+            )
+            for row in rows
+        )
     )
     response = HttpResponse(csv_body, content_type="text/csv")
     response["Content-Disposition"] = (
@@ -2647,7 +1384,9 @@ def export_turnaround_plan(request, plan_id: int):
     return response
 
 
-@revenue_execution_router.get("/action-templates", response=List[DailyActionTemplateOutSchema])
+@revenue_execution_router.get(
+    "/action-templates", response=List[DailyActionTemplateOutSchema]
+)
 @require_permission("revenue_execution", "list")
 def list_action_templates(request, active: bool = None, branch_id: int = None):
     templates = _template_queryset(request)
@@ -2668,11 +1407,11 @@ def create_action_template(request, payload: DailyActionTemplateCreateSchema):
         template = DailyActionTemplate(created_by=request.user, **payload.dict())
         template.full_clean()
         template.save()
-        return 201, template
+        return (201, template)
     except ValidationError as e:
-        return 400, {"detail": _validation_detail(e)}
+        return (400, {"detail": _validation_detail(e)})
     except Exception as e:
-        return 400, {"detail": str(e)}
+        return (400, {"detail": str(e)})
 
 
 @revenue_execution_router.patch(
@@ -2689,11 +1428,14 @@ def update_action_template(
 ):
     try:
         template = get_object_or_404(_template_queryset(request), id=template_id)
-        return 200, _apply_template_payload(template, payload.dict(exclude_unset=True))
+        return (
+            200,
+            _apply_template_payload(template, payload.dict(exclude_unset=True)),
+        )
     except ValidationError as e:
-        return 400, {"detail": _validation_detail(e)}
+        return (400, {"detail": _validation_detail(e)})
     except Exception as e:
-        return 400, {"detail": str(e)}
+        return (400, {"detail": str(e)})
 
 
 @revenue_execution_router.delete(
@@ -2703,7 +1445,7 @@ def update_action_template(
 def delete_action_template(request, template_id: int):
     template = get_object_or_404(_template_queryset(request), id=template_id)
     template.delete()
-    return 200, {"detail": "Daily action template deleted successfully"}
+    return (200, {"detail": "Daily action template deleted successfully"})
 
 
 @revenue_execution_router.get("/days/today", response=DailyExecutionDayOutSchema)
@@ -2726,11 +1468,11 @@ def open_day(request, payload: OpenDailyExecutionDaySchema):
             branch_id=payload.branch_id,
             force_rebuild=payload.force_rebuild or False,
         )
-        return 200, day
+        return (200, day)
     except ValidationError as e:
-        return 400, {"detail": _validation_detail(e)}
+        return (400, {"detail": _validation_detail(e)})
     except Exception as e:
-        return 400, {"detail": str(e)}
+        return (400, {"detail": str(e)})
 
 
 @revenue_execution_router.get("/days/{day_date}", response=DailyExecutionDayOutSchema)
@@ -2751,11 +1493,11 @@ def get_day(request, day_date: date, branch_id: int = None):
 def update_action(request, action_id: int, payload: DailyActionInstanceUpdateSchema):
     try:
         action = get_object_or_404(_action_queryset(request), id=action_id)
-        return 200, _apply_action_payload(action, payload.dict(exclude_unset=True))
+        return (200, _apply_action_payload(action, payload.dict(exclude_unset=True)))
     except ValidationError as e:
-        return 400, {"detail": _validation_detail(e)}
+        return (400, {"detail": _validation_detail(e)})
     except Exception as e:
-        return 400, {"detail": str(e)}
+        return (400, {"detail": str(e)})
 
 
 @revenue_execution_router.post(
@@ -2776,11 +1518,11 @@ def complete_action(request, action_id: int, payload: DailyActionCompleteSchema)
         action.completion_note = payload.completion_note or ""
         action.full_clean()
         action.save()
-        return 200, action
+        return (200, action)
     except ValidationError as e:
-        return 400, {"detail": _validation_detail(e)}
+        return (400, {"detail": _validation_detail(e)})
     except Exception as e:
-        return 400, {"detail": str(e)}
+        return (400, {"detail": str(e)})
 
 
 @revenue_execution_router.post(
@@ -2801,11 +1543,11 @@ def reopen_action(request, action_id: int):
         action.completion_note = ""
         action.full_clean()
         action.save()
-        return 200, action
+        return (200, action)
     except ValidationError as e:
-        return 400, {"detail": _validation_detail(e)}
+        return (400, {"detail": _validation_detail(e)})
     except Exception as e:
-        return 400, {"detail": str(e)}
+        return (400, {"detail": str(e)})
 
 
 @revenue_execution_router.get("/summary", response=DailyExecutionSummarySchema)
@@ -2816,23 +1558,19 @@ def get_summary(request, date: date = None, branch_id: int = None):
     total, completed, open_count, completion_pct = (
         _completion_counts(day) if day else (0, 0, 0, 0)
     )
-
     leads = _lead_queryset(request)
     if branch_id:
         leads = leads.filter(branch_id=branch_id)
-
     end_of_day = timezone.make_aware(datetime.combine(target_date, time.max))
     now = timezone.now()
     active_leads = leads.filter(status__in=Lead.ACTIVE_STATUSES)
     sla_breaches = sum(
-        1 for lead in active_leads if _lead_sla_status(lead, now) == "breached"
+        (1 for lead in active_leads if _lead_sla_status(lead, now) == "breached")
     )
     hot = active_leads.filter(score__gte=75).count()
     next_actions_due = active_leads.filter(
-        next_follow_up_at__isnull=False,
-        next_follow_up_at__lte=end_of_day,
+        next_follow_up_at__isnull=False, next_follow_up_at__lte=end_of_day
     ).count()
-
     return {
         "date": target_date,
         "completion_pct": completion_pct,
@@ -2845,7 +1583,9 @@ def get_summary(request, date: date = None, branch_id: int = None):
     }
 
 
-@revenue_execution_router.get("/monthly-summary", response=MonthlyExecutionSummarySchema)
+@revenue_execution_router.get(
+    "/monthly-summary", response=MonthlyExecutionSummarySchema
+)
 @require_permission("revenue_execution", "view")
 def get_monthly_summary(request, month: str, branch_id: int = None):
     year, month_num = [int(part) for part in month.split("-")]
@@ -2854,21 +1594,18 @@ def get_monthly_summary(request, month: str, branch_id: int = None):
         end = date(year + 1, 1, 1)
     else:
         end = date(year, month_num + 1, 1)
-
     days = _day_queryset(request).filter(date__gte=start, date__lt=end)
     if branch_id:
         days = days.filter(branch_id=branch_id)
-
     total_days = days.count()
     completion_values = [_completion_counts(day)[3] for day in days]
     average_completion = (
         round(sum(completion_values) / total_days, 2) if total_days else 0.0
     )
-    fully_completed = sum(1 for value in completion_values if value == 100)
+    fully_completed = sum((1 for value in completion_values if value == 100))
     actions = _action_queryset(request).filter(day__date__gte=start, day__date__lt=end)
     if branch_id:
         actions = actions.filter(day__branch_id=branch_id)
-
     return {
         "month": month,
         "total_days": total_days,
@@ -2879,13 +1616,14 @@ def get_monthly_summary(request, month: str, branch_id: int = None):
     }
 
 
-@revenue_execution_router.get("/speed-to-lead-queue", response=List[SpeedToLeadQueueItemSchema])
+@revenue_execution_router.get(
+    "/speed-to-lead-queue", response=List[SpeedToLeadQueueItemSchema]
+)
 @require_permission("revenue_execution", "view")
 def get_speed_to_lead_queue(request, branch_id: int = None, limit: int = 20):
     leads = _lead_queryset(request).filter(status__in=Lead.ACTIVE_STATUSES)
     if branch_id:
         leads = leads.filter(branch_id=branch_id)
-
     now = timezone.now()
     queue = []
     for lead in leads:
@@ -2894,8 +1632,8 @@ def get_speed_to_lead_queue(request, branch_id: int = None, limit: int = 20):
             sla_status in ["breached", "due_now"]
             or (
                 lead.status == "new"
-                and not lead.first_response_at
-                and not lead.first_contact_at
+                and (not lead.first_response_at)
+                and (not lead.first_contact_at)
             )
             or lead.score >= 75
             or lead.is_stale
@@ -2916,7 +1654,6 @@ def get_speed_to_lead_queue(request, branch_id: int = None, limit: int = 20):
                 "recommended_action": _recommended_action(lead, sla_status),
             }
         )
-
     return sorted(
         queue,
         key=lambda item: (
@@ -2927,12 +1664,13 @@ def get_speed_to_lead_queue(request, branch_id: int = None, limit: int = 20):
     )[:limit]
 
 
-@revenue_execution_router.get("/activity-scorecard", response=List[ActivityScorecardRowSchema])
+@revenue_execution_router.get(
+    "/activity-scorecard", response=List[ActivityScorecardRowSchema]
+)
 @require_permission("revenue_execution", "view")
 def get_activity_scorecard(request, date: date = None, branch_id: int = None):
     target_date = date or timezone.localdate()
     start, end = _date_bounds(target_date)
-
     activities = _activity_queryset(request).filter(
         created_at__gte=start, created_at__lte=end
     )
@@ -2942,7 +1680,6 @@ def get_activity_scorecard(request, date: date = None, branch_id: int = None):
         activities = activities.filter(lead__branch_id=branch_id)
         actions = actions.filter(day__branch_id=branch_id)
         leads = leads.filter(branch_id=branch_id)
-
     employees = {}
     for activity in activities:
         employee = None
@@ -2961,7 +1698,6 @@ def get_activity_scorecard(request, date: date = None, branch_id: int = None):
             },
         )
         employees[label]["activities"] += 1
-
     for action in actions:
         label = _role_label(action.owner)
         employees.setdefault(
@@ -2977,7 +1713,6 @@ def get_activity_scorecard(request, date: date = None, branch_id: int = None):
         employees[label]["assigned"] += 1
         if action.status == "completed":
             employees[label]["completed"] += 1
-
     for lead in leads.filter(created_at__date=target_date):
         label = _role_label(lead.assigned_to)
         employees.setdefault(
@@ -2993,17 +1728,16 @@ def get_activity_scorecard(request, date: date = None, branch_id: int = None):
         employees[label]["sla_total"] += 1
         if _lead_sla_status(lead) == "completed":
             employees[label]["sla_done"] += 1
-
     rows = []
     for label, metrics in sorted(employees.items()):
         action_score = (
-            round((metrics["completed"] / metrics["assigned"]) * 100)
+            round(metrics["completed"] / metrics["assigned"] * 100)
             if metrics["assigned"]
             else 0
         )
         activity_score = min(100, metrics["activities"] * 10)
         sla_score = (
-            round((metrics["sla_done"] / metrics["sla_total"]) * 100)
+            round(metrics["sla_done"] / metrics["sla_total"] * 100)
             if metrics["sla_total"]
             else 0
         )
@@ -3019,19 +1753,13 @@ def get_activity_scorecard(request, date: date = None, branch_id: int = None):
             focus = "Log customer-facing activity"
         else:
             focus = "Maintain execution pace"
-
         rows.append(
             {
                 "role": label,
                 "daily_standard": "Complete assigned actions and log lead activity",
-                "actual": (
-                    f"{metrics['activities']} activities · "
-                    f"{metrics['completed']}/{metrics['assigned']} actions · "
-                    f"{metrics['sla_done']}/{metrics['sla_total']} SLA"
-                ),
+                "actual": f"{metrics['activities']} activities · {metrics['completed']}/{metrics['assigned']} actions · {metrics['sla_done']}/{metrics['sla_total']} SLA",
                 "score": score,
                 "manager_focus": focus,
             }
         )
-
     return rows

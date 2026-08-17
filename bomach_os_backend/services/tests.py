@@ -8,21 +8,12 @@ from django.db import IntegrityError, transaction
 from django.test import Client, TestCase
 from django.utils import timezone
 
-from finance.models import FinanceAccount
-from services.funnel_events import backfill_lead_funnel_events
-from services.models.content import Content, ContentCalendarItem, MediaLibraryAsset
-from services.models.crm import (
-    DailyActionInstance,
-    Lead,
-    LeadActivity,
-    LeadFunnelEvent,
-    RevenueKeyResult,
-    RevenueObjective,
-    SalesPlaybook,
-    SalesPlaybookObjection,
-    TurnaroundPlan,
+from domains.marketing_sales.models.content import (
+    Content,
+    ContentCalendarItem,
+    MediaLibraryAsset,
 )
-from services.models.marketing_campaign import (
+from domains.marketing_sales.models.marketing import (
     CampaignAsset,
     CampaignExpense,
     CampaignRequest,
@@ -38,6 +29,21 @@ from services.models.marketing_campaign import (
     PartnerTask,
     TraditionalMediaPlacement,
 )
+from domains.marketing_sales.models.revenue_execution import (
+    DailyActionInstance,
+    RevenueKeyResult,
+    RevenueObjective,
+    TurnaroundPlan,
+)
+from domains.marketing_sales.models.sales import (
+    Lead,
+    LeadActivity,
+    LeadFunnelEvent,
+    SalesPlaybook,
+    SalesPlaybookObjection,
+)
+from domains.marketing_sales.services.funnel import backfill_lead_funnel_events
+from finance.models import FinanceAccount
 from services.models.service import (
     Quote,
     Service,
@@ -3609,7 +3615,7 @@ class MarketingLeadAPITests(TestCase):
             text = ""
 
         with patch(
-            "services.api.v1.marketing.send_marketing_email",
+            "domains.marketing_sales.api.v1.routers.marketing.send_marketing_email",
             return_value=FakeEmailResponse(),
         ) as send_mock:
             send_response = self.post_json(
@@ -3701,7 +3707,7 @@ class MarketingLeadAPITests(TestCase):
         campaign_id = campaign_response.json()["id"]
 
         with patch(
-            "services.api.v1.marketing.send_marketing_email",
+            "domains.marketing_sales.api.v1.routers.marketing.send_marketing_email",
             return_value=FakeEmailResponse(),
         ) as send_mock:
             with self.captureOnCommitCallbacks(execute=True):

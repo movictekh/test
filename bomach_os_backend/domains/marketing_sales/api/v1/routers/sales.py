@@ -1,10 +1,8 @@
 """Sales acquisition, inquiry, funnel and pipeline HTTP endpoints.
 
-Transitional note: model and schema ownership remains in the legacy services package during this extraction slice. Only HTTP source ownership moves here.
+HTTP layer only: query, workflow and presentation helpers live in the domain application layers.
 """
 
-
-# ---- Leads ---------------------------------------------------------------
 from datetime import date, timedelta
 from decimal import Decimal
 from typing import List
@@ -28,11 +26,6 @@ from domains.marketing_sales.api.v1.schemas.sales import (
     LeadSummarySchema,
     LeadUpdateSchema,
 )
-from services.api.schema.others import MessageSchema
-from domains.marketing_sales.services.funnel import (
-    record_initial_funnel_event,
-    record_status_funnel_event,
-)
 from domains.marketing_sales.models.sales import Lead, LeadActivity
 from domains.marketing_sales.selectors.sales import (
     _activity_queryset,
@@ -40,71 +33,18 @@ from domains.marketing_sales.selectors.sales import (
     _lead_queryset,
     _lead_value_sum,
 )
+from domains.marketing_sales.services.funnel import (
+    record_initial_funnel_event,
+    record_status_funnel_event,
+)
 from domains.marketing_sales.services.sales import (
     _apply_activity_effects,
     _apply_lead_payload,
 )
+from services.api.schema.others import MessageSchema
 from user.utils.perm import require_permission, scope_queryset
 
 leads_router = Router(tags=["Marketing Leads"])
-
-
-def _validation_detail(exc):
-    if hasattr(exc, "message_dict"):
-        return "; ".join(
-            f"{field}: {', '.join(messages)}"
-            for field, messages in exc.message_dict.items()
-        )
-    return exc.messages[0] if getattr(exc, "messages", None) else str(exc)
-
-
-def _pipeline_card(lead):
-    return {
-        "id": lead.id,
-        "lead": lead.full_name,
-        "division": lead.division,
-        "division_label": lead.get_division_display(),
-        "source": lead.source,
-        "source_label": lead.get_source_display(),
-        "referral_partner_id": lead.referral_partner_id,
-        "referral_partner_name": (
-            lead.referral_partner.name if lead.referral_partner else None
-        ),
-        "status": lead.status,
-        "status_label": lead.get_status_display(),
-        "estimated_value": lead.estimated_value,
-        "priority": lead.priority,
-        "sla_status": lead.sla_status,
-        "is_sla_breached": lead.is_sla_breached,
-        "is_stale": lead.is_stale,
-        "owner": (
-            lead.assigned_to.user.get_full_name() if lead.assigned_to else "Unassigned"
-        ),
-        "next_action": lead.next_action,
-        "next_follow_up_at": lead.next_follow_up_at,
-        "created_at": lead.created_at,
-        "updated_at": lead.updated_at,
-    }
-
-
-def _activity_timeline_item(activity):
-    return {
-        "id": activity.id,
-        "sequence": activity.sequence,
-        "activity_type": activity.activity_type,
-        "activity_type_display": activity.get_activity_type_display(),
-        "outcome": activity.outcome,
-        "outcome_display": activity.get_outcome_display(),
-        "note": activity.note,
-        "from_status": activity.from_status,
-        "to_status": activity.to_status,
-        "next_action": activity.next_action,
-        "next_follow_up_at": activity.next_follow_up_at,
-        "created_by": (
-            activity.created_by.get_full_name() if activity.created_by else None
-        ),
-        "created_at": activity.created_at,
-    }
 
 
 @leads_router.get("/summary", response=LeadSummarySchema)
@@ -114,7 +54,6 @@ def get_lead_summary(request):
     now = timezone.now()
     active = leads.filter(status__in=Lead.ACTIVE_STATUSES)
     sla_threshold = now - timedelta(minutes=30)
-
     return {
         "total": leads.count(),
         "active": active.count(),
@@ -122,9 +61,7 @@ def get_lead_summary(request):
             status="new", first_contact_at__isnull=True
         ).count(),
         "sla_breaches": leads.filter(
-            status="new",
-            first_contact_at__isnull=True,
-            created_at__lt=sla_threshold,
+            status="new", first_contact_at__isnull=True, created_at__lt=sla_threshold
         ).count(),
         "hot_leads": active.filter(score__gte=75).count(),
         "stale_leads": active.filter(
@@ -132,8 +69,7 @@ def get_lead_summary(request):
             | Q(last_contact_at__isnull=True, created_at__lt=now - timedelta(days=12))
         ).count(),
         "upcoming_followups": active.filter(
-            next_follow_up_at__gte=now,
-            next_follow_up_at__lte=now + timedelta(days=1),
+            next_follow_up_at__gte=now, next_follow_up_at__lte=now + timedelta(days=1)
         ).count(),
     }
 
@@ -170,7 +106,6 @@ def list_leads(
         date_from=date_from,
         date_to=date_to,
     )
-
     return leads.order_by("-created_at")
 
 
@@ -199,16 +134,13 @@ def create_lead(request, payload: LeadCreateSchema):
         record_initial_funnel_event(lead, actor=request.user)
         if lead.status not in ["new", "contacted"]:
             record_status_funnel_event(
-                lead,
-                from_status="new",
-                to_status=lead.status,
-                actor=request.user,
+                lead, from_status="new", to_status=lead.status, actor=request.user
             )
-        return 201, lead
+        return (201, lead)
     except ValidationError as e:
-        return 400, {"detail": _validation_detail(e)}
+        return (400, {"detail": _validation_detail(e)})
     except Exception as e:
-        return 400, {"detail": str(e)}
+        return (400, {"detail": str(e)})
 
 
 @leads_router.get("/pipeline")
@@ -245,7 +177,6 @@ def get_pipeline(
         "lost",
     ]
     stage_labels = dict(Lead.STATUS_CHOICES)
-
     columns = []
     for status in stage_order:
         stage_leads = leads.filter(status=status)
@@ -264,14 +195,12 @@ def get_pipeline(
                 "cards": cards,
             }
         )
-
     total_leads = leads.count()
     won_count = leads.filter(status="won").count()
     active_leads = leads.filter(status__in=Lead.ACTIVE_STATUSES)
-    sla_breach_count = sum(1 for lead in leads if lead.is_sla_breached)
-    stale_count = sum(1 for lead in leads if lead.is_stale)
-    conversion_rate = round((won_count / total_leads) * 100, 2) if total_leads else 0.0
-
+    sla_breach_count = sum((1 for lead in leads if lead.is_sla_breached))
+    stale_count = sum((1 for lead in leads if lead.is_stale))
+    conversion_rate = round(won_count / total_leads * 100, 2) if total_leads else 0.0
     return {
         "filters": {
             "division": division,
@@ -363,7 +292,6 @@ def list_lead_activities(
 ):
     lead = get_object_or_404(_lead_queryset(request), id=lead_id)
     activities = _activity_queryset(lead)
-
     if activity_type:
         activities = activities.filter(activity_type=activity_type)
     if outcome:
@@ -374,7 +302,6 @@ def list_lead_activities(
         activities = activities.filter(created_at__date__gte=date_from)
     if date_to:
         activities = activities.filter(created_at__date__lte=date_to)
-
     return activities.order_by("-sequence")
 
 
@@ -391,7 +318,6 @@ def create_lead_activity(request, lead_id: int, payload: LeadActivityCreateSchem
         payload_data["next_action"] = payload_data.get("next_action") or ""
         payload_data["to_status"] = payload_data.get("to_status") or ""
         from_status = lead.status if payload_data["to_status"] else ""
-
         with transaction.atomic():
             activity = LeadActivity.create_for_lead(
                 lead_id=lead.id,
@@ -409,11 +335,11 @@ def create_lead_activity(request, lead_id: int, payload: LeadActivityCreateSchem
                     occurred_at=activity.created_at,
                     metadata={"activity_id": activity.id},
                 )
-        return 201, activity
+        return (201, activity)
     except ValidationError as e:
-        return 400, {"detail": _validation_detail(e)}
+        return (400, {"detail": _validation_detail(e)})
     except Exception as e:
-        return 400, {"detail": str(e)}
+        return (400, {"detail": str(e)})
 
 
 @leads_router.get("/{lead_id}/activities/{activity_id}", response=LeadActivityOutSchema)
@@ -429,27 +355,22 @@ def get_lead_activity(request, lead_id: int, activity_id: int):
 )
 @require_permission("leads", "update")
 def update_lead_activity(
-    request,
-    lead_id: int,
-    activity_id: int,
-    payload: LeadActivityUpdateSchema,
+    request, lead_id: int, activity_id: int, payload: LeadActivityUpdateSchema
 ):
     try:
         lead = get_object_or_404(_lead_queryset(request), id=lead_id)
         activity = get_object_or_404(_activity_queryset(lead), id=activity_id)
-
         for attr, value in payload.dict(exclude_unset=True).items():
             if attr in ["outcome", "next_action", "from_status", "to_status"]:
                 value = value or ""
             setattr(activity, attr, value)
-
         activity.full_clean()
         activity.save()
-        return 200, activity
+        return (200, activity)
     except ValidationError as e:
-        return 400, {"detail": _validation_detail(e)}
+        return (400, {"detail": _validation_detail(e)})
     except Exception as e:
-        return 400, {"detail": str(e)}
+        return (400, {"detail": str(e)})
 
 
 @leads_router.delete(
@@ -461,7 +382,7 @@ def delete_lead_activity(request, lead_id: int, activity_id: int):
     lead = get_object_or_404(_lead_queryset(request), id=lead_id)
     activity = get_object_or_404(_activity_queryset(lead), id=activity_id)
     activity.delete()
-    return 200, {"detail": "Lead activity deleted successfully"}
+    return (200, {"detail": "Lead activity deleted successfully"})
 
 
 @leads_router.get("/{lead_id}", response=LeadOutSchema)
@@ -477,13 +398,16 @@ def get_lead(request, lead_id: int):
 def update_lead(request, lead_id: int, payload: LeadUpdateSchema):
     try:
         lead = get_object_or_404(_lead_queryset(request), id=lead_id)
-        return 200, _apply_lead_payload(
-            lead, payload.dict(exclude_unset=True), actor=request.user
+        return (
+            200,
+            _apply_lead_payload(
+                lead, payload.dict(exclude_unset=True), actor=request.user
+            ),
         )
     except ValidationError as e:
-        return 400, {"detail": _validation_detail(e)}
+        return (400, {"detail": _validation_detail(e)})
     except Exception as e:
-        return 400, {"detail": str(e)}
+        return (400, {"detail": str(e)})
 
 
 @leads_router.patch(
@@ -497,11 +421,11 @@ def assign_lead(request, lead_id: int, payload: LeadAssignSchema):
         lead.assigned_to_id = payload.assigned_to_id
         lead.full_clean()
         lead.save(update_fields=["assigned_to", "updated_at"])
-        return 200, lead
+        return (200, lead)
     except ValidationError as e:
-        return 400, {"detail": _validation_detail(e)}
+        return (400, {"detail": _validation_detail(e)})
     except Exception as e:
-        return 400, {"detail": str(e)}
+        return (400, {"detail": str(e)})
 
 
 @leads_router.patch(
@@ -514,14 +438,12 @@ def update_lead_status(request, lead_id: int, payload: LeadStatusSchema):
         lead = get_object_or_404(_lead_queryset(request), id=lead_id)
         previous_status = lead.status
         lead.status = payload.status
-
-        if payload.status != "new" and not lead.first_contact_at:
+        if payload.status != "new" and (not lead.first_contact_at):
             lead.first_contact_at = timezone.now()
-        if lead.first_contact_at and not lead.first_response_at:
+        if lead.first_contact_at and (not lead.first_response_at):
             lead.first_response_at = lead.first_contact_at
         if payload.status in ["contacted", "qualified", "proposal_sent", "negotiation"]:
             lead.last_contact_at = timezone.now()
-
         lead.refresh_sla_status()
         lead.refresh_score()
         lead.full_clean()
@@ -533,11 +455,11 @@ def update_lead_status(request, lead_id: int, payload: LeadStatusSchema):
                 to_status=lead.status,
                 actor=request.user,
             )
-        return 200, lead
+        return (200, lead)
     except ValidationError as e:
-        return 400, {"detail": _validation_detail(e)}
+        return (400, {"detail": _validation_detail(e)})
     except Exception as e:
-        return 400, {"detail": str(e)}
+        return (400, {"detail": str(e)})
 
 
 @leads_router.delete("/{lead_id}", response={200: MessageSchema, 404: MessageSchema})
@@ -545,10 +467,9 @@ def update_lead_status(request, lead_id: int, payload: LeadStatusSchema):
 def delete_lead(request, lead_id: int):
     lead = get_object_or_404(_lead_queryset(request), id=lead_id)
     lead.delete()
-    return 200, {"detail": "Lead deleted successfully"}
+    return (200, {"detail": "Lead deleted successfully"})
 
 
-# ---- Funnel --------------------------------------------------------------
 from datetime import timedelta
 from typing import List
 
@@ -575,27 +496,21 @@ funnel_router = Router(tags=["Funnel Engine"])
 def get_funnel_summary(request):
     stages = FunnelStage.objects.all()
     last_month = timezone.now().date() - timedelta(days=30)
-
     result = []
     prev_count = None
-
     for stage in stages:
         current_count = FunnelLead.objects.filter(stage=stage, status="active").count()
-
         last_snapshot = FunnelSnapshot.objects.filter(
             stage=stage, date=last_month
         ).first()
-
         conversion_rate = 0.0
         if prev_count and prev_count > 0:
-            conversion_rate = round((current_count / prev_count) * 100, 2)
-
+            conversion_rate = round(current_count / prev_count * 100, 2)
         change_pct = 0.0
         if last_snapshot and last_snapshot.count > 0:
             change_pct = round(
-                ((current_count - last_snapshot.count) / last_snapshot.count) * 100, 2
+                (current_count - last_snapshot.count) / last_snapshot.count * 100, 2
             )
-
         result.append(
             FunnelStageSummarySchema(
                 name=stage.name,
@@ -606,9 +521,7 @@ def get_funnel_summary(request):
                 change_pct=change_pct,
             )
         )
-
         prev_count = current_count
-
     return {"stages": result}
 
 
@@ -617,22 +530,18 @@ def get_funnel_summary(request):
 def get_conversion_breakdown(request):
     stages = list(FunnelStage.objects.all().order_by("order"))
     transitions = []
-
     for i in range(len(stages) - 1):
         current_stage = stages[i]
         next_stage = stages[i + 1]
-
         current_count = FunnelLead.objects.filter(
             stage=current_stage, status__in=["active", "converted"]
         ).count()
         next_count = FunnelLead.objects.filter(
             stage=next_stage, status__in=["active", "converted"]
         ).count()
-
         rate = 0.0
         if current_count > 0:
-            rate = round((next_count / current_count) * 100, 2)
-
+            rate = round(next_count / current_count * 100, 2)
         transitions.append(
             {
                 "from_stage": current_stage.get_name_display(),
@@ -640,7 +549,6 @@ def get_conversion_breakdown(request):
                 "rate": rate,
             }
         )
-
     return {"transitions": transitions}
 
 
@@ -649,17 +557,13 @@ def get_conversion_breakdown(request):
 def get_drop_off_alerts(request, threshold: float = 50.0):
     stages = list(FunnelStage.objects.all().order_by("order"))
     alerts = []
-
     for i in range(len(stages) - 1):
         current_stage = stages[i]
         next_stage = stages[i + 1]
-
         entered = FunnelLead.objects.filter(stage=current_stage).count()
         progressed = FunnelLead.objects.filter(stage=next_stage).count()
-
         if entered > 0:
-            loss_pct = round(((entered - progressed) / entered) * 100, 2)
-
+            loss_pct = round((entered - progressed) / entered * 100, 2)
             if loss_pct >= threshold:
                 suggestions = [
                     f"Review {current_stage.get_name_display()} touchpoints",
@@ -673,7 +577,6 @@ def get_drop_off_alerts(request, threshold: float = 50.0):
                         "suggestions": suggestions,
                     }
                 )
-
     return alerts
 
 
@@ -681,17 +584,13 @@ def get_drop_off_alerts(request, threshold: float = 50.0):
 @paginate(LimitOffsetPagination, page_size=20)
 @require_permission("leads", "view")
 def get_lead_activity_log(
-    request,
-    stage: str = None,
-    status: str = None,
-    search: str = None,
+    request, stage: str = None, status: str = None, search: str = None
 ):
     from django.db.models import Q
 
     leads = FunnelLead.objects.select_related(
         "stage", "assigned_role", "assigned_role__user", "branch"
     )
-
     if stage:
         leads = leads.filter(stage__name=stage)
     if status:
@@ -702,11 +601,9 @@ def get_lead_activity_log(
             | Q(last_name__icontains=search)
             | Q(email__icontains=search)
         )
-
     return leads.order_by("-last_activity")
 
 
-# ---- Pipeline ------------------------------------------------------------
 from datetime import timedelta
 from decimal import Decimal
 
@@ -743,7 +640,6 @@ def get_deals(
     period: int = None,
 ):
     deals = Deal.objects.select_related("stage", "agent", "agent__user", "branch")
-
     if branch_id:
         deals = deals.filter(branch_id=branch_id)
     if agent_id:
@@ -752,20 +648,16 @@ def get_deals(
         deals = deals.filter(stage__slug=stage)
     if period:
         deals = deals.filter(created_at__gte=timezone.now() - timedelta(days=period))
-
     total_value = deals.aggregate(total=Sum("value"))["total"] or Decimal("0")
     closed_count = deals.filter(stage__is_won=True).count()
     total_deals = deals.count()
-
     conversion_pct = 0.0
     if total_deals > 0:
-        conversion_pct = round((closed_count / total_deals) * 100, 2)
-
+        conversion_pct = round(closed_count / total_deals * 100, 2)
     stages_data = []
     for pipeline_stage in PipelineStage.objects.all().order_by("order"):
         stage_deals = deals.filter(stage=pipeline_stage)
         stage_value = stage_deals.aggregate(total=Sum("value"))["total"] or Decimal("0")
-
         stages_data.append(
             PipelineStageSchema(
                 id=pipeline_stage.id,
@@ -778,7 +670,6 @@ def get_deals(
                 deals=list(stage_deals),
             )
         )
-
     return PipelineReportSchema(
         summary=PipelineSummarySchema(
             total_deals=total_deals,
@@ -797,16 +688,13 @@ def create_deal(request, payload: CreateDealSchema):
     try:
         stage = PipelineStage.objects.filter(slug="new_lead").first()
         if not stage:
-            return 400, {"detail": "Default pipeline stage not found"}
-
+            return (400, {"detail": "Default pipeline stage not found"})
         branch = None
         if payload.branch_id:
             branch = Branch.objects.get(id=payload.branch_id)
-
         agent = None
         if payload.agent_id:
             agent = Employee.objects.get(id=payload.agent_id)
-
         deal = Deal.objects.create(
             lead_name=payload.lead_name,
             property_name=payload.property_name,
@@ -821,13 +709,13 @@ def create_deal(request, payload: CreateDealSchema):
             notes=payload.notes,
             stage=stage,
         )
-        return 201, deal
+        return (201, deal)
     except Branch.DoesNotExist:
-        return 400, {"detail": "Branch not found"}
+        return (400, {"detail": "Branch not found"})
     except Employee.DoesNotExist:
-        return 400, {"detail": "Agent not found"}
+        return (400, {"detail": "Agent not found"})
     except Exception as e:
-        return 400, {"detail": str(e)}
+        return (400, {"detail": str(e)})
 
 
 @pipeline_router.patch(
@@ -838,14 +726,11 @@ def create_deal(request, payload: CreateDealSchema):
 def move_deal_stage(request, deal_id: int, payload: MoveDealStageSchema):
     deal = get_object_or_404(Deal, id=deal_id)
     new_stage = get_object_or_404(PipelineStage, slug=payload.stage)
-
     deal.stage = new_stage
     deal.save()
-
     if new_stage.is_won or new_stage.is_lost:
         deal.closed_at = timezone.now()
         deal.save()
-
     return deal
 
 
@@ -855,19 +740,15 @@ def move_deal_stage(request, deal_id: int, payload: MoveDealStageSchema):
 @require_permission("leads", "update")
 def update_deal(request, deal_id: int, payload: UpdateDealSchema):
     deal = get_object_or_404(Deal, id=deal_id)
-
     update_data = payload.dict(exclude_unset=True)
-
     if "agent_id" in update_data:
         if update_data["agent_id"]:
             deal.agent = Employee.objects.get(id=update_data["agent_id"])
         else:
             deal.agent = None
         del update_data["agent_id"]
-
     for key, value in update_data.items():
         setattr(deal, key, value)
-
     deal.save()
     return deal
 
@@ -884,17 +765,12 @@ def delete_deal(request, deal_id: int):
 @require_permission("dashboard", "view")
 def get_pipeline_reports(request, period: int = 30):
     start_date = timezone.now() - timedelta(days=period)
-
     closed_deals = Deal.objects.filter(stage__is_won=True, closed_at__gte=start_date)
-
     total_created = Deal.objects.filter(created_at__gte=start_date).count()
-
     revenue = closed_deals.aggregate(total=Sum("value"))["total"] or Decimal("0")
-
     conversion_rate = 0.0
     if total_created > 0:
-        conversion_rate = round((closed_deals.count() / total_created) * 100, 2)
-
+        conversion_rate = round(closed_deals.count() / total_created * 100, 2)
     return PipelineReportsSchema(
         total_closed=closed_deals.count(),
         revenue=revenue,
@@ -903,7 +779,6 @@ def get_pipeline_reports(request, period: int = 30):
     )
 
 
-# ---- CSRC / inquiries & follow-ups --------------------------------------
 from datetime import timedelta
 from typing import List
 
@@ -923,6 +798,13 @@ from domains.marketing_sales.api.v1.schemas.sales import (
     UpdateInquiryStatusSchema,
 )
 from domains.marketing_sales.models.sales import FollowUp, Inquiry
+from domains.marketing_sales.presenters import (
+    _sales_activity_timeline_item as _activity_timeline_item,
+)
+from domains.marketing_sales.presenters import _sales_pipeline_card as _pipeline_card
+from domains.marketing_sales.presenters import (
+    _sales_validation_detail as _validation_detail,
+)
 from user.models.branch import Branch
 from user.models.employee import Employee
 from user.utils.perm import require_permission
@@ -944,7 +826,6 @@ def get_inquiries(
     inquiries = Inquiry.objects.select_related(
         "assigned_agent", "assigned_agent__user", "branch"
     )
-
     if branch_id:
         inquiries = inquiries.filter(branch_id=branch_id)
     if source:
@@ -957,12 +838,9 @@ def get_inquiries(
         inquiries = inquiries.filter(created_at__date__gte=date_from)
     if date_to:
         inquiries = inquiries.filter(created_at__date__lte=date_to)
-
     total = inquiries.count()
     new_count = inquiries.filter(status="new").count()
-
     pending_followups = FollowUp.objects.filter(status="pending").count()
-
     return InquirySummarySchema(
         total=total,
         new_count=new_count,
@@ -979,11 +857,9 @@ def create_inquiry(request, payload: CreateInquirySchema):
         branch = None
         if payload.branch_id:
             branch = Branch.objects.get(id=payload.branch_id)
-
         assigned_agent = None
         if payload.assigned_agent_id:
             assigned_agent = Employee.objects.get(id=payload.assigned_agent_id)
-
         inquiry = Inquiry.objects.create(
             lead_name=payload.lead_name,
             email=payload.email or "",
@@ -996,13 +872,13 @@ def create_inquiry(request, payload: CreateInquirySchema):
             assigned_agent=assigned_agent,
             notes=payload.notes or "",
         )
-        return 201, inquiry
+        return (201, inquiry)
     except Branch.DoesNotExist:
-        return 400, {"detail": "Branch not found"}
+        return (400, {"detail": "Branch not found"})
     except Employee.DoesNotExist:
-        return 400, {"detail": "Agent not found"}
+        return (400, {"detail": "Agent not found"})
     except Exception as e:
-        return 400, {"detail": str(e)}
+        return (400, {"detail": str(e)})
 
 
 @csrc_router.patch(
@@ -1012,9 +888,7 @@ def create_inquiry(request, payload: CreateInquirySchema):
 @require_permission("leads", "update")
 def update_inquiry(request, inquiry_id: int, payload: UpdateInquirySchema):
     inquiry = get_object_or_404(Inquiry, id=inquiry_id)
-
     update_data = payload.dict(exclude_unset=True)
-
     if "assigned_agent_id" in update_data:
         if update_data["assigned_agent_id"]:
             inquiry.assigned_agent = Employee.objects.get(
@@ -1023,10 +897,8 @@ def update_inquiry(request, inquiry_id: int, payload: UpdateInquirySchema):
         else:
             inquiry.assigned_agent = None
         del update_data["assigned_agent_id"]
-
     for key, value in update_data.items():
         setattr(inquiry, key, value)
-
     inquiry.save()
     return inquiry
 
@@ -1044,7 +916,7 @@ def assign_inquiry_agent(request, inquiry_id: int, payload: AssignAgentSchema):
         inquiry.save()
         return inquiry
     except Employee.DoesNotExist:
-        return 400, {"detail": "Agent not found"}
+        return (400, {"detail": "Agent not found"})
 
 
 @csrc_router.patch(
@@ -1054,15 +926,11 @@ def assign_inquiry_agent(request, inquiry_id: int, payload: AssignAgentSchema):
 @require_permission("leads", "update")
 def update_inquiry_status(request, inquiry_id: int, payload: UpdateInquiryStatusSchema):
     inquiry = get_object_or_404(Inquiry, id=inquiry_id)
-
     inquiry.status = payload.status
-
-    if payload.status == "contacted" and not inquiry.first_contact_at:
+    if payload.status == "contacted" and (not inquiry.first_contact_at):
         inquiry.first_contact_at = timezone.now()
-
     if payload.status == "resolved":
         inquiry.resolved_at = timezone.now()
-
     inquiry.save()
     return inquiry
 
@@ -1071,7 +939,6 @@ def update_inquiry_status(request, inquiry_id: int, payload: UpdateInquiryStatus
 @require_permission("leads", "view")
 def get_missed_inquiries(request):
     threshold = timezone.now() - timedelta(minutes=30)
-
     return Inquiry.objects.filter(
         status="new", created_at__lt=threshold, first_contact_at__isnull=True
     ).select_related("assigned_agent", "assigned_agent__user", "branch")
@@ -1081,7 +948,6 @@ def get_missed_inquiries(request):
 @require_permission("leads", "view")
 def get_followups(request, tab: str = "today"):
     today = timezone.now().date()
-
     if tab == "today":
         followups = FollowUp.objects.filter(
             schedule_type="today", scheduled_at__date=today
@@ -1096,7 +962,6 @@ def get_followups(request, tab: str = "today"):
         )
     else:
         followups = FollowUp.objects.none()
-
     return followups.select_related("inquiry", "agent", "agent__user")
 
 
@@ -1105,11 +970,9 @@ def get_followups(request, tab: str = "today"):
 def create_followup(request, payload: CreateFollowUpSchema):
     try:
         inquiry = Inquiry.objects.get(id=payload.inquiry_id)
-
         agent = None
         if payload.agent_id:
             agent = Employee.objects.get(id=payload.agent_id)
-
         followup = FollowUp.objects.create(
             inquiry=inquiry,
             agent=agent,
@@ -1118,13 +981,13 @@ def create_followup(request, payload: CreateFollowUpSchema):
             schedule_type=payload.schedule_type,
             notes=payload.notes or "",
         )
-        return 201, followup
+        return (201, followup)
     except Inquiry.DoesNotExist:
-        return 400, {"detail": "Inquiry not found"}
+        return (400, {"detail": "Inquiry not found"})
     except Employee.DoesNotExist:
-        return 400, {"detail": "Agent not found"}
+        return (400, {"detail": "Agent not found"})
     except Exception as e:
-        return 400, {"detail": str(e)}
+        return (400, {"detail": str(e)})
 
 
 @csrc_router.patch(
@@ -1134,14 +997,10 @@ def create_followup(request, payload: CreateFollowUpSchema):
 @require_permission("leads", "update")
 def update_followup(request, followup_id: int, payload: UpdateFollowUpSchema):
     followup = get_object_or_404(FollowUp, id=followup_id)
-
     update_data = payload.dict(exclude_unset=True)
-
     for key, value in update_data.items():
         setattr(followup, key, value)
-
     if payload.status == "completed":
         followup.completed_at = timezone.now()
-
     followup.save()
     return followup

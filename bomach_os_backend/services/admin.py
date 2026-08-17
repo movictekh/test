@@ -1,31 +1,32 @@
 from django.contrib import admin
 
-from .models import (
-    Budget,
+from domains.marketing_sales.models.content import Content
+from domains.marketing_sales.models.marketing import MarketingCampaign
+from domains.marketing_sales.models.revenue_execution import (
     DailyActionInstance,
     DailyActionTemplate,
     DailyExecutionDay,
+    RevenueKeyResult,
+    RevenueObjective,
+    TurnaroundAction,
+    TurnaroundPlan,
+)
+from domains.marketing_sales.models.sales import Lead, LeadActivity, LeadFunnelEvent
+
+from .models import (
+    Budget,
     Document,
     Expense,
     Invoice,
     InvoiceItem,
-    Lead,
-    LeadActivity,
-    LeadFunnelEvent,
     Payment,
     Property,
     Quote,
-    RevenueKeyResult,
-    RevenueObjective,
     Service,
     ServiceCategory,
     ServiceLead,
     ServiceOrder,
-    TurnaroundAction,
-    TurnaroundPlan,
 )
-from .models.content import Content
-from .models.marketing_campaign import MarketingCampaign
 
 
 @admin.register(ServiceCategory)

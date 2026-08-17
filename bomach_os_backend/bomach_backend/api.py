@@ -1,5 +1,17 @@
 from ninja import NinjaAPI, Swagger
 
+# Marketing & Sales API v1
+from domains.marketing_sales.api.v1 import campaigns_router as svc_marketing_router
+from domains.marketing_sales.api.v1 import content_router as svc_content_router
+from domains.marketing_sales.api.v1 import csrc_router as svc_csrc
+from domains.marketing_sales.api.v1 import funnel_router as svc_funnel
+from domains.marketing_sales.api.v1 import leads_router as svc_leads_router
+from domains.marketing_sales.api.v1 import marketing_router as svc_marketing_cc
+from domains.marketing_sales.api.v1 import pipeline_router as svc_pipeline
+from domains.marketing_sales.api.v1 import (
+    revenue_execution_router as svc_revenue_execution_router,
+)
+
 # Project Operations API v1
 from domains.project_operations.api.v1 import register_project_operations_v1
 
@@ -49,18 +61,6 @@ from hr.api.v1.payroll import router as payroll_router
 from hr.api.v1.performance_reviews import router as performance_reviews_router
 from hr.api.v1.training_programs import router as training_programs_router
 from hr.api.v1.work_reports import router as work_reports_router
-
-# Marketing & Sales API v1
-from domains.marketing_sales.api.v1 import (
-    campaigns_router as svc_marketing_router,
-    content_router as svc_content_router,
-    csrc_router as svc_csrc,
-    funnel_router as svc_funnel,
-    leads_router as svc_leads_router,
-    marketing_router as svc_marketing_cc,
-    pipeline_router as svc_pipeline,
-    revenue_execution_router as svc_revenue_execution_router,
-)
 
 # Remaining legacy Services routers
 from services.api.v1 import budgets as svc_budgets
