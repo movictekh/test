@@ -2,7 +2,7 @@
 
 import hashlib
 import html
-from datetime import date, datetime, time, timedelta
+from datetime import timedelta
 from decimal import Decimal
 
 from django.conf import settings
@@ -20,31 +20,11 @@ from domains.marketing_sales.constants import (
     TRADITIONAL_MEDIA_EXPIRY_WINDOW_DAYS,
 )
 from domains.marketing_sales.models.content import (
-    Content,
     ContentCalendarItem,
     MediaLibraryAsset,
 )
-from domains.marketing_sales.models.marketing import (
-    CampaignDecision,
-    EmailMarketingCampaign,
-    EmailMarketingRecipient,
-    MarketingCampaign,
-    MarketingMeetingAction,
-    MarketingMeetingContext,
-    PartnerCommission,
-    PartnerInvitation,
-    PartnerReport,
-    PartnerTask,
-    TraditionalMediaPlacement,
-)
-from domains.marketing_sales.models.sales import (
-    FUNNEL_STAGE_ORDER,
-    Lead,
-    LeadActivity,
-    LeadFunnelEvent,
-    SalesPlaybook,
-    SalesPlaybookObjection,
-)
+from domains.marketing_sales.models.marketing import TraditionalMediaPlacement
+from domains.marketing_sales.models.sales import Lead
 
 
 def _sales_validation_detail(exc):

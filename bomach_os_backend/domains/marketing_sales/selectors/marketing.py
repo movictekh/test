@@ -1,6 +1,6 @@
 """Read/query layer for campaigns, marketing operations, content and media."""
 
-from datetime import date, timedelta
+from datetime import timedelta
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
@@ -19,27 +19,12 @@ from domains.marketing_sales.models.content import (
 )
 from domains.marketing_sales.models.marketing import (
     CampaignAsset,
-    CampaignDecision,
-    CampaignExpense,
-    CampaignPostAnalysis,
-    CampaignRequest,
-    CampaignRisk,
-    CampaignTask,
-    CampaignUpdate,
-    EmailMarketingCampaign,
-    EmailMarketingRecipient,
     MarketingCampaign,
-    MarketingMeetingAction,
     MarketingMeetingContext,
-    PartnerCommission,
-    PartnerInvitation,
-    PartnerReport,
-    PartnerTask,
     TraditionalMediaPlacement,
 )
 from domains.marketing_sales.models.sales import (
     FUNNEL_STAGE_ORDER,
-    FunnelLead,
     Lead,
     LeadActivity,
     LeadFunnelEvent,
@@ -86,7 +71,7 @@ from domains.marketing_sales.presenters import _marketing_pct as _pct
 from user.models.branch import Branch
 from user.models.employee import Employee
 from user.models.role_targets import EmployeeTarget, with_target_progress
-from user.utils.perm import require_permission, scope_queryset
+from user.utils.perm import scope_queryset
 
 
 def _period_bounds(period_start=None, period_end=None):

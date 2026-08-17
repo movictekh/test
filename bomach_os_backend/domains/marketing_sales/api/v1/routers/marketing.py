@@ -1,15 +1,11 @@
 import csv
-import hashlib
-import html
 import logging
 import secrets
 from datetime import date, timedelta
 from decimal import Decimal
 from io import StringIO
 
-from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.validators import validate_email
 from django.db import transaction
 from django.db.models import Q, Sum
 from django.http import HttpResponse
@@ -55,7 +51,10 @@ from domains.marketing_sales.models.marketing import (
     PartnerTask,
     TraditionalMediaPlacement,
 )
-from domains.marketing_sales.models.sales import FunnelLead, Lead, LeadActivity
+from domains.marketing_sales.models.sales import (
+    FunnelLead,
+    Lead,
+)
 from domains.marketing_sales.presenters import (
     _marketing_email_body_to_html as _email_body_to_html,
 )
@@ -125,7 +124,6 @@ from domains.marketing_sales.selectors.marketing import (
     _traditional_media_queryset,
     _weekly_content_output,
 )
-from domains.marketing_sales.services.funnel import record_initial_funnel_event
 from domains.marketing_sales.services.marketing import (
     _create_partner_referral_lead,
     _resolve_email_recipients,
@@ -137,8 +135,6 @@ from user.models.client import Client as CustomerClient
 from user.models.employee import Employee
 from user.models.meeting import Meeting
 from user.models.partner import Partner
-from user.models.role_targets import EmployeeTarget, with_target_progress
-from user.models.user import User
 from user.utils.perm import require_permission, scope_queryset
 from user.utils.send_email import send_marketing_email
 

@@ -6,10 +6,7 @@ from django.utils import timezone
 from domains.marketing_sales.constants import TURNAROUND_DEFAULT_ACTIONS
 from domains.marketing_sales.models.revenue_execution import (
     DailyActionInstance,
-    DailyActionTemplate,
     DailyExecutionDay,
-    RevenueKeyResult,
-    RevenueObjective,
     TurnaroundAction,
     TurnaroundPlan,
 )
@@ -22,10 +19,7 @@ from domains.marketing_sales.selectors.sales import (
 from domains.marketing_sales.selectors.sales import (
     _revenue_templates_for_day as _templates_for_day,
 )
-from domains.marketing_sales.services.funnel import (
-    record_initial_funnel_event,
-    record_status_funnel_event,
-)
+from domains.marketing_sales.services.funnel import record_status_funnel_event
 from user.models.branch import Branch
 
 

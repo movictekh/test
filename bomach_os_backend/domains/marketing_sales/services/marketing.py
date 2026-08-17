@@ -10,19 +10,9 @@ from domains.marketing_sales.constants import (
 )
 from domains.marketing_sales.models.marketing import (
     CampaignAsset,
-    CampaignDecision,
-    EmailMarketingCampaign,
-    EmailMarketingRecipient,
-    MarketingCampaign,
-    MarketingMeetingAction,
-    MarketingMeetingContext,
-    PartnerCommission,
     PartnerInvitation,
-    PartnerReport,
-    PartnerTask,
-    TraditionalMediaPlacement,
 )
-from domains.marketing_sales.models.sales import FunnelLead, Lead, LeadActivity
+from domains.marketing_sales.models.sales import Lead
 from domains.marketing_sales.presenters import (
     _content_effective_status as _effective_status,
 )
@@ -46,7 +36,7 @@ from user.models.client import Client as CustomerClient
 from user.models.employee import Employee
 from user.models.partner import Partner
 from user.models.user import User
-from user.utils.perm import require_permission, scope_queryset
+from user.utils.perm import scope_queryset
 
 
 def _set_meeting_attendees(meeting, attendee_ids):

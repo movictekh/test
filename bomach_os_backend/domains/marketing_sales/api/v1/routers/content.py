@@ -1,10 +1,10 @@
 import csv
-from datetime import date, timedelta
+from datetime import date
 from io import StringIO
 from typing import List
 
 from django.core.exceptions import ValidationError
-from django.db.models import Q, Sum
+from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -27,7 +27,6 @@ from domains.marketing_sales.models.content import (
     ContentCalendarItem,
     MediaLibraryAsset,
 )
-from domains.marketing_sales.models.marketing import CampaignAsset, MarketingCampaign
 from domains.marketing_sales.presenters import (
     _content_calendar_response as _calendar_response,
 )
@@ -77,9 +76,7 @@ from domains.marketing_sales.services.marketing import (
     _content_sync_media_to_campaign_asset as _sync_media_to_campaign_asset,
 )
 from services.api.schema.others import MessageSchema
-from user.models.branch import Branch
-from user.models.employee import Employee
-from user.utils.perm import require_permission, scope_queryset
+from user.utils.perm import require_permission
 
 content_router = Router(tags=["Content"])
 

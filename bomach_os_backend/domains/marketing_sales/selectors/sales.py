@@ -1,6 +1,10 @@
 """Read/query layer for Sales, funnel, pipeline and revenue execution."""
 
-from datetime import date, datetime, time, timedelta
+from datetime import (
+    datetime,
+    time,
+    timedelta,
+)
 from decimal import Decimal
 
 from django.db.models import Q, Sum
@@ -51,12 +55,8 @@ from domains.marketing_sales.presenters import (
     _revenue_turnaround_kpis as _turnaround_kpis,
 )
 from user.models.employee import Employee
-from user.models.role_targets import (
-    EmployeeTarget,
-    RoleTargetTemplate,
-    with_target_progress,
-)
-from user.utils.perm import require_permission, scope_queryset
+from user.models.role_targets import EmployeeTarget
+from user.utils.perm import scope_queryset
 
 
 def _lead_queryset(request):

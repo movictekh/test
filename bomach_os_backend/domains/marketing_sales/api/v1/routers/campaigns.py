@@ -41,11 +41,6 @@ from domains.marketing_sales.models.marketing import (
     CampaignUpdate,
     MarketingCampaign,
 )
-from domains.marketing_sales.models.sales import (
-    FUNNEL_STAGE_ORDER,
-    Lead,
-    LeadFunnelEvent,
-)
 from domains.marketing_sales.presenters import _campaign_campaign_base as _campaign_base
 from domains.marketing_sales.presenters import _campaign_pct as _pct
 from domains.marketing_sales.presenters import (
@@ -105,7 +100,7 @@ from domains.marketing_sales.services.marketing import (
 from services.api.schema.others import MessageSchema
 from user.models.branch import Branch
 from user.models.employee import Employee
-from user.utils.perm import require_permission, scope_queryset
+from user.utils.perm import require_permission
 
 campaigns_router = Router(tags=["Marketing Campaigns"])
 

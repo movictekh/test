@@ -42,7 +42,7 @@ from domains.marketing_sales.services.sales import (
     _apply_lead_payload,
 )
 from services.api.schema.others import MessageSchema
-from user.utils.perm import require_permission, scope_queryset
+from user.utils.perm import require_permission
 
 leads_router = Router(tags=["Marketing Leads"])
 

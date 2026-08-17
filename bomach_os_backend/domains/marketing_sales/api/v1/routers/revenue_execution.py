@@ -4,7 +4,7 @@ from typing import List
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import Q, Sum
+from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -50,19 +50,14 @@ from domains.marketing_sales.constants import (
     QUALIFICATION_CHECKLIST,
 )
 from domains.marketing_sales.models.revenue_execution import (
-    DailyActionInstance,
     DailyActionTemplate,
-    DailyExecutionDay,
     RevenueKeyResult,
     RevenueObjective,
-    TurnaroundAction,
     TurnaroundPlan,
 )
 from domains.marketing_sales.models.sales import (
     FUNNEL_STAGE_ORDER,
     Lead,
-    LeadActivity,
-    LeadFunnelEvent,
     SalesPlaybook,
     SalesPlaybookObjection,
 )
@@ -197,14 +192,12 @@ from domains.marketing_sales.services.sales import (
     _revenue_seed_turnaround_actions as _seed_turnaround_actions,
 )
 from services.api.schema.others import MessageSchema
-from user.models.branch import Branch
-from user.models.employee import Employee
 from user.models.role_targets import (
     EmployeeTarget,
     RoleTargetTemplate,
     with_target_progress,
 )
-from user.utils.perm import require_permission, scope_queryset
+from user.utils.perm import require_permission
 
 revenue_execution_router = Router(tags=["Revenue Execution"])
 
