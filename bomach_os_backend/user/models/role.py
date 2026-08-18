@@ -106,6 +106,7 @@ PERMISSIONS_MAP = {
     "finance_vendors": ["create", "view", "list", "update", "deactivate"],
     "vendor_bills": ["create", "view", "list", "update", "approve", "reject", "pay", "void"],
     "petty_cash": ["create", "view", "list", "update", "approve", "reject", "issue", "retire", "cancel"],
+    "cash_flow": ["view"],
     "service_invoices": ["create", "view", "list", "update", "delete"],
     "service_leads": ["create", "view", "list", "update", "delete"],
     "marketing_campaigns": ["create", "view", "list", "update", "delete"],

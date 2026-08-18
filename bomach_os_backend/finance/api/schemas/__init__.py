@@ -1,5 +1,10 @@
 from finance.api.schemas.accounts import FinanceAccountIn, FinanceAccountOut, FinanceAccountUpdate
 from finance.api.schemas.cashbook import CashbookRowOut, CashbookSummaryOut
+from finance.api.schemas.cash_flow import (
+    CashFlowForecastItemOut,
+    CashFlowForecastOut,
+    CashFlowForecastWeekOut,
+)
 from finance.api.schemas.expenses import (
     FinanceExpenseIn,
     FinanceExpenseOut,
@@ -59,6 +64,9 @@ __all__ = [
     "ConfirmedFinancePaymentOut",
     "CashbookRowOut",
     "CashbookSummaryOut",
+    "CashFlowForecastItemOut",
+    "CashFlowForecastOut",
+    "CashFlowForecastWeekOut",
     "FinanceAccountIn",
     "FinanceAccountOut",
     "FinanceAccountUpdate",

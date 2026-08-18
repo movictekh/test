@@ -633,3 +633,78 @@ Petty cash is additive. It does not replace Finance expenses, vendor bills, or
 legacy service expense routes. Existing clients that do not create petty cash
 advances continue to use invoices, payments, expenses, vendor bills, and wallets
 without supplying petty cash fields.
+
+## Cash Flow Forecast
+
+Cash Flow Forecast is a read-only, deterministic liquidity projection built on
+existing Finance records. It does not store weekly forecast balances and does
+not introduce a separate cash-flow model.
+
+```http
+GET /api/v1/finance/cash-flow/forecast
+```
+
+Query parameters:
+
+- `as_of`: forecast start date; defaults to the current local date
+- `weeks`: forecast horizon; defaults to `13` and must be between `1` and `52`
+- `branch_id`: optional branch filter, still constrained by the caller's role
+  branch scope
+
+The response is shaped for the Finance Cash Flow Forecast workspace and returns:
+
+- opening cash
+- expected inflows for the next 30 days
+- expected outflows for the next 30 days
+- forecast 30-day closing cash
+- forecast closing cash at the selected horizon
+- weekly opening, inflow, outflow, net movement, and closing balances
+- upcoming obligations
+- the underlying forecast items used to explain the calculation
+
+### Forecast source rules
+
+Opening cash reuses the same actual-money sources as Cashbook:
+
+- Finance account opening balances
+- confirmed client payments
+- paid expenses
+- paid vendor bills
+- issued petty cash
+- returned petty cash
+
+Expected inflows use outstanding `services.Invoice` balances. Draft, cancelled,
+and fully paid invoices are excluded. Each balance is forecast on its invoice
+due date. An overdue receivable is placed on the forecast `as_of` date so it
+appears in week 1.
+
+Expected outflows use `VendorBill.net_amount` for bills in
+`awaiting_approval`, `approved`, or `scheduled` status. Paid, rejected, void,
+and draft bills are excluded. Each open bill is forecast on its due date.
+An overdue open bill is placed on the forecast `as_of` date.
+
+The weekly formula is:
+
+```text
+closing balance =
+opening balance
++ expected inflows
+- expected outflows
+```
+
+Each week's closing balance becomes the next week's opening balance.
+
+### Source coverage
+
+This first Cash Flow slice only includes future sources that already have
+reliable amount and date semantics in the backend.
+
+Payroll is not yet included in the forecast because the current HR Payroll
+model has a payroll period and an actual `disbursement_date`, but no dedicated
+scheduled payment date for an unpaid payroll obligation.
+
+Tax and statutory obligations are not yet included because there is no Finance
+tax/statutory obligation source model or endpoint in this backend slice.
+
+Those sources should be integrated when their authoritative due-date records
+exist rather than hard-coding amounts or dates into Cash Flow Forecast.

@@ -570,6 +570,33 @@ def _build_cashbook_rows(
     return visible_rows
 
 
+def cash_position_as_of(request, as_of, finance_account_id=None, branch_id=None):
+    # Return actual cash position using the same sources as Cashbook.
+    rows = _build_cashbook_rows(
+        request,
+        None,
+        as_of,
+        finance_account_id,
+        branch_id,
+        None,
+        None,
+        None,
+        None,
+        None,
+    )
+    opening_balance = _opening_balance(
+        request,
+        finance_account_id=finance_account_id,
+        branch_id=branch_id,
+        start_date=as_of,
+    )
+    net_movement = sum(
+        (row["money_in"] - row["money_out"] for row in rows),
+        Decimal("0.00"),
+    )
+    return _money(opening_balance + net_movement)
+
+
 @router.get("/cashbook", response=List[CashbookRowOut])
 @paginate(LimitOffsetPagination, page_size=10)
 @require_permission("payments", "list")
