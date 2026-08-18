@@ -912,3 +912,46 @@ Safe automatic sources are explicit `VendorBill.withholding_tax` on paid vendor 
 Workflow: Draft → Pending Approval → Approved → Paid, with Reject and Void for unpaid records. Overdue is derived from due date.
 
 Paid statutory obligations become Cashbook outflows. Vendor Bills with WHT now contribute net vendor cash paid to Cashbook; the withheld amount is paid separately when remitted, preventing double-counting.
+
+## People & Compliance Cash Flow Integration
+
+Cash Flow now includes approved People & Compliance obligations.
+
+### Payroll
+
+Only `PayrollRun.status = approved` enters the forecast.
+
+- date: `scheduled_payment_date`
+- amount: `net_pay`
+- source: `payroll`
+- overdue approved Payroll moves to `as_of` / Week 1 without changing Payroll state.
+
+Paid Payroll is excluded because it is already actual cash in Cashbook.
+
+### Tax & Statutory
+
+Only `StatutoryObligation.status = approved` enters the forecast.
+
+- date: `due_date`
+- amount: obligation `amount`
+- source: `statutory`
+- overdue approved obligations move to `as_of` / Week 1 without changing source state.
+
+Paid statutory obligations are excluded because they are already Cashbook actuals.
+
+### Commissions & Bonuses
+
+Incentive awards are not forecast separately. Approved incentives are designed
+to flow through native Finance Payroll and therefore become part of Payroll
+`net_pay`. Forecasting them independently would double-count employee payouts.
+
+```text
+Opening Cash
++ Receivables
+- Vendor Bills
+- Payroll
+- Tax & Statutory
+= Forecast Closing Cash
+```
+
+This integration adds no model and no migration.

@@ -4,7 +4,7 @@ from decimal import Decimal
 from django.test import Client as DjangoClient
 from django.test import TestCase
 
-from finance.models import FinanceAccount, FinanceVendor, VendorBill
+from finance.models import FinanceAccount, FinanceVendor, PayrollRun, StatutoryObligation, VendorBill
 from services.models.payment import Invoice, Payment
 from services.models.service import (
     Service,
@@ -378,3 +378,196 @@ class FinanceCashFlowForecastAPITests(RoleAPITestMixin, TestCase):
 
         invalid = self._forecast(weeks=0)
         self.assertEqual(invalid.status_code, 400)
+    def test_approved_payroll_and_statutory_obligations_join_forecast_without_double_counting_paid_items(self):
+        payroll = PayrollRun.objects.create(
+            period_month=8,
+            period_year=2026,
+            scheduled_payment_date=date(2026, 8, 25),
+            branch=self.enugu,
+            status=PayrollRun.STATUS.APPROVED,
+            employee_count=2,
+            gross_pay=Decimal("1600.00"),
+            total_deductions=Decimal("100.00"),
+            net_pay=Decimal("1500.00"),
+            created_by=self.employee.user,
+        )
+        statutory = StatutoryObligation.objects.create(
+            obligation_type=StatutoryObligation.OBLIGATION_TYPE.PAYE,
+            source_type=StatutoryObligation.SOURCE_TYPE.PAYROLL,
+            branch=self.enugu,
+            period_label="August 2026",
+            period_start=date(2026, 8, 1),
+            period_end=date(2026, 8, 31),
+            basis="Approved payroll PAYE",
+            basis_amount=Decimal("1600.00"),
+            amount=Decimal("200.00"),
+            due_date=date(2026, 8, 30),
+            status=StatutoryObligation.STATUS.APPROVED,
+            created_by=self.employee.user,
+        )
+
+        paid_payroll = PayrollRun.objects.create(
+            period_month=7,
+            period_year=2026,
+            scheduled_payment_date=date(2026, 8, 22),
+            branch=self.enugu,
+            finance_account=self.account,
+            status=PayrollRun.STATUS.PAID,
+            employee_count=1,
+            gross_pay=Decimal("999.00"),
+            total_deductions=Decimal("0.00"),
+            net_pay=Decimal("999.00"),
+            paid_by=self.employee.user,
+            paid_at="2026-08-17T10:00:00+01:00",
+            payment_reference="CF-PAID-PAYROLL",
+            created_by=self.employee.user,
+        )
+        paid_statutory = StatutoryObligation.objects.create(
+            obligation_type=StatutoryObligation.OBLIGATION_TYPE.WHT,
+            source_type=StatutoryObligation.SOURCE_TYPE.VENDOR_BILL,
+            branch=self.enugu,
+            period_label="July 2026",
+            period_start=date(2026, 7, 1),
+            period_end=date(2026, 7, 31),
+            basis="Already remitted WHT",
+            basis_amount=Decimal("5000.00"),
+            amount=Decimal("300.00"),
+            due_date=date(2026, 8, 24),
+            status=StatutoryObligation.STATUS.PAID,
+            finance_account=self.account,
+            paid_by=self.employee.user,
+            paid_at="2026-08-17T11:00:00+01:00",
+            payment_reference="CF-PAID-WHT",
+            created_by=self.employee.user,
+        )
+
+        response = self._forecast()
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+
+        # The paid July Payroll (999) and paid WHT (300) occurred on
+        # 17 Aug, before AS_OF=18 Aug. They must therefore be reflected in
+        # actual opening cash through Cashbook, while remaining excluded from
+        # future forecast items.
+        self.assertEqual(body["opening_cash"], "10701.00")
+        self.assertEqual(body["expected_inflows_30d"], "4000.00")
+        self.assertEqual(body["expected_outflows_30d"], "4400.00")
+        self.assertEqual(body["forecast_closing_30d"], "10301.00")
+
+        by_source = body["outflow_by_source_30d"]
+        self.assertEqual(by_source["vendor_bill"], "2700.00")
+        self.assertEqual(by_source["payroll"], "1500.00")
+        self.assertEqual(by_source["statutory"], "200.00")
+
+        refs = {item["reference"] for item in body["items"]}
+        self.assertIn(payroll.run_number, refs)
+        self.assertIn(statutory.obligation_number, refs)
+        self.assertNotIn(paid_payroll.run_number, refs)
+        self.assertNotIn(paid_statutory.obligation_number, refs)
+
+        # Baseline opening cash was 12,000:
+        # 12,000 - 999 paid Payroll - 300 paid statutory = 10,701.
+        self.assertEqual(
+            Decimal(body["opening_cash"]),
+            Decimal("12000.00") - Decimal("999.00") - Decimal("300.00"),
+        )
+
+    def test_overdue_payroll_and_statutory_move_to_week_one_without_mutating_source_records(self):
+        payroll = PayrollRun.objects.create(
+            period_month=7,
+            period_year=2026,
+            scheduled_payment_date=date(2026, 8, 15),
+            branch=self.enugu,
+            status=PayrollRun.STATUS.APPROVED,
+            employee_count=1,
+            gross_pay=Decimal("800.00"),
+            total_deductions=Decimal("0.00"),
+            net_pay=Decimal("800.00"),
+            created_by=self.employee.user,
+        )
+        statutory = StatutoryObligation.objects.create(
+            obligation_type=StatutoryObligation.OBLIGATION_TYPE.OTHER,
+            source_type=StatutoryObligation.SOURCE_TYPE.MANUAL,
+            branch=self.enugu,
+            period_label="July 2026",
+            period_start=date(2026, 7, 1),
+            period_end=date(2026, 7, 31),
+            basis="Overdue filing obligation",
+            basis_amount=Decimal("1000.00"),
+            amount=Decimal("100.00"),
+            due_date=date(2026, 8, 16),
+            status=StatutoryObligation.STATUS.APPROVED,
+            created_by=self.employee.user,
+        )
+
+        response = self._forecast(weeks=2)
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+
+        payroll_item = next(
+            item for item in body["items"]
+            if item["reference"] == payroll.run_number
+        )
+        statutory_item = next(
+            item for item in body["items"]
+            if item["reference"] == statutory.obligation_number
+        )
+        self.assertTrue(payroll_item["is_overdue"])
+        self.assertTrue(statutory_item["is_overdue"])
+        self.assertEqual(payroll_item["forecast_date"], "2026-08-18")
+        self.assertEqual(statutory_item["forecast_date"], "2026-08-18")
+
+        payroll.refresh_from_db()
+        statutory.refresh_from_db()
+        self.assertEqual(payroll.status, PayrollRun.STATUS.APPROVED)
+        self.assertEqual(statutory.status, StatutoryObligation.STATUS.APPROVED)
+
+    def test_branch_scope_excludes_other_branch_people_compliance_outflows(self):
+        lagos = self._branch("Lagos", "BR-CF-PC4-LAG")
+        lagos_payroll = PayrollRun.objects.create(
+            period_month=8,
+            period_year=2026,
+            scheduled_payment_date=date(2026, 8, 25),
+            branch=lagos,
+            status=PayrollRun.STATUS.APPROVED,
+            employee_count=1,
+            gross_pay=Decimal("700.00"),
+            total_deductions=Decimal("0.00"),
+            net_pay=Decimal("700.00"),
+            created_by=self.employee.user,
+        )
+        lagos_statutory = StatutoryObligation.objects.create(
+            obligation_type=StatutoryObligation.OBLIGATION_TYPE.OTHER,
+            source_type=StatutoryObligation.SOURCE_TYPE.MANUAL,
+            branch=lagos,
+            period_label="August 2026",
+            period_start=date(2026, 8, 1),
+            period_end=date(2026, 8, 31),
+            basis="Lagos statutory obligation",
+            basis_amount=Decimal("500.00"),
+            amount=Decimal("50.00"),
+            due_date=date(2026, 8, 27),
+            status=StatutoryObligation.STATUS.APPROVED,
+            created_by=self.employee.user,
+        )
+        enugu_payroll = PayrollRun.objects.create(
+            period_month=8,
+            period_year=2026,
+            scheduled_payment_date=date(2026, 8, 24),
+            branch=self.enugu,
+            status=PayrollRun.STATUS.APPROVED,
+            employee_count=1,
+            gross_pay=Decimal("600.00"),
+            total_deductions=Decimal("0.00"),
+            net_pay=Decimal("600.00"),
+            created_by=self.employee.user,
+        )
+
+        self.role.branches.add(self.enugu)
+        response = self._forecast()
+        self.assertEqual(response.status_code, 200)
+        refs = {item["reference"] for item in response.json()["items"]}
+
+        self.assertIn(enugu_payroll.run_number, refs)
+        self.assertNotIn(lagos_payroll.run_number, refs)
+        self.assertNotIn(lagos_statutory.obligation_number, refs)

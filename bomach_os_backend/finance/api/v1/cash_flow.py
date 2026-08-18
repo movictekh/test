@@ -10,7 +10,7 @@ from ninja.errors import HttpError
 
 from finance.api.schemas import CashFlowForecastOut
 from finance.api.v1.cashbook import cash_position_as_of
-from finance.models import VendorBill
+from finance.models import PayrollRun, StatutoryObligation, VendorBill
 from services.models.payment import Invoice
 from user.utils.perm import require_permission
 
@@ -72,6 +72,20 @@ def _apply_vendor_bill_scope(request, bills):
         | Q(service_order__branch_id__in=branch_ids)
         | Q(finance_account__branch_id__in=branch_ids)
     )
+
+
+def _apply_payroll_scope(request, payroll_runs):
+    branch_ids = getattr(request, "_perm_branch_ids", [])
+    if getattr(request, "_perm_scope", "branches") == "company" or not branch_ids:
+        return payroll_runs
+    return payroll_runs.filter(branch_id__in=branch_ids)
+
+
+def _apply_statutory_scope(request, obligations):
+    branch_ids = getattr(request, "_perm_branch_ids", [])
+    if getattr(request, "_perm_scope", "branches") == "company" or not branch_ids:
+        return obligations
+    return obligations.filter(branch_id__in=branch_ids)
 
 
 def _receivable_items(request, as_of, query_end, branch_id=None):
@@ -175,6 +189,90 @@ def _vendor_bill_items(request, as_of, query_end, branch_id=None):
     return items
 
 
+def _payroll_items(request, as_of, query_end, branch_id=None):
+    payroll_runs = PayrollRun.objects.select_related("branch").filter(
+        status=PayrollRun.STATUS.APPROVED,
+        scheduled_payment_date__lte=query_end,
+    )
+    payroll_runs = _apply_payroll_scope(request, payroll_runs)
+    if branch_id:
+        payroll_runs = payroll_runs.filter(branch_id=branch_id)
+
+    items = []
+    for payroll_run in payroll_runs.order_by(
+        "scheduled_payment_date",
+        "run_number",
+    ):
+        overdue = payroll_run.scheduled_payment_date < as_of
+        items.append(
+            {
+                "source": "payroll",
+                "direction": "outflow",
+                "reference": payroll_run.run_number,
+                "description": f"{payroll_run.period_display} payroll",
+                "due_date": payroll_run.scheduled_payment_date,
+                "forecast_date": (
+                    as_of if overdue else payroll_run.scheduled_payment_date
+                ),
+                "amount": _money(payroll_run.net_pay),
+                "status": payroll_run.status,
+                "is_overdue": overdue,
+                "branch_id": payroll_run.branch_id,
+                "branch_name": (
+                    payroll_run.branch.branch_name
+                    if payroll_run.branch
+                    else ""
+                ),
+                "client_id": None,
+                "client_name": "",
+                "service_order_id": None,
+                "service_order_number": "",
+            }
+        )
+    return items
+
+
+def _statutory_items(request, as_of, query_end, branch_id=None):
+    obligations = StatutoryObligation.objects.select_related("branch").filter(
+        status=StatutoryObligation.STATUS.APPROVED,
+        due_date__lte=query_end,
+    )
+    obligations = _apply_statutory_scope(request, obligations)
+    if branch_id:
+        obligations = obligations.filter(branch_id=branch_id)
+
+    items = []
+    for obligation in obligations.order_by("due_date", "obligation_number"):
+        overdue = obligation.due_date < as_of
+        items.append(
+            {
+                "source": "statutory",
+                "direction": "outflow",
+                "reference": obligation.obligation_number,
+                "description": (
+                    f"{obligation.get_obligation_type_display()} — "
+                    f"{obligation.period_label}"
+                ),
+                "due_date": obligation.due_date,
+                "forecast_date": as_of if overdue else obligation.due_date,
+                "amount": _money(obligation.amount),
+                "status": obligation.status,
+                "is_overdue": overdue,
+                "branch_id": obligation.branch_id,
+                "branch_name": (
+                    obligation.branch.branch_name
+                    if obligation.branch
+                    else ""
+                ),
+                "client_id": None,
+                "client_name": "",
+                "service_order_id": None,
+                "service_order_number": "",
+            }
+        )
+    return items
+
+
 def _sum_amount(items):
     return _money(sum((item["amount"] for item in items), Decimal("0.00")))
 
@@ -211,6 +309,8 @@ def cash_flow_forecast(
     items = (
         _receivable_items(request, as_of, query_end, branch_id=branch_id)
         + _vendor_bill_items(request, as_of, query_end, branch_id=branch_id)
+        + _payroll_items(request, as_of, query_end, branch_id=branch_id)
+        + _statutory_items(request, as_of, query_end, branch_id=branch_id)
     )
     items.sort(
         key=lambda item: (
