@@ -1560,3 +1560,124 @@ class IncentiveAward(models.Model):
 
     def __str__(self):
         return f"{self.award_number} - {self.employee}"
+
+
+class StatutoryObligation(models.Model):
+    class OBLIGATION_TYPE(models.TextChoices):
+        VAT = "vat", "VAT"
+        WHT = "wht", "Withholding Tax"
+        PAYE = "paye", "PAYE"
+        PENSION = "pension", "Pension"
+        OTHER = "other", "Other Statutory"
+
+    class SOURCE_TYPE(models.TextChoices):
+        MANUAL = "manual", "Manual"
+        VENDOR_BILL = "vendor_bill", "Vendor Bills"
+        PAYROLL = "payroll", "Payroll"
+        INVOICE = "invoice", "Invoice Evidence"
+
+    class STATUS(models.TextChoices):
+        DRAFT = "draft", "Draft"
+        PENDING_APPROVAL = "pending_approval", "Pending Approval"
+        APPROVED = "approved", "Approved"
+        PAID = "paid", "Paid"
+        REJECTED = "rejected", "Rejected"
+        VOID = "void", "Void"
+
+    obligation_number = models.CharField(max_length=50, unique=True, editable=False)
+    obligation_type = models.CharField(max_length=20, choices=OBLIGATION_TYPE.choices)
+    source_type = models.CharField(max_length=30, choices=SOURCE_TYPE.choices, default=SOURCE_TYPE.MANUAL)
+    branch = models.ForeignKey("user.Branch", on_delete=models.PROTECT, null=True, blank=True, related_name="finance_statutory_obligations")
+    period_label = models.CharField(max_length=80)
+    period_start = models.DateField()
+    period_end = models.DateField()
+    basis = models.CharField(max_length=255)
+    basis_amount = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal("0.00"), validators=[MinValueValidator(Decimal("0.00"))])
+    amount = models.DecimalField(max_digits=15, decimal_places=2, validators=[MinValueValidator(Decimal("0.01"))])
+    due_date = models.DateField()
+    status = models.CharField(max_length=30, choices=STATUS.choices, default=STATUS.DRAFT, db_index=True)
+    finance_account = models.ForeignKey(FinanceAccount, on_delete=models.PROTECT, null=True, blank=True, related_name="statutory_payments")
+    notes = models.TextField(blank=True, default="")
+    submitted_by = models.ForeignKey("user.User", on_delete=models.SET_NULL, null=True, blank=True, related_name="submitted_statutory_obligations")
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    approved_by = models.ForeignKey("user.User", on_delete=models.SET_NULL, null=True, blank=True, related_name="approved_statutory_obligations")
+    approved_at = models.DateTimeField(null=True, blank=True)
+    rejected_by = models.ForeignKey("user.User", on_delete=models.SET_NULL, null=True, blank=True, related_name="rejected_statutory_obligations")
+    rejected_at = models.DateTimeField(null=True, blank=True)
+    rejection_reason = models.TextField(blank=True, default="")
+    paid_by = models.ForeignKey("user.User", on_delete=models.SET_NULL, null=True, blank=True, related_name="paid_statutory_obligations")
+    paid_at = models.DateTimeField(null=True, blank=True)
+    payment_reference = models.CharField(max_length=120, blank=True, default="")
+    created_by = models.ForeignKey("user.User", on_delete=models.PROTECT, related_name="created_statutory_obligations")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["due_date", "-created_at"]
+        indexes = [
+            models.Index(fields=["obligation_type", "status"]),
+            models.Index(fields=["due_date", "status"]),
+            models.Index(fields=["branch", "status"]),
+            models.Index(fields=["period_start", "period_end"]),
+        ]
+
+    @property
+    def is_overdue(self):
+        return self.status not in {self.STATUS.PAID, self.STATUS.VOID} and self.due_date < timezone.localdate()
+
+    def clean(self):
+        super().clean()
+        errors = {}
+        if self.period_end < self.period_start:
+            errors["period_end"] = "Period end cannot be before period start."
+        if self.finance_account_id and self.branch_id and self.finance_account.branch_id and self.finance_account.branch_id != self.branch_id:
+            errors["finance_account"] = "Payment account branch must match obligation branch."
+        if self.status == self.STATUS.PAID:
+            if not self.finance_account_id: errors["finance_account"] = "Paid obligations require a Finance account."
+            if not self.paid_at: errors["paid_at"] = "Paid obligations require a payment timestamp."
+        if errors: raise ValidationError(errors)
+
+    def save(self, *args, **kwargs):
+        if not self.obligation_number:
+            prefix = self.obligation_type.upper() if self.obligation_type else "STAT"
+            self.obligation_number = f"{prefix}-{uuid.uuid4().hex[:10].upper()}"
+        self.full_clean(); super().save(*args, **kwargs)
+
+
+class StatutoryObligationItem(models.Model):
+    class SOURCE_TYPE(models.TextChoices):
+        MANUAL = "manual", "Manual"
+        VENDOR_BILL = "vendor_bill", "Vendor Bill"
+        PAYROLL_LINE_ITEM = "payroll_line_item", "Payroll Line Item"
+        INVOICE = "invoice", "Invoice Evidence"
+
+    obligation = models.ForeignKey(StatutoryObligation, on_delete=models.CASCADE, related_name="items")
+    source_type = models.CharField(max_length=30, choices=SOURCE_TYPE.choices)
+    source_reference = models.CharField(max_length=120)
+    description = models.CharField(max_length=255)
+    basis_amount = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal("0.00"), validators=[MinValueValidator(Decimal("0.00"))])
+    liability_amount = models.DecimalField(max_digits=15, decimal_places=2, validators=[MinValueValidator(Decimal("0.01"))])
+    vendor_bill = models.ForeignKey(VendorBill, on_delete=models.PROTECT, null=True, blank=True, related_name="statutory_items")
+    payroll_line_item = models.ForeignKey(PayrollLineItem, on_delete=models.PROTECT, null=True, blank=True, related_name="statutory_items")
+    invoice = models.ForeignKey("services.Invoice", on_delete=models.PROTECT, null=True, blank=True, related_name="statutory_items")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["id"]
+        indexes = [
+            models.Index(fields=["source_type", "source_reference"]),
+            models.Index(fields=["vendor_bill"]),
+            models.Index(fields=["payroll_line_item"]),
+            models.Index(fields=["invoice"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(fields=["vendor_bill"], condition=Q(vendor_bill__isnull=False), name="uniq_statutory_vendor_bill_source"),
+            models.UniqueConstraint(fields=["payroll_line_item"], condition=Q(payroll_line_item__isnull=False), name="uniq_statutory_payroll_item_source"),
+        ]
+
+    def clean(self):
+        super().clean()
+        refs = [bool(self.vendor_bill_id), bool(self.payroll_line_item_id), bool(self.invoice_id)]
+        if sum(refs) > 1: raise ValidationError("A statutory item may reference only one concrete source.")
+
+    def save(self, *args, **kwargs): self.full_clean(); super().save(*args, **kwargs)

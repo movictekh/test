@@ -72,6 +72,7 @@ from finance.api.v1 import (
     petty_cash as finance_petty_cash,
     receivables as finance_receivables,
     service_orders as finance_service_orders,
+    statutory as finance_statutory,
     vendors as finance_vendors,
     wallets as finance_wallets,
 )
@@ -218,6 +219,7 @@ api.add_router("/finance", finance_cashbook.router)
 api.add_router("/finance", finance_cash_flow.router)
 api.add_router("/finance", finance_commissions.router)
 api.add_router("/finance", finance_service_orders.router)
+api.add_router("/finance", finance_statutory.router)
 
 
 

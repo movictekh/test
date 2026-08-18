@@ -114,6 +114,10 @@ PERMISSIONS_MAP = {
     "commissions": [
         "list", "view", "create", "update", "calculate", "approve", "reject",
     ],
+    "statutory": [
+        "list", "view", "create", "update", "generate", "submit",
+        "approve", "reject", "pay", "void",
+    ],
     "service_invoices": ["create", "view", "list", "update", "delete"],
     "service_leads": ["create", "view", "list", "update", "delete"],
     "marketing_campaigns": ["create", "view", "list", "update", "delete"],

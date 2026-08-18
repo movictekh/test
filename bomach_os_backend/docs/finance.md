@@ -900,3 +900,15 @@ Cashbook, and later statutory calculations remain coherent.
 
 Direct non-payroll incentive payment can be introduced later only if the
 business requires a separate payout route.
+
+## Tax & Statutory
+
+Finance owns a durable statutory-obligation ledger. This slice does not hard-code tax law.
+
+Safe automatic sources are explicit `VendorBill.withholding_tax` on paid vendor bills and explicit Payroll deduction line items categorized as `paye` or `pension`. VAT is supported as an obligation type, but `Invoice.tax_amount` is not automatically treated as final VAT payable because transaction tax is not necessarily the final remittance liability.
+
+`StatutoryObligation` stores type, period, basis, amount, due date, branch, workflow, and remittance metadata. `StatutoryObligationItem` keeps source lineage and prevents a Vendor Bill or Payroll deduction from being imported twice.
+
+Workflow: Draft → Pending Approval → Approved → Paid, with Reject and Void for unpaid records. Overdue is derived from due date.
+
+Paid statutory obligations become Cashbook outflows. Vendor Bills with WHT now contribute net vendor cash paid to Cashbook; the withheld amount is paid separately when remitted, preventing double-counting.

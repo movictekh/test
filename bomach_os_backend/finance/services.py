@@ -17,6 +17,8 @@ from finance.models import (
     PayrollLine,
     PayrollLineItem,
     PayrollRun,
+    StatutoryObligation,
+    StatutoryObligationItem,
     VendorBill,
 )
 from services.models.expenses import Expense
@@ -1377,3 +1379,81 @@ def reject_incentive_award(award, rejected_by, reason):
             ]
         )
         return award
+
+
+
+def submit_statutory_obligation(obligation, submitted_by):
+    with transaction.atomic():
+        obligation = StatutoryObligation.objects.select_for_update().get(id=obligation.id)
+        if obligation.status not in {StatutoryObligation.STATUS.DRAFT, StatutoryObligation.STATUS.REJECTED}:
+            raise ValidationError("Only draft or rejected statutory obligations can be submitted.")
+        obligation.status=StatutoryObligation.STATUS.PENDING_APPROVAL; obligation.submitted_by=submitted_by; obligation.submitted_at=timezone.now()
+        obligation.rejected_by=None; obligation.rejected_at=None; obligation.rejection_reason=""
+        obligation.save(update_fields=["status","submitted_by","submitted_at","rejected_by","rejected_at","rejection_reason","updated_at"]); return obligation
+
+
+def approve_statutory_obligation(obligation, approved_by):
+    with transaction.atomic():
+        obligation=StatutoryObligation.objects.select_for_update().get(id=obligation.id)
+        if obligation.status != StatutoryObligation.STATUS.PENDING_APPROVAL: raise ValidationError("Only statutory obligations pending approval can be approved.")
+        obligation.status=StatutoryObligation.STATUS.APPROVED; obligation.approved_by=approved_by; obligation.approved_at=timezone.now()
+        obligation.save(update_fields=["status","approved_by","approved_at","updated_at"]); return obligation
+
+
+def reject_statutory_obligation(obligation, rejected_by, reason):
+    reason=(reason or "").strip()
+    if not reason: raise ValidationError("A rejection reason is required.")
+    with transaction.atomic():
+        obligation=StatutoryObligation.objects.select_for_update().get(id=obligation.id)
+        if obligation.status != StatutoryObligation.STATUS.PENDING_APPROVAL: raise ValidationError("Only statutory obligations pending approval can be rejected.")
+        obligation.status=StatutoryObligation.STATUS.REJECTED; obligation.rejected_by=rejected_by; obligation.rejected_at=timezone.now(); obligation.rejection_reason=reason
+        obligation.approved_by=None; obligation.approved_at=None
+        obligation.save(update_fields=["status","rejected_by","rejected_at","rejection_reason","approved_by","approved_at","updated_at"]); return obligation
+
+
+def pay_statutory_obligation(obligation, paid_by, finance_account, paid_at=None, payment_reference=""):
+    with transaction.atomic():
+        obligation=StatutoryObligation.objects.select_for_update().get(id=obligation.id)
+        if obligation.status != StatutoryObligation.STATUS.APPROVED: raise ValidationError("Only approved statutory obligations can be paid.")
+        if not finance_account or not finance_account.is_active: raise ValidationError("An active Finance account is required.")
+        if obligation.branch_id and finance_account.branch_id and obligation.branch_id != finance_account.branch_id: raise ValidationError("Payment account branch must match obligation branch.")
+        ref=(payment_reference or "").strip()
+        if ref and StatutoryObligation.objects.exclude(id=obligation.id).filter(status=StatutoryObligation.STATUS.PAID,payment_reference=ref).exists(): raise ValidationError("This statutory payment reference has already been used.")
+        obligation.status=StatutoryObligation.STATUS.PAID; obligation.finance_account=finance_account; obligation.paid_by=paid_by; obligation.paid_at=paid_at or timezone.now(); obligation.payment_reference=ref
+        obligation.save(update_fields=["status","finance_account","paid_by","paid_at","payment_reference","updated_at"]); return obligation
+
+
+def void_statutory_obligation(obligation):
+    with transaction.atomic():
+        obligation=StatutoryObligation.objects.select_for_update().get(id=obligation.id)
+        if obligation.status == StatutoryObligation.STATUS.PAID: raise ValidationError("Paid statutory obligations cannot be voided.")
+        if obligation.status == StatutoryObligation.STATUS.VOID: raise ValidationError("This statutory obligation is already void.")
+        obligation.status=StatutoryObligation.STATUS.VOID; obligation.save(update_fields=["status","updated_at"]); return obligation
+
+
+def generate_wht_obligation(*, period_start, period_end, due_date, created_by, branch=None, period_label="", notes=""):
+    bills=VendorBill.objects.filter(status=VendorBill.STATUS.PAID, paid_at__date__gte=period_start, paid_at__date__lte=period_end, withholding_tax__gt=0)
+    if branch: bills=bills.filter(Q(branch=branch)|Q(service_order__branch=branch)|Q(finance_account__branch=branch))
+    unused=[b for b in bills.select_related("vendor","branch") if not StatutoryObligationItem.objects.filter(vendor_bill=b).exists()]
+    if not unused: raise ValidationError("No new paid Vendor Bills with unrecorded withholding tax were found.")
+    basis_amount=sum((b.gross_amount for b in unused),Decimal("0.00")).quantize(Decimal("0.01")); amount=sum((b.withholding_tax for b in unused),Decimal("0.00")).quantize(Decimal("0.01"))
+    with transaction.atomic():
+        o=StatutoryObligation.objects.create(obligation_type="wht",source_type="vendor_bill",branch=branch,period_label=period_label or f"{period_start} to {period_end}",period_start=period_start,period_end=period_end,basis="Paid vendor bills with explicit withholding tax",basis_amount=basis_amount,amount=amount,due_date=due_date,notes=notes or "",created_by=created_by)
+        for b in unused: StatutoryObligationItem.objects.create(obligation=o,source_type="vendor_bill",source_reference=b.bill_number,description=f"WHT withheld from {b.vendor.name}",basis_amount=b.gross_amount,liability_amount=b.withholding_tax,vendor_bill=b)
+        return o
+
+
+def generate_payroll_statutory_obligation(*, payroll_run, category, due_date, created_by, notes=""):
+    if payroll_run.status not in {PayrollRun.STATUS.APPROVED, PayrollRun.STATUS.PAID}: raise ValidationError("Payroll must be approved or paid before statutory obligations are generated.")
+    mapping={PayrollLineItem.CATEGORY.PAYE:("paye","Employee payroll PAYE deductions"),PayrollLineItem.CATEGORY.PENSION:("pension","Employee payroll pension deductions")}
+    if category not in mapping: raise ValidationError("Only PAYE or Pension can be generated from Payroll in this slice.")
+    typ,basis=mapping[category]
+    items=list(PayrollLineItem.objects.filter(payroll_line__payroll_run=payroll_run,item_type="deduction",category=category).select_related("payroll_line"))
+    unused=[i for i in items if not StatutoryObligationItem.objects.filter(payroll_line_item=i).exists()]
+    if not unused: raise ValidationError(f"No new {typ.upper()} Payroll deductions were found.")
+    amount=sum((i.amount for i in unused),Decimal("0.00")).quantize(Decimal("0.01")); basis_amount=sum((i.payroll_line.gross_pay for i in unused),Decimal("0.00")).quantize(Decimal("0.01"))
+    ps,pe=_payroll_period_bounds(payroll_run)
+    with transaction.atomic():
+        o=StatutoryObligation.objects.create(obligation_type=typ,source_type="payroll",branch=payroll_run.branch,period_label=payroll_run.period_display,period_start=ps,period_end=pe,basis=basis,basis_amount=basis_amount,amount=amount,due_date=due_date,notes=notes or "",created_by=created_by)
+        for i in unused: StatutoryObligationItem.objects.create(obligation=o,source_type="payroll_line_item",source_reference=f"{payroll_run.run_number}:{i.payroll_line.employee_number}:{category}",description=f"{i.payroll_line.employee_name} {i.name}",basis_amount=i.payroll_line.gross_pay,liability_amount=i.amount,payroll_line_item=i)
+        return o
