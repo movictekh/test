@@ -10,6 +10,7 @@ from domains.service_operations.models import (
     ClientFeedback,
     Invoice,
     Quote,
+    Service,
     ServiceOrder,
     ServiceRequest,
 )
