@@ -589,11 +589,7 @@ class PaymentListOut(Schema):
 
 
 # Stats Schemas
-class ServiceStatsOut(Schema):
-    total_services: int
-    total_orders: int
-    total_quotes: int
-    total_invoices: int
+from domains.service_operations.api.v1.schemas.reports import ServiceStatsOut
 
 
 # Error Schemas

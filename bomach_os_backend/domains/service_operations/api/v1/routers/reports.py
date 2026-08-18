@@ -17,6 +17,7 @@ from services.models.expenses import Expense
 from user.utils.perm import require_permission
 
 from ..schemas.reports import (
+    ServiceStatsOut,
     BranchPerformanceItem,
     KPISchema,
     ServicePerformanceItem,
@@ -319,3 +320,14 @@ def get_branch_performance(
         )
 
     return 200, results
+
+
+@router.get("/stats", response=ServiceStatsOut)
+@require_permission("stats", "view")
+def get_stats(request):
+    return {
+        "total_services": Service.objects.count(),
+        "total_orders": ServiceOrder.objects.count(),
+        "total_quotes": Quote.objects.count(),
+        "total_invoices": Invoice.objects.count(),
+    }

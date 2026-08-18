@@ -23,3 +23,10 @@ class BranchPerformanceItem(Schema):
     revenue: Decimal
     sla: Decimal
     csat: Decimal
+
+
+class ServiceStatsOut(Schema):
+    total_services: int
+    total_orders: int
+    total_quotes: int
+    total_invoices: int
