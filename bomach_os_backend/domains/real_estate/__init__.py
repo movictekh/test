@@ -1,0 +1,1 @@
+"""Real Estate business domain."""
