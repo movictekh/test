@@ -1,8 +1,7 @@
-from datetime import date, datetime
-from decimal import Decimal
-from typing import List, Optional
-
 from ninja import Schema
+from typing import List, Optional
+from decimal import Decimal
+from datetime import date, datetime
 
 
 class ActivityFeedItem(Schema):
@@ -11,8 +10,8 @@ class ActivityFeedItem(Schema):
     title: str
     description: str
     timestamp: datetime
-    link: str = ""
-    actor_name: str = ""
+    link: str = ''
+    actor_name: str = ''
 
 
 class ApprovalDomainSummary(Schema):
@@ -48,7 +47,7 @@ class ActionItem(Schema):
     id: int
     type: str
     title: str
-    description: str = ""
+    description: str = ''
     due_date: Optional[date] = None
-    priority: str = "normal"
-    link: str = ""
+    priority: str = 'normal'
+    link: str = ''

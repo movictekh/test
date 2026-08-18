@@ -1,21 +1,19 @@
-from datetime import datetime, time
-from typing import List, Optional
-
-from ninja import File, Schema
+from ninja import Schema, File
 from ninja.files import UploadedFile
+from typing import Optional, List
+from datetime import datetime, time
 from pydantic import field_validator
 
 
 # Business Hours Schemas
 class BusinessHoursInputSchema(Schema):
     """Schema for creating/updating a single day's business hours"""
-
     day_of_week: int  # 0=Monday, 6=Sunday
     open_time: Optional[time] = None  # e.g. "09:00:00"
     close_time: Optional[time] = None  # e.g. "17:00:00"
     is_open: bool = True
 
-    @field_validator("open_time", "close_time", mode="before")
+    @field_validator('open_time', 'close_time', mode='before')
     @classmethod
     def parse_time(cls, v):
         if isinstance(v, str):
@@ -33,7 +31,6 @@ class BusinessHoursInputSchema(Schema):
 
 class BusinessHoursSchema(Schema):
     """Schema for business hours response"""
-
     id: int
     day_of_week: int
     day_name: str
@@ -47,17 +44,16 @@ class BusinessHoursSchema(Schema):
 
     @staticmethod
     def resolve_open_time(obj):
-        return obj.open_time.strftime("%H:%M") if obj.open_time else None
+        return obj.open_time.strftime('%H:%M') if obj.open_time else None
 
     @staticmethod
     def resolve_close_time(obj):
-        return obj.close_time.strftime("%H:%M") if obj.close_time else None
+        return obj.close_time.strftime('%H:%M') if obj.close_time else None
 
 
 # Branch Schemas
 class BranchCreateSchema(Schema):
     """Schema for creating a branch"""
-
     branch_name: str
     branch_id: Optional[str] = None  # Optional, will auto-generate if not provided
     default_currency: Optional[str] = None
@@ -69,8 +65,8 @@ class BranchCreateSchema(Schema):
     city: Optional[str] = None
     lga: Optional[str] = None
     office_address: str
-    operational_status: str = "active"
-    branch_role: str = "branch"
+    operational_status: str = 'active'
+    branch_role: str = 'branch'
     contact_email: str
     contact_phone: str
     manager_id: Optional[int] = None
@@ -81,7 +77,6 @@ class BranchCreateSchema(Schema):
 
 class BranchUpdateSchema(Schema):
     """Schema for updating a branch"""
-
     branch_name: Optional[str] = None
     default_currency: Optional[str] = None
     language_preference: Optional[str] = None
@@ -106,7 +101,6 @@ class BranchUpdateSchema(Schema):
 
 class BranchSchema(Schema):
     """Schema for branch response"""
-
     id: int
     branch_name: str
     branch_id: str
@@ -143,30 +137,27 @@ class BranchSchema(Schema):
     @staticmethod
     def resolve_full_address(obj):
         return obj.full_address
-
+    
     @staticmethod
     def resolve_operational_status_display(obj):
         return obj.get_operational_status_display()
-
+    
     @staticmethod
     def resolve_branch_role_display(obj):
         return obj.get_branch_role_display()
-
+    
     @staticmethod
     def resolve_manager_name(obj):
         if obj.manager:
-            return (
-                f"{obj.manager.first_name} {obj.manager.last_name}".strip()
-                or obj.manager.email
-            )
+            return f"{obj.manager.first_name} {obj.manager.last_name}".strip() or obj.manager.email
         return None
-
+    
     @staticmethod
     def resolve_branch_file(obj):
         if obj.branch_file:
             return obj.branch_file.url
         return None
-
+    
     @staticmethod
     def resolve_is_operational(obj):
         return obj.is_operational
@@ -175,14 +166,12 @@ class BranchSchema(Schema):
 # Additional schema for operational status and branch role choices
 class ChoiceSchema(Schema):
     """Schema for choice options"""
-
     value: str
     label: str
 
 
 class BranchChoicesSchema(Schema):
     """Schema for branch choice fields"""
-
     operational_status: List[ChoiceSchema]
     branch_role: List[ChoiceSchema]
 
@@ -190,7 +179,6 @@ class BranchChoicesSchema(Schema):
 # Branch Performance Analysis Schemas
 class KeyInsightSchema(Schema):
     """Schema for individual key insight"""
-
     title: str
     value: str
     status: str  # 'high', 'medium', 'low'
@@ -199,7 +187,6 @@ class KeyInsightSchema(Schema):
 
 class RevenueTrendPointSchema(Schema):
     """Schema for revenue trend data point"""
-
     month: str
     actual_revenue: float
     projected_revenue: float
@@ -207,7 +194,6 @@ class RevenueTrendPointSchema(Schema):
 
 class BranchPerformanceMetricsSchema(Schema):
     """Schema for top-level performance metrics"""
-
     revenue_generated: str
     operational_efficiency: str
     customer_satisfaction: str
@@ -216,7 +202,6 @@ class BranchPerformanceMetricsSchema(Schema):
 
 class BranchDetailsSchema(Schema):
     """Schema for branch detail information"""
-
     branch_name: str
     location: str
     status: str
@@ -232,7 +217,6 @@ class BranchDetailsSchema(Schema):
 
 class BranchPerformanceAnalysisSchema(Schema):
     """Schema for complete branch performance analysis"""
-
     metrics: BranchPerformanceMetricsSchema
     key_insights: List[KeyInsightSchema]
     revenue_trend: List[RevenueTrendPointSchema]

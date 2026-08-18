@@ -8,76 +8,26 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("user", "0084_roledailyroutineitem_roletasktemplate"),
+        ('user', '0084_roledailyroutineitem_roletasktemplate'),
     ]
 
     operations = [
         migrations.CreateModel(
-            name="RoleResource",
+            name='RoleResource',
             fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                (
-                    "created_at",
-                    models.DateTimeField(
-                        auto_now_add=True, help_text="When this record was created"
-                    ),
-                ),
-                (
-                    "updated_at",
-                    models.DateTimeField(
-                        auto_now=True, help_text="When this record was last updated"
-                    ),
-                ),
-                ("name", models.CharField(max_length=255)),
-                ("description", models.TextField(blank=True, default="")),
-                (
-                    "kind",
-                    models.CharField(
-                        choices=[
-                            ("physical", "Physical"),
-                            ("software", "Software"),
-                            ("document", "Document"),
-                            ("skill", "Skill"),
-                        ],
-                        max_length=20,
-                    ),
-                ),
-                (
-                    "sequence",
-                    models.PositiveIntegerField(
-                        default=1,
-                        validators=[django.core.validators.MinValueValidator(1)],
-                    ),
-                ),
-                ("is_active", models.BooleanField(default=True)),
-                (
-                    "role",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        related_name="resources",
-                        to="user.role",
-                    ),
-                ),
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('created_at', models.DateTimeField(auto_now_add=True, help_text='When this record was created')),
+                ('updated_at', models.DateTimeField(auto_now=True, help_text='When this record was last updated')),
+                ('name', models.CharField(max_length=255)),
+                ('description', models.TextField(blank=True, default='')),
+                ('kind', models.CharField(choices=[('physical', 'Physical'), ('software', 'Software'), ('document', 'Document'), ('skill', 'Skill')], max_length=20)),
+                ('sequence', models.PositiveIntegerField(default=1, validators=[django.core.validators.MinValueValidator(1)])),
+                ('is_active', models.BooleanField(default=True)),
+                ('role', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='resources', to='user.role')),
             ],
             options={
-                "ordering": ["sequence", "id"],
-                "indexes": [
-                    models.Index(
-                        fields=["role", "sequence"],
-                        name="user_rolere_role_id_020d9a_idx",
-                    ),
-                    models.Index(
-                        fields=["role", "kind"], name="user_rolere_role_id_8a5ed8_idx"
-                    ),
-                ],
+                'ordering': ['sequence', 'id'],
+                'indexes': [models.Index(fields=['role', 'sequence'], name='user_rolere_role_id_020d9a_idx'), models.Index(fields=['role', 'kind'], name='user_rolere_role_id_8a5ed8_idx')],
             },
         ),
     ]

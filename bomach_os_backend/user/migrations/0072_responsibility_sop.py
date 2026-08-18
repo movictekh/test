@@ -8,161 +8,49 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("user", "0071_merge_20260314_1640"),
+        ('user', '0071_merge_20260314_1640'),
     ]
 
     operations = [
         migrations.CreateModel(
-            name="Responsibility",
+            name='Responsibility',
             fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                (
-                    "created_at",
-                    models.DateTimeField(
-                        auto_now_add=True, help_text="When this record was created"
-                    ),
-                ),
-                (
-                    "updated_at",
-                    models.DateTimeField(
-                        auto_now=True, help_text="When this record was last updated"
-                    ),
-                ),
-                ("title", models.CharField(max_length=200)),
-                ("description", models.TextField(blank=True)),
-                (
-                    "priority",
-                    models.CharField(
-                        choices=[
-                            ("High", "High"),
-                            ("Medium", "Medium"),
-                            ("Low", "Low"),
-                        ],
-                        default="Medium",
-                        max_length=20,
-                    ),
-                ),
-                ("frequency", models.CharField(blank=True, max_length=80)),
-                ("kpi_target", models.CharField(blank=True, max_length=120)),
-                (
-                    "user",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        related_name="core_responsibilities",
-                        to=settings.AUTH_USER_MODEL,
-                    ),
-                ),
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('created_at', models.DateTimeField(auto_now_add=True, help_text='When this record was created')),
+                ('updated_at', models.DateTimeField(auto_now=True, help_text='When this record was last updated')),
+                ('title', models.CharField(max_length=200)),
+                ('description', models.TextField(blank=True)),
+                ('priority', models.CharField(choices=[('High', 'High'), ('Medium', 'Medium'), ('Low', 'Low')], default='Medium', max_length=20)),
+                ('frequency', models.CharField(blank=True, max_length=80)),
+                ('kpi_target', models.CharField(blank=True, max_length=120)),
+                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='core_responsibilities', to=settings.AUTH_USER_MODEL)),
             ],
             options={
-                "verbose_name": "Core Responsibility",
-                "verbose_name_plural": "Core Responsibilities",
-                "ordering": ["priority", "title"],
-                "indexes": [
-                    models.Index(
-                        fields=["user", "priority"],
-                        name="user_respon_user_id_48ae1f_idx",
-                    )
-                ],
+                'verbose_name': 'Core Responsibility',
+                'verbose_name_plural': 'Core Responsibilities',
+                'ordering': ['priority', 'title'],
+                'indexes': [models.Index(fields=['user', 'priority'], name='user_respon_user_id_48ae1f_idx')],
             },
         ),
         migrations.CreateModel(
-            name="SOP",
+            name='SOP',
             fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                (
-                    "created_at",
-                    models.DateTimeField(
-                        auto_now_add=True, help_text="When this record was created"
-                    ),
-                ),
-                (
-                    "updated_at",
-                    models.DateTimeField(
-                        auto_now=True, help_text="When this record was last updated"
-                    ),
-                ),
-                (
-                    "title",
-                    models.CharField(help_text="SOP title / name", max_length=200),
-                ),
-                (
-                    "version",
-                    models.CharField(
-                        default="v1.0", help_text="e.g. v1.2, 2025-03", max_length=20
-                    ),
-                ),
-                (
-                    "description",
-                    models.TextField(blank=True, help_text="Full procedure / content"),
-                ),
-                (
-                    "priority",
-                    models.CharField(
-                        choices=[
-                            ("Critical", "Critical"),
-                            ("High", "High"),
-                            ("Medium", "Medium"),
-                            ("Low", "Low"),
-                        ],
-                        default="Medium",
-                        max_length=20,
-                    ),
-                ),
-                (
-                    "is_up_to_date",
-                    models.BooleanField(default=True, help_text="Still current"),
-                ),
-                (
-                    "department",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="department_sops",
-                        to="user.department",
-                    ),
-                ),
-                (
-                    "unit",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="unit_sops",
-                        to="user.unit",
-                    ),
-                ),
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('created_at', models.DateTimeField(auto_now_add=True, help_text='When this record was created')),
+                ('updated_at', models.DateTimeField(auto_now=True, help_text='When this record was last updated')),
+                ('title', models.CharField(help_text='SOP title / name', max_length=200)),
+                ('version', models.CharField(default='v1.0', help_text='e.g. v1.2, 2025-03', max_length=20)),
+                ('description', models.TextField(blank=True, help_text='Full procedure / content')),
+                ('priority', models.CharField(choices=[('Critical', 'Critical'), ('High', 'High'), ('Medium', 'Medium'), ('Low', 'Low')], default='Medium', max_length=20)),
+                ('is_up_to_date', models.BooleanField(default=True, help_text='Still current')),
+                ('department', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='department_sops', to='user.department')),
+                ('unit', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='unit_sops', to='user.unit')),
             ],
             options={
-                "verbose_name": "SOP",
-                "verbose_name_plural": "SOPs",
-                "ordering": ["-updated_at"],
-                "indexes": [
-                    models.Index(
-                        fields=["department", "unit"],
-                        name="user_sop_departm_9c385a_idx",
-                    ),
-                    models.Index(
-                        fields=["priority", "is_up_to_date"],
-                        name="user_sop_priorit_7989a2_idx",
-                    ),
-                ],
+                'verbose_name': 'SOP',
+                'verbose_name_plural': 'SOPs',
+                'ordering': ['-updated_at'],
+                'indexes': [models.Index(fields=['department', 'unit'], name='user_sop_departm_9c385a_idx'), models.Index(fields=['priority', 'is_up_to_date'], name='user_sop_priorit_7989a2_idx')],
             },
         ),
     ]

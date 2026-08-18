@@ -1,16 +1,20 @@
+from ninja import Schema
+from typing import List, Literal, Optional
 from datetime import date, datetime
 from decimal import Decimal
-from typing import List, Literal, Optional
-
-from ninja import Schema
 from pydantic import Field, field_validator
 
 from hr.models.asset import Asset
 
-ASSET_TYPE_MAP = {value.lower(): value for value, _label in Asset.ASSET_TYPE_CHOICES}
-ASSET_TYPE_MAP.update(
-    {label.lower(): value for value, label in Asset.ASSET_TYPE_CHOICES}
-)
+
+ASSET_TYPE_MAP = {
+    value.lower(): value
+    for value, _label in Asset.ASSET_TYPE_CHOICES
+}
+ASSET_TYPE_MAP.update({
+    label.lower(): value
+    for value, label in Asset.ASSET_TYPE_CHOICES
+})
 
 
 class AssetDocument(Schema):
@@ -32,7 +36,6 @@ def normalize_asset_type(value: Optional[str]) -> Optional[str]:
         raise ValueError(f"Invalid asset_type. Must be one of: {valid_types}")
     return normalized
 
-
 class AssetCreate(Schema):
     name: str
     asset_type: str
@@ -43,7 +46,7 @@ class AssetCreate(Schema):
     value: Optional[Decimal] = None
     vendor: Optional[str] = None
     invoice_number: Optional[str] = None
-    status: Optional[str] = "available"
+    status: Optional[str] = 'available'
     warranty_expiry_date: Optional[date] = None
     documents: List[AssetDocument] = Field(default_factory=list)
     notes: Optional[str] = None
@@ -55,7 +58,6 @@ class AssetCreate(Schema):
     @classmethod
     def validate_asset_type(cls, value):
         return normalize_asset_type(value)
-
 
 class AssetUpdate(Schema):
     name: Optional[str] = None
@@ -79,7 +81,6 @@ class AssetUpdate(Schema):
     @classmethod
     def validate_asset_type(cls, value):
         return normalize_asset_type(value)
-
 
 class AssetOut(Schema):
     name: str

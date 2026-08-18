@@ -1,9 +1,8 @@
+import jwt
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Dict, Optional, Tuple
-
-import jwt
 from django.conf import settings
+from typing import Dict, Optional, Tuple
 
 
 class JWTService:
@@ -16,37 +15,52 @@ class JWTService:
         access_token = cls._create_access_token(user_id)
         refresh_token = cls._create_refresh_token(user_id)
 
-        return {"access": access_token, "refresh": refresh_token}
+        return {
+            'access': access_token,
+            'refresh': refresh_token
+        }
 
     @classmethod
     def _create_access_token(cls, user_id: int) -> str:
         now = datetime.now(timezone.utc)
         payload = {
-            "user_id": user_id,
-            "token_type": "access",
-            "exp": now + cls.ACCESS_TOKEN_LIFETIME,
-            "iat": now,
-            "jti": str(uuid.uuid4()),
+            'user_id': user_id,
+            'token_type': 'access',
+            'exp': now + cls.ACCESS_TOKEN_LIFETIME,
+            'iat': now,
+            'jti': str(uuid.uuid4()),
         }
-        return jwt.encode(payload, settings.SECRET_KEY, algorithm="HS256")
+        return jwt.encode(
+            payload,
+            settings.SECRET_KEY,
+            algorithm='HS256'
+        )
 
     @classmethod
     def _create_refresh_token(cls, user_id: int) -> str:
         now = datetime.now(timezone.utc)
         payload = {
-            "user_id": user_id,
-            "token_type": "refresh",
-            "exp": now + cls.REFRESH_TOKEN_LIFETIME,
-            "iat": now,
-            "jti": str(uuid.uuid4()),
+            'user_id': user_id,
+            'token_type': 'refresh',
+            'exp': now + cls.REFRESH_TOKEN_LIFETIME,
+            'iat': now,
+            'jti': str(uuid.uuid4()),
         }
-        return jwt.encode(payload, settings.SECRET_KEY, algorithm="HS256")
+        return jwt.encode(
+            payload,
+            settings.SECRET_KEY,
+            algorithm='HS256'
+        )
 
     @classmethod
     def verify_token(cls, token: str) -> Tuple[bool, Optional[int]]:
         try:
-            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
-            user_id = payload.get("user_id")
+            payload = jwt.decode(
+                token,
+                settings.SECRET_KEY,
+                algorithms=['HS256']
+            )
+            user_id = payload.get('user_id')
             return True, user_id
         except jwt.ExpiredSignatureError:
             return False, None
@@ -61,11 +75,13 @@ class JWTService:
 
         try:
             payload = jwt.decode(
-                refresh_token, settings.SECRET_KEY, algorithms=["HS256"]
+                refresh_token,
+                settings.SECRET_KEY,
+                algorithms=['HS256']
             )
 
             # Verify it's actually a refresh token
-            if payload.get("token_type") != "refresh":
+            if payload.get('token_type') != 'refresh':
                 return False, None
 
             new_access_token = cls._create_access_token(user_id)

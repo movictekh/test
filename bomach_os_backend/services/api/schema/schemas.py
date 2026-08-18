@@ -1,8 +1,7 @@
+from ninja import Schema
+from typing import Optional, List, Dict
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Dict, List, Optional
-
-from ninja import Schema
 
 
 # ServiceCategory Schemas
@@ -483,9 +482,7 @@ class InvoiceUpdate(Schema):
 class InvoiceFromQuoteIn(Schema):
     due_date: date
     payment_schedule: str = "Deposit / mobilisation"
-    payment_instructions: str = (
-        "Pay through client wallet, payment gateway, bank transfer or approved POS."
-    )
+    payment_instructions: str = "Pay through client wallet, payment gateway, bank transfer or approved POS."
     notes: Optional[str] = ""
 
 
@@ -589,7 +586,11 @@ class PaymentListOut(Schema):
 
 
 # Stats Schemas
-from domains.service_operations.api.v1.schemas.reports import ServiceStatsOut
+class ServiceStatsOut(Schema):
+    total_services: int
+    total_orders: int
+    total_quotes: int
+    total_invoices: int
 
 
 # Error Schemas

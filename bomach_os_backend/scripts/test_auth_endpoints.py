@@ -59,8 +59,8 @@ django.setup()
 from user.models import OTPCode, TokenBlacklist, User  # noqa: E402
 from user.models.employee import Employee  # noqa: E402
 from user.models.role import Role  # noqa: E402
-from user.services.auth_service import AuthService  # noqa: E402
 from user.services.jwt_service import JWTService  # noqa: E402
+from user.services.auth_service import AuthService  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Demo accounts
@@ -182,11 +182,7 @@ def _truncate(data: Any, max_len: int = 4000) -> Any:
                 out[k] = sample
             elif isinstance(v, str) and k.endswith("token") and len(v) > 80:
                 out[k] = v[:48] + "…[truncated]"
-            elif (
-                isinstance(v, str)
-                and k in ("access_token", "refresh_token", "session_token")
-                and len(v) > 80
-            ):
+            elif isinstance(v, str) and k in ("access_token", "refresh_token", "session_token") and len(v) > 80:
                 out[k] = v[:48] + "…[truncated]"
             else:
                 out[k] = _truncate(v, max_len)
@@ -282,7 +278,9 @@ def ensure_demo_staff(users: dict[str, User]) -> dict[str, Any]:
 
 def latest_otp(user: User, intent: str) -> Optional[OTPCode]:
     return (
-        OTPCode.objects.filter(user=user, intent=intent).order_by("-created_at").first()
+        OTPCode.objects.filter(user=user, intent=intent)
+        .order_by("-created_at")
+        .first()
     )
 
 
@@ -344,10 +342,7 @@ class AuthTester:
             name=name,
             method=method.upper(),
             path=path,
-            request_headers={
-                k: ("Bearer …" if k.lower() == "authorization" else v)
-                for k, v in headers.items()
-            },
+            request_headers={k: ("Bearer …" if k.lower() == "authorization" else v) for k, v in headers.items()},
             request_body=body,
             status=resp.status_code,
             response_body=resp_body,
@@ -383,16 +378,8 @@ class AuthTester:
             body={"email": active.email, "password": DEMO_PASSWORD},
             expected_status=200,
         )
-        access = (
-            login.response_body.get("access_token")
-            if isinstance(login.response_body, dict)
-            else None
-        )
-        refresh = (
-            login.response_body.get("refresh_token")
-            if isinstance(login.response_body, dict)
-            else None
-        )
+        access = login.response_body.get("access_token") if isinstance(login.response_body, dict) else None
+        refresh = login.response_body.get("refresh_token") if isinstance(login.response_body, dict) else None
         self._test_refresh(refresh)
 
         print("\n=== ME / VERIFY-TOKEN ===")
@@ -427,11 +414,7 @@ class AuthTester:
             body={"email": active.email, "password": DEMO_PASSWORD},
             expected_status=200,
         )
-        access = (
-            login.response_body.get("access_token")
-            if isinstance(login.response_body, dict)
-            else None
-        )
+        access = login.response_body.get("access_token") if isinstance(login.response_body, dict) else None
         if not access:
             print("    WARNING: no access token — skipped role/permission cases")
             return
@@ -445,11 +428,7 @@ class AuthTester:
             expected_status=200,
             notes="Frontend then loads GET /roles/employees/{user.id} with this id.",
         )
-        user_id = (
-            me.response_body.get("id")
-            if isinstance(me.response_body, dict)
-            else active.id
-        )
+        user_id = me.response_body.get("id") if isinstance(me.response_body, dict) else active.id
 
         self.call(
             "GET employee role + full permissions (own)",
@@ -767,11 +746,7 @@ class AuthTester:
             body={"email": self.users["active"].email, "password": DEMO_PASSWORD},
             expected_status=200,
         )
-        tok = (
-            login.response_body.get("access_token")
-            if isinstance(login.response_body, dict)
-            else None
-        )
+        tok = login.response_body.get("access_token") if isinstance(login.response_body, dict) else None
         if not tok:
             return
         self.call(
@@ -840,11 +815,7 @@ class AuthTester:
             "reset-password short password",
             "POST",
             "/api/v1/auth/reset-password",
-            body={
-                "email": active.email,
-                "code": code or "1234",
-                "new_password": "short",
-            },
+            body={"email": active.email, "code": code or "1234", "new_password": "short"},
             expected_status=422,
             notes="new_password min_length=8 (Django AUTH_PASSWORD_VALIDATORS are NOT applied).",
         )
@@ -965,11 +936,7 @@ class AuthTester:
             body={"email": active.email, "password": DEMO_PASSWORD},
             expected_status=200,
         )
-        access = (
-            login.response_body.get("access_token")
-            if isinstance(login.response_body, dict)
-            else None
-        )
+        access = login.response_body.get("access_token") if isinstance(login.response_body, dict) else None
         if not access:
             return
 
@@ -1082,9 +1049,7 @@ class AuthTester:
                 expected_status=400,
             )
         else:
-            print(
-                "    WARNING: skipped verify-2fa success (no session/OTP — often email send 500)"
-            )
+            print("    WARNING: skipped verify-2fa success (no session/OTP — often email send 500)")
 
         # Disable 2FA on active again so demo stays clean
         self.call(
@@ -1168,9 +1133,7 @@ class AuthTester:
             body={"email": active.email, "password": DEMO_PASSWORD},
             expected_status=200,
         )
-        if isinstance(login.response_body, dict) and login.response_body.get(
-            "refresh_token"
-        ):
+        if isinstance(login.response_body, dict) and login.response_body.get("refresh_token"):
             self.call(
                 "GET /me with refresh token as Bearer",
                 "GET",
@@ -1193,13 +1156,16 @@ STATIC_CATALOG: list[RouteCatalog] = [
         path="/api/v1/auth/login",
         auth="None",
         purpose="Authenticate with email + password. Issues JWTs, or a 2FA session if enabled.",
-        request_schema=textwrap.dedent("""\
+        request_schema=textwrap.dedent(
+            """\
             {
               "email": "string (must match ^[^@]+@[^@]+\\.[^@]+$, lowercased)",
               "password": "string (min_length=1)"
-            }"""),
+            }"""
+        ),
         success_shapes=[
-            textwrap.dedent("""\
+            textwrap.dedent(
+                """\
                 200 — no 2FA
                 {
                   "success": true,
@@ -1207,15 +1173,18 @@ STATIC_CATALOG: list[RouteCatalog] = [
                   "refresh_token": "<jwt>",
                   "user_id": 1,
                   "detail": "Login successful"
-                }"""),
-            textwrap.dedent("""\
+                }"""
+            ),
+            textwrap.dedent(
+                """\
                 200 — 2FA required
                 {
                   "success": true,
                   "requires_2fa": true,
                   "session_token": "<2fa_session jwt, ~10 min>",
                   "detail": "A verification code has been sent to your email"
-                }"""),
+                }"""
+            ),
         ],
         error_shapes=[
             '401 {"detail": "Invalid credentials"}',
@@ -1235,13 +1204,16 @@ STATIC_CATALOG: list[RouteCatalog] = [
         path="/api/v1/auth/verify-2fa",
         auth="None",
         purpose="Complete login after 2FA by submitting session_token + 6-digit email OTP.",
-        request_schema=textwrap.dedent("""\
+        request_schema=textwrap.dedent(
+            """\
             {
               "session_token": "string (from login requires_2fa response)",
               "code": "string (exactly 6 digits)"
-            }"""),
+            }"""
+        ),
         success_shapes=[
-            textwrap.dedent("""\
+            textwrap.dedent(
+                """\
                 200
                 {
                   "success": true,
@@ -1249,7 +1221,8 @@ STATIC_CATALOG: list[RouteCatalog] = [
                   "refresh_token": "<jwt>",
                   "user_id": 1,
                   "detail": "Two-factor authentication successful"
-                }"""),
+                }"""
+            ),
         ],
         error_shapes=[
             '401 {"detail": "Invalid session token"}',
@@ -1333,18 +1306,17 @@ STATIC_CATALOG: list[RouteCatalog] = [
         purpose="Exchange a refresh JWT for a new access JWT (no rotation).",
         request_schema='{"refresh_token": "string"}',
         success_shapes=[
-            textwrap.dedent("""\
+            textwrap.dedent(
+                """\
                 200
                 {
                   "success": true,
                   "access_token": "<new jwt>",
                   "detail": "Token refreshed successfully"
-                }"""),
+                }"""
+            ),
         ],
-        error_shapes=[
-            '401 {"detail": "Invalid or expired refresh token"}',
-            "422 validation",
-        ],
+        error_shapes=['401 {"detail": "Invalid or expired refresh token"}', "422 validation"],
         frontend_notes=(
             "On 401 → force re-login. Refresh path does not check the blacklist. "
             "Access lifetime ≈ 1000 minutes; refresh ≈ 90 days."
@@ -1356,9 +1328,7 @@ STATIC_CATALOG: list[RouteCatalog] = [
         auth="None",
         purpose="Create a password-reset OTP and email it.",
         request_schema='{"email": "string (validated + lowercased)"}',
-        success_shapes=[
-            '200 {"success": true, "detail": "Password reset code sent to your email"}'
-        ],
+        success_shapes=['200 {"success": true, "detail": "Password reset code sent to your email"}'],
         error_shapes=[
             '404 {"detail": "User with this email not found"}',
             '500 {"detail": "Error creating reset code: …"}',
@@ -1374,15 +1344,15 @@ STATIC_CATALOG: list[RouteCatalog] = [
         path="/api/v1/auth/reset-password",
         auth="None",
         purpose="Verify reset OTP and set a new password.",
-        request_schema=textwrap.dedent("""\
+        request_schema=textwrap.dedent(
+            """\
             {
               "email": "string",
               "code": "string (4–12 chars)",
               "new_password": "string (min_length=8)"
-            }"""),
-        success_shapes=[
-            '200 {"success": true, "detail": "Password reset successfully"}'
-        ],
+            }"""
+        ),
+        success_shapes=['200 {"success": true, "detail": "Password reset successfully"}'],
         error_shapes=[
             '400 {"detail": "User not found"}',
             '400 {"detail": "Reset code not found or expired"}',
@@ -1405,7 +1375,8 @@ STATIC_CATALOG: list[RouteCatalog] = [
         purpose="Current user profile snapshot.",
         request_schema="(no body)",
         success_shapes=[
-            textwrap.dedent("""\
+            textwrap.dedent(
+                """\
                 200
                 {
                   "id": 1,
@@ -1416,7 +1387,8 @@ STATIC_CATALOG: list[RouteCatalog] = [
                   "phone_number": null|"...",
                   "is_verified": false,
                   "created_at": "ISO-8601"
-                }"""),
+                }"""
+            ),
         ],
         error_shapes=[
             '404 {"detail": "User not found"}',
@@ -1432,18 +1404,18 @@ STATIC_CATALOG: list[RouteCatalog] = [
         purpose="Confirm the Bearer token is still valid.",
         request_schema="(no body)",
         success_shapes=[
-            textwrap.dedent("""\
+            textwrap.dedent(
+                """\
                 200 (only reached if authenticator passes)
                 {
                   "success": true,
                   "valid": true|false,
                   "user_id": 1|null,
                   "detail": "Token is valid" | "Token is invalid or expired" | "No token provided"
-                }"""),
+                }"""
+            ),
         ],
-        error_shapes=[
-            '401 before handler if token missing/invalid (e.g. {"detail":"Unauthorized"})'
-        ],
+        error_shapes=['401 before handler if token missing/invalid (e.g. {"detail":"Unauthorized"})'],
         frontend_notes=(
             "Because the route uses the global JWTAuthenticator, missing/invalid tokens "
             "usually never reach the handler — you get 401 instead of valid=false. "
@@ -1461,7 +1433,8 @@ STATIC_CATALOG: list[RouteCatalog] = [
         ),
         request_schema="(no body) — path param user_id: int (User.id, not Employee.id)",
         success_shapes=[
-            textwrap.dedent("""\
+            textwrap.dedent(
+                """\
                 200
                 {
                   "id": 1,
@@ -1474,7 +1447,8 @@ STATIC_CATALOG: list[RouteCatalog] = [
                   },
                   "created_at": "ISO-8601",
                   "updated_at": "ISO-8601"
-                }"""),
+                }"""
+            ),
         ],
         error_shapes=[
             '401 {"detail": "Unauthorized"} / JWT errors',
@@ -1499,7 +1473,8 @@ STATIC_CATALOG: list[RouteCatalog] = [
         purpose="Full catalog of valid resources and actions (PERMISSIONS_MAP) for admin UI grids.",
         request_schema="(no body)",
         success_shapes=[
-            textwrap.dedent("""\
+            textwrap.dedent(
+                """\
                 200
                 {
                   "permissions_map": {
@@ -1507,9 +1482,10 @@ STATIC_CATALOG: list[RouteCatalog] = [
                     "roles": ["create", "view", "list", "update", "delete", "view_own"],
                     "...": ["..."]
                   }
-                }"""),
+                }"""
+            ),
         ],
-        error_shapes=["401 when unauthenticated"],
+        error_shapes=['401 when unauthenticated'],
         frontend_notes=(
             "Not the current user's grants — the universe of possible permissions. "
             "Use GET /roles/employees/{id} (or /me/authority-limits) for what the user actually has."
@@ -1522,7 +1498,8 @@ STATIC_CATALOG: list[RouteCatalog] = [
         purpose="Current user's role permissions flattened into labeled authority-limit items.",
         request_schema="(no body)",
         success_shapes=[
-            textwrap.dedent("""\
+            textwrap.dedent(
+                """\
                 200
                 {
                   "items": [
@@ -1533,7 +1510,8 @@ STATIC_CATALOG: list[RouteCatalog] = [
                       "helper_text": "List orders."
                     }
                   ]
-                }"""),
+                }"""
+            ),
         ],
         error_shapes=[
             "401 unauthenticated",
@@ -1550,7 +1528,8 @@ STATIC_CATALOG: list[RouteCatalog] = [
 ]
 
 
-AUTH_ERROR_REFERENCE = textwrap.dedent("""\
+AUTH_ERROR_REFERENCE = textwrap.dedent(
+    """\
     ## Shared auth / JWT errors (`JWTAuthenticator`)
 
     Header: `Authorization: Bearer <access_token>`
@@ -1590,7 +1569,8 @@ AUTH_ERROR_REFERENCE = textwrap.dedent("""\
     | Employee has `role=null` | 403 | `No role assigned.` |
     | Missing resource/action on role | 403 | `You do not have permission to perform this action.` |
     | `view_own` but object owned by someone else | 403 | `You do not have permission to access this resource.` |
-    """)
+    """
+)
 
 
 def attach_live_cases(catalog: list[RouteCatalog], cases: list[CaseResult]) -> None:
@@ -1619,9 +1599,7 @@ def write_markdown(
     lines.append("")
     lines.append(f"Generated: **{now}**  ")
     lines.append(f"Base URL: `{base_url}`  ")
-    lines.append(
-        f"Live cases: **{passed} matched expected status**, **{failed} mismatched** (of {len(cases)})."
-    )
+    lines.append(f"Live cases: **{passed} matched expected status**, **{failed} mismatched** (of {len(cases)}).")
     lines.append("")
     lines.append("## How to re-run")
     lines.append("")
@@ -1743,9 +1721,7 @@ def write_markdown(
     for c in cases:
         exp = c.expected_status if c.expected_status is not None else "—"
         flag = "✓" if c.ok else "✗"
-        lines.append(
-            f"| {flag} {c.status} | {exp} | {c.name} | `{c.method} {c.path}` |"
-        )
+        lines.append(f"| {flag} {c.status} | {exp} | {c.name} | `{c.method} {c.path}` |")
     lines.append("")
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1754,9 +1730,7 @@ def write_markdown(
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Test auth endpoints and write MD catalog"
-    )
+    parser = argparse.ArgumentParser(description="Test auth endpoints and write MD catalog")
     parser.add_argument("--base-url", default="http://127.0.0.1:8000")
     parser.add_argument(
         "--out",
@@ -1768,16 +1742,11 @@ def main() -> int:
     try:
         health = requests.get(f"{args.base_url.rstrip('/')}/api/v1/docs/", timeout=5)
         if health.status_code >= 500:
-            print(
-                f"Server at {args.base_url} returned {health.status_code}",
-                file=sys.stderr,
-            )
+            print(f"Server at {args.base_url} returned {health.status_code}", file=sys.stderr)
             return 1
     except requests.RequestException as exc:
         print(f"Cannot reach {args.base_url}: {exc}", file=sys.stderr)
-        print(
-            "Start the Django server first, then re-run this script.", file=sys.stderr
-        )
+        print("Start the Django server first, then re-run this script.", file=sys.stderr)
         return 1
 
     tester = AuthTester(args.base_url)
@@ -1791,9 +1760,7 @@ def main() -> int:
 
     failed = [c for c in tester.cases if not c.ok]
     if failed:
-        print(
-            f"\n{len(failed)} case(s) did not match expected status (still documented)."
-        )
+        print(f"\n{len(failed)} case(s) did not match expected status (still documented).")
         return 0  # catalog is the deliverable; mismatches are useful signal
     print("\nAll expected statuses matched.")
     return 0

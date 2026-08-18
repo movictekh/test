@@ -1,10 +1,9 @@
 from functools import wraps
-
 from django.core.exceptions import ValidationError
 from ninja.errors import HttpError
 
-# ── Role-based permission system with branch scoping ─────────────────────────
 
+# ── Role-based permission system with branch scoping ─────────────────────────
 
 def require_permission(resource, action, owner_lookup=None):
     """
@@ -34,7 +33,6 @@ def require_permission(resource, action, owner_lookup=None):
         @require_permission("leave_requests", "view", owner_lookup="employee__user")
         def get_leave(request, leave_id: int):
     """
-
     def decorator(func):
         @wraps(func)
         def wrapper(request, *args, **kwargs):
@@ -70,20 +68,17 @@ def require_permission(resource, action, owner_lookup=None):
             request._perm_branch_ids = branch_ids
 
             if not branch_ids:
-                request._perm_scope = "company"
+                request._perm_scope = 'company'
             else:
-                request._perm_scope = "branches"
+                request._perm_scope = 'branches'
 
             return func(request, *args, **kwargs)
-
         return wrapper
-
     return decorator
 
 
-def scope_queryset(
-    request, qs, owner_field=None, branch_field=None, department_field=None
-):
+def scope_queryset(request, qs, owner_field=None, branch_field=None,
+                   department_field=None):
     """
     Filter a queryset based on the permission scope set by ``@require_permission``.
 
@@ -98,24 +93,24 @@ def scope_queryset(
 
     Returns the filtered queryset.
     """
-    employee = getattr(request, "_perm_employee", None)
+    employee = getattr(request, '_perm_employee', None)
     if not employee:
         return qs
 
     # Owner-only access: show only their own records
-    if getattr(request, "_perm_owner_only", False):
+    if getattr(request, '_perm_owner_only', False):
         if owner_field:
             return qs.filter(**{owner_field: request.user})
         return qs.none()
 
     # Broad permission: scope by role's branches
-    scope = getattr(request, "_perm_scope", "branches")
+    scope = getattr(request, '_perm_scope', 'branches')
 
-    if scope == "company":
+    if scope == 'company':
         return qs
 
     # Branch-scoped: filter to the role's branches
-    branch_ids = getattr(request, "_perm_branch_ids", [])
+    branch_ids = getattr(request, '_perm_branch_ids', [])
     if branch_ids and branch_field:
         return qs.filter(**{f"{branch_field}__in": branch_ids})
 
@@ -139,7 +134,7 @@ def check_obj_permission(request, obj, owner_field=None):
         leave = get_object_or_404(LeaveRequest, id=leave_id)
         check_obj_permission(request, leave, owner_field="employee.user")
     """
-    if not getattr(request, "_perm_owner_only", False):
+    if not getattr(request, '_perm_owner_only', False):
         return  # has broad permission — nothing to check
 
     if not owner_field:
@@ -147,10 +142,13 @@ def check_obj_permission(request, obj, owner_field=None):
 
     # Walk the dot-separated path
     current = obj
-    for attr in owner_field.split("."):
+    for attr in owner_field.split('.'):
         current = getattr(current, attr, None)
         if current is None:
-            raise HttpError(403, "You do not have permission to access this resource.")
+            raise HttpError(
+                403, "You do not have permission to access this resource."
+            )
 
     if current != request.user:
         raise HttpError(403, "You do not have permission to access this resource.")
+

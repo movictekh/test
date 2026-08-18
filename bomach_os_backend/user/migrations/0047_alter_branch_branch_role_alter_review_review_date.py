@@ -7,33 +7,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("user", "0046_employee_employer_contribution_and_more"),
+        ('user', '0046_employee_employer_contribution_and_more'),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name="branch",
-            name="branch_role",
-            field=models.CharField(
-                choices=[
-                    ("branch", "Branch"),
-                    ("state_headquarters", "State Headquarters"),
-                    (
-                        "interstate_regional_headquarters",
-                        "Inter State Regional Headquarters",
-                    ),
-                    ("national_headquarters", "National Headquarters"),
-                ],
-                default="branch",
-                max_length=50,
-                verbose_name="Branch Role",
-            ),
+            model_name='branch',
+            name='branch_role',
+            field=models.CharField(choices=[('branch', 'Branch'), ('state_headquarters', 'State Headquarters'), ('interstate_regional_headquarters', 'Inter State Regional Headquarters'), ('national_headquarters', 'National Headquarters')], default='branch', max_length=50, verbose_name='Branch Role'),
         ),
         migrations.AlterField(
-            model_name="review",
-            name="review_date",
-            field=models.DateField(
-                default=django.utils.timezone.localdate, help_text="Date of the review"
-            ),
+            model_name='review',
+            name='review_date',
+            field=models.DateField(default=django.utils.timezone.localdate, help_text='Date of the review'),
         ),
     ]

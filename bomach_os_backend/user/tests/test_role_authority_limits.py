@@ -1,8 +1,8 @@
 from django.test import TestCase
 
 from user.models.employee import Employee
-from user.models.user import User
 from user.tests.helpers import RoleAPITestMixin
+from user.models.user import User
 
 
 class RoleAuthorityLimitsAPITests(RoleAPITestMixin, TestCase):

@@ -1,19 +1,12 @@
 import json
-
 from django.test import TestCase
 
 from user.models.role_sop import RoleSOP
 from user.models.role_training_requirements import RoleTrainingRequirement
-from user.tests.helpers import (
-    RoleAPITestMixin,
-    SOPFactoryMixin,
-    TrainingProgramFactoryMixin,
-)
+from user.tests.helpers import RoleAPITestMixin, SOPFactoryMixin, TrainingProgramFactoryMixin
 
 
-class RoleTrainingRequirementAPITests(
-    RoleAPITestMixin, TrainingProgramFactoryMixin, TestCase
-):
+class RoleTrainingRequirementAPITests(RoleAPITestMixin, TrainingProgramFactoryMixin, TestCase):
     def test_can_create_list_and_patch_role_training_requirements(self):
         admin_role = self.create_role(
             "Training Requirement Admin",
@@ -42,9 +35,7 @@ class RoleTrainingRequirementAPITests(
         self.assertEqual(response.status_code, 201)
         created = response.json()
         self.assertEqual(created["training_program_id"], training_program.id)
-        self.assertEqual(
-            created["training_program"]["program_name"], training_program.program_name
-        )
+        self.assertEqual(created["training_program"]["program_name"], training_program.program_name)
         self.assertEqual(created["requirement_type"], "mandatory")
         self.assertEqual(created["sequence"], 1)
 
@@ -56,22 +47,12 @@ class RoleTrainingRequirementAPITests(
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data["count"], 1)
-        self.assertEqual(
-            data["items"][0]["training_program"]["provider"], training_program.provider
-        )
+        self.assertEqual(data["items"][0]["training_program"]["provider"], training_program.provider)
 
-        next_program = self.create_training_program(
-            "Sales Training", provider="External Vendor"
-        )
+        next_program = self.create_training_program("Sales Training", provider="External Vendor")
         response = self.client.patch(
             f"/api/v1/roles/{target_role.id}/training-requirements/{created['id']}",
-            data=json.dumps(
-                {
-                    "training_program_id": next_program.id,
-                    "requirement_type": "continuous",
-                    "is_active": False,
-                }
-            ),
+            data=json.dumps({"training_program_id": next_program.id, "requirement_type": "continuous", "is_active": False}),
             content_type="application/json",
             **self.auth_headers(admin),
         )
@@ -109,9 +90,7 @@ class RoleTrainingRequirementAPITests(
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data["count"], 1)
-        self.assertEqual(
-            data["items"][0]["training_program"]["program_name"], "Bomach OS Training"
-        )
+        self.assertEqual(data["items"][0]["training_program"]["program_name"], "Bomach OS Training")
 
     def test_employee_can_get_grouped_own_training_requirements(self):
         employee_role = self.create_role(
@@ -147,14 +126,9 @@ class RoleTrainingRequirementAPITests(
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(len(data["mandatory"]), 1)
-        self.assertEqual(
-            data["mandatory"][0]["training_program"]["program_name"],
-            "Bomach OS Training",
-        )
+        self.assertEqual(data["mandatory"][0]["training_program"]["program_name"], "Bomach OS Training")
         self.assertEqual(len(data["continuous"]), 1)
-        self.assertEqual(
-            data["continuous"][0]["training_program"]["program_name"], "Sales Training"
-        )
+        self.assertEqual(data["continuous"][0]["training_program"]["program_name"], "Sales Training")
 
     def test_training_requirement_sequence_auto_increments_when_omitted(self):
         admin_role = self.create_role(
@@ -173,23 +147,13 @@ class RoleTrainingRequirementAPITests(
 
         first_response = self.client.post(
             f"/api/v1/roles/{target_role.id}/training-requirements",
-            data=json.dumps(
-                {
-                    "training_program_id": first_program.id,
-                    "requirement_type": "mandatory",
-                }
-            ),
+            data=json.dumps({"training_program_id": first_program.id, "requirement_type": "mandatory"}),
             content_type="application/json",
             **self.auth_headers(admin),
         )
         second_response = self.client.post(
             f"/api/v1/roles/{target_role.id}/training-requirements",
-            data=json.dumps(
-                {
-                    "training_program_id": second_program.id,
-                    "requirement_type": "continuous",
-                }
-            ),
+            data=json.dumps({"training_program_id": second_program.id, "requirement_type": "continuous"}),
             content_type="application/json",
             **self.auth_headers(admin),
         )

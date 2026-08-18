@@ -1,7 +1,6 @@
-from datetime import datetime
-from typing import List, Optional
-
 from ninja import Schema
+from typing import Optional, List
+from datetime import datetime
 
 
 class AnnouncementBranchSchema(Schema):
@@ -18,8 +17,8 @@ class AnnouncementDepartmentSchema(Schema):
 class AnnouncementCreateSchema(Schema):
     title: str
     content: str
-    announcement_type: str = "general"
-    priority: str = "normal"
+    announcement_type: str = 'general'
+    priority: str = 'normal'
     branch_ids: List[int] = []
     department_ids: List[int] = []
     is_active: bool = True
@@ -91,10 +90,7 @@ class AnnouncementSchema(Schema):
     @staticmethod
     def resolve_created_by_name(obj):
         if obj.created_by:
-            return (
-                f"{obj.created_by.first_name} {obj.created_by.last_name}".strip()
-                or obj.created_by.email
-            )
+            return f"{obj.created_by.first_name} {obj.created_by.last_name}".strip() or obj.created_by.email
         return None
 
 

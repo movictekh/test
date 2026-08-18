@@ -6,31 +6,26 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("hr", "0008_alter_dailyworkreport_employee"),
+        ('hr', '0008_alter_dailyworkreport_employee'),
     ]
 
     operations = [
         migrations.RenameField(
-            model_name="dailyworkreport",
-            old_name="achievements",
-            new_name="work_activities",
+            model_name='dailyworkreport',
+            old_name='achievements',
+            new_name='work_activities',
         ),
         migrations.RemoveField(
-            model_name="dailyworkreport",
-            name="challenges",
+            model_name='dailyworkreport',
+            name='challenges',
         ),
         migrations.RemoveField(
-            model_name="dailyworkreport",
-            name="mood",
+            model_name='dailyworkreport',
+            name='mood',
         ),
         migrations.AddField(
-            model_name="dailyworkreport",
-            name="operational_base",
-            field=models.CharField(
-                blank=True,
-                help_text="Challenges faced today",
-                max_length=500,
-                null=True,
-            ),
+            model_name='dailyworkreport',
+            name='operational_base',
+            field=models.CharField(blank=True, help_text='Challenges faced today', max_length=500, null=True),
         ),
     ]

@@ -1,14 +1,12 @@
-from datetime import datetime
-from typing import Any, Dict, Optional
-
 from ninja import Schema
+from typing import Optional, Any, Dict
+from datetime import datetime
 
 from user.models.user import User
 
 
 class UserInfo(Schema):
     """User information for audit log entries"""
-
     id: Optional[int] = None
     email: Optional[str] = None
     full_name: Optional[str] = None
@@ -23,7 +21,6 @@ class UserInfo(Schema):
 
 class AuditLogResponse(Schema):
     """Schema for a single audit log entry"""
-
     id: int
     activity: str
     audit_type: str

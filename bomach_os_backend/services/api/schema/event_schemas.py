@@ -1,8 +1,7 @@
-from datetime import date, datetime, time
-from decimal import Decimal
-from typing import List, Optional
-
 from ninja import Schema
+from typing import Optional, List
+from datetime import date, time, datetime
+from decimal import Decimal
 
 
 # Event Schemas
@@ -112,7 +111,7 @@ class EventOut(Schema):
 
     @staticmethod
     def resolve_team_members(obj):
-        return list(obj.team_members.values_list("id", flat=True))
+        return list(obj.team_members.values_list('id', flat=True))
 
 
 class EventListOut(Schema):

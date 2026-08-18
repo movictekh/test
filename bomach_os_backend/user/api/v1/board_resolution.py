@@ -1,21 +1,21 @@
-from datetime import date
-from typing import List, Optional
-
-from django.core.exceptions import ValidationError
+from ninja import Router, Query
+from ninja.pagination import paginate, LimitOffsetPagination
 from django.db.models import Q
+from django.core.exceptions import ValidationError
 from django.utils import timezone
-from ninja import Query, Router
-from ninja.pagination import LimitOffsetPagination, paginate
+from typing import List, Optional
+from datetime import date
 
-from user.api.schemas.board_resolution import (
-    BoardResolutionChoicesSchema,
-    BoardResolutionCreateSchema,
-    BoardResolutionSchema,
-    BoardResolutionUpdateSchema,
-)
 from user.api.schemas.others import MessageSchema
+from user.api.schemas.board_resolution import (
+    BoardResolutionCreateSchema,
+    BoardResolutionUpdateSchema,
+    BoardResolutionSchema,
+    BoardResolutionChoicesSchema,
+)
 from user.models.board_resolution import BoardResolution
 from user.utils.perm import require_permission
+
 
 board_resolution_api = Router(tags=["Board Resolutions"])
 
@@ -23,10 +23,8 @@ board_resolution_api = Router(tags=["Board Resolutions"])
 @board_resolution_api.get("/choices", response=BoardResolutionChoicesSchema, auth=None)
 def get_board_resolution_choices(request):
     return {
-        "types": [{"value": v, "label": l} for v, l in BoardResolution.TYPE_CHOICES],
-        "statuses": [
-            {"value": v, "label": l} for v, l in BoardResolution.STATUS_CHOICES
-        ],
+        "types":    [{"value": v, "label": l} for v, l in BoardResolution.TYPE_CHOICES],
+        "statuses": [{"value": v, "label": l} for v, l in BoardResolution.STATUS_CHOICES],
     }
 
 
@@ -41,7 +39,7 @@ def list_board_resolutions(
     date_to: Optional[date] = Query(None),
     search: Optional[str] = Query(None),
 ):
-    qs = BoardResolution.objects.select_related("created_by", "approved_by").all()
+    qs = BoardResolution.objects.select_related('created_by', 'approved_by').all()
 
     if status:
         qs = qs.filter(status=status)
@@ -57,31 +55,25 @@ def list_board_resolutions(
 
     if search:
         qs = qs.filter(
-            Q(title__icontains=search)
-            | Q(description__icontains=search)
-            | Q(resolution_id__icontains=search)
+            Q(title__icontains=search) |
+            Q(description__icontains=search) |
+            Q(resolution_id__icontains=search)
         )
 
     return qs
 
 
-@board_resolution_api.get(
-    "/{resolution_id}", response={200: BoardResolutionSchema, 404: MessageSchema}
-)
+@board_resolution_api.get("/{resolution_id}", response={200: BoardResolutionSchema, 404: MessageSchema})
 @require_permission("board_resolutions", "view")
 def get_board_resolution(request, resolution_id: int):
     try:
-        resolution = BoardResolution.objects.select_related(
-            "created_by", "approved_by"
-        ).get(id=resolution_id)
+        resolution = BoardResolution.objects.select_related('created_by', 'approved_by').get(id=resolution_id)
         return 200, resolution
     except BoardResolution.DoesNotExist:
         return 404, {"detail": "Board resolution not found"}
 
 
-@board_resolution_api.post(
-    "", response={201: BoardResolutionSchema, 400: MessageSchema}
-)
+@board_resolution_api.post("", response={201: BoardResolutionSchema, 400: MessageSchema})
 @require_permission("board_resolutions", "create")
 def create_board_resolution(request, payload: BoardResolutionCreateSchema):
     try:
@@ -90,7 +82,7 @@ def create_board_resolution(request, payload: BoardResolutionCreateSchema):
             description=payload.description,
             resolution_type=payload.resolution_type,
             resolution_date=payload.resolution_date,
-            status=payload.status or "pending",
+            status=payload.status or 'pending',
             attachment_url=payload.attachment_url or "",
             notes=payload.notes or "",
             created_by=request.user,
@@ -104,27 +96,18 @@ def create_board_resolution(request, payload: BoardResolutionCreateSchema):
         return 400, {"detail": str(e)}
 
 
-@board_resolution_api.put(
-    "/{resolution_id}",
-    response={200: BoardResolutionSchema, 400: MessageSchema, 404: MessageSchema},
-)
+@board_resolution_api.put("/{resolution_id}", response={200: BoardResolutionSchema, 400: MessageSchema, 404: MessageSchema})
 @require_permission("board_resolutions", "update")
-def update_board_resolution(
-    request, resolution_id: int, payload: BoardResolutionUpdateSchema
-):
+def update_board_resolution(request, resolution_id: int, payload: BoardResolutionUpdateSchema):
     try:
-        resolution = BoardResolution.objects.select_related(
-            "created_by", "approved_by"
-        ).get(id=resolution_id)
+        resolution = BoardResolution.objects.select_related('created_by', 'approved_by').get(id=resolution_id)
 
-        if resolution.status == "approved":
-            return 400, {
-                "detail": "Approved resolutions cannot be edited. Archive it first."
-            }
+        if resolution.status == 'approved':
+            return 400, {"detail": "Approved resolutions cannot be edited. Archive it first."}
 
         data = payload.dict(exclude_unset=True)
         # Status changes to 'approved' must go through the dedicated approve endpoint
-        if data.get("status") == "approved":
+        if data.get('status') == 'approved':
             return 400, {"detail": "Use the approve endpoint to approve a resolution."}
 
         for field, value in data.items():
@@ -143,29 +126,22 @@ def update_board_resolution(
         return 400, {"detail": str(e)}
 
 
-@board_resolution_api.post(
-    "/{resolution_id}/approve",
-    response={200: BoardResolutionSchema, 400: MessageSchema, 404: MessageSchema},
-)
+@board_resolution_api.post("/{resolution_id}/approve", response={200: BoardResolutionSchema, 400: MessageSchema, 404: MessageSchema})
 @require_permission("board_resolutions", "approve")
 def approve_board_resolution(request, resolution_id: int):
     try:
-        resolution = BoardResolution.objects.select_related(
-            "created_by", "approved_by"
-        ).get(id=resolution_id)
+        resolution = BoardResolution.objects.select_related('created_by', 'approved_by').get(id=resolution_id)
 
-        if resolution.status == "approved":
+        if resolution.status == 'approved':
             return 400, {"detail": "Resolution is already approved."}
 
-        if resolution.status == "archived":
+        if resolution.status == 'archived':
             return 400, {"detail": "Archived resolutions cannot be approved."}
 
-        if resolution.status == "draft":
-            return 400, {
-                "detail": "Resolution must be submitted for review (pending) before it can be approved."
-            }
+        if resolution.status == 'draft':
+            return 400, {"detail": "Resolution must be submitted for review (pending) before it can be approved."}
 
-        resolution.status = "approved"
+        resolution.status = 'approved'
         resolution.approved_by = request.user
         resolution.approved_at = timezone.now()
         resolution.save()
@@ -180,15 +156,12 @@ def approve_board_resolution(request, resolution_id: int):
         return 400, {"detail": str(e)}
 
 
-@board_resolution_api.delete(
-    "/{resolution_id}",
-    response={200: MessageSchema, 400: MessageSchema, 404: MessageSchema},
-)
+@board_resolution_api.delete("/{resolution_id}", response={200: MessageSchema, 400: MessageSchema, 404: MessageSchema})
 @require_permission("board_resolutions", "delete")
 def archive_board_resolution(request, resolution_id: int):
     try:
         resolution = BoardResolution.objects.get(id=resolution_id)
-        resolution.status = "archived"
+        resolution.status = 'archived'
         resolution.save()
         return 200, {"detail": "Board resolution archived successfully"}
 

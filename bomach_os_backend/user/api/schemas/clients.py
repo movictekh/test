@@ -1,15 +1,13 @@
-from datetime import date, datetime
-from decimal import Decimal
-from typing import List, Optional
-
-from django.db import models
 from ninja import Schema
+from typing import Optional, List
+from datetime import date, datetime
 from pydantic import EmailStr
-
+from decimal import Decimal
+from django.db import models
 from services.models.payment import Invoice
 
-# ============== Lead Schemas ==============
 
+# ============== Lead Schemas ==============
 
 class CreateLeadRequest(Schema):
     email: EmailStr
@@ -73,7 +71,6 @@ class LeadResponse(Schema):
 
 # ============== Client Schemas ==============
 
-
 class CreateClientRequest(Schema):
     email: EmailStr
     first_name: str
@@ -133,7 +130,6 @@ class ClientResponse(Schema):
     def resolve_gender(obj):
         return obj.user.gender
 
-
 class UpdateClientRequest(Schema):
     first_name: str
     last_name: str
@@ -147,9 +143,7 @@ class UpdateClientRequest(Schema):
 class ConvertLeadToClientRequest(Schema):
     pass  # No fields needed, lead_id comes from URL path
 
-
 # ── Read ──
-
 
 class ClientProfileSchema(Schema):
     id: int
@@ -194,19 +188,21 @@ class ClientProfileSchema(Schema):
     @staticmethod
     def resolve_active_orders(obj):
         return obj.user.service_requests.exclude(
-            status__in=["completed", "rejected"]
+            status__in=['completed', 'rejected']
         ).count()
 
     @staticmethod
     def resolve_completed_services(obj):
-        return obj.user.service_requests.filter(status="completed").count()
+        return obj.user.service_requests.filter(
+            status='completed'
+        ).count()
 
     @staticmethod
     def resolve_total_spent(obj):
-        result = Invoice.objects.filter(client=obj, status="paid").aggregate(
-            total=models.Sum("total_amount")
-        )
-        return result["total"] or Decimal("0.00")
+        result = Invoice.objects.filter(
+            client=obj, status='paid'
+        ).aggregate(total=models.Sum('total_amount'))
+        return result['total'] or Decimal('0.00')
 
     @staticmethod
     def resolve_member_since(obj):
@@ -214,7 +210,6 @@ class ClientProfileSchema(Schema):
 
 
 # ── Update: Personal Info ──
-
 
 class UpdatePersonalInfoSchema(Schema):
     first_name: Optional[str] = None
@@ -229,7 +224,6 @@ class UpdatePersonalInfoSchema(Schema):
 
 # ── Update: Company Info ──
 
-
 class UpdateCompanyInfoSchema(Schema):
     company_name: Optional[str] = None
     registration_number: Optional[str] = None
@@ -240,7 +234,6 @@ class UpdateCompanyInfoSchema(Schema):
 
 
 # ── Admin: Client list view (lightweight) ──
-
 
 class ClientListSchema(Schema):
     id: int

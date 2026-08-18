@@ -1,15 +1,11 @@
 from datetime import datetime
-from decimal import Decimal
 from typing import Optional
-
+from decimal import Decimal
 from pydantic import BaseModel, Field
 
 
 class OfferLetterCreateSchema(BaseModel):
-    template: str = Field(
-        ...,
-        description="Template: standard_full_time, standard_part_time, contract, internship",
-    )
+    template: str = Field(..., description="Template: standard_full_time, standard_part_time, contract, internship")
     annual_salary: Decimal = Field(..., gt=0)
     letter_content: str
     start_date: datetime

@@ -6,8 +6,9 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("user", "0063_add_partner_and_agreement"),
-        ("user", "0064_client_address_client_company_name_client_phone"),
+        ('user', '0063_add_partner_and_agreement'),
+        ('user', '0064_client_address_client_company_name_client_phone'),
     ]
 
-    operations = []
+    operations = [
+    ]

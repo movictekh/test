@@ -7,20 +7,14 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("services", "0026_quote_approved_at_quote_approved_by_and_more"),
-        ("user", "0093_employeetargetreport"),
+        ('services', '0026_quote_approved_at_quote_approved_by_and_more'),
+        ('user', '0093_employeetargetreport'),
     ]
 
     operations = [
         migrations.AddField(
-            model_name="quote",
-            name="required_approver_role",
-            field=models.ForeignKey(
-                blank=True,
-                null=True,
-                on_delete=django.db.models.deletion.PROTECT,
-                related_name="quotes_requiring_approval",
-                to="user.role",
-            ),
+            model_name='quote',
+            name='required_approver_role',
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='quotes_requiring_approval', to='user.role'),
         ),
     ]

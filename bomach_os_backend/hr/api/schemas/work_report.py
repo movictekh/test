@@ -1,23 +1,20 @@
+from ninja import Schema
+from typing import Optional, Literal, List
 from datetime import date, datetime
 from decimal import Decimal
-from typing import List, Literal, Optional
-
-from ninja import Schema
-
 
 class AttachmentOut(Schema):
     file_url: str
 
-
 class WorkReportCreate(Schema):
     day: date
-    hours_worked: Optional[Decimal] = Decimal("0.0")
+    hours_worked: Optional[Decimal] = Decimal('0.0')
     # mood: Optional[Literal['happy', 'neutral', 'sad', 'stressed', 'tired', 'frustrated']] = 'neutral'
     operational_base: Optional[str] = None
     work_activities: Optional[str] = None
     task_details: Optional[str] = None
     plan_next_day: Optional[str] = None
-    status: Optional[Literal["draft", "submitted"]] = "draft"
+    status: Optional[Literal['draft', 'submitted']] = 'draft'
     attachments: List[str] = []
 
 
@@ -29,7 +26,7 @@ class WorkReportUpdate(Schema):
     work_activities: Optional[str] = None
     task_details: Optional[str] = None
     plan_next_day: Optional[str] = None
-    status: Optional[Literal["draft", "submitted"]] = None
+    status: Optional[Literal['draft', 'submitted']] = None
     attachments: Optional[List[str]] = None
 
 
@@ -47,7 +44,6 @@ class WorkReportReviewer(Schema):
     email: str
     first_name: str
     last_name: str
-
 
 class WorkReportOut(Schema):
     id: int
@@ -72,7 +68,6 @@ class WorkReportOut(Schema):
     @staticmethod
     def resolve_reviewed_by(obj):
         return obj.reviewed_by
-
 
 class WorkReportListItem(Schema):
     id: int

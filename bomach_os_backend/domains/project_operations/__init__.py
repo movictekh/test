@@ -1,1 +1,0 @@
-"""Project Operations business domain."""

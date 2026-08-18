@@ -1,4 +1,5 @@
-from datetime import datetime
+from datetime import date, datetime
+from decimal import Decimal
 from typing import Optional
 
 from ninja import Schema
@@ -13,6 +14,8 @@ class FinanceAccountIn(Schema):
     account_number: str = ""
     account_name: str = ""
     notes: str = ""
+    opening_balance: Decimal = Decimal("0.00")
+    opening_balance_date: Optional[date] = None
     is_active: bool = True
 
 
@@ -25,6 +28,8 @@ class FinanceAccountUpdate(Schema):
     account_number: Optional[str] = None
     account_name: Optional[str] = None
     notes: Optional[str] = None
+    opening_balance: Optional[Decimal] = None
+    opening_balance_date: Optional[date] = None
     is_active: Optional[bool] = None
 
 
@@ -40,6 +45,8 @@ class FinanceAccountOut(Schema):
     account_number: str
     account_name: str
     notes: str
+    opening_balance: Decimal
+    opening_balance_date: Optional[date] = None
     is_active: bool
     created_by_id: Optional[int] = None
     created_at: datetime

@@ -9,17 +9,13 @@ class Migration(migrations.Migration):
     dependencies = [
         ("user", "0059_create_role_model"),
         ("hr", "0006_alter_dailyworkreport_employee"),
-        ("user", "0058_invoiceapproval"),
+        ('user', '0058_invoiceapproval'),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name="dailyworkreport",
-            name="employee",
-            field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE,
-                related_name="work_reports",
-                to="user.employee",
-            ),
+            model_name='dailyworkreport',
+            name='employee',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='work_reports', to='user.employee'),
         ),
     ]

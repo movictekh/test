@@ -1,51 +1,50 @@
-from datetime import datetime, timezone
-
-import jwt
-from django.conf import settings
-from django.http import HttpRequest
 from ninja import Router
+from django.http import HttpRequest
 
+from user.services.auth_service import AuthService
+from user.services.jwt_service import JWTService
+from user.models import User, TokenBlacklist
 from user.api.schemas import (
-    ErrorResponse,
-    ForgotPasswordRequest,
-    ForgotPasswordResponse,
     LoginRequest,
     LoginResponse,
     LogoutResponse,
     RefreshTokenRequest,
     RefreshTokenResponse,
+    ForgotPasswordRequest,
+    ForgotPasswordResponse,
     ResetPasswordRequest,
     ResetPasswordResponse,
-    TwoFactorRequiredResponse,
-    TwoFactorStatusResponse,
-    TwoFactorToggleRequest,
-    TwoFactorVerifyRequest,
-    TwoFactorVerifyResponse,
     UserResponse,
     VerifyTokenResponse,
+    ErrorResponse,
+    TwoFactorRequiredResponse,
+    TwoFactorVerifyRequest,
+    TwoFactorVerifyResponse,
+    TwoFactorToggleRequest,
+    TwoFactorStatusResponse,
 )
-from user.models import TokenBlacklist, User
-from user.models.audit_log import AuditLog
-from user.services.auth_service import AuthService
-from user.services.jwt_service import JWTService
-from user.utils.audit import log_activity
+
+import jwt
+from django.conf import settings
+from datetime import datetime, timezone
+
 from user.utils.auth import get_token_from_request
+from user.utils.audit import log_activity
+from user.models.audit_log import AuditLog
+
 
 auth_api = Router(tags=["Authentication"])
 
 
 @auth_api.post(
     "/login",
-    response={
-        200: LoginResponse | TwoFactorRequiredResponse,
-        401: ErrorResponse,
-        500: ErrorResponse,
-    },
+    response={200: LoginResponse | TwoFactorRequiredResponse, 401: ErrorResponse, 500: ErrorResponse},
     auth=None,
 )
 def login(request: HttpRequest, data: LoginRequest):
     success, user, error_msg = AuthService.authenticate_user(
-        username=data.email, password=data.password
+        username=data.email,
+        password=data.password
     )
 
     if not success:
@@ -57,7 +56,9 @@ def login(request: HttpRequest, data: LoginRequest):
             audit_status=AuditLog.AuditStatus.WARNING,
             metadata={"email": data.email},
         )
-        return 401, ErrorResponse(detail=error_msg or "Invalid credentials")
+        return 401, ErrorResponse(
+            detail=error_msg or "Invalid credentials"
+        )
 
     # If 2FA is not enabled for this user, issue tokens directly.
     if not user.two_factor_enabled:
@@ -213,15 +214,22 @@ def logout(request: HttpRequest):
 
     try:
         # Decode token to get expiration time
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
-        expires_at = datetime.fromtimestamp(payload["exp"], tz=timezone.utc)
+        payload = jwt.decode(
+            token,
+            settings.SECRET_KEY,
+            algorithms=['HS256']
+        )
+        expires_at = datetime.fromtimestamp(payload['exp'], tz=timezone.utc)
 
         # Get user
         user = User.objects.get(id=request.user.id)
 
         # Blacklist the token
         TokenBlacklist.blacklist_token(
-            token=token, user=user, reason="logout", expires_at=expires_at
+            token=token,
+            user=user,
+            reason="logout",
+            expires_at=expires_at
         )
 
         log_activity(
@@ -236,29 +244,27 @@ def logout(request: HttpRequest):
         return 500, ErrorResponse(detail=f"Logout failed: {str(e)}")
 
 
-@auth_api.post(
-    "/refresh", response={200: RefreshTokenResponse, 401: ErrorResponse}, auth=None
-)
+@auth_api.post("/refresh", response={200: RefreshTokenResponse, 401: ErrorResponse}, auth=None)
 def refresh_token(request: HttpRequest, data: RefreshTokenRequest):
     success, new_access_token = JWTService.refresh_access_token(data.refresh_token)
 
     if not success:
-        return 401, ErrorResponse(detail="Invalid or expired refresh token")
+        return 401, ErrorResponse(
+            detail="Invalid or expired refresh token"
+        )
 
     return 200, RefreshTokenResponse(access_token=new_access_token)
 
 
-@auth_api.post(
-    "/forgot-password",
-    response={200: ForgotPasswordResponse, 404: ErrorResponse, 500: ErrorResponse},
-    auth=None,
-)
+@auth_api.post("/forgot-password", response={200: ForgotPasswordResponse, 404: ErrorResponse, 500: ErrorResponse}, auth=None)
 def forgot_password(request: HttpRequest, data: ForgotPasswordRequest):
     ip_address = request.META.get("REMOTE_ADDR", "")
     user_agent = request.META.get("HTTP_USER_AGENT", "")
 
     success, message = AuthService.create_password_reset_code(
-        email=data.email, ip_address=ip_address, user_agent=user_agent
+        email=data.email,
+        ip_address=ip_address,
+        user_agent=user_agent
     )
 
     if not success:
@@ -268,7 +274,6 @@ def forgot_password(request: HttpRequest, data: ForgotPasswordRequest):
 
     # Look up the user so we can attach them to the log
     from user.models import User as _User
-
     _user = _User.objects.filter(email=data.email).first()
     log_activity(
         audit_type=AuditLog.AuditType.FORGOT_PASSWORD,
@@ -281,21 +286,18 @@ def forgot_password(request: HttpRequest, data: ForgotPasswordRequest):
     return 200, ForgotPasswordResponse()
 
 
-@auth_api.post(
-    "/reset-password",
-    response={200: ResetPasswordResponse, 400: ErrorResponse},
-    auth=None,
-)
+@auth_api.post("/reset-password", response={200: ResetPasswordResponse, 400: ErrorResponse}, auth=None)
 def reset_password(request: HttpRequest, data: ResetPasswordRequest):
     success, message = AuthService.verify_and_reset_password(
-        email=data.email, code=data.code, new_password=data.new_password
+        email=data.email,
+        code=data.code,
+        new_password=data.new_password
     )
 
     if not success:
         return 400, ErrorResponse(detail=message)
 
     from user.models import User as _User
-
     _user = _User.objects.filter(email=data.email).first()
     log_activity(
         audit_type=AuditLog.AuditType.RESET_PASSWORD,
@@ -308,9 +310,7 @@ def reset_password(request: HttpRequest, data: ResetPasswordRequest):
     return 200, ResetPasswordResponse()
 
 
-@auth_api.get(
-    "/me", response={200: UserResponse, 401: ErrorResponse, 404: ErrorResponse}
-)
+@auth_api.get("/me", response={200: UserResponse, 401: ErrorResponse, 404: ErrorResponse})
 def get_current_user(request: HttpRequest):
     try:
         user = User.objects.get(id=request.user.id)
@@ -322,21 +322,26 @@ def get_current_user(request: HttpRequest):
             last_name=user.last_name,
             phone_number=user.phone_number,
             is_verified=user.is_verified,
-            created_at=user.created_at,
+            created_at=user.created_at
         )
     except User.DoesNotExist:
-        return 404, ErrorResponse(detail="User not found")
+        return 404, ErrorResponse(
+            detail="User not found"
+        )
 
 
 @auth_api.get("/verify-token", response={200: VerifyTokenResponse})
 def verify_token(request: HttpRequest):
     token = get_token_from_request(request)
     if not token:
-        return 200, VerifyTokenResponse(valid=False, detail="No token provided")
+        return 200, VerifyTokenResponse(
+            valid=False,
+            detail="No token provided"
+        )
 
     is_valid, user_id = JWTService.verify_token(token)
     return 200, VerifyTokenResponse(
         valid=is_valid,
         user_id=user_id if is_valid else None,
-        detail="Token is valid" if is_valid else "Token is invalid or expired",
+        detail="Token is valid" if is_valid else "Token is invalid or expired"
     )

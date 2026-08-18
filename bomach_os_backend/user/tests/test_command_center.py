@@ -1,32 +1,27 @@
 import json
-from datetime import timedelta
 from decimal import Decimal
+from datetime import timedelta
 
 from django.test import TestCase
 from django.utils import timezone
 
-from services.models.expenses import Expense
-from services.models.payment import Invoice
-from services.models.service import Quote, Service, ServiceCategory, ServiceOrder
-from user.models.approval import ApprovalRequest
+from user.models.user import User
 from user.models.employee import Employee
 from user.models.role import Role
-from user.models.user import User
+from user.models.approval import ApprovalRequest
+from services.models.service import Quote, ServiceOrder, Service, ServiceCategory
+from services.models.payment import Invoice
+from services.models.expenses import Expense
 from user.services.jwt_service import JWTService
 
 
 class CommandCenterAPITests(TestCase):
     def create_user_with_employee(self, email, username, employee_id, role=None):
         user = User.objects.create_user(
-            email=email,
-            username=username,
-            password="password123",
+            email=email, username=username, password="password123",
         )
         return Employee.objects.create(
-            user=user,
-            employee_id=employee_id,
-            is_active=True,
-            role=role,
+            user=user, employee_id=employee_id, is_active=True, role=role,
         )
 
     def create_role(self, name, permissions):
@@ -39,19 +34,13 @@ class CommandCenterAPITests(TestCase):
     def setUp(self):
         self.role = self.create_role("CC Admin", {"command_center": ["view"]})
         self.employee = self.create_user_with_employee(
-            "cc@test.com",
-            "ccuser",
-            "EMP-CC-001",
-            role=self.role,
+            "cc@test.com", "ccuser", "EMP-CC-001", role=self.role,
         )
         self.headers = self.auth_headers(self.employee)
 
         self.no_role = self.create_role("No CC", {"command_center": []})
         self.no_emp = self.create_user_with_employee(
-            "nocc@test.com",
-            "nocc",
-            "EMP-CC-002",
-            role=self.no_role,
+            "nocc@test.com", "nocc", "EMP-CC-002", role=self.no_role,
         )
         self.no_headers = self.auth_headers(self.no_emp)
 
@@ -102,14 +91,12 @@ class CommandCenterAPITests(TestCase):
 
     def _create_client(self):
         from user.models.client import Client
-
         user, _ = User.objects.get_or_create(
             username="clientcc",
             defaults={"email": "client_cc@test.com", "password": "pass123"},
         )
         client, _ = Client.objects.get_or_create(
-            user=user,
-            defaults={"phone": "+2348000000000"},
+            user=user, defaults={"phone": "+2348000000000"},
         )
         return client
 
@@ -174,7 +161,6 @@ class CommandCenterAPITests(TestCase):
 
     def test_no_permission(self):
         response = self.client.get(
-            "/api/v1/command-center/activity",
-            **self.no_headers,
+            "/api/v1/command-center/activity", **self.no_headers,
         )
         self.assertEqual(response.status_code, 403)

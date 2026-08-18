@@ -8,114 +8,45 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("user", "0082_notification"),
+        ('user', '0082_notification'),
     ]
 
     operations = [
         migrations.CreateModel(
-            name="WorkflowRule",
+            name='WorkflowRule',
             fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                (
-                    "created_at",
-                    models.DateTimeField(
-                        auto_now_add=True, help_text="When this record was created"
-                    ),
-                ),
-                (
-                    "updated_at",
-                    models.DateTimeField(
-                        auto_now=True, help_text="When this record was last updated"
-                    ),
-                ),
-                ("name", models.CharField(max_length=255, unique=True)),
-                ("description", models.TextField(blank=True)),
-                (
-                    "trigger_event",
-                    models.CharField(
-                        choices=[
-                            (
-                                "service_order_status_changed",
-                                "Service Order Status Changed",
-                            ),
-                            ("quote_status_changed", "Quote Status Changed"),
-                        ],
-                        max_length=50,
-                    ),
-                ),
-                ("conditions", models.JSONField(blank=True, default=list)),
-                (
-                    "action_type",
-                    models.CharField(
-                        choices=[("send_notification", "Send Notification")],
-                        max_length=30,
-                    ),
-                ),
-                ("action_config", models.JSONField(blank=True, default=dict)),
-                ("is_active", models.BooleanField(default=True)),
-                (
-                    "created_by",
-                    models.ForeignKey(
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="workflow_rules_created",
-                        to=settings.AUTH_USER_MODEL,
-                    ),
-                ),
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('created_at', models.DateTimeField(auto_now_add=True, help_text='When this record was created')),
+                ('updated_at', models.DateTimeField(auto_now=True, help_text='When this record was last updated')),
+                ('name', models.CharField(max_length=255, unique=True)),
+                ('description', models.TextField(blank=True)),
+                ('trigger_event', models.CharField(choices=[('service_order_status_changed', 'Service Order Status Changed'), ('quote_status_changed', 'Quote Status Changed')], max_length=50)),
+                ('conditions', models.JSONField(blank=True, default=list)),
+                ('action_type', models.CharField(choices=[('send_notification', 'Send Notification')], max_length=30)),
+                ('action_config', models.JSONField(blank=True, default=dict)),
+                ('is_active', models.BooleanField(default=True)),
+                ('created_by', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='workflow_rules_created', to=settings.AUTH_USER_MODEL)),
             ],
             options={
-                "ordering": ["name"],
+                'ordering': ['name'],
             },
         ),
         migrations.CreateModel(
-            name="WorkflowRuleLog",
+            name='WorkflowRuleLog',
             fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                (
-                    "created_at",
-                    models.DateTimeField(
-                        auto_now_add=True, help_text="When this record was created"
-                    ),
-                ),
-                (
-                    "updated_at",
-                    models.DateTimeField(
-                        auto_now=True, help_text="When this record was last updated"
-                    ),
-                ),
-                ("trigger_event", models.CharField(max_length=50)),
-                ("trigger_object_id", models.PositiveIntegerField()),
-                ("trigger_object_type", models.CharField(max_length=100)),
-                ("conditions_met", models.BooleanField(default=False)),
-                ("action_executed", models.BooleanField(default=False)),
-                ("error_message", models.TextField(blank=True)),
-                (
-                    "rule",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        related_name="execution_logs",
-                        to="user.workflowrule",
-                    ),
-                ),
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('created_at', models.DateTimeField(auto_now_add=True, help_text='When this record was created')),
+                ('updated_at', models.DateTimeField(auto_now=True, help_text='When this record was last updated')),
+                ('trigger_event', models.CharField(max_length=50)),
+                ('trigger_object_id', models.PositiveIntegerField()),
+                ('trigger_object_type', models.CharField(max_length=100)),
+                ('conditions_met', models.BooleanField(default=False)),
+                ('action_executed', models.BooleanField(default=False)),
+                ('error_message', models.TextField(blank=True)),
+                ('rule', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='execution_logs', to='user.workflowrule')),
             ],
             options={
-                "ordering": ["-created_at"],
+                'ordering': ['-created_at'],
             },
         ),
     ]

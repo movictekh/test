@@ -1,26 +1,26 @@
+from typing import Optional, List
 from datetime import date
-from typing import List, Optional
-
-from django.core.exceptions import ValidationError
-from django.shortcuts import get_object_or_404
 from ninja import Router
-from ninja.pagination import LimitOffsetPagination, paginate
+from ninja.pagination import paginate, LimitOffsetPagination
+from django.shortcuts import get_object_or_404
+from django.core.exceptions import ValidationError
 
+from hr.models import LeaveRequest
 from hr.api.schemas import (
     LeaveRequestCreateSchema,
-    LeaveRequestListItemSchema,
-    LeaveRequestResponseSchema,
-    LeaveRequestStatusUpdateSchema,
     LeaveRequestUpdateSchema,
+    LeaveRequestStatusUpdateSchema,
+    LeaveRequestResponseSchema,
+    LeaveRequestListItemSchema,
     MessageSchema,
 )
-from hr.models import LeaveRequest
-from user.utils.perm import check_obj_permission, require_permission, scope_queryset
-
-router = Router(tags=["Leave Requests"])
+from user.utils.perm import require_permission, scope_queryset, check_obj_permission
 
 
-@router.get("/", response=List[LeaveRequestListItemSchema])
+router = Router(tags=['Leave Requests'])
+
+
+@router.get('/', response=List[LeaveRequestListItemSchema])
 @paginate(LimitOffsetPagination, page_size=10)
 @require_permission("leave_requests", "list", owner_lookup="employee__user")
 def list_leave_requests(
@@ -56,17 +56,13 @@ def list_leave_requests(
     if start_date_to:
         queryset = queryset.filter(start_date__lte=start_date_to)
 
-    queryset = scope_queryset(
-        request,
-        queryset,
-        owner_field="employee__user",
-        branch_field="employee__branch",
-        department_field="employee__department",
-    )
+    queryset = scope_queryset(request, queryset, owner_field="employee__user",
+                              branch_field="employee__branch",
+                              department_field="employee__department")
     return queryset
 
 
-@router.get("/{leave_request_id}", response=LeaveRequestResponseSchema)
+@router.get('/{leave_request_id}', response=LeaveRequestResponseSchema)
 @require_permission("leave_requests", "view", owner_lookup="employee__user")
 def get_leave_request(request, leave_request_id: int):
     """
@@ -77,7 +73,7 @@ def get_leave_request(request, leave_request_id: int):
     return leave_request
 
 
-@router.post("/", response={201: LeaveRequestResponseSchema, 400: MessageSchema})
+@router.post('/', response={201: LeaveRequestResponseSchema, 400: MessageSchema})
 @require_permission("leave_requests", "create")
 def create_leave_request(request, payload: LeaveRequestCreateSchema):
     """
@@ -85,21 +81,16 @@ def create_leave_request(request, payload: LeaveRequestCreateSchema):
     """
     try:
         data = payload.model_dump()
-        data["employee_id"] = request._perm_employee.id
+        data['employee_id'] = request._perm_employee.id
         leave_request = LeaveRequest.objects.create(**data)
         return 201, leave_request
     except ValidationError as e:
-        return 400, {"detail": e.messages[0]}
+        return 400, {'detail': e.messages[0]}
 
 
-@router.patch(
-    "/{leave_request_id}",
-    response={200: LeaveRequestResponseSchema, 400: MessageSchema},
-)
+@router.patch('/{leave_request_id}', response={200: LeaveRequestResponseSchema, 400: MessageSchema})
 @require_permission("leave_requests", "update", owner_lookup="employee__user")
-def update_leave_request(
-    request, leave_request_id: int, payload: LeaveRequestUpdateSchema
-):
+def update_leave_request(request, leave_request_id: int, payload: LeaveRequestUpdateSchema):
     """
     Update a leave request.
     """
@@ -115,17 +106,12 @@ def update_leave_request(
         leave_request.save()
         return 200, leave_request
     except ValidationError as e:
-        return 400, {"detail": e.messages[0]}
+        return 400, {'detail': e.messages[0]}
 
 
-@router.patch(
-    "/{leave_request_id}/status",
-    response={200: LeaveRequestResponseSchema, 400: MessageSchema},
-)
+@router.patch('/{leave_request_id}/status', response={200: LeaveRequestResponseSchema, 400: MessageSchema})
 @require_permission("leave_requests", "update_status")
-def update_leave_request_status(
-    request, leave_request_id: int, payload: LeaveRequestStatusUpdateSchema
-):
+def update_leave_request_status(request, leave_request_id: int, payload: LeaveRequestStatusUpdateSchema):
     """
     Update the status of a leave request.
     Useful for approving or rejecting leave requests.
@@ -134,8 +120,8 @@ def update_leave_request_status(
         leave_request = get_object_or_404(LeaveRequest, id=leave_request_id)
 
         update_data = payload.model_dump(exclude_unset=True)
-        update_data["approver_id"] = request._perm_employee.id
-        update_fields = ["status", "approver_id", "updated_at"]
+        update_data['approver_id'] = request._perm_employee.id
+        update_fields = ['status', 'approver_id', 'updated_at']
 
         for attr, value in update_data.items():
             setattr(leave_request, attr, value)
@@ -145,12 +131,10 @@ def update_leave_request_status(
         leave_request.save(update_fields=update_fields)
         return 200, leave_request
     except ValidationError as e:
-        return 400, {"detail": e.messages[0]}
+        return 400, {'detail': e.messages[0]}
 
 
-@router.delete(
-    "/{leave_request_id}", response={200: MessageSchema, 204: None, 400: MessageSchema}
-)
+@router.delete('/{leave_request_id}', response={200: MessageSchema, 204: None, 400: MessageSchema})
 @require_permission("leave_requests", "delete", owner_lookup="employee__user")
 def delete_leave_request(request, leave_request_id: int):
     """
@@ -160,12 +144,12 @@ def delete_leave_request(request, leave_request_id: int):
         leave_request = get_object_or_404(LeaveRequest, id=leave_request_id)
         check_obj_permission(request, leave_request, owner_field="employee.user")
         leave_request.delete()
-        return 200, {"detail": f"Leave request deleted successfully"}
+        return 200, {'detail': f'Leave request deleted successfully'}
     except ValidationError as e:
-        return 400, {"detail": e.messages[0]}
+        return 400, {'detail': e.messages[0]}
 
 
-@router.get("/stats/summary", response=dict)
+@router.get('/stats/summary', response=dict)
 @require_permission("leave_requests", "list")
 def get_leave_requests_summary(request):
     """
@@ -173,41 +157,35 @@ def get_leave_requests_summary(request):
     Returns counts by status.
     """
     total = LeaveRequest.objects.count()
-    pending = LeaveRequest.objects.filter(status="pending").count()
-    approved = LeaveRequest.objects.filter(status="approved").count()
-    rejected = LeaveRequest.objects.filter(status="rejected").count()
-    cancelled = LeaveRequest.objects.filter(status="cancelled").count()
+    pending = LeaveRequest.objects.filter(status='pending').count()
+    approved = LeaveRequest.objects.filter(status='approved').count()
+    rejected = LeaveRequest.objects.filter(status='rejected').count()
+    cancelled = LeaveRequest.objects.filter(status='cancelled').count()
 
     return {
-        "total": total,
-        "pending": pending,
-        "approved": approved,
-        "rejected": rejected,
-        "cancelled": cancelled,
+        'total': total,
+        'pending': pending,
+        'approved': approved,
+        'rejected': rejected,
+        'cancelled': cancelled,
     }
 
 
-@router.get("/stats/by-employee/{employee_id}", response=dict)
+@router.get('/stats/by-employee/{employee_id}', response=dict)
 @require_permission("leave_requests", "view", owner_lookup="employee__user")
 def get_employee_leave_stats(request, employee_id: int):
     """
     Get leave request statistics for a specific employee.
     """
     total = LeaveRequest.objects.filter(employee_id=employee_id).count()
-    pending = LeaveRequest.objects.filter(
-        employee_id=employee_id, status="pending"
-    ).count()
-    approved = LeaveRequest.objects.filter(
-        employee_id=employee_id, status="approved"
-    ).count()
-    rejected = LeaveRequest.objects.filter(
-        employee_id=employee_id, status="rejected"
-    ).count()
+    pending = LeaveRequest.objects.filter(employee_id=employee_id, status='pending').count()
+    approved = LeaveRequest.objects.filter(employee_id=employee_id, status='approved').count()
+    rejected = LeaveRequest.objects.filter(employee_id=employee_id, status='rejected').count()
 
     return {
-        "employee_id": employee_id,
-        "total": total,
-        "pending": pending,
-        "approved": approved,
-        "rejected": rejected,
+        'employee_id': employee_id,
+        'total': total,
+        'pending': pending,
+        'approved': approved,
+        'rejected': rejected,
     }

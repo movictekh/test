@@ -1,42 +1,45 @@
 import re
 
-from django.core.exceptions import ValidationError
 from django.db import models
+from django.core.exceptions import ValidationError
 
 from user.models.base import BaseModel
 
+
 CURRENCY_CHOICES = [
     # Africa
-    ("NGN", "NGN - Nigerian Naira"),
-    ("GHS", "GHS - Ghanaian Cedi"),
-    ("KES", "KES - Kenyan Shilling"),
-    ("ZAR", "ZAR - South African Rand"),
-    ("EGP", "EGP - Egyptian Pound"),
+    ('NGN', 'NGN - Nigerian Naira'),
+    ('GHS', 'GHS - Ghanaian Cedi'),
+    ('KES', 'KES - Kenyan Shilling'),
+    ('ZAR', 'ZAR - South African Rand'),
+    ('EGP', 'EGP - Egyptian Pound'),
+
     # Major Global
-    ("USD", "USD - US Dollar"),
-    ("EUR", "EUR - Euro"),
-    ("GBP", "GBP - British Pound Sterling"),
-    ("CAD", "CAD - Canadian Dollar"),
-    ("AUD", "AUD - Australian Dollar"),
-    ("JPY", "JPY - Japanese Yen"),
-    ("CHF", "CHF - Swiss Franc"),
+    ('USD', 'USD - US Dollar'),
+    ('EUR', 'EUR - Euro'),
+    ('GBP', 'GBP - British Pound Sterling'),
+    ('CAD', 'CAD - Canadian Dollar'),
+    ('AUD', 'AUD - Australian Dollar'),
+    ('JPY', 'JPY - Japanese Yen'),
+    ('CHF', 'CHF - Swiss Franc'),
+
     # Asia & Middle East
-    ("CNY", "CNY - Chinese Yuan"),
-    ("INR", "INR - Indian Rupee"),
-    ("AED", "AED - UAE Dirham"),
-    ("SAR", "SAR - Saudi Riyal"),
-    ("SGD", "SGD - Singapore Dollar"),
+    ('CNY', 'CNY - Chinese Yuan'),
+    ('INR', 'INR - Indian Rupee'),
+    ('AED', 'AED - UAE Dirham'),
+    ('SAR', 'SAR - Saudi Riyal'),
+    ('SGD', 'SGD - Singapore Dollar'),
 ]
 
 LANGUAGE_CHOICES = [
-    ("en-GB", "English UK"),
-    ("en-US", "English US"),
-    ("fr", "French"),
-    ("es", "Spanish"),
+    ('en-GB', 'English UK'),
+    ('en-US', 'English US'),
+    ('fr', 'French'),
+    ('es', 'Spanish'),
 ]
 
 
-HEX_COLOR_RE = re.compile(r"^#[0-9A-Fa-f]{6}$")
+HEX_COLOR_RE = re.compile(r'^#[0-9A-Fa-f]{6}$')
 
 
 class _SingletonMixin:
@@ -85,9 +88,9 @@ class CompanyProfile(BaseModel, _SingletonMixin):
     def clean(self):
         super().clean()
         if not self.company_name or not self.company_name.strip():
-            raise ValidationError({"company_name": "Company name cannot be blank."})
+            raise ValidationError({'company_name': "Company name cannot be blank."})
         if not self.company_email or not self.company_email.strip():
-            raise ValidationError({"company_email": "Company email cannot be blank."})
+            raise ValidationError({'company_email': "Company email cannot be blank."})
 
     def save(self, *args, **kwargs):
         self._enforce_singleton()
@@ -100,11 +103,11 @@ class CompanyProfile(BaseModel, _SingletonMixin):
     @classmethod
     def get_settings(cls):
         return super().get_settings(
-            company_name="Your Company Name",
-            company_email="info@company.com",
-            company_phone="+1234567890",
-            company_addresses="Default Address",
-            rc_number="RC000000",
+            company_name='Your Company Name',
+            company_email='info@company.com',
+            company_phone='+1234567890',
+            company_addresses='Default Address',
+            rc_number='RC000000',
         )
 
     def __str__(self):
@@ -134,7 +137,7 @@ class CompanyBranding(BaseModel, _SingletonMixin):
     company_slogan = models.CharField(
         max_length=255,
         blank=True,
-        default="",
+        default='',
         verbose_name="Company Slogan",
     )
 
@@ -145,19 +148,9 @@ class CompanyBranding(BaseModel, _SingletonMixin):
     def clean(self):
         super().clean()
         if self.primary_color_code and not HEX_COLOR_RE.match(self.primary_color_code):
-            raise ValidationError(
-                {
-                    "primary_color_code": "Must be a valid hex color code (e.g., #FE0000)."
-                }
-            )
-        if self.secondary_color_code and not HEX_COLOR_RE.match(
-            self.secondary_color_code
-        ):
-            raise ValidationError(
-                {
-                    "secondary_color_code": "Must be a valid hex color code (e.g., #3E4094)."
-                }
-            )
+            raise ValidationError({'primary_color_code': "Must be a valid hex color code (e.g., #FE0000)."})
+        if self.secondary_color_code and not HEX_COLOR_RE.match(self.secondary_color_code):
+            raise ValidationError({'secondary_color_code': "Must be a valid hex color code (e.g., #3E4094)."})
 
     def save(self, *args, **kwargs):
         self._enforce_singleton()
@@ -178,18 +171,18 @@ class CompanyPreferences(BaseModel, _SingletonMixin):
     default_currency = models.CharField(
         max_length=3,
         choices=CURRENCY_CHOICES,
-        default="NGN",
+        default='NGN',
         verbose_name="Default Currency",
     )
     language_preference = models.CharField(
         max_length=10,
         choices=LANGUAGE_CHOICES,
-        default="en-GB",
+        default='en-GB',
         verbose_name="Language Preference",
     )
     business_rules = models.TextField(
         blank=True,
-        default="",
+        default='',
         verbose_name="Business Rules",
     )
     extras = models.JSONField(
@@ -207,20 +200,12 @@ class CompanyPreferences(BaseModel, _SingletonMixin):
         super().clean()
         valid_currencies = {c[0] for c in CURRENCY_CHOICES}
         if self.default_currency and self.default_currency not in valid_currencies:
-            raise ValidationError(
-                {
-                    "default_currency": f"Invalid currency. Must be one of: {', '.join(sorted(valid_currencies))}"
-                }
-            )
+            raise ValidationError({'default_currency': f"Invalid currency. Must be one of: {', '.join(sorted(valid_currencies))}"})
         valid_languages = {c[0] for c in LANGUAGE_CHOICES}
         if self.language_preference and self.language_preference not in valid_languages:
-            raise ValidationError(
-                {
-                    "language_preference": f"Invalid language. Must be one of: {', '.join(sorted(valid_languages))}"
-                }
-            )
+            raise ValidationError({'language_preference': f"Invalid language. Must be one of: {', '.join(sorted(valid_languages))}"})
         if self.extras is not None and not isinstance(self.extras, dict):
-            raise ValidationError({"extras": "Extras must be a JSON object."})
+            raise ValidationError({'extras': "Extras must be a JSON object."})
 
     def save(self, *args, **kwargs):
         self._enforce_singleton()

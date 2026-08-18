@@ -3,6 +3,7 @@ from __future__ import annotations
 from django.apps import apps
 from django.db import transaction
 
+
 SEED_BRANCHES = [
     {
         "branch_name": "Enugu",
@@ -48,9 +49,7 @@ SEED_BRANCHES = [
 
 
 def find_branch_model():
-    matches = [
-        model for model in apps.get_models() if model.__name__.lower() == "branch"
-    ]
+    matches = [model for model in apps.get_models() if model.__name__.lower() == "branch"]
 
     if not matches:
         raise RuntimeError(
@@ -73,8 +72,7 @@ def field_map(model):
     return {
         field.name: field
         for field in model._meta.get_fields()
-        if getattr(field, "concrete", False)
-        and not getattr(field, "auto_created", False)
+        if getattr(field, "concrete", False) and not getattr(field, "auto_created", False)
     }
 
 
@@ -150,9 +148,7 @@ with transaction.atomic():
                 defaults[key] = value
 
         if "operational_status" in fields:
-            defaults["operational_status"] = operational_value(
-                fields["operational_status"]
-            )
+            defaults["operational_status"] = operational_value(fields["operational_status"])
 
         if "is_active" in fields:
             defaults["is_active"] = True

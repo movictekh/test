@@ -1,13 +1,11 @@
+from django.db import models
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+from datetime import timedelta
 import secrets
 import string
-from datetime import timedelta
-
-from django.core.exceptions import ValidationError
-from django.db import models
-from django.utils import timezone
-
-from .base import BaseModel
 from .user import User
+from .base import BaseModel
 
 
 class OTPCode(BaseModel):
@@ -25,112 +23,115 @@ class OTPCode(BaseModel):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name="otp_codes",
-        help_text="User this OTP is for",
+        related_name='otp_codes',
+        help_text="User this OTP is for"
     )
 
     intent = models.CharField(
         max_length=50,
         choices=IntentChoices.choices,
         default=IntentChoices.PASSWORD_RESET,
-        help_text="Purpose/intent of this OTP code",
+        help_text="Purpose/intent of this OTP code"
     )
 
     code = models.CharField(
-        max_length=255, unique=True, help_text="The actual OTP code"
+        max_length=255,
+        unique=True,
+        help_text="The actual OTP code"
     )
 
     code_type = models.CharField(
         max_length=20,
         choices=CodeTypeChoices.choices,
         default=CodeTypeChoices.NUMERIC,
-        help_text="Type of code generated",
+        help_text="Type of code generated"
     )
 
     # Validation & Status
     is_used = models.BooleanField(
-        default=False, help_text="Whether this code has been used"
+        default=False,
+        help_text="Whether this code has been used"
     )
 
     used_at = models.DateTimeField(
-        null=True, blank=True, help_text="When the code was used"
+        null=True,
+        blank=True,
+        help_text="When the code was used"
     )
 
-    expires_at = models.DateTimeField(help_text="When this code expires")
+    expires_at = models.DateTimeField(
+        help_text="When this code expires"
+    )
 
     attempts = models.IntegerField(
-        default=0, help_text="Number of failed validation attempts"
+        default=0,
+        help_text="Number of failed validation attempts"
     )
 
     max_attempts = models.IntegerField(
-        default=5, help_text="Maximum number of validation attempts allowed"
+        default=5,
+        help_text="Maximum number of validation attempts allowed"
     )
 
     # Metadata
     ip_address = models.GenericIPAddressField(
-        null=True, blank=True, help_text="IP address from which code was requested"
+        null=True,
+        blank=True,
+        help_text="IP address from which code was requested"
     )
 
-    user_agent = models.TextField(blank=True, help_text="User agent from request")
+    user_agent = models.TextField(
+        blank=True,
+        help_text="User agent from request"
+    )
 
     metadata = models.JSONField(
         default=dict,
         blank=True,
-        help_text="Additional metadata (email being verified, phone number, etc.)",
+        help_text="Additional metadata (email being verified, phone number, etc.)"
     )
 
     class Meta:
         verbose_name = "OTP Code"
         verbose_name_plural = "OTP Codes"
-        ordering = ["-created_at"]
+        ordering = ['-created_at']
         indexes = [
-            models.Index(fields=["user", "intent"]),
-            models.Index(fields=["code"]),
-            models.Index(fields=["expires_at"]),
-            models.Index(fields=["is_used"]),
-            models.Index(fields=["user", "is_used", "intent"]),
+            models.Index(fields=['user', 'intent']),
+            models.Index(fields=['code']),
+            models.Index(fields=['expires_at']),
+            models.Index(fields=['is_used']),
+            models.Index(fields=['user', 'is_used', 'intent']),
         ]
 
     def clean(self):
         super().clean()
         valid_intents = [choice[0] for choice in self.IntentChoices.choices]
         if self.intent and self.intent not in valid_intents:
-            raise ValidationError(
-                {
-                    "intent": f"Invalid intent. Must be one of: {', '.join(valid_intents)}"
-                }
-            )
+            raise ValidationError({'intent': f"Invalid intent. Must be one of: {', '.join(valid_intents)}"})
         valid_code_types = [choice[0] for choice in self.CodeTypeChoices.choices]
         if self.code_type and self.code_type not in valid_code_types:
-            raise ValidationError(
-                {
-                    "code_type": f"Invalid code type. Must be one of: {', '.join(valid_code_types)}"
-                }
-            )
+            raise ValidationError({'code_type': f"Invalid code type. Must be one of: {', '.join(valid_code_types)}"})
         if self.max_attempts is not None and self.max_attempts <= 0:
-            raise ValidationError(
-                {"max_attempts": "Max attempts must be greater than zero."}
-            )
+            raise ValidationError({'max_attempts': "Max attempts must be greater than zero."})
         if not self.code or not self.code.strip():
-            raise ValidationError({"code": "OTP code cannot be blank."})
+            raise ValidationError({'code': "OTP code cannot be blank."})
 
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return (
-            f"{self.get_intent_display()} for {self.user.username} ({self.code[:8]}...)"
-        )
+        return f"{self.get_intent_display()} for {self.user.username} ({self.code[:8]}...)"
 
     @classmethod
     def generate_numeric_code(cls, length=6):
-        return "".join(secrets.choice(string.digits) for _ in range(length))
+        return ''.join(secrets.choice(string.digits) for _ in range(length))
 
     @classmethod
     def generate_alphanumeric_code(cls, length=12):
         alphabet = string.ascii_letters + string.digits
-        return "".join(secrets.choice(alphabet) for _ in range(length))
+        return ''.join(secrets.choice(alphabet) for _ in range(length))
+
 
     @classmethod
     def create_code(
@@ -141,7 +142,7 @@ class OTPCode(BaseModel):
         expires_in_seconds=600,
         ip_address=None,
         user_agent=None,
-        metadata=None,
+        metadata=None
     ):
         # Default code type
         if code_type is None:
@@ -154,9 +155,13 @@ class OTPCode(BaseModel):
             code = cls.generate_alphanumeric_code()
         else:
             raise ValueError("Unsupported code type")
-
+        
         # Delete old unused codes for this user and intent
-        cls.objects.filter(user=user, intent=intent, is_used=False).delete()
+        cls.objects.filter(
+            user=user,
+            intent=intent,
+            is_used=False
+        ).delete()
 
         # Create new code
         otp = cls.objects.create(
@@ -167,7 +172,7 @@ class OTPCode(BaseModel):
             expires_at=timezone.now() + timedelta(seconds=expires_in_seconds),
             ip_address=ip_address,
             user_agent=user_agent,
-            metadata=metadata or {},
+            metadata=metadata or {}
         )
 
         return otp
@@ -197,7 +202,7 @@ class OTPCode(BaseModel):
 
         # Increment attempts
         self.attempts += 1
-        self.save(update_fields=["attempts"])
+        self.save(update_fields=['attempts'])
 
         # Check code match (case-insensitive for alphanumeric)
         code_match = (
@@ -212,7 +217,7 @@ class OTPCode(BaseModel):
         # Code is valid - mark as used
         self.is_used = True
         self.used_at = timezone.now()
-        self.save(update_fields=["is_used", "used_at"])
+        self.save(update_fields=['is_used', 'used_at'])
 
         return True, ""
 
@@ -220,12 +225,17 @@ class OTPCode(BaseModel):
     def get_valid_code(cls, user, intent):
         try:
             return cls.objects.get(
-                user=user, intent=intent, is_used=False, expires_at__gt=timezone.now()
+                user=user,
+                intent=intent,
+                is_used=False,
+                expires_at__gt=timezone.now()
             )
         except cls.DoesNotExist:
             return None
 
     @classmethod
     def cleanup_expired(cls):
-        expired_count, _ = cls.objects.filter(expires_at__lt=timezone.now()).delete()
+        expired_count, _ = cls.objects.filter(
+            expires_at__lt=timezone.now()
+        ).delete()
         return expired_count

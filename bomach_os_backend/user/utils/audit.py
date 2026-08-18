@@ -1,5 +1,4 @@
-from typing import Any, Dict, Optional
-
+from typing import Optional, Dict, Any
 from django.http import HttpRequest
 
 

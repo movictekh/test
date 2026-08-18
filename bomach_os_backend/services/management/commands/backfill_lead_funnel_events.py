@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 
-from domains.marketing_sales.models.sales import Lead
-from domains.marketing_sales.services.funnel import backfill_lead_funnel_events
+from services.funnel_events import backfill_lead_funnel_events
+from services.models.crm import Lead
 
 
 class Command(BaseCommand):
@@ -16,7 +16,7 @@ class Command(BaseCommand):
         if options["branch_id"]:
             leads = leads.filter(branch_id=options["branch_id"])
         if options["limit"]:
-            leads = leads[: options["limit"]]
+            leads = leads[:options["limit"]]
 
         result = backfill_lead_funnel_events(leads)
         self.stdout.write(

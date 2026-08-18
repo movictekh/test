@@ -1,11 +1,10 @@
+from ninja import Schema
+from typing import Optional, List
 from datetime import date, datetime
 from decimal import Decimal
-from typing import List, Optional
 
-from ninja import Schema
 
 # ============== Choice Schema ==============
-
 
 class ChoiceSchema(Schema):
     value: str
@@ -19,15 +18,14 @@ class PartnerChoicesSchema(Schema):
 
 # ============== Partner Schemas ==============
 
-
 class PartnerCreateSchema(Schema):
     name: str
-    email: Optional[str] = ""
-    phone: Optional[str] = ""
-    address: Optional[str] = ""
-    category: str = "other"
-    status: str = "inactive"
-    notes: Optional[str] = ""
+    email: Optional[str] = ''
+    phone: Optional[str] = ''
+    address: Optional[str] = ''
+    category: str = 'other'
+    status: str = 'inactive'
+    notes: Optional[str] = ''
 
 
 class PartnerUpdateSchema(Schema):
@@ -70,7 +68,6 @@ class PartnerSchema(Schema):
 
 # ============== Agreement Schemas ==============
 
-
 class AgreementCreateSchema(Schema):
     title: str
     document: str  # URL from file upload endpoint
@@ -103,7 +100,7 @@ class AgreementSchema(Schema):
     @staticmethod
     def resolve_document_name(obj):
         if obj.document and obj.document.name:
-            return obj.document.name.split("/")[-1]
+            return obj.document.name.split('/')[-1]
         return None
 
     @staticmethod

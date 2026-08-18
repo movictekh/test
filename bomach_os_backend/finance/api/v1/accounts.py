@@ -4,15 +4,12 @@ from django.shortcuts import get_object_or_404
 from ninja import Query, Router
 from ninja.pagination import LimitOffsetPagination, paginate
 
-from finance.api.schemas import (
-    FinanceAccountIn,
-    FinanceAccountOut,
-    FinanceAccountUpdate,
-)
+from finance.api.schemas import FinanceAccountIn, FinanceAccountOut, FinanceAccountUpdate
 from finance.models import FinanceAccount
 from services.api.schema.others import MessageSchema
 from user.models.branch import Branch
 from user.utils.perm import require_permission, scope_queryset
+
 
 router = Router(tags=["Finance Accounts"])
 
@@ -61,10 +58,7 @@ def create_finance_account(request, payload: FinanceAccountIn):
         return 400, {"detail": str(exc)}
 
 
-@router.patch(
-    "/accounts/{account_id}",
-    response={200: FinanceAccountOut, 400: MessageSchema, 404: MessageSchema},
-)
+@router.patch("/accounts/{account_id}", response={200: FinanceAccountOut, 400: MessageSchema, 404: MessageSchema})
 @require_permission("payments", "create")
 def update_finance_account(request, account_id: int, payload: FinanceAccountUpdate):
     try:
@@ -72,9 +66,7 @@ def update_finance_account(request, account_id: int, payload: FinanceAccountUpda
         data = payload.dict(exclude_unset=True)
         if "branch_id" in data:
             branch_id = data.pop("branch_id")
-            account.branch = (
-                get_object_or_404(Branch, id=branch_id) if branch_id else None
-            )
+            account.branch = get_object_or_404(Branch, id=branch_id) if branch_id else None
         for field, value in data.items():
             setattr(account, field, value)
         account.save()
@@ -83,10 +75,7 @@ def update_finance_account(request, account_id: int, payload: FinanceAccountUpda
         return 400, {"detail": str(exc)}
 
 
-@router.post(
-    "/accounts/{account_id}/deactivate",
-    response={200: FinanceAccountOut, 404: MessageSchema},
-)
+@router.post("/accounts/{account_id}/deactivate", response={200: FinanceAccountOut, 404: MessageSchema})
 @require_permission("payments", "create")
 def deactivate_finance_account(request, account_id: int):
     account = get_object_or_404(FinanceAccount, id=account_id)

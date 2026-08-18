@@ -83,9 +83,7 @@ class RoleTargetTemplateAPITests(RoleAPITestMixin, TestCase):
 
 
 class EmployeeTargetAPITests(RoleAPITestMixin, TestCase):
-    def create_target_template(
-        self, role, title: str, sequence: int = 1
-    ) -> RoleTargetTemplate:
+    def create_target_template(self, role, title: str, sequence: int = 1) -> RoleTargetTemplate:
         return RoleTargetTemplate.objects.create(
             role=role,
             title=title,
@@ -171,9 +169,7 @@ class EmployeeTargetAPITests(RoleAPITestMixin, TestCase):
         self.assertEqual(filtered_response.status_code, 200)
         filtered_data = filtered_response.json()
         self.assertEqual(filtered_data["created_count"], 1)
-        self.assertEqual(
-            filtered_data["items"][0]["employee"]["user_id"], employee_one.user_id
-        )
+        self.assertEqual(filtered_data["items"][0]["employee"]["user_id"], employee_one.user_id)
 
     def test_can_generate_and_list_employee_targets(self):
         admin_role = self.create_role(
@@ -217,9 +213,7 @@ class EmployeeTargetAPITests(RoleAPITestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data["count"], 1)
-        self.assertEqual(
-            data["items"][0]["employee"]["employee_id"], employee.employee_id
-        )
+        self.assertEqual(data["items"][0]["employee"]["employee_id"], employee.employee_id)
         self.assertEqual(data["items"][0]["title"], "Monthly Sales")
 
     def test_employee_can_list_own_targets(self):
@@ -233,9 +227,7 @@ class EmployeeTargetAPITests(RoleAPITestMixin, TestCase):
             employee_id="EMP-OWN-TARGETS",
             role=employee_role,
         )
-        template = self.create_target_template(
-            employee_role, "Monthly Sales", sequence=1
-        )
+        template = self.create_target_template(employee_role, "Monthly Sales", sequence=1)
         EmployeeTarget.objects.create(
             employee=employee,
             role=employee_role,

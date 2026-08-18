@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("user", "0077_remove_employee_level"),
+        ('user', '0077_remove_employee_level'),
     ]
 
     operations = [
         migrations.AddField(
-            model_name="user",
-            name="face_embedding",
+            model_name='user',
+            name='face_embedding',
             field=models.JSONField(blank=True, null=True),
         ),
     ]

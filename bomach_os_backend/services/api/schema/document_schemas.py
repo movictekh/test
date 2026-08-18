@@ -1,7 +1,6 @@
-from datetime import datetime
-from typing import Optional
-
 from ninja import Schema
+from typing import Optional
+from datetime import datetime
 
 
 class DocumentIn(Schema):

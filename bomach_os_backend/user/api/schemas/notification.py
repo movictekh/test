@@ -1,7 +1,6 @@
-from datetime import datetime
-from typing import Optional
-
 from ninja import Schema
+from typing import Optional
+from datetime import datetime
 
 
 class NotificationOut(Schema):
@@ -10,7 +9,7 @@ class NotificationOut(Schema):
     message: str
     notification_type: str
     is_read: bool
-    link: str = ""
+    link: str = ''
     metadata: dict = {}
     created_at: datetime
 

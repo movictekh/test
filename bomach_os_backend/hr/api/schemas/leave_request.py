@@ -1,20 +1,18 @@
 from datetime import date, datetime
-from typing import Literal, Optional
-
+from typing import Optional, Literal
 from pydantic import BaseModel, Field
 
 
 class LeaveRequestCreateSchema(BaseModel):
     """Schema for creating a new leave request"""
-
     leave_type: Literal[
-        "sick_leave",
-        "annual_leave",
-        "casual_leave",
-        "maternity_leave",
-        "paternity_leave",
-        "unpaid_leave",
-        "compassionate_leave",
+        'sick_leave',
+        'annual_leave',
+        'casual_leave',
+        'maternity_leave',
+        'paternity_leave',
+        'unpaid_leave',
+        'compassionate_leave'
     ] = Field(..., description="Type of leave")
     start_date: date = Field(..., description="Leave start date")
     end_date: date = Field(..., description="Leave end date")
@@ -30,18 +28,15 @@ class LeaveRequestCreateSchema(BaseModel):
 
 class LeaveRequestUpdateSchema(BaseModel):
     """Schema for updating a leave request"""
-
-    leave_type: Optional[
-        Literal[
-            "sick_leave",
-            "annual_leave",
-            "casual_leave",
-            "maternity_leave",
-            "paternity_leave",
-            "unpaid_leave",
-            "compassionate_leave",
-        ]
-    ] = None
+    leave_type: Optional[Literal[
+        'sick_leave',
+        'annual_leave',
+        'casual_leave',
+        'maternity_leave',
+        'paternity_leave',
+        'unpaid_leave',
+        'compassionate_leave'
+    ]] = None
     start_date: Optional[date] = None
     end_date: Optional[date] = None
     reason: Optional[str] = None
@@ -50,31 +45,24 @@ class LeaveRequestUpdateSchema(BaseModel):
     # approval_date: Optional[date] = None
     # rejection_reason: Optional[str] = None
 
-
 class LeaveUpdateSchema(BaseModel):
-    status: Optional[Literal["pending", "approved", "rejected", "cancelled"]] = None
+    status: Optional[Literal['pending', 'approved', 'rejected', 'cancelled']] = None
     approver_id: Optional[int] = Field(None)
     approval_date: Optional[date] = None
     rejection_reason: Optional[str] = None
 
-
 class LeaveRequestStatusUpdateSchema(BaseModel):
     """Schema for updating leave request status"""
-
-    status: Literal["pending", "approved", "rejected", "cancelled"] = Field(
-        ..., description="New status for the leave request"
+    status: Literal['pending', 'approved', 'rejected', 'cancelled'] = Field(
+        ...,
+        description="New status for the leave request"
     )
-    approval_date: Optional[date] = Field(
-        None, description="Date of approval/rejection"
-    )
-    rejection_reason: Optional[str] = Field(
-        None, description="Reason for rejection (if rejected)"
-    )
+    approval_date: Optional[date] = Field(None, description="Date of approval/rejection")
+    rejection_reason: Optional[str] = Field(None, description="Reason for rejection (if rejected)")
 
 
 class LeaveRequestResponseSchema(BaseModel):
     """Schema for leave request response"""
-
     id: int
     employee_id: int
     leave_type: str
@@ -95,7 +83,6 @@ class LeaveRequestResponseSchema(BaseModel):
 
 class LeaveRequestListItemSchema(BaseModel):
     """Schema for leave request in list view"""
-
     id: int
     employee_id: int
     leave_type: str
@@ -112,5 +99,4 @@ class LeaveRequestListItemSchema(BaseModel):
 
 class MessageSchema(BaseModel):
     """Generic message response schema"""
-
     detail: str

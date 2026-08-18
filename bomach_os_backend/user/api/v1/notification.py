@@ -1,6 +1,6 @@
-from django.shortcuts import get_object_or_404
 from ninja import Router
-from ninja.pagination import LimitOffsetPagination, paginate
+from ninja.pagination import paginate, LimitOffsetPagination
+from django.shortcuts import get_object_or_404
 
 from user.api.schemas.notification import NotificationOut, NotificationStats
 from user.models.notification import Notification
@@ -13,8 +13,7 @@ notification_router = Router(tags=["Notifications"])
 @require_permission("notifications", "view")
 def get_notification_stats(request):
     unread_count = Notification.objects.filter(
-        user=request.user,
-        is_read=False,
+        user=request.user, is_read=False,
     ).count()
     return {"unread_count": unread_count}
 
@@ -23,8 +22,7 @@ def get_notification_stats(request):
 @require_permission("notifications", "mark_all_read")
 def mark_all_notifications_read(request):
     updated = Notification.objects.filter(
-        user=request.user,
-        is_read=False,
+        user=request.user, is_read=False,
     ).update(is_read=True)
     return {"detail": f"Marked {updated} notifications as read"}
 
@@ -43,9 +41,7 @@ def list_notifications(request, is_read: bool = None):
 @require_permission("notifications", "view")
 def get_notification(request, notification_id: int):
     return get_object_or_404(
-        Notification,
-        id=notification_id,
-        user=request.user,
+        Notification, id=notification_id, user=request.user,
     )
 
 
@@ -53,10 +49,8 @@ def get_notification(request, notification_id: int):
 @require_permission("notifications", "mark_read")
 def mark_notification_read(request, notification_id: int):
     notification = get_object_or_404(
-        Notification,
-        id=notification_id,
-        user=request.user,
+        Notification, id=notification_id, user=request.user,
     )
     notification.is_read = True
-    notification.save(update_fields=["is_read", "updated_at"])
+    notification.save(update_fields=['is_read', 'updated_at'])
     return notification

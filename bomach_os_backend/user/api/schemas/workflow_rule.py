@@ -1,7 +1,6 @@
-from datetime import datetime
-from typing import List, Optional
-
 from ninja import Schema
+from typing import List, Optional
+from datetime import datetime
 
 
 class ConditionSchema(Schema):
@@ -12,7 +11,7 @@ class ConditionSchema(Schema):
 
 class WorkflowRuleIn(Schema):
     name: str
-    description: str = ""
+    description: str = ''
     trigger_event: str
     conditions: List[ConditionSchema] = []
     action_type: str
@@ -39,7 +38,7 @@ class WorkflowRuleOut(Schema):
     action_type: str
     action_config: dict
     is_active: bool
-    created_by_name: str = ""
+    created_by_name: str = ''
     execution_count: int = 0
     created_at: datetime
 

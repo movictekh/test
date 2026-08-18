@@ -1,1 +1,0 @@
-"""Bomach business-domain packages."""

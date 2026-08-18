@@ -73,14 +73,8 @@ class RoleReportingLine(BaseModel):
         ]
 
     def clean(self):
-        if (
-            self.role_id
-            and self.reports_to_role_id
-            and self.role_id == self.reports_to_role_id
-        ):
-            raise ValidationError(
-                {"reports_to_role": "A role cannot report to itself."}
-            )
+        if self.role_id and self.reports_to_role_id and self.role_id == self.reports_to_role_id:
+            raise ValidationError({"reports_to_role": "A role cannot report to itself."})
 
         self._validate_unit_department()
         self._validate_duplicate_active_line()
@@ -94,14 +88,8 @@ class RoleReportingLine(BaseModel):
         }
 
     def _validate_unit_department(self):
-        if (
-            self.unit_id
-            and self.department_id
-            and self.unit.department_id != self.department_id
-        ):
-            raise ValidationError(
-                {"unit": "Unit must belong to the selected department."}
-            )
+        if self.unit_id and self.department_id and self.unit.department_id != self.department_id:
+            raise ValidationError({"unit": "Unit must belong to the selected department."})
 
     def _validate_duplicate_active_line(self):
         if not self.is_active or not self.role_id or not self.reports_to_role_id:
@@ -117,9 +105,7 @@ class RoleReportingLine(BaseModel):
         if self.pk:
             duplicate = duplicate.exclude(pk=self.pk)
         if duplicate.exists():
-            raise ValidationError(
-                "An active reporting line with this scope already exists."
-            )
+            raise ValidationError("An active reporting line with this scope already exists.")
 
         if self.relationship_type != self.RelationshipType.DIRECT:
             return
@@ -133,9 +119,7 @@ class RoleReportingLine(BaseModel):
         if self.pk:
             active_direct = active_direct.exclude(pk=self.pk)
         if active_direct.exists():
-            raise ValidationError(
-                "A role can only have one active direct reporting line per scope."
-            )
+            raise ValidationError("A role can only have one active direct reporting line per scope.")
 
     def _validate_direct_line_cycle(self):
         if (

@@ -8,328 +8,106 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("services", "0030_alter_servicerequestactivity_activity_type"),
-        ("user", "0093_employeetargetreport"),
+        ('services', '0030_alter_servicerequestactivity_activity_type'),
+        ('user', '0093_employeetargetreport'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name="serviceorderactivity",
-            name="activity_type",
-            field=models.CharField(
-                choices=[
-                    ("order_created", "Order Created"),
-                    ("control_update", "Control Update"),
-                    ("progress_update", "Progress Update"),
-                    ("stage_advanced", "Stage Advanced"),
-                    ("milestone_added", "Milestone Added"),
-                    ("milestone_reopened", "Milestone Reopened"),
-                    ("task_created", "Task Created"),
-                    ("task_updated", "Task Updated"),
-                    ("task_advanced", "Task Advanced"),
-                    ("deliverable_added", "Deliverable Added"),
-                    ("deliverable_approved", "Deliverable Approved"),
-                    ("deliverable_rejected", "Deliverable Rejected"),
-                    ("client_communication", "Client Communication"),
-                    ("delay_blocker", "Delay / Blocker"),
-                    ("inspection", "Inspection"),
-                    ("decision", "Decision"),
-                ],
-                max_length=40,
-            ),
+            model_name='serviceorderactivity',
+            name='activity_type',
+            field=models.CharField(choices=[('order_created', 'Order Created'), ('control_update', 'Control Update'), ('progress_update', 'Progress Update'), ('stage_advanced', 'Stage Advanced'), ('milestone_added', 'Milestone Added'), ('milestone_reopened', 'Milestone Reopened'), ('task_created', 'Task Created'), ('task_updated', 'Task Updated'), ('task_advanced', 'Task Advanced'), ('deliverable_added', 'Deliverable Added'), ('deliverable_approved', 'Deliverable Approved'), ('deliverable_rejected', 'Deliverable Rejected'), ('client_communication', 'Client Communication'), ('delay_blocker', 'Delay / Blocker'), ('inspection', 'Inspection'), ('decision', 'Decision')], max_length=40),
         ),
         migrations.CreateModel(
-            name="ServiceExecutionTask",
+            name='ServiceExecutionTask',
             fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                (
-                    "task_number",
-                    models.CharField(editable=False, max_length=50, unique=True),
-                ),
-                ("title", models.CharField(max_length=255)),
-                ("description", models.TextField(blank=True)),
-                ("instructions", models.TextField(blank=True)),
-                ("acceptance_criteria", models.TextField(blank=True)),
-                (
-                    "status",
-                    models.CharField(
-                        choices=[
-                            ("to_do", "To Do"),
-                            ("in_progress", "In Progress"),
-                            ("review", "Review"),
-                            ("done", "Done"),
-                            ("cancelled", "Cancelled"),
-                        ],
-                        default="to_do",
-                        max_length=20,
-                    ),
-                ),
-                (
-                    "priority",
-                    models.CharField(
-                        choices=[
-                            ("normal", "Normal"),
-                            ("high", "High"),
-                            ("critical", "Critical"),
-                        ],
-                        default="normal",
-                        max_length=20,
-                    ),
-                ),
-                ("evidence_required", models.BooleanField(default=False)),
-                ("due_date", models.DateField(blank=True, null=True)),
-                ("completed_at", models.DateTimeField(blank=True, null=True)),
-                ("created_at", models.DateTimeField(auto_now_add=True)),
-                ("updated_at", models.DateTimeField(auto_now=True)),
-                (
-                    "assignees",
-                    models.ManyToManyField(
-                        blank=True,
-                        related_name="assigned_service_execution_tasks",
-                        to="user.employee",
-                    ),
-                ),
-                (
-                    "created_by",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.PROTECT,
-                        related_name="created_service_execution_tasks",
-                        to=settings.AUTH_USER_MODEL,
-                    ),
-                ),
-                (
-                    "milestone",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="tasks",
-                        to="services.serviceordermilestone",
-                    ),
-                ),
-                (
-                    "order",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        related_name="tasks",
-                        to="services.serviceorder",
-                    ),
-                ),
-                (
-                    "owner",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="owned_service_execution_tasks",
-                        to="user.employee",
-                    ),
-                ),
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('task_number', models.CharField(editable=False, max_length=50, unique=True)),
+                ('title', models.CharField(max_length=255)),
+                ('description', models.TextField(blank=True)),
+                ('instructions', models.TextField(blank=True)),
+                ('acceptance_criteria', models.TextField(blank=True)),
+                ('status', models.CharField(choices=[('to_do', 'To Do'), ('in_progress', 'In Progress'), ('review', 'Review'), ('done', 'Done'), ('cancelled', 'Cancelled')], default='to_do', max_length=20)),
+                ('priority', models.CharField(choices=[('normal', 'Normal'), ('high', 'High'), ('critical', 'Critical')], default='normal', max_length=20)),
+                ('evidence_required', models.BooleanField(default=False)),
+                ('due_date', models.DateField(blank=True, null=True)),
+                ('completed_at', models.DateTimeField(blank=True, null=True)),
+                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('updated_at', models.DateTimeField(auto_now=True)),
+                ('assignees', models.ManyToManyField(blank=True, related_name='assigned_service_execution_tasks', to='user.employee')),
+                ('created_by', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='created_service_execution_tasks', to=settings.AUTH_USER_MODEL)),
+                ('milestone', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='tasks', to='services.serviceordermilestone')),
+                ('order', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='tasks', to='services.serviceorder')),
+                ('owner', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='owned_service_execution_tasks', to='user.employee')),
             ],
             options={
-                "ordering": ["due_date", "-created_at"],
+                'ordering': ['due_date', '-created_at'],
             },
         ),
         migrations.CreateModel(
-            name="ServiceDeliverable",
+            name='ServiceDeliverable',
             fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                (
-                    "deliverable_number",
-                    models.CharField(editable=False, max_length=50, unique=True),
-                ),
-                ("title", models.CharField(max_length=255)),
-                (
-                    "deliverable_type",
-                    models.CharField(
-                        choices=[
-                            ("report", "Report"),
-                            ("drawing", "Drawing"),
-                            ("survey_plan", "Survey Plan"),
-                            ("certificate", "Certificate"),
-                            ("legal_document", "Legal Document"),
-                            ("progress_evidence", "Progress Evidence"),
-                            ("handover_file", "Handover File"),
-                            ("other", "Other"),
-                        ],
-                        default="report",
-                        max_length=40,
-                    ),
-                ),
-                ("version", models.CharField(default="v1", max_length=40)),
-                ("file_url", models.URLField(max_length=500)),
-                ("file_name", models.CharField(blank=True, max_length=255)),
-                ("content_type", models.CharField(blank=True, max_length=100)),
-                ("file_size_bytes", models.PositiveIntegerField(default=0)),
-                ("description", models.TextField(blank=True)),
-                ("client_visible", models.BooleanField(default=False)),
-                (
-                    "status",
-                    models.CharField(
-                        choices=[
-                            ("draft", "Draft"),
-                            ("under_review", "Under Review"),
-                            ("approved", "Approved"),
-                            ("rejected", "Rejected"),
-                            ("superseded", "Superseded"),
-                        ],
-                        default="draft",
-                        max_length=20,
-                    ),
-                ),
-                (
-                    "approval_mode",
-                    models.CharField(
-                        choices=[
-                            ("none", "No Approval"),
-                            ("supervisor", "Supervisor Approval"),
-                            ("client", "Client Approval"),
-                        ],
-                        default="none",
-                        max_length=20,
-                    ),
-                ),
-                ("approved_at", models.DateTimeField(blank=True, null=True)),
-                ("rejected_at", models.DateTimeField(blank=True, null=True)),
-                ("rejection_reason", models.TextField(blank=True)),
-                ("created_at", models.DateTimeField(auto_now_add=True)),
-                ("updated_at", models.DateTimeField(auto_now=True)),
-                (
-                    "approved_by",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="approved_service_deliverables",
-                        to=settings.AUTH_USER_MODEL,
-                    ),
-                ),
-                (
-                    "created_by",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.PROTECT,
-                        related_name="created_service_deliverables",
-                        to=settings.AUTH_USER_MODEL,
-                    ),
-                ),
-                (
-                    "milestone",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="deliverables",
-                        to="services.serviceordermilestone",
-                    ),
-                ),
-                (
-                    "order",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        related_name="deliverables",
-                        to="services.serviceorder",
-                    ),
-                ),
-                (
-                    "owner",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="owned_service_deliverables",
-                        to="user.employee",
-                    ),
-                ),
-                (
-                    "rejected_by",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="rejected_service_deliverables",
-                        to=settings.AUTH_USER_MODEL,
-                    ),
-                ),
-                (
-                    "task",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="deliverables",
-                        to="services.serviceexecutiontask",
-                    ),
-                ),
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('deliverable_number', models.CharField(editable=False, max_length=50, unique=True)),
+                ('title', models.CharField(max_length=255)),
+                ('deliverable_type', models.CharField(choices=[('report', 'Report'), ('drawing', 'Drawing'), ('survey_plan', 'Survey Plan'), ('certificate', 'Certificate'), ('legal_document', 'Legal Document'), ('progress_evidence', 'Progress Evidence'), ('handover_file', 'Handover File'), ('other', 'Other')], default='report', max_length=40)),
+                ('version', models.CharField(default='v1', max_length=40)),
+                ('file_url', models.URLField(max_length=500)),
+                ('file_name', models.CharField(blank=True, max_length=255)),
+                ('content_type', models.CharField(blank=True, max_length=100)),
+                ('file_size_bytes', models.PositiveIntegerField(default=0)),
+                ('description', models.TextField(blank=True)),
+                ('client_visible', models.BooleanField(default=False)),
+                ('status', models.CharField(choices=[('draft', 'Draft'), ('under_review', 'Under Review'), ('approved', 'Approved'), ('rejected', 'Rejected'), ('superseded', 'Superseded')], default='draft', max_length=20)),
+                ('approval_mode', models.CharField(choices=[('none', 'No Approval'), ('supervisor', 'Supervisor Approval'), ('client', 'Client Approval')], default='none', max_length=20)),
+                ('approved_at', models.DateTimeField(blank=True, null=True)),
+                ('rejected_at', models.DateTimeField(blank=True, null=True)),
+                ('rejection_reason', models.TextField(blank=True)),
+                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('updated_at', models.DateTimeField(auto_now=True)),
+                ('approved_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='approved_service_deliverables', to=settings.AUTH_USER_MODEL)),
+                ('created_by', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='created_service_deliverables', to=settings.AUTH_USER_MODEL)),
+                ('milestone', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='deliverables', to='services.serviceordermilestone')),
+                ('order', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='deliverables', to='services.serviceorder')),
+                ('owner', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='owned_service_deliverables', to='user.employee')),
+                ('rejected_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='rejected_service_deliverables', to=settings.AUTH_USER_MODEL)),
+                ('task', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='deliverables', to='services.serviceexecutiontask')),
             ],
             options={
-                "ordering": ["-created_at"],
+                'ordering': ['-created_at'],
             },
         ),
         migrations.AddIndex(
-            model_name="serviceexecutiontask",
-            index=models.Index(
-                fields=["order", "status"], name="services_se_order_i_54ab0a_idx"
-            ),
+            model_name='serviceexecutiontask',
+            index=models.Index(fields=['order', 'status'], name='services_se_order_i_54ab0a_idx'),
         ),
         migrations.AddIndex(
-            model_name="serviceexecutiontask",
-            index=models.Index(
-                fields=["milestone", "status"], name="services_se_milesto_ec57ee_idx"
-            ),
+            model_name='serviceexecutiontask',
+            index=models.Index(fields=['milestone', 'status'], name='services_se_milesto_ec57ee_idx'),
         ),
         migrations.AddIndex(
-            model_name="serviceexecutiontask",
-            index=models.Index(
-                fields=["owner", "status"], name="services_se_owner_i_c4c3cd_idx"
-            ),
+            model_name='serviceexecutiontask',
+            index=models.Index(fields=['owner', 'status'], name='services_se_owner_i_c4c3cd_idx'),
         ),
         migrations.AddIndex(
-            model_name="serviceexecutiontask",
-            index=models.Index(
-                fields=["priority"], name="services_se_priorit_bcc2e7_idx"
-            ),
+            model_name='serviceexecutiontask',
+            index=models.Index(fields=['priority'], name='services_se_priorit_bcc2e7_idx'),
         ),
         migrations.AddIndex(
-            model_name="servicedeliverable",
-            index=models.Index(
-                fields=["order", "status"], name="services_se_order_i_a02a2b_idx"
-            ),
+            model_name='servicedeliverable',
+            index=models.Index(fields=['order', 'status'], name='services_se_order_i_a02a2b_idx'),
         ),
         migrations.AddIndex(
-            model_name="servicedeliverable",
-            index=models.Index(
-                fields=["order", "client_visible"],
-                name="services_se_order_i_00b073_idx",
-            ),
+            model_name='servicedeliverable',
+            index=models.Index(fields=['order', 'client_visible'], name='services_se_order_i_00b073_idx'),
         ),
         migrations.AddIndex(
-            model_name="servicedeliverable",
-            index=models.Index(
-                fields=["milestone", "status"], name="services_se_milesto_346d62_idx"
-            ),
+            model_name='servicedeliverable',
+            index=models.Index(fields=['milestone', 'status'], name='services_se_milesto_346d62_idx'),
         ),
         migrations.AddIndex(
-            model_name="servicedeliverable",
-            index=models.Index(
-                fields=["approval_mode", "status"],
-                name="services_se_approva_9a3dc0_idx",
-            ),
+            model_name='servicedeliverable',
+            index=models.Index(fields=['approval_mode', 'status'], name='services_se_approva_9a3dc0_idx'),
         ),
     ]

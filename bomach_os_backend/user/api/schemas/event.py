@@ -1,13 +1,12 @@
-from datetime import datetime
-from typing import List, Optional
-
-from django.utils import timezone
 from ninja import Schema
+from typing import Optional, List
+from datetime import datetime
+from django.utils import timezone
 
 
 class EventCreateSchema(Schema):
     title: str
-    event_type: str = "GENERAL_MEETING"
+    event_type: str = 'GENERAL_MEETING'
     event_time_from: datetime
     event_time_to: datetime
     meeting_location: Optional[str] = None
@@ -16,13 +15,8 @@ class EventCreateSchema(Schema):
     target_associates: bool = False
     target_investors: bool = False
     target_partners: bool = False
-    reminder_offset: Optional[int] = (
-        None  # Reminder time in minutes before the event starts
-    )
-    recurrence: Optional[str] = (
-        None  # Eg: "RRULE:FREQ=WEEKLY;BYDAY=TU;INTERVAL=1" - Tuesday every week
-    )
-
+    reminder_offset: Optional[int] = None    # Reminder time in minutes before the event starts
+    recurrence: Optional[str] = None    # Eg: "RRULE:FREQ=WEEKLY;BYDAY=TU;INTERVAL=1" - Tuesday every week
 
 class EventUpdateSchema(Schema):
     title: Optional[str] = None
@@ -35,9 +29,8 @@ class EventUpdateSchema(Schema):
     target_associates: Optional[bool] = None
     target_investors: Optional[bool] = None
     target_partners: Optional[bool] = None
-    reminder_offset: Optional[int] = None
+    reminder_offset: Optional[int] = None 
     recurrence: Optional[str] = None
-
 
 class EventBaseResponse(Schema):
     title: str
@@ -47,6 +40,7 @@ class EventBaseResponse(Schema):
     status: str
     created_at: datetime
     updated_at: datetime
+
 
     @staticmethod
     def resolve_target_audience(obj):
@@ -69,18 +63,15 @@ class EventBaseResponse(Schema):
             return "Expired"
         return "Active"
 
-
 class EventChoicesSchema(Schema):
     event_types: List[dict]
-
 
 class EventDashboardSchema(EventBaseResponse):
     date_sent: str
 
     @staticmethod
     def resolve_date_sent(obj):
-        return obj.created_at.strftime("%d-%m-%Y, %I:%M %p")
-
+        return obj.created_at.strftime('%d-%m-%Y, %I:%M %p')
 
 class EventFullResponseSchema(EventBaseResponse):
     id: int
@@ -95,19 +86,15 @@ class EventFullResponseSchema(EventBaseResponse):
 
     @staticmethod
     def resolve_event_time_from(obj):
-        return obj.event_time_from.strftime("%d-%m-%Y, %I:%M %p")
+        return obj.event_time_from.strftime('%d-%m-%Y, %I:%M %p')
 
     @staticmethod
     def resolve_event_time_to(obj):
-        return obj.event_time_to.strftime("%d-%m-%Y, %I:%M %p")
+        return obj.event_time_to.strftime('%d-%m-%Y, %I:%M %p')
 
     @staticmethod
     def resolve_reminder_offset(obj):
-        return (
-            f"{obj.reminder_offset} minutes before"
-            if obj.reminder_offset
-            else "No Reminder"
-        )
+        return f"{obj.reminder_offset} minutes before" if obj.reminder_offset else "No Reminder"
 
     @staticmethod
     def resolve_is_recurring(obj):
@@ -124,4 +111,4 @@ class EventFullResponseSchema(EventBaseResponse):
         if obj.organizer:
             name = f"{obj.organizer.first_name} {obj.organizer.last_name}".strip()
             return name or obj.organizer.username
-        return "System"
+        return "System"   

@@ -1,5 +1,4 @@
 from typing import List
-
 from ninja import Schema
 
 
@@ -25,5 +24,4 @@ class HRStats(Schema):
 
 class MessageSchema(Schema):
     """Generic message response schema"""
-
     detail: str

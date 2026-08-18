@@ -1,11 +1,10 @@
-from datetime import date, datetime
-from decimal import Decimal
-from typing import Any, Optional
-
 from ninja import Schema
+from decimal import Decimal
+from datetime import date, datetime
+from typing import Optional, Any
+
 
 # ─── ClientService Schemas ───────────────────────────────────────────
-
 
 class ClientServiceResponseSchema(Schema):
     id: int
@@ -28,15 +27,14 @@ class ClientServiceResponseSchema(Schema):
 
 # ─── ServiceRequest Schemas ──────────────────────────────────────────
 
-
 class ServiceRequestCreateSchema(Schema):
     service_id: int
     project_name: str
     location: str
     preferred_start_date: Optional[date] = None
     project_details: str
-    special_requirements: Optional[str] = ""
-    attachment: Optional[str] = ""
+    special_requirements: Optional[str] = ''
+    attachment: Optional[str] = ''
 
 
 class InvoiceSummarySchema(Schema):
@@ -51,7 +49,6 @@ class InvoiceSummarySchema(Schema):
     @staticmethod
     def resolve_status(obj):
         return obj.get_status_display()
-
 
 class ServiceRequestDashboardResponseSchema(Schema):
     id: int
@@ -88,11 +85,7 @@ class ServiceRequestFullResponseSchema(ServiceRequestDashboardResponseSchema):
 
     @staticmethod
     def resolve_client_name(obj):
-        return (
-            f"{obj.client.first_name} {obj.client.last_name}".strip()
-            or obj.client.username
-        )
-
+        return f"{obj.client.first_name} {obj.client.last_name}".strip() or obj.client.username
 
 # Client-facing: what they see on the payments page
 class ClientInvoiceSchema(Schema):
@@ -112,11 +105,8 @@ class ClientInvoiceSchema(Schema):
 
     @staticmethod
     def resolve_service_request_name(obj):
-        sr = (
-            obj.service_requests.first()
-        )  # reverse FK is a manager, not a single object
+        sr = obj.service_requests.first()  # reverse FK is a manager, not a single object
         return sr.project_name if sr else ""
-
 
 # Submission schemas
 class PaymentSubmissionCreateSchema(Schema):

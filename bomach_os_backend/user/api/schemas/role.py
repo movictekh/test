@@ -1,8 +1,7 @@
+from ninja import Schema
+from typing import Optional, Dict, List
 from datetime import date, datetime, time
 from decimal import Decimal
-from typing import Dict, List, Optional
-
-from ninja import Schema
 
 
 class BranchMinimalSchema(Schema):
@@ -58,7 +57,6 @@ class RoleResponseSchema(Schema):
 
 class PermissionsMapSchema(Schema):
     """Returns all valid resources and their actions for the frontend checkbox grid."""
-
     permissions_map: Dict[str, List[str]]
 
 
@@ -75,7 +73,6 @@ class AuthorityLimitsResponseSchema(Schema):
 
 class AssignRolesSchema(Schema):
     """Assign a role to an employee."""
-
     role_id: int
 
 
