@@ -26,6 +26,7 @@ from domains.service_operations.api.v1 import invoices_router as svc_invoices_ro
 from domains.service_operations.api.v1 import orders_router as svc_orders_router
 from domains.service_operations.api.v1 import quotes_router as svc_quotes_router
 from domains.service_operations.api.v1 import reports_router as svc_reports_router
+from domains.service_operations.api.v1 import stats_router as svc_stats_router
 from domains.service_operations.api.v1 import (
     service_branch_activation_router as svc_service_branch_activation_router,
 )
@@ -68,7 +69,6 @@ from services.api.v1 import documents as svc_documents
 from services.api.v1 import expenses as svc_expenses
 from services.api.v1 import payments as svc_payments
 from services.api.v1 import property as svc_property
-from services.api.v1 import stats as svc_stats
 from user.api.v1.announcement import announcement_api as announcement_router
 from user.api.v1.approval import approval_api as approval_router
 from user.api.v1.approval_queue import approval_queue_api as approval_queue_router
@@ -217,7 +217,7 @@ api.add_router("/marketing-campaigns", svc_marketing_router)
 api.add_router("/payments", svc_payments.router)
 api.add_router("/properties", svc_property.router)
 api.add_router("/revenue-execution", svc_revenue_execution_router)
-api.add_router("/stats", svc_stats.router)
+api.add_router("/stats", svc_stats_router)
 
 # === Finance routers ===
 api.add_router("/finance", finance_invoices.router)

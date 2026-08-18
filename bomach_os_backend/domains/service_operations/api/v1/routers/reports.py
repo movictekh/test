@@ -25,6 +25,7 @@ from ..schemas.reports import (
 )
 
 router = Router(tags=["Reports"])
+stats_router = Router()
 
 
 def _date_filters(date_from, date_to):
@@ -323,6 +324,12 @@ def get_branch_performance(
     return 200, results
 
 
+@stats_router.get(
+    "",
+    response=ServiceStatsOut,
+    tags=["Statistics"],
+    operation_id="service_operations_legacy_stats_get_stats",
+)
 @router.get("/stats", response=ServiceStatsOut)
 @require_permission("stats", "view")
 def get_stats(request):

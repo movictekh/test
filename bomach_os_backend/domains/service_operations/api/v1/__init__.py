@@ -16,6 +16,7 @@ from .routers.invoices import router as invoices_router
 from .routers.orders import router as orders_router
 from .routers.quotes import router as quotes_router
 from .routers.reports import router as reports_router
+from .routers.reports import stats_router
 from .routers.service_leads import router as service_leads_router
 from .routers.service_requests import admin_router as service_request_admin_router
 from .routers.service_requests import router as service_requests_router
@@ -28,6 +29,7 @@ __all__ = [
     "invoices_router",
     "feedback_router",
     "reports_router",
+    "stats_router",
     "categories_router",
     "service_leads_router",
     "service_request_admin_router",
