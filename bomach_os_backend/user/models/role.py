@@ -111,6 +111,9 @@ PERMISSIONS_MAP = {
         "list", "view", "create", "update", "calculate",
         "submit", "approve", "reject", "pay", "cancel",
     ],
+    "commissions": [
+        "list", "view", "create", "update", "calculate", "approve", "reject",
+    ],
     "service_invoices": ["create", "view", "list", "update", "delete"],
     "service_leads": ["create", "view", "list", "update", "delete"],
     "marketing_campaigns": ["create", "view", "list", "update", "delete"],
@@ -289,6 +292,18 @@ PERMISSION_HELPERS = {
     "petty_cash.cancel": {
         "label": "Cancel Petty Cash",
         "helper_text": "Cancel petty cash advances before they are issued.",
+    },
+    "commissions.calculate": {
+        "label": "Calculate Commissions",
+        "helper_text": "Create employee commissions from confirmed revenue using an active Commission rule.",
+    },
+    "commissions.approve": {
+        "label": "Approve Commissions & Bonuses",
+        "helper_text": "Approve employee incentive awards for Payroll inclusion.",
+    },
+    "commissions.reject": {
+        "label": "Reject Commissions & Bonuses",
+        "helper_text": "Reject employee incentive awards during Finance review.",
     },
     "finance_payroll.calculate": {
         "label": "Calculate Finance Payroll",

@@ -1296,3 +1296,267 @@ class PayrollLineItem(models.Model):
 
     def __str__(self):
         return f"{self.payroll_line} - {self.name} - {self.amount}"
+
+
+class CommissionRule(models.Model):
+    class STATUS(models.TextChoices):
+        ACTIVE = "active", "Active"
+        INACTIVE = "inactive", "Inactive"
+
+    rule_number = models.CharField(max_length=50, unique=True, editable=False)
+    name = models.CharField(max_length=160)
+    service = models.ForeignKey(
+        "services.Service",
+        on_delete=models.PROTECT,
+        related_name="finance_commission_rules",
+    )
+    branch = models.ForeignKey(
+        "user.Branch",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="finance_commission_rules",
+    )
+    rate_percent = models.DecimalField(
+        max_digits=7,
+        decimal_places=4,
+        validators=[MinValueValidator(Decimal("0.0001"))],
+    )
+    minimum_verified_revenue = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        validators=[MinValueValidator(Decimal("0.00"))],
+    )
+    effective_from = models.DateField()
+    effective_to = models.DateField(null=True, blank=True)
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS.choices,
+        default=STATUS.ACTIVE,
+        db_index=True,
+    )
+    notes = models.TextField(blank=True, default="")
+    created_by = models.ForeignKey(
+        "user.User",
+        on_delete=models.PROTECT,
+        related_name="created_finance_commission_rules",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["service__name", "name"]
+        indexes = [
+            models.Index(fields=["service", "status"]),
+            models.Index(fields=["branch", "status"]),
+            models.Index(fields=["effective_from", "effective_to"]),
+        ]
+
+    def clean(self):
+        super().clean()
+        errors = {}
+        if self.rate_percent <= 0 or self.rate_percent > Decimal("100.00"):
+            errors["rate_percent"] = "Commission rate must be greater than 0 and at most 100."
+        if self.effective_to and self.effective_to < self.effective_from:
+            errors["effective_to"] = "Effective end date cannot be before the start date."
+        if errors:
+            raise ValidationError(errors)
+
+    def save(self, *args, **kwargs):
+        if not self.rule_number:
+            self.rule_number = f"CR-{uuid.uuid4().hex[:10].upper()}"
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.rule_number} - {self.name}"
+
+
+class IncentiveAward(models.Model):
+    class AWARD_TYPE(models.TextChoices):
+        COMMISSION = "commission", "Commission"
+        BONUS = "bonus", "Bonus"
+
+    class STATUS(models.TextChoices):
+        PENDING_REVIEW = "pending_review", "Pending Review"
+        APPROVED = "approved", "Approved"
+        REJECTED = "rejected", "Rejected"
+        INCLUDED_IN_PAYROLL = "included_in_payroll", "Included In Payroll"
+        PAID = "paid", "Paid"
+
+    award_number = models.CharField(max_length=50, unique=True, editable=False)
+    award_type = models.CharField(max_length=20, choices=AWARD_TYPE.choices)
+    employee = models.ForeignKey(
+        "user.Employee",
+        on_delete=models.PROTECT,
+        related_name="finance_incentive_awards",
+    )
+    branch = models.ForeignKey(
+        "user.Branch",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="finance_incentive_awards",
+    )
+    service = models.ForeignKey(
+        "services.Service",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="finance_incentive_awards",
+    )
+    payment = models.ForeignKey(
+        "services.Payment",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="finance_incentive_awards",
+    )
+    commission_rule = models.ForeignKey(
+        CommissionRule,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="awards",
+    )
+    revenue_source = models.CharField(max_length=255, blank=True, default="")
+    verified_revenue = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        validators=[MinValueValidator(Decimal("0.00"))],
+    )
+    rate_percent = models.DecimalField(
+        max_digits=7,
+        decimal_places=4,
+        default=Decimal("0.0000"),
+        validators=[MinValueValidator(Decimal("0.0000"))],
+    )
+    amount = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("0.01"))],
+    )
+    payout_month = models.PositiveSmallIntegerField()
+    payout_year = models.PositiveSmallIntegerField()
+    status = models.CharField(
+        max_length=30,
+        choices=STATUS.choices,
+        default=STATUS.PENDING_REVIEW,
+        db_index=True,
+    )
+    payroll_line = models.ForeignKey(
+        PayrollLine,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="incentive_awards",
+    )
+    reason = models.CharField(max_length=255, blank=True, default="")
+    notes = models.TextField(blank=True, default="")
+    approved_by = models.ForeignKey(
+        "user.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="approved_finance_incentive_awards",
+    )
+    approved_at = models.DateTimeField(null=True, blank=True)
+    rejected_by = models.ForeignKey(
+        "user.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="rejected_finance_incentive_awards",
+    )
+    rejected_at = models.DateTimeField(null=True, blank=True)
+    rejection_reason = models.TextField(blank=True, default="")
+    paid_by = models.ForeignKey(
+        "user.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="paid_finance_incentive_awards",
+    )
+    paid_at = models.DateTimeField(null=True, blank=True)
+    created_by = models.ForeignKey(
+        "user.User",
+        on_delete=models.PROTECT,
+        related_name="created_finance_incentive_awards",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["award_type", "status"]),
+            models.Index(fields=["employee", "payout_year", "payout_month"]),
+            models.Index(fields=["branch", "status"]),
+            models.Index(fields=["service", "status"]),
+            models.Index(fields=["payment"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["payment", "employee", "commission_rule"],
+                condition=Q(award_type="commission"),
+                name="uniq_fin_commission_payment_employee_rule",
+            ),
+        ]
+
+    @property
+    def payout_period_display(self):
+        import calendar
+        if 1 <= self.payout_month <= 12:
+            return f"{calendar.month_name[self.payout_month]} {self.payout_year}"
+        return f"{self.payout_month}/{self.payout_year}"
+
+    def clean(self):
+        super().clean()
+        errors = {}
+
+        if not 1 <= self.payout_month <= 12:
+            errors["payout_month"] = "Payout month must be between 1 and 12."
+        if self.payout_year < 2000:
+            errors["payout_year"] = "Payout year must be 2000 or later."
+
+        if self.award_type == self.AWARD_TYPE.COMMISSION:
+            if not self.payment_id:
+                errors["payment"] = "Commission awards require a verified Payment source."
+            if not self.commission_rule_id:
+                errors["commission_rule"] = "Commission awards require a Commission rule."
+            if not self.service_id:
+                errors["service"] = "Commission awards require a service."
+            if self.verified_revenue <= 0:
+                errors["verified_revenue"] = "Commission verified revenue must be greater than zero."
+            if self.rate_percent <= 0:
+                errors["rate_percent"] = "Commission rate must be greater than zero."
+        elif self.award_type == self.AWARD_TYPE.BONUS:
+            if self.payment_id or self.commission_rule_id:
+                errors["payment"] = "Bonus awards cannot be linked to a Payment or Commission rule."
+            if self.verified_revenue != 0 or self.rate_percent != 0:
+                errors["verified_revenue"] = "Bonus awards do not use verified revenue or commission rate."
+            if not self.reason.strip():
+                errors["reason"] = "A bonus reason is required."
+
+        if self.payroll_line_id and self.payroll_line.employee_id != self.employee_id:
+            errors["payroll_line"] = "Payroll line employee must match incentive beneficiary."
+
+        if self.status == self.STATUS.PAID and not self.paid_at:
+            errors["paid_at"] = "Paid incentives require a payment timestamp."
+
+        if errors:
+            raise ValidationError(errors)
+
+    def save(self, *args, **kwargs):
+        if not self.award_number:
+            prefix = "COM" if self.award_type == self.AWARD_TYPE.COMMISSION else "BON"
+            self.award_number = f"{prefix}-{uuid.uuid4().hex[:10].upper()}"
+        if self.employee_id and not self.branch_id:
+            self.branch_id = self.employee.branch_id
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.award_number} - {self.employee}"

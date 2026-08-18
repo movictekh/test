@@ -10,6 +10,8 @@ from finance.models import (
     FinanceAccount,
     FinanceWallet,
     FinanceWalletEntry,
+    CommissionRule,
+    IncentiveAward,
     PettyCashAdvance,
     PettyCashRetirementLine,
     PayrollLine,
@@ -793,6 +795,20 @@ def calculate_payroll_run(payroll_run, calculated_by):
         employees = list(_payroll_employee_queryset(payroll_run))
         eligible_ids = {employee.id for employee in employees}
 
+        attached_awards = IncentiveAward.objects.select_for_update().filter(
+            payroll_line__payroll_run=payroll_run,
+            status=IncentiveAward.STATUS.INCLUDED_IN_PAYROLL,
+        )
+        attached_awards.update(
+            status=IncentiveAward.STATUS.APPROVED,
+            payroll_line=None,
+            updated_at=timezone.now(),
+        )
+        PayrollLineItem.objects.filter(
+            payroll_line__payroll_run=payroll_run,
+            source_type=PayrollLineItem.SOURCE_TYPE.COMMISSION,
+        ).delete()
+
         existing_lines = {
             line.employee_id: line
             for line in PayrollLine.objects.select_for_update().filter(
@@ -874,6 +890,47 @@ def calculate_payroll_run(payroll_run, calculated_by):
                 )
             if allowance_items:
                 PayrollLineItem.objects.bulk_create(allowance_items)
+
+            approved_awards = IncentiveAward.objects.select_for_update().filter(
+                employee=employee,
+                payout_month=payroll_run.period_month,
+                payout_year=payroll_run.period_year,
+                status=IncentiveAward.STATUS.APPROVED,
+                payroll_line__isnull=True,
+            ).order_by("created_at", "id")
+
+            for index, award in enumerate(approved_awards, start=1):
+                PayrollLineItem.objects.create(
+                    payroll_line=line,
+                    item_type=PayrollLineItem.ITEM_TYPE.EARNING,
+                    category=(
+                        PayrollLineItem.CATEGORY.COMMISSION
+                        if award.award_type == IncentiveAward.AWARD_TYPE.COMMISSION
+                        else PayrollLineItem.CATEGORY.BONUS
+                    ),
+                    name=(
+                        "Commission"
+                        if award.award_type == IncentiveAward.AWARD_TYPE.COMMISSION
+                        else award.reason
+                    ),
+                    amount=award.amount,
+                    source_type=PayrollLineItem.SOURCE_TYPE.COMMISSION,
+                    source_reference=award.award_number,
+                    is_taxable=None,
+                    is_statutory=False,
+                    notes=award.notes,
+                    sort_order=200 + index,
+                    created_by=calculated_by,
+                )
+                award.status = IncentiveAward.STATUS.INCLUDED_IN_PAYROLL
+                award.payroll_line = line
+                award.save(
+                    update_fields=[
+                        "status",
+                        "payroll_line",
+                        "updated_at",
+                    ]
+                )
 
             refresh_payroll_line_totals(line)
 
@@ -1095,6 +1152,17 @@ def pay_payroll_run(
                 "updated_at",
             ]
         )
+
+        IncentiveAward.objects.filter(
+            payroll_line__payroll_run=payroll_run,
+            status=IncentiveAward.STATUS.INCLUDED_IN_PAYROLL,
+        ).update(
+            status=IncentiveAward.STATUS.PAID,
+            paid_by=paid_by,
+            paid_at=payroll_run.paid_at,
+            updated_at=timezone.now(),
+        )
+
         return payroll_run
 
 
@@ -1110,6 +1178,19 @@ def cancel_payroll_run(payroll_run, cancelled_by, reason):
         if payroll_run.status == PayrollRun.STATUS.CANCELLED:
             raise ValidationError("This payroll run is already cancelled.")
 
+        IncentiveAward.objects.filter(
+            payroll_line__payroll_run=payroll_run,
+            status=IncentiveAward.STATUS.INCLUDED_IN_PAYROLL,
+        ).update(
+            status=IncentiveAward.STATUS.APPROVED,
+            payroll_line=None,
+            updated_at=timezone.now(),
+        )
+        PayrollLineItem.objects.filter(
+            payroll_line__payroll_run=payroll_run,
+            source_type=PayrollLineItem.SOURCE_TYPE.COMMISSION,
+        ).delete()
+
         payroll_run.status = PayrollRun.STATUS.CANCELLED
         payroll_run.cancelled_by = cancelled_by
         payroll_run.cancelled_at = timezone.now()
@@ -1124,3 +1205,175 @@ def cancel_payroll_run(payroll_run, cancelled_by, reason):
             ]
         )
         return payroll_run
+
+
+
+def create_commission_award(
+    *,
+    employee,
+    payment,
+    commission_rule,
+    payout_month,
+    payout_year,
+    created_by,
+    notes="",
+):
+    if not employee.is_active:
+        raise ValidationError("Commission beneficiary must be an active employee.")
+
+    invoice = payment.invoice
+    if invoice.service_id != commission_rule.service_id:
+        raise ValidationError("Commission rule service does not match the verified Payment service.")
+
+    if commission_rule.status != CommissionRule.STATUS.ACTIVE:
+        raise ValidationError("Commission rule is not active.")
+
+    if payment.payment_date < commission_rule.effective_from:
+        raise ValidationError("Payment predates the Commission rule.")
+    if commission_rule.effective_to and payment.payment_date > commission_rule.effective_to:
+        raise ValidationError("Payment is outside the Commission rule effective period.")
+
+    payment_branch = None
+    if invoice.service_request_id and invoice.service_request.branch_id:
+        payment_branch = invoice.service_request.branch
+    elif invoice.order_id and invoice.order.branch_id:
+        payment_branch = invoice.order.branch
+    elif payment.finance_account_id and payment.finance_account.branch_id:
+        payment_branch = payment.finance_account.branch
+
+    if commission_rule.branch_id:
+        if not payment_branch or payment_branch.id != commission_rule.branch_id:
+            raise ValidationError("Verified Payment branch does not match the Commission rule branch.")
+        if employee.branch_id and employee.branch_id != commission_rule.branch_id:
+            raise ValidationError("Commission beneficiary branch does not match the Commission rule branch.")
+
+    if payment.amount < commission_rule.minimum_verified_revenue:
+        raise ValidationError("Verified revenue is below the Commission rule minimum.")
+
+    verified_revenue = payment.amount.quantize(Decimal("0.01"))
+    amount = (
+        verified_revenue * commission_rule.rate_percent / Decimal("100")
+    ).quantize(Decimal("0.01"))
+
+    if amount <= 0:
+        raise ValidationError("Calculated commission must be greater than zero.")
+
+    with transaction.atomic():
+        if IncentiveAward.objects.filter(
+            award_type=IncentiveAward.AWARD_TYPE.COMMISSION,
+            payment=payment,
+            employee=employee,
+            commission_rule=commission_rule,
+        ).exists():
+            raise ValidationError(
+                "This verified Payment has already produced this employee Commission under the selected rule."
+            )
+
+        return IncentiveAward.objects.create(
+            award_type=IncentiveAward.AWARD_TYPE.COMMISSION,
+            employee=employee,
+            branch=payment_branch or employee.branch,
+            service=invoice.service,
+            payment=payment,
+            commission_rule=commission_rule,
+            revenue_source=(
+                invoice.order.description
+                if invoice.order_id and invoice.order.description
+                else invoice.service.name
+            ),
+            verified_revenue=verified_revenue,
+            rate_percent=commission_rule.rate_percent,
+            amount=amount,
+            payout_month=payout_month,
+            payout_year=payout_year,
+            status=IncentiveAward.STATUS.PENDING_REVIEW,
+            notes=notes or "",
+            created_by=created_by,
+        )
+
+
+def create_bonus_award(
+    *,
+    employee,
+    amount,
+    payout_month,
+    payout_year,
+    reason,
+    created_by,
+    notes="",
+):
+    if not employee.is_active:
+        raise ValidationError("Bonus beneficiary must be an active employee.")
+    if amount <= 0:
+        raise ValidationError("Bonus amount must be greater than zero.")
+
+    return IncentiveAward.objects.create(
+        award_type=IncentiveAward.AWARD_TYPE.BONUS,
+        employee=employee,
+        branch=employee.branch,
+        verified_revenue=Decimal("0.00"),
+        rate_percent=Decimal("0.0000"),
+        amount=amount,
+        payout_month=payout_month,
+        payout_year=payout_year,
+        status=IncentiveAward.STATUS.PENDING_REVIEW,
+        reason=reason,
+        notes=notes or "",
+        created_by=created_by,
+    )
+
+
+def approve_incentive_award(award, approved_by):
+    with transaction.atomic():
+        award = IncentiveAward.objects.select_for_update().get(id=award.id)
+        if award.status != IncentiveAward.STATUS.PENDING_REVIEW:
+            raise ValidationError("Only incentives pending review can be approved.")
+
+        award.status = IncentiveAward.STATUS.APPROVED
+        award.approved_by = approved_by
+        award.approved_at = timezone.now()
+        award.rejected_by = None
+        award.rejected_at = None
+        award.rejection_reason = ""
+        award.save(
+            update_fields=[
+                "status",
+                "approved_by",
+                "approved_at",
+                "rejected_by",
+                "rejected_at",
+                "rejection_reason",
+                "updated_at",
+            ]
+        )
+        return award
+
+
+def reject_incentive_award(award, rejected_by, reason):
+    reason = (reason or "").strip()
+    if not reason:
+        raise ValidationError("A rejection reason is required.")
+
+    with transaction.atomic():
+        award = IncentiveAward.objects.select_for_update().get(id=award.id)
+        if award.status != IncentiveAward.STATUS.PENDING_REVIEW:
+            raise ValidationError("Only incentives pending review can be rejected.")
+
+        award.status = IncentiveAward.STATUS.REJECTED
+        award.rejected_by = rejected_by
+        award.rejected_at = timezone.now()
+        award.rejection_reason = reason
+        award.approved_by = None
+        award.approved_at = None
+        award.save(
+            update_fields=[
+                "status",
+                "rejected_by",
+                "rejected_at",
+                "rejection_reason",
+                "approved_by",
+                "approved_at",
+                "updated_at",
+            ]
+        )
+        return award

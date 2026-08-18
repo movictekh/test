@@ -809,3 +809,94 @@ deferred to the later People & Compliance / Cash Flow integration slice.
 The existing `/api/v1/payroll` HR routes remain untouched for compatibility,
 but native Finance Payroll does not depend on them. No migration or data copy
 from `hr.Payroll` is performed.
+
+## Commissions & Bonuses
+
+Finance owns employee incentive awards separately from Payroll calculation.
+
+The frontend rule remains: commissions are calculated from **verified revenue
+received**, subject to service-specific rules. The authoritative verified
+revenue source in v1 is a confirmed `services.Payment`.
+
+### Data model
+
+`CommissionRule` defines a service-specific percentage, optional branch scope,
+minimum verified revenue, effective period, and active/inactive status.
+
+`IncentiveAward` represents either:
+
+- a Commission calculated from one confirmed Payment and one Commission rule, or
+- a manually created Bonus with an explicit reason and amount.
+
+Commission creation is intentionally beneficiary-explicit. Current confirmed
+Payment records know invoice/service/order/branch information but do not identify
+which employee earned the sale. Finance therefore selects the employee, Payment,
+and rule. The backend validates all three and snapshots verified revenue, rate,
+service, branch, and calculated amount.
+
+The same Payment + employee + rule cannot create the same Commission twice.
+
+### Workflow
+
+```text
+Commission:
+Confirmed Payment + Employee + Active Rule
+        ↓ calculate
+Pending Review
+        ├─ reject → Rejected
+        └─ approve
+Approved
+        ↓ next matching Finance Payroll calculation
+Included In Payroll
+        ↓ Payroll paid
+Paid
+
+Bonus:
+Employee + Amount + Reason
+        ↓
+Pending Review
+        ├─ reject → Rejected
+        └─ approve
+Approved
+        ↓ Payroll
+Included In Payroll
+        ↓ Payroll paid
+Paid
+```
+
+Commissions and bonuses do not post separate Cashbook outflows when paid through
+Payroll. Their amounts become Payroll line items, and Cashbook records the single
+Payroll outflow. This prevents double-counting cash.
+
+If an unpaid Payroll run is cancelled, incentive awards that were included in it
+return to Approved and can be picked up by a later run.
+
+### API
+
+```http
+GET   /api/v1/finance/commission-rules
+POST  /api/v1/finance/commission-rules
+PATCH /api/v1/finance/commission-rules/{rule_id}
+POST  /api/v1/finance/commission-rules/{rule_id}/deactivate
+
+GET   /api/v1/finance/commissions
+GET   /api/v1/finance/commissions/{award_id}
+POST  /api/v1/finance/commissions/calculate
+POST  /api/v1/finance/bonuses
+POST  /api/v1/finance/commissions/{award_id}/approve
+POST  /api/v1/finance/commissions/{award_id}/reject
+```
+
+The permission resource is:
+
+```text
+commissions:
+list, view, create, update, calculate, approve, reject
+```
+
+There is deliberately no direct `pay` action in FIN-PC-2. Approved employee
+incentives are paid through native Finance Payroll so employee compensation,
+Cashbook, and later statutory calculations remain coherent.
+
+Direct non-payroll incentive payment can be introduced later only if the
+business requires a separate payout route.

@@ -5,6 +5,15 @@ from finance.api.schemas.cash_flow import (
     CashFlowForecastOut,
     CashFlowForecastWeekOut,
 )
+from finance.api.schemas.commissions import (
+    BonusIn,
+    CommissionCalculateIn,
+    CommissionRuleIn,
+    CommissionRuleOut,
+    CommissionRuleUpdate,
+    IncentiveAwardOut,
+    IncentiveRejectIn,
+)
 from finance.api.schemas.expenses import (
     FinanceExpenseIn,
     FinanceExpenseOut,
@@ -80,6 +89,13 @@ __all__ = [
     "CashFlowForecastItemOut",
     "CashFlowForecastOut",
     "CashFlowForecastWeekOut",
+    "BonusIn",
+    "CommissionCalculateIn",
+    "CommissionRuleIn",
+    "CommissionRuleOut",
+    "CommissionRuleUpdate",
+    "IncentiveAwardOut",
+    "IncentiveRejectIn",
     "FinanceAccountIn",
     "FinanceAccountOut",
     "FinanceAccountUpdate",
