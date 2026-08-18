@@ -61,7 +61,7 @@ from user.api.schemas.client_service import (
 )
 from user.models.client import Client as CustomerClient
 from user.models.client_service import PaymentSubmission
-from finance.services import handle_payment_exception, review_payment_submission as review_submission_payment
+from finance.service import handle_payment_exception, review_payment_submission as review_submission_payment
 from user.models.employee import Employee
 from user.utils.perm import require_permission, scope_queryset
 

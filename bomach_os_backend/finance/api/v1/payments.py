@@ -13,7 +13,7 @@ from finance.api.schemas import (
     FinancePaymentSubmissionReviewIn,
 )
 from finance.models import FinanceAccount
-from finance.services import handle_payment_exception, review_payment_submission
+from finance.service import handle_payment_exception, review_payment_submission
 from services.api.schema.others import MessageSchema
 from services.models.payment import Invoice, Payment
 from user.models.client_service import PaymentSubmission

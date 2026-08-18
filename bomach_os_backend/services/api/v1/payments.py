@@ -8,7 +8,7 @@ from services.api.schema.others import MessageSchema
 from services.models.payment import Payment
 from ninja.pagination import paginate, LimitOffsetPagination
 from user.utils.perm import require_permission
-from finance.services import get_active_finance_account
+from finance.service import get_active_finance_account
 
 
 router = Router(tags=["Payments"])

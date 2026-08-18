@@ -16,7 +16,7 @@ from finance.api.schemas import (
     PayrollRunUpdate,
 )
 from finance.models import FinanceAccount, PayrollLine, PayrollRun
-from finance.services import (
+from finance.service import (
     approve_payroll_run,
     calculate_payroll_run,
     cancel_payroll_run,

@@ -18,7 +18,7 @@ from services.utils.service_orders import create_order_from_invoice
 from user.api.schemas.client_service import PaymentSubmissionResponseSchema, ReviewPaymentSchema
 from user.models.client_service import PaymentSubmission
 from user.utils.perm import require_permission, scope_queryset
-from finance.services import handle_payment_exception, review_payment_submission as review_submission_payment
+from finance.service import handle_payment_exception, review_payment_submission as review_submission_payment
 
 
 router = Router(tags=["Invoices"])

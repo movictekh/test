@@ -9,7 +9,7 @@ from django.core.exceptions import ValidationError
 from services.api.schema.expense_schemas import ExpenseIn, ExpenseOut, ExpenseUpdate
 from services.api.schema.others import MessageSchema
 from services.models.expenses import Expense
-from finance.services import approve_finance_expense, reject_finance_expense
+from finance.service import approve_finance_expense, reject_finance_expense
 from user.utils.perm import require_permission
 from ninja.errors import HttpError
 

@@ -16,7 +16,7 @@ from user.api.schemas.client_service import (
 )
 from user.api.schemas.others import MessageSchema
 from user.models.client_service import ClientService, ServiceRequest, PaymentSubmission
-from finance.services import handle_payment_exception, review_payment_submission as review_submission_payment
+from finance.service import handle_payment_exception, review_payment_submission as review_submission_payment
 from services.models.payment import Invoice
 from typing import List, Optional
 from ninja.errors import HttpError

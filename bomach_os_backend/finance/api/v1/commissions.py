@@ -15,7 +15,7 @@ from finance.api.schemas import (
     IncentiveRejectIn,
 )
 from finance.models import CommissionRule, IncentiveAward
-from finance.services import (
+from finance.service import (
     approve_incentive_award,
     create_bonus_award,
     create_commission_award,

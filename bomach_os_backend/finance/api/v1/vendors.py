@@ -20,7 +20,7 @@ from finance.api.schemas import (
     VendorBillUpdate,
 )
 from finance.models import FinanceAccount, FinanceVendor, VendorBill
-from finance.services import (
+from finance.service import (
     approve_vendor_bill,
     handle_payment_exception,
     pay_vendor_bill,

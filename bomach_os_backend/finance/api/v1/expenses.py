@@ -13,7 +13,7 @@ from finance.api.schemas import (
     FinanceExpenseUpdate,
 )
 from finance.models import FinanceAccount
-from finance.services import (
+from finance.service import (
     approve_finance_expense,
     handle_payment_exception,
     pay_finance_expense,
