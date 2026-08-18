@@ -8,7 +8,7 @@ from ninja import Query, Router
 from ninja.pagination import LimitOffsetPagination, paginate
 
 from finance.api.schemas import CashbookRowOut, CashbookSummaryOut
-from finance.models import FinanceAccount, PettyCashAdvance, PettyCashRetirementLine, VendorBill
+from finance.models import FinanceAccount, PayrollRun, PettyCashAdvance, PettyCashRetirementLine, VendorBill
 from services.models.expenses import Expense
 from services.models.payment import Payment
 from user.utils.perm import require_permission
@@ -24,6 +24,7 @@ SOURCE_LABELS = {
     "vendor_bill": "Vendor Bill",
     "petty_cash_advance": "Petty Cash Advance",
     "petty_cash_return": "Petty Cash Return",
+    "payroll": "Payroll",
 }
 
 
@@ -193,6 +194,26 @@ def _vendor_bill_queryset(request):
     return bills
 
 
+
+def _payroll_queryset(request):
+    payroll_runs = PayrollRun.objects.select_related(
+        "branch",
+        "finance_account",
+        "finance_account__branch",
+    ).filter(
+        status=PayrollRun.STATUS.PAID,
+        paid_at__isnull=False,
+        finance_account__isnull=False,
+    )
+    branch_ids = getattr(request, "_perm_branch_ids", [])
+    if getattr(request, "_perm_scope", "branches") != "company" and branch_ids:
+        payroll_runs = payroll_runs.filter(
+            Q(branch_id__in=branch_ids)
+            | Q(finance_account__branch_id__in=branch_ids)
+        )
+    return payroll_runs
+
+
 def _petty_cash_advance_queryset(request):
     advances = PettyCashAdvance.objects.select_related(
         "requester",
@@ -268,6 +289,7 @@ def _build_cashbook_rows(
     payments = _payment_queryset(request)
     expenses = _expense_queryset(request)
     vendor_bills = _vendor_bill_queryset(request)
+    payroll_runs = _payroll_queryset(request)
     petty_cash_advances = _petty_cash_advance_queryset(request)
     petty_cash_returns = _petty_cash_return_queryset(request)
 
@@ -275,12 +297,14 @@ def _build_cashbook_rows(
         payments = payments.filter(payment_date__lte=date_to)
         expenses = expenses.filter(date__lte=date_to)
         vendor_bills = vendor_bills.filter(paid_at__date__lte=date_to)
+        payroll_runs = payroll_runs.filter(paid_at__date__lte=date_to)
         petty_cash_advances = petty_cash_advances.filter(issued_at__date__lte=date_to)
         petty_cash_returns = petty_cash_returns.filter(created_at__date__lte=date_to)
     if finance_account_id:
         payments = payments.filter(finance_account_id=finance_account_id)
         expenses = expenses.filter(finance_account_id=finance_account_id)
         vendor_bills = vendor_bills.filter(finance_account_id=finance_account_id)
+        payroll_runs = payroll_runs.filter(finance_account_id=finance_account_id)
         petty_cash_advances = petty_cash_advances.filter(finance_account_id=finance_account_id)
         petty_cash_returns = petty_cash_returns.filter(advance__finance_account_id=finance_account_id)
     if branch_id:
@@ -299,6 +323,10 @@ def _build_cashbook_rows(
             | Q(service_order__branch_id=branch_id)
             | Q(finance_account__branch_id=branch_id)
         )
+        payroll_runs = payroll_runs.filter(
+            Q(branch_id=branch_id)
+            | Q(finance_account__branch_id=branch_id)
+        )
         petty_cash_advances = petty_cash_advances.filter(
             Q(branch_id=branch_id)
             | Q(service_order__branch_id=branch_id)
@@ -314,37 +342,50 @@ def _build_cashbook_rows(
         payments = payments.filter(invoice__order_id=service_order_id)
         expenses = expenses.filter(service_order_id=service_order_id)
         vendor_bills = vendor_bills.filter(service_order_id=service_order_id)
+        payroll_runs = payroll_runs.none()
         petty_cash_advances = petty_cash_advances.filter(service_order_id=service_order_id)
         petty_cash_returns = petty_cash_returns.filter(Q(service_order_id=service_order_id) | Q(advance__service_order_id=service_order_id))
     if client_id:
         payments = payments.filter(invoice__client_id=client_id)
         expenses = expenses.filter(service_order__client_id=client_id)
         vendor_bills = vendor_bills.filter(service_order__client_id=client_id)
+        payroll_runs = payroll_runs.none()
         petty_cash_advances = petty_cash_advances.filter(service_order__client_id=client_id)
         petty_cash_returns = petty_cash_returns.filter(Q(service_order__client_id=client_id) | Q(advance__service_order__client_id=client_id))
     if source == "client_payment":
         expenses = expenses.none()
         vendor_bills = vendor_bills.none()
+        payroll_runs = payroll_runs.none()
         petty_cash_advances = petty_cash_advances.none()
         petty_cash_returns = petty_cash_returns.none()
     elif source == "vendor_bill":
         payments = payments.none()
         expenses = expenses.none()
+        payroll_runs = payroll_runs.none()
+        petty_cash_advances = petty_cash_advances.none()
+        petty_cash_returns = petty_cash_returns.none()
+    elif source == "payroll":
+        payments = payments.none()
+        expenses = expenses.none()
+        vendor_bills = vendor_bills.none()
         petty_cash_advances = petty_cash_advances.none()
         petty_cash_returns = petty_cash_returns.none()
     elif source == "petty_cash_advance":
         payments = payments.none()
         expenses = expenses.none()
         vendor_bills = vendor_bills.none()
+        payroll_runs = payroll_runs.none()
         petty_cash_returns = petty_cash_returns.none()
     elif source == "petty_cash_return":
         payments = payments.none()
         expenses = expenses.none()
         vendor_bills = vendor_bills.none()
+        payroll_runs = payroll_runs.none()
         petty_cash_advances = petty_cash_advances.none()
     elif source:
         payments = payments.none()
         vendor_bills = vendor_bills.none()
+        payroll_runs = payroll_runs.none()
         petty_cash_advances = petty_cash_advances.none()
         petty_cash_returns = petty_cash_returns.none()
     if search:
@@ -378,6 +419,12 @@ def _build_cashbook_rows(
             | Q(payment_reference__icontains=q)
             | Q(service_order__order_number__icontains=q)
             | Q(service_order__description__icontains=q)
+        )
+        payroll_runs = payroll_runs.filter(
+            Q(run_number__icontains=q)
+            | Q(payment_reference__icontains=q)
+            | Q(notes__icontains=q)
+            | Q(branch__branch_name__icontains=q)
         )
         petty_cash_advances = petty_cash_advances.filter(
             Q(advance_number__icontains=q)
@@ -493,6 +540,44 @@ def _build_cashbook_rows(
                 "status": "posted",
             }
         )
+
+    for payroll_run in payroll_runs:
+        account = payroll_run.finance_account
+        branch = payroll_run.branch or (account.branch if account else None)
+        paid_date = payroll_run.paid_at.date()
+        rows.append(
+            {
+                "sort_key": (
+                    paid_date,
+                    payroll_run.paid_at,
+                    f"payroll-{payroll_run.id}",
+                ),
+                "date": paid_date,
+                "reference": payroll_run.payment_reference or payroll_run.run_number,
+                "source": "payroll",
+                "source_display": SOURCE_LABELS["payroll"],
+                "description": f"{payroll_run.period_display} payroll",
+                "service": "Payroll",
+                "project": (
+                    f"{payroll_run.branch.branch_name} payroll"
+                    if payroll_run.branch
+                    else "Company payroll"
+                ),
+                "service_order_id": None,
+                "service_order_number": "",
+                "client_id": None,
+                "client_name": "",
+                "finance_account_id": account.id if account else None,
+                "finance_account_name": account.display_name if account else "",
+                "branch_id": branch.id if branch else None,
+                "branch_name": branch.branch_name if branch else "",
+                "money_in": Decimal("0.00"),
+                "money_out": _money(payroll_run.net_pay),
+                "running_balance": Decimal("0.00"),
+                "status": "posted",
+            }
+        )
+
 
     for advance in petty_cash_advances:
         order = advance.service_order

@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
@@ -11,6 +12,9 @@ from finance.models import (
     FinanceWalletEntry,
     PettyCashAdvance,
     PettyCashRetirementLine,
+    PayrollLine,
+    PayrollLineItem,
+    PayrollRun,
     VendorBill,
 )
 from services.models.expenses import Expense
@@ -657,3 +661,466 @@ def handle_payment_exception(exc):
     if isinstance(exc, (ValidationError, IntegrityError)):
         return {"detail": validation_detail(exc)}
     return {"detail": str(exc)}
+
+
+
+def _payroll_period_bounds(payroll_run):
+    import calendar
+    from datetime import date
+
+    last_day = calendar.monthrange(payroll_run.period_year, payroll_run.period_month)[1]
+    return (
+        date(payroll_run.period_year, payroll_run.period_month, 1),
+        date(payroll_run.period_year, payroll_run.period_month, last_day),
+    )
+
+
+def _payroll_employee_queryset(payroll_run):
+    from user.models.employee import Employee
+
+    period_start, period_end = _payroll_period_bounds(payroll_run)
+    employees = Employee.objects.select_related(
+        "user",
+        "branch",
+        "department",
+    ).filter(
+        is_active=True,
+        employment_status__in=["active", "on-probation", "on-leave"],
+        salary_frequency="monthly",
+        gross_salary__gt=0,
+    ).filter(
+        Q(start_date__isnull=True) | Q(start_date__lte=period_end),
+        Q(offboard_date__isnull=True) | Q(offboard_date__gte=period_start),
+    )
+
+    if payroll_run.branch_id:
+        employees = employees.filter(branch_id=payroll_run.branch_id)
+
+    return employees.order_by("employee_id")
+
+
+def _payroll_allowance_amount(name, value):
+    if isinstance(value, bool):
+        raise ValidationError(f"Allowance '{name}' must be numeric.")
+    try:
+        amount = Decimal(str(value or "0.00")).quantize(Decimal("0.01"))
+    except Exception as exc:
+        raise ValidationError(f"Allowance '{name}' must be numeric.") from exc
+    if amount < 0:
+        raise ValidationError(f"Allowance '{name}' cannot be negative.")
+    return amount
+
+
+def _payroll_item_name(key):
+    return str(key).replace("_", " ").replace("-", " ").strip().title() or "Allowance"
+
+
+def refresh_payroll_line_totals(payroll_line):
+    earnings = Decimal("0.00")
+    deductions = Decimal("0.00")
+
+    for item in payroll_line.items.all():
+        if item.item_type == PayrollLineItem.ITEM_TYPE.EARNING:
+            earnings += item.amount
+        else:
+            deductions += item.amount
+
+    earnings = earnings.quantize(Decimal("0.01"))
+    deductions = deductions.quantize(Decimal("0.01"))
+    net_pay = (earnings - deductions).quantize(Decimal("0.01"))
+
+    if net_pay < 0:
+        raise ValidationError(
+            f"Payroll deductions cannot exceed earnings for {payroll_line.employee_name}."
+        )
+
+    payroll_line.gross_pay = earnings
+    payroll_line.total_deductions = deductions
+    payroll_line.net_pay = net_pay
+    payroll_line.save(
+        update_fields=[
+            "gross_pay",
+            "total_deductions",
+            "net_pay",
+            "updated_at",
+        ]
+    )
+    return payroll_line
+
+
+def refresh_payroll_run_totals(payroll_run):
+    lines = list(payroll_run.lines.all())
+
+    payroll_run.employee_count = len(lines)
+    payroll_run.gross_pay = sum(
+        (line.gross_pay for line in lines),
+        Decimal("0.00"),
+    ).quantize(Decimal("0.01"))
+    payroll_run.total_deductions = sum(
+        (line.total_deductions for line in lines),
+        Decimal("0.00"),
+    ).quantize(Decimal("0.01"))
+    payroll_run.net_pay = sum(
+        (line.net_pay for line in lines),
+        Decimal("0.00"),
+    ).quantize(Decimal("0.01"))
+    payroll_run.save(
+        update_fields=[
+            "employee_count",
+            "gross_pay",
+            "total_deductions",
+            "net_pay",
+            "updated_at",
+        ]
+    )
+    return payroll_run
+
+
+def calculate_payroll_run(payroll_run, calculated_by):
+    allowed_statuses = {
+        PayrollRun.STATUS.DRAFT,
+        PayrollRun.STATUS.CALCULATED,
+        PayrollRun.STATUS.REJECTED,
+    }
+
+    with transaction.atomic():
+        payroll_run = PayrollRun.objects.select_for_update().get(id=payroll_run.id)
+        if payroll_run.status not in allowed_statuses:
+            raise ValidationError(
+                "Only draft, calculated, or rejected payroll runs can be recalculated."
+            )
+
+        employees = list(_payroll_employee_queryset(payroll_run))
+        eligible_ids = {employee.id for employee in employees}
+
+        existing_lines = {
+            line.employee_id: line
+            for line in PayrollLine.objects.select_for_update().filter(
+                payroll_run=payroll_run,
+                employee__isnull=False,
+            )
+        }
+
+        if eligible_ids:
+            PayrollLine.objects.filter(payroll_run=payroll_run).exclude(
+                employee_id__in=eligible_ids
+            ).delete()
+        else:
+            PayrollLine.objects.filter(payroll_run=payroll_run).delete()
+
+        for employee in employees:
+            line = existing_lines.get(employee.id)
+            if line is None:
+                line = PayrollLine(
+                    payroll_run=payroll_run,
+                    employee=employee,
+                    gross_salary_snapshot=employee.gross_salary,
+                )
+
+            line.employee = employee
+            line.employee_number = employee.employee_id
+            line.employee_name = employee.get_full_name() or employee.user.email
+            line.designation = employee.designation or ""
+            line.branch_name = employee.branch.branch_name if employee.branch else ""
+            line.department_name = employee.department.name if employee.department else ""
+            line.salary_frequency = employee.salary_frequency
+            line.bank_name = employee.bank_name or ""
+            line.account_number = employee.account_number or ""
+            line.tax_id = employee.tax_id or ""
+            line.pension_number = employee.pension_number or ""
+            line.pfa_provider = employee.pfa_provider or ""
+            line.rsa_number = employee.rsa_number or ""
+            line.employer_contribution_snapshot = employee.employer_contribution
+            line.gross_salary_snapshot = employee.gross_salary
+            line.save()
+
+            # Recalculation refreshes only employee-owned inputs. Manual and future
+            # commission/statutory items stay intact for still-eligible employees.
+            line.items.filter(
+                source_type=PayrollLineItem.SOURCE_TYPE.EMPLOYEE
+            ).delete()
+
+            PayrollLineItem.objects.create(
+                payroll_line=line,
+                item_type=PayrollLineItem.ITEM_TYPE.EARNING,
+                category=PayrollLineItem.CATEGORY.BASE_SALARY,
+                name="Base Salary",
+                amount=employee.gross_salary,
+                source_type=PayrollLineItem.SOURCE_TYPE.EMPLOYEE,
+                source_reference=employee.employee_id,
+                is_taxable=None,
+                sort_order=10,
+                created_by=calculated_by,
+            )
+
+            allowance_items = []
+            for index, (name, value) in enumerate((employee.allowances or {}).items(), start=1):
+                amount = _payroll_allowance_amount(name, value)
+                if amount <= 0:
+                    continue
+                allowance_items.append(
+                    PayrollLineItem(
+                        payroll_line=line,
+                        item_type=PayrollLineItem.ITEM_TYPE.EARNING,
+                        category=PayrollLineItem.CATEGORY.ALLOWANCE,
+                        name=_payroll_item_name(name),
+                        amount=amount,
+                        source_type=PayrollLineItem.SOURCE_TYPE.EMPLOYEE,
+                        source_reference=f"{employee.employee_id}:allowance:{name}",
+                        is_taxable=None,
+                        sort_order=20 + index,
+                        created_by=calculated_by,
+                    )
+                )
+            if allowance_items:
+                PayrollLineItem.objects.bulk_create(allowance_items)
+
+            refresh_payroll_line_totals(line)
+
+        payroll_run.status = PayrollRun.STATUS.CALCULATED
+        payroll_run.calculated_by = calculated_by
+        payroll_run.calculated_at = timezone.now()
+        payroll_run.submitted_by = None
+        payroll_run.submitted_at = None
+        payroll_run.approved_by = None
+        payroll_run.approved_at = None
+        payroll_run.rejected_by = None
+        payroll_run.rejected_at = None
+        payroll_run.rejection_reason = ""
+        payroll_run.finance_account = None
+        payroll_run.paid_by = None
+        payroll_run.paid_at = None
+        payroll_run.payment_reference = ""
+        payroll_run.save(
+            update_fields=[
+                "status",
+                "calculated_by",
+                "calculated_at",
+                "submitted_by",
+                "submitted_at",
+                "approved_by",
+                "approved_at",
+                "rejected_by",
+                "rejected_at",
+                "rejection_reason",
+                "finance_account",
+                "paid_by",
+                "paid_at",
+                "payment_reference",
+                "updated_at",
+            ]
+        )
+
+        return refresh_payroll_run_totals(payroll_run)
+
+
+def replace_manual_payroll_items(payroll_line, items, updated_by):
+    with transaction.atomic():
+        payroll_line = PayrollLine.objects.select_for_update().select_related(
+            "payroll_run"
+        ).get(id=payroll_line.id)
+        payroll_run = PayrollRun.objects.select_for_update().get(
+            id=payroll_line.payroll_run_id
+        )
+
+        if payroll_run.status not in {
+            PayrollRun.STATUS.CALCULATED,
+            PayrollRun.STATUS.REJECTED,
+        }:
+            raise ValidationError(
+                "Manual payroll adjustments are only allowed while payroll is calculated or rejected."
+            )
+
+        payroll_line.items.filter(
+            source_type=PayrollLineItem.SOURCE_TYPE.MANUAL
+        ).delete()
+
+        for index, item in enumerate(items, start=1):
+            PayrollLineItem.objects.create(
+                payroll_line=payroll_line,
+                item_type=item["item_type"],
+                category=item["category"],
+                name=item["name"],
+                amount=item["amount"],
+                source_type=PayrollLineItem.SOURCE_TYPE.MANUAL,
+                source_reference="",
+                is_taxable=item.get("is_taxable"),
+                is_statutory=item.get("is_statutory", False),
+                notes=item.get("notes", ""),
+                sort_order=500 + index,
+                created_by=updated_by,
+            )
+
+        refresh_payroll_line_totals(payroll_line)
+
+        if payroll_run.status == PayrollRun.STATUS.REJECTED:
+            payroll_run.status = PayrollRun.STATUS.CALCULATED
+            payroll_run.rejected_by = None
+            payroll_run.rejected_at = None
+            payroll_run.rejection_reason = ""
+            payroll_run.save(
+                update_fields=[
+                    "status",
+                    "rejected_by",
+                    "rejected_at",
+                    "rejection_reason",
+                    "updated_at",
+                ]
+            )
+
+        refresh_payroll_run_totals(payroll_run)
+        return payroll_line
+
+
+def submit_payroll_run(payroll_run, submitted_by):
+    with transaction.atomic():
+        payroll_run = PayrollRun.objects.select_for_update().get(id=payroll_run.id)
+        if payroll_run.status != PayrollRun.STATUS.CALCULATED:
+            raise ValidationError("Only calculated payroll runs can be submitted for approval.")
+        if payroll_run.employee_count <= 0:
+            raise ValidationError("Payroll must contain at least one employee before submission.")
+        if payroll_run.net_pay <= 0:
+            raise ValidationError("Payroll net pay must be greater than zero before submission.")
+
+        payroll_run.status = PayrollRun.STATUS.AWAITING_APPROVAL
+        payroll_run.submitted_by = submitted_by
+        payroll_run.submitted_at = timezone.now()
+        payroll_run.save(
+            update_fields=[
+                "status",
+                "submitted_by",
+                "submitted_at",
+                "updated_at",
+            ]
+        )
+        return payroll_run
+
+
+def approve_payroll_run(payroll_run, approved_by):
+    with transaction.atomic():
+        payroll_run = PayrollRun.objects.select_for_update().get(id=payroll_run.id)
+        if payroll_run.status != PayrollRun.STATUS.AWAITING_APPROVAL:
+            raise ValidationError("Only payroll runs awaiting approval can be approved.")
+
+        payroll_run.status = PayrollRun.STATUS.APPROVED
+        payroll_run.approved_by = approved_by
+        payroll_run.approved_at = timezone.now()
+        payroll_run.rejected_by = None
+        payroll_run.rejected_at = None
+        payroll_run.rejection_reason = ""
+        payroll_run.save(
+            update_fields=[
+                "status",
+                "approved_by",
+                "approved_at",
+                "rejected_by",
+                "rejected_at",
+                "rejection_reason",
+                "updated_at",
+            ]
+        )
+        return payroll_run
+
+
+def reject_payroll_run(payroll_run, rejected_by, reason):
+    reason = (reason or "").strip()
+    if not reason:
+        raise ValidationError("A rejection reason is required.")
+
+    with transaction.atomic():
+        payroll_run = PayrollRun.objects.select_for_update().get(id=payroll_run.id)
+        if payroll_run.status != PayrollRun.STATUS.AWAITING_APPROVAL:
+            raise ValidationError("Only payroll runs awaiting approval can be rejected.")
+
+        payroll_run.status = PayrollRun.STATUS.REJECTED
+        payroll_run.rejected_by = rejected_by
+        payroll_run.rejected_at = timezone.now()
+        payroll_run.rejection_reason = reason
+        payroll_run.approved_by = None
+        payroll_run.approved_at = None
+        payroll_run.save(
+            update_fields=[
+                "status",
+                "rejected_by",
+                "rejected_at",
+                "rejection_reason",
+                "approved_by",
+                "approved_at",
+                "updated_at",
+            ]
+        )
+        return payroll_run
+
+
+def pay_payroll_run(
+    payroll_run,
+    paid_by,
+    finance_account,
+    paid_at=None,
+    payment_reference="",
+):
+    with transaction.atomic():
+        payroll_run = PayrollRun.objects.select_for_update().get(id=payroll_run.id)
+        if payroll_run.status != PayrollRun.STATUS.APPROVED:
+            raise ValidationError("Only approved payroll runs can be paid.")
+        if not finance_account or not finance_account.is_active:
+            raise ValidationError("An active Finance account is required to pay payroll.")
+
+        if (
+            payroll_run.branch_id
+            and finance_account.branch_id
+            and payroll_run.branch_id != finance_account.branch_id
+        ):
+            raise ValidationError("Payroll account branch must match the payroll run branch.")
+
+        payment_reference = (payment_reference or "").strip()
+        if payment_reference and PayrollRun.objects.exclude(id=payroll_run.id).filter(
+            status=PayrollRun.STATUS.PAID,
+            payment_reference=payment_reference,
+        ).exists():
+            raise ValidationError("This payroll payment reference has already been used.")
+
+        payroll_run.status = PayrollRun.STATUS.PAID
+        payroll_run.finance_account = finance_account
+        payroll_run.paid_by = paid_by
+        payroll_run.paid_at = paid_at or timezone.now()
+        payroll_run.payment_reference = payment_reference
+        payroll_run.save(
+            update_fields=[
+                "status",
+                "finance_account",
+                "paid_by",
+                "paid_at",
+                "payment_reference",
+                "updated_at",
+            ]
+        )
+        return payroll_run
+
+
+def cancel_payroll_run(payroll_run, cancelled_by, reason):
+    reason = (reason or "").strip()
+    if not reason:
+        raise ValidationError("A cancellation reason is required.")
+
+    with transaction.atomic():
+        payroll_run = PayrollRun.objects.select_for_update().get(id=payroll_run.id)
+        if payroll_run.status == PayrollRun.STATUS.PAID:
+            raise ValidationError("Paid payroll runs cannot be cancelled.")
+        if payroll_run.status == PayrollRun.STATUS.CANCELLED:
+            raise ValidationError("This payroll run is already cancelled.")
+
+        payroll_run.status = PayrollRun.STATUS.CANCELLED
+        payroll_run.cancelled_by = cancelled_by
+        payroll_run.cancelled_at = timezone.now()
+        payroll_run.cancellation_reason = reason
+        payroll_run.save(
+            update_fields=[
+                "status",
+                "cancelled_by",
+                "cancelled_at",
+                "cancellation_reason",
+                "updated_at",
+            ]
+        )
+        return payroll_run

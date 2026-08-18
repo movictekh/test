@@ -13,6 +13,19 @@ from finance.api.schemas.expenses import (
     FinanceExpenseUpdate,
 )
 from finance.api.schemas.invoices import FinanceInvoiceOut, FinanceInvoiceSummaryOut, finance_invoice_status
+from finance.api.schemas.payroll import (
+    PayrollCancelIn,
+    PayrollLineItemOut,
+    PayrollLineOut,
+    PayrollManualItemsReplaceIn,
+    PayrollManualLineItemIn,
+    PayrollPayIn,
+    PayrollRejectIn,
+    PayrollRunDetailOut,
+    PayrollRunIn,
+    PayrollRunOut,
+    PayrollRunUpdate,
+)
 from finance.api.schemas.payments import (
     ConfirmedFinancePaymentOut,
     FinancePaymentSubmissionIn,
@@ -80,6 +93,17 @@ __all__ = [
     "FinancePaymentSubmissionIn",
     "FinancePaymentSubmissionOut",
     "FinancePaymentSubmissionReviewIn",
+    "PayrollCancelIn",
+    "PayrollLineItemOut",
+    "PayrollLineOut",
+    "PayrollManualItemsReplaceIn",
+    "PayrollManualLineItemIn",
+    "PayrollPayIn",
+    "PayrollRejectIn",
+    "PayrollRunDetailOut",
+    "PayrollRunIn",
+    "PayrollRunOut",
+    "PayrollRunUpdate",
     "PettyCashAdvanceIn",
     "PettyCashAdvanceOut",
     "PettyCashAdvanceUpdate",

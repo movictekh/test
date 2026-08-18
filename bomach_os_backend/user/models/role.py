@@ -107,6 +107,10 @@ PERMISSIONS_MAP = {
     "vendor_bills": ["create", "view", "list", "update", "approve", "reject", "pay", "void"],
     "petty_cash": ["create", "view", "list", "update", "approve", "reject", "issue", "retire", "cancel"],
     "cash_flow": ["view"],
+    "finance_payroll": [
+        "list", "view", "create", "update", "calculate",
+        "submit", "approve", "reject", "pay", "cancel",
+    ],
     "service_invoices": ["create", "view", "list", "update", "delete"],
     "service_leads": ["create", "view", "list", "update", "delete"],
     "marketing_campaigns": ["create", "view", "list", "update", "delete"],
@@ -285,6 +289,30 @@ PERMISSION_HELPERS = {
     "petty_cash.cancel": {
         "label": "Cancel Petty Cash",
         "helper_text": "Cancel petty cash advances before they are issued.",
+    },
+    "finance_payroll.calculate": {
+        "label": "Calculate Finance Payroll",
+        "helper_text": "Calculate employee earnings and deductions for a Finance payroll run.",
+    },
+    "finance_payroll.submit": {
+        "label": "Submit Finance Payroll",
+        "helper_text": "Submit a calculated payroll run for approval.",
+    },
+    "finance_payroll.approve": {
+        "label": "Approve Finance Payroll",
+        "helper_text": "Approve a submitted Finance payroll run.",
+    },
+    "finance_payroll.reject": {
+        "label": "Reject Finance Payroll",
+        "helper_text": "Reject a submitted Finance payroll run for correction.",
+    },
+    "finance_payroll.pay": {
+        "label": "Pay Finance Payroll",
+        "helper_text": "Record payment of an approved payroll run from a Finance account.",
+    },
+    "finance_payroll.cancel": {
+        "label": "Cancel Finance Payroll",
+        "helper_text": "Cancel an unpaid Finance payroll run.",
     },
     "estate_invoices.approve": {
         "label": "Approve Estate Invoices",

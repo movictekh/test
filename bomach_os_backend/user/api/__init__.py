@@ -67,6 +67,7 @@ from finance.api.v1 import (
     expenses as finance_expenses,
     invoices as finance_invoices,
     payments as finance_payments,
+    payroll as finance_payroll,
     petty_cash as finance_petty_cash,
     receivables as finance_receivables,
     service_orders as finance_service_orders,
@@ -206,6 +207,7 @@ api.add_router("/stats", svc_stats.router)
 api.add_router("/finance", finance_invoices.router)
 api.add_router("/finance", finance_accounts.router)
 api.add_router("/finance", finance_payments.router)
+api.add_router("/finance", finance_payroll.router)
 api.add_router("/finance", finance_receivables.router)
 api.add_router("/finance", finance_wallets.router)
 api.add_router("/finance", finance_expenses.router)

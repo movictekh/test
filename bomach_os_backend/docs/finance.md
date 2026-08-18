@@ -708,3 +708,104 @@ tax/statutory obligation source model or endpoint in this backend slice.
 
 Those sources should be integrated when their authoritative due-date records
 exist rather than hard-coding amounts or dates into Cash Flow Forecast.
+
+## Native Finance Payroll
+
+Finance owns a native payroll workflow. It does not import, wrap, copy, or write
+the legacy `hr.Payroll` model or HR payroll API.
+
+The only employee-side dependency is employee configuration from
+`user.Employee`, including identity, branch, monthly salary, allowances, bank
+details, and employment dates/status.
+
+### Payroll data model
+
+`PayrollRun` represents one company-wide or branch payroll period and owns the
+workflow, approval and aggregate payment metadata.
+
+`PayrollLine` represents one employee inside a payroll run. It snapshots the
+employee identity, organisational context, bank details, configured base salary,
+and calculated totals used for that period so historical payroll does not change
+when the current employee profile changes later.
+
+`PayrollLineItem` represents one earning or deduction that explains the
+employee's gross pay, deductions, and net pay.
+
+Employee-configured monthly salary and allowances are generated as
+`source_type=employee` line items. Manual Finance adjustments use
+`source_type=manual`. Future Commissions & Bonuses and Tax & Statutory work will
+use the reserved `commission` and `statutory` source types rather than
+overloading generic allowances/deductions.
+
+### Payroll workflow
+
+```text
+Draft
+  ↓ calculate
+Calculated
+  ↓ submit
+Awaiting Approval
+  ├─ reject → Rejected → correct/recalculate
+  └─ approve
+Approved
+  ↓ pay from FinanceAccount
+Paid
+```
+
+Unpaid runs may also be cancelled. Paid runs cannot be cancelled.
+
+Calculation is currently monthly. Eligible employees must be active, have a
+positive configured monthly `gross_salary`, and fall within the payroll
+employment period. A branch payroll includes only employees assigned to that
+branch.
+
+A company-wide run and branch runs are mutually exclusive for the same payroll
+month. This prevents employees from being paid twice through overlapping scopes.
+
+Recalculation refreshes employee-sourced salary and allowance items while
+preserving manual Finance adjustments already applied to employees who remain
+eligible.
+
+### API
+
+```http
+GET   /api/v1/finance/payroll
+POST  /api/v1/finance/payroll
+GET   /api/v1/finance/payroll/{run_id}
+PATCH /api/v1/finance/payroll/{run_id}
+
+POST  /api/v1/finance/payroll/{run_id}/calculate
+PUT   /api/v1/finance/payroll/{run_id}/lines/{line_id}/manual-items
+POST  /api/v1/finance/payroll/{run_id}/submit
+POST  /api/v1/finance/payroll/{run_id}/approve
+POST  /api/v1/finance/payroll/{run_id}/reject
+POST  /api/v1/finance/payroll/{run_id}/pay
+POST  /api/v1/finance/payroll/{run_id}/cancel
+```
+
+The public permission resource is `finance_payroll`, deliberately separate from
+the legacy HR `payroll` permission resource.
+
+Branch-scoped Finance Payroll roles can only access payroll runs explicitly
+assigned to their permitted branches. Company-wide payroll runs remain hidden
+from branch-scoped users because their detail includes employee compensation.
+
+### Cashbook posting
+
+An approved payroll run is paid from an active `FinanceAccount`. Payment marks
+the run as paid and records the Finance account, payment timestamp, actor, and
+reference.
+
+Cashbook derives one posted payroll outflow from the paid `PayrollRun`. No
+duplicate transaction table is introduced.
+
+Because Cash Flow opening cash already reuses Cashbook actual-money sources, a
+paid payroll automatically reduces later Cash Flow opening cash. Forecasting an
+approved but not-yet-paid payroll as a future obligation is intentionally
+deferred to the later People & Compliance / Cash Flow integration slice.
+
+### Legacy HR payroll
+
+The existing `/api/v1/payroll` HR routes remain untouched for compatibility,
+but native Finance Payroll does not depend on them. No migration or data copy
+from `hr.Payroll` is performed.
