@@ -61,6 +61,7 @@ from services.api.v1 import (
     csrc_router as svc_csrc, pipeline_router as svc_pipeline,
 )
 from finance.api.v1 import (
+    accounting as finance_accounting,
     accounts as finance_accounts,
     cashbook as finance_cashbook,
     cash_flow as finance_cash_flow,
@@ -206,6 +207,7 @@ api.add_router("/revenue-execution", svc_revenue_execution.router)
 api.add_router("/stats", svc_stats.router)
 
 # === Finance routers ===
+api.add_router("/finance", finance_accounting.router)
 api.add_router("/finance", finance_invoices.router)
 api.add_router("/finance", finance_accounts.router)
 api.add_router("/finance", finance_payments.router)

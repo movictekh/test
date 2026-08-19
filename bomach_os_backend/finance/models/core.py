@@ -27,6 +27,13 @@ class FinanceAccount(models.Model):
         blank=True,
         related_name="finance_accounts",
     )
+    ledger_account = models.OneToOneField(
+        "finance.LedgerAccount",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="finance_account",
+    )
     bank_name = models.CharField(max_length=120, blank=True, default="")
     account_number = models.CharField(max_length=50, blank=True, default="")
     account_name = models.CharField(max_length=120, blank=True, default="")
@@ -76,6 +83,12 @@ class FinanceAccount(models.Model):
             ).exists()
             or self.payroll_runs.filter(status="paid").exists()
             or self.statutory_payments.filter(status="paid").exists()
+            or (
+                self.ledger_account_id
+                and self.ledger_account.journal_lines.filter(
+                    journal_entry__status="posted"
+                ).exists()
+            )
         )
 
     def clean(self):
@@ -91,8 +104,34 @@ class FinanceAccount(models.Model):
             if errors:
                 raise ValidationError(errors)
 
+        if self.ledger_account_id:
+            ledger_errors = {}
+            if self.ledger_account.account_type != "asset":
+                ledger_errors["ledger_account"] = "Bank/cash Finance accounts must map to an Asset ledger account."
+            elif self.ledger_account.normal_balance != "debit":
+                ledger_errors["ledger_account"] = "Bank/cash Finance accounts require a debit-normal ledger account."
+            elif not self.ledger_account.is_active:
+                ledger_errors["ledger_account"] = "Bank/cash Finance accounts require an active ledger account."
+            elif not self.ledger_account.is_postable:
+                ledger_errors["ledger_account"] = "Bank/cash Finance accounts must map to a postable ledger account."
+            elif not self.ledger_account.is_in_cash_bank_tree():
+                ledger_errors["ledger_account"] = "Bank/cash Finance accounts must map inside the canonical Cash & Bank ledger tree."
+            if ledger_errors:
+                raise ValidationError(ledger_errors)
+
         if self.pk:
             original = type(self).objects.filter(pk=self.pk).first()
+            if (
+                original
+                and original.ledger_account_id
+                and original.ledger_account_id != self.ledger_account_id
+                and original.ledger_account.journal_lines.filter(
+                    journal_entry__status="posted"
+                ).exists()
+            ):
+                raise ValidationError({
+                    "ledger_account": "Ledger mapping cannot change after posted journal activity exists."
+                })
             if original and self.has_financial_activity():
                 locked_fields = {
                     "account_type": "Account type",

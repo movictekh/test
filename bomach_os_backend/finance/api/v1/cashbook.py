@@ -305,7 +305,10 @@ def _build_cashbook_rows(
 
     if date_to:
         payments = payments.filter(payment_date__lte=date_to)
-        expenses = expenses.filter(date__lte=date_to)
+        expenses = expenses.filter(
+            Q(paid_at__date__lte=date_to)
+            | Q(paid_at__isnull=True, date__lte=date_to)
+        )
         vendor_bills = vendor_bills.filter(paid_at__date__lte=date_to)
         payroll_runs = payroll_runs.filter(paid_at__date__lte=date_to)
         statutory_obligations = statutory_obligations.filter(paid_at__date__lte=date_to)
@@ -514,6 +517,7 @@ def _build_cashbook_rows(
 
     for expense in expenses:
         row_source = _expense_source(expense)
+        paid_date = expense.paid_at.date() if expense.paid_at else expense.date
         if source and row_source != source:
             continue
         order = expense.service_order
@@ -522,8 +526,8 @@ def _build_cashbook_rows(
         client = order.client if order else None
         rows.append(
             {
-                "sort_key": (expense.date, expense.created_at, f"expense-{expense.id}"),
-                "date": expense.date,
+                "sort_key": (paid_date, expense.paid_at or expense.created_at, f"expense-{expense.id}"),
+                "date": paid_date,
                 "reference": expense.expense_number,
                 "source": row_source,
                 "source_display": SOURCE_LABELS[row_source],

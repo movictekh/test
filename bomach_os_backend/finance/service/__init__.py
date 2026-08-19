@@ -26,6 +26,24 @@ from .core import (
     handle_payment_exception,
 )
 
+from .accounting import (
+    create_manual_journal,
+    ensure_finance_account_ledger_account,
+    get_system_ledger_account,
+    map_finance_account_ledger,
+    post_client_payment_journal,
+    post_expense_payment_journal,
+    post_journal_entry,
+    post_opening_balance_journal,
+    post_payroll_payment_journal,
+    post_petty_cash_issue_journal,
+    post_petty_cash_retirement_line_journal,
+    post_statutory_payment_journal,
+    post_vendor_bill_payment_journal,
+    reverse_journal_entry,
+    update_manual_journal,
+)
+
 from .people_compliance import (
     refresh_payroll_line_totals,
     refresh_payroll_run_totals,
@@ -50,6 +68,21 @@ from .people_compliance import (
 )
 
 __all__ = [
+    "create_manual_journal",
+    "ensure_finance_account_ledger_account",
+    "get_system_ledger_account",
+    "map_finance_account_ledger",
+    "post_client_payment_journal",
+    "post_expense_payment_journal",
+    "post_journal_entry",
+    "post_opening_balance_journal",
+    "post_payroll_payment_journal",
+    "post_petty_cash_issue_journal",
+    "post_petty_cash_retirement_line_journal",
+    "post_statutory_payment_journal",
+    "post_vendor_bill_payment_journal",
+    "reverse_journal_entry",
+    "update_manual_journal",
     "validation_detail",
     "log_request_activity",
     "get_active_finance_account",

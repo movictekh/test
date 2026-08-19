@@ -4,6 +4,23 @@ from finance.api.schemas.accounts import (
     FinanceAccountOut,
     FinanceAccountUpdate,
 )
+from finance.api.schemas.accounting import (
+    FinanceAccountLedgerMapIn,
+    FinanceAccountLedgerMapOut,
+    GeneralLedgerLineOut,
+    JournalEntryDetailOut,
+    JournalEntryOut,
+    JournalLineIn,
+    JournalLineOut,
+    JournalReverseIn,
+    LedgerAccountIn,
+    LedgerAccountOut,
+    LedgerAccountUpdate,
+    ManualJournalIn,
+    ManualJournalUpdate,
+    TrialBalanceOut,
+    TrialBalanceRowOut,
+)
 from finance.api.schemas.cashbook import CashbookRowOut, CashbookSummaryOut
 from finance.api.schemas.cash_flow import (
     CashFlowForecastItemOut,
@@ -100,6 +117,21 @@ from finance.api.schemas.wallets import (
 )
 
 __all__ = [
+    "FinanceAccountLedgerMapIn",
+    "FinanceAccountLedgerMapOut",
+    "GeneralLedgerLineOut",
+    "JournalEntryDetailOut",
+    "JournalEntryOut",
+    "JournalLineIn",
+    "JournalLineOut",
+    "JournalReverseIn",
+    "LedgerAccountIn",
+    "LedgerAccountOut",
+    "LedgerAccountUpdate",
+    "ManualJournalIn",
+    "ManualJournalUpdate",
+    "TrialBalanceOut",
+    "TrialBalanceRowOut",
     "ConfirmedFinancePaymentOut",
     "CashbookRowOut",
     "CashbookSummaryOut",

@@ -17,6 +17,7 @@ from finance.models import (
 )
 from services.models.payment import Payment
 
+from .accounting import post_payroll_payment_journal, post_statutory_payment_journal
 
 
 def _payroll_period_bounds(payroll_run):
@@ -516,6 +517,7 @@ def pay_payroll_run(
             updated_at=timezone.now(),
         )
 
+        post_payroll_payment_journal(payroll_run, paid_by)
         return payroll_run
 
 
@@ -771,7 +773,9 @@ def pay_statutory_obligation(obligation, paid_by, finance_account, paid_at=None,
         ref=(payment_reference or "").strip()
         if ref and StatutoryObligation.objects.exclude(id=obligation.id).filter(status=StatutoryObligation.STATUS.PAID,payment_reference=ref).exists(): raise ValidationError("This statutory payment reference has already been used.")
         obligation.status=StatutoryObligation.STATUS.PAID; obligation.finance_account=finance_account; obligation.paid_by=paid_by; obligation.paid_at=paid_at or timezone.now(); obligation.payment_reference=ref
-        obligation.save(update_fields=["status","finance_account","paid_by","paid_at","payment_reference","updated_at"]); return obligation
+        obligation.save(update_fields=["status","finance_account","paid_by","paid_at","payment_reference","updated_at"])
+        post_statutory_payment_journal(obligation, paid_by)
+        return obligation
 
 
 def void_statutory_obligation(obligation):

@@ -198,10 +198,12 @@ def update_finance_expense(request, expense_id: int, payload: FinanceExpenseUpda
         return 400, {"detail": str(exc)}
 
 
-@router.delete("/expenses/{expense_id}", response={200: MessageSchema, 404: MessageSchema})
+@router.delete("/expenses/{expense_id}", response={200: MessageSchema, 400: MessageSchema, 404: MessageSchema})
 @require_permission("expenses", "delete")
 def delete_finance_expense(request, expense_id: int):
     expense = get_object_or_404(_apply_branch_scope(request, _expense_queryset()), id=expense_id)
+    if expense.status not in {Expense.STATUS.PENDING, Expense.STATUS.REJECTED}:
+        return 400, {"detail": "Only pending or rejected expenses can be deleted; settled/approved sources must remain auditable."}
     expense.delete()
     return 200, {"detail": "Expense deleted successfully"}
 

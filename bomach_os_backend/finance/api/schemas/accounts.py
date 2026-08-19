@@ -41,6 +41,9 @@ class FinanceAccountOut(Schema):
     currency: str
     branch_id: Optional[int] = None
     branch_name: str
+    ledger_account_id: Optional[int] = None
+    ledger_account_code: str
+    ledger_account_name: str
     bank_name: str
     account_number: str
     account_name: str
@@ -59,6 +62,14 @@ class FinanceAccountOut(Schema):
     @staticmethod
     def resolve_branch_name(obj):
         return obj.branch.branch_name if obj.branch else ""
+
+    @staticmethod
+    def resolve_ledger_account_code(obj):
+        return obj.ledger_account.code if obj.ledger_account else ""
+
+    @staticmethod
+    def resolve_ledger_account_name(obj):
+        return obj.ledger_account.name if obj.ledger_account else ""
 
 class FinanceAccountBalanceOut(Schema):
     account_id: int

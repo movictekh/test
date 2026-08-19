@@ -21,6 +21,14 @@ from services.models.payment import Invoice, Payment
 from services.models.service import ServiceRequestActivity
 from user.models.client_service import PaymentSubmission
 
+from .accounting import (
+    post_client_payment_journal,
+    post_expense_payment_journal,
+    post_petty_cash_issue_journal,
+    post_petty_cash_retirement_line_journal,
+    post_vendor_bill_payment_journal,
+)
+
 
 def validation_detail(exc):
     if hasattr(exc, "message_dict"):
@@ -302,6 +310,7 @@ def pay_vendor_bill(vendor_bill, paid_by, finance_account, paid_at=None, payment
             ]
         )
         post_wallet_payment_for_vendor_bill(vendor_bill, paid_by)
+        post_vendor_bill_payment_journal(vendor_bill, paid_by)
         return vendor_bill
 
 
@@ -427,6 +436,7 @@ def issue_petty_cash_advance(advance, issued_by, custodian=None, amount_issued=N
                 "updated_at",
             ]
         )
+        post_petty_cash_issue_journal(advance, issued_by)
         return advance
 
 
@@ -457,6 +467,7 @@ def retire_petty_cash_advance(advance, retired_by, line_payloads):
             created_lines.append(line)
             if line.amount_spent:
                 post_wallet_spend_for_petty_cash_line(line, retired_by)
+            post_petty_cash_retirement_line_journal(line, retired_by)
 
         advance.amount_retired = existing_retired + new_spent
         advance.amount_returned = existing_returned + new_returned
@@ -566,6 +577,7 @@ def pay_finance_expense(expense, paid_by, finance_account, paid_at=None, payment
             ]
         )
         post_wallet_payment_for_expense(expense, paid_by)
+        post_expense_payment_journal(expense, paid_by)
         return expense
 
 
@@ -603,6 +615,7 @@ def create_confirmed_payment_from_submission(submission, reviewed_by, finance_ac
             created_by=reviewed_by,
         )
         post_wallet_funding_for_payment(payment, reviewed_by)
+        post_client_payment_journal(payment, reviewed_by)
 
         invoice.refresh_from_db()
         submission.status = PaymentSubmission.STATUS.CONFIRMED

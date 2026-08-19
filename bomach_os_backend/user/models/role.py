@@ -107,6 +107,9 @@ PERMISSIONS_MAP = {
     "vendor_bills": ["create", "view", "list", "update", "approve", "reject", "pay", "void"],
     "petty_cash": ["create", "view", "list", "update", "approve", "reject", "issue", "retire", "cancel"],
     "cash_flow": ["view"],
+    "chart_of_accounts": ["create", "view", "list", "update", "deactivate"],
+    "journals": ["create", "view", "list", "update", "post", "reverse"],
+    "general_ledger": ["view", "list"],
     "finance_payroll": [
         "list", "view", "create", "update", "calculate",
         "submit", "approve", "reject", "pay", "cancel",

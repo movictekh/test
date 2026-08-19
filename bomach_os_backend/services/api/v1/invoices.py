@@ -310,6 +310,8 @@ def replace_invoice(request, invoice_id: int, payload: InvoiceUpdate):
 @require_permission("service_invoices", "delete")
 def delete_invoice(request, invoice_id: int):
     invoice = get_object_or_404(Invoice, id=invoice_id)
+    if invoice.payments.exists():
+        return 400, {"detail": "Invoices with recorded payments cannot be deleted; preserve the payment and accounting audit trail."}
     if invoice.quote_id or invoice.service_request_id:
         return 400, {"detail": "Commercial flow invoices cannot be deleted. Cancel them instead."}
     invoice.delete()

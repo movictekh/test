@@ -9,6 +9,12 @@ from .core import (
     FinanceWalletEntry,
 )
 
+from .accounting import (
+    LedgerAccount,
+    JournalEntry,
+    JournalLine,
+)
+
 from .people_compliance import (
     PayrollRun,
     PayrollLine,
@@ -28,6 +34,9 @@ __all__ = [
     "PettyCashAdvance",
     "PettyCashRetirementLine",
     "FinanceWalletEntry",
+    "LedgerAccount",
+    "JournalEntry",
+    "JournalLine",
     "PayrollRun",
     "PayrollLine",
     "PayrollLineItem",

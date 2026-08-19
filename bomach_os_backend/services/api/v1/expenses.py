@@ -51,7 +51,10 @@ def list_expenses(
 def create_expense(request, payload: ExpenseIn):
     """Create a new expense."""
     try:
-        expense = Expense.objects.create(**payload.dict())
+        data = payload.dict()
+        if data.get("status", Expense.STATUS.PENDING) != Expense.STATUS.PENDING:
+            return 400, {"detail": "New expenses must start pending; use the Finance approval/payment workflow for status changes."}
+        expense = Expense.objects.create(**data)
 
         expense.refresh_from_db()
         return 201, expense
@@ -74,7 +77,12 @@ def update_expense(request, expense_id: int, payload: ExpenseUpdate):
     """Update an existing expense."""
     try:
         expense = get_object_or_404(Expense, id=expense_id)
-        for attr, value in payload.dict(exclude_unset=True).items():
+        if expense.status != Expense.STATUS.PENDING:
+            return 400, {"detail": "Only pending expenses can be updated."}
+        data = payload.dict(exclude_unset=True)
+        if "status" in data:
+            return 400, {"detail": "Use the approve/reject Finance workflow to change expense status."}
+        for attr, value in data.items():
             setattr(expense, attr, value)
         expense.save()
         return 200, expense
@@ -90,6 +98,8 @@ def delete_expense(request, expense_id: int):
     """Delete an expense."""
     try:
         expense = get_object_or_404(Expense, id=expense_id)
+        if expense.status not in {Expense.STATUS.PENDING, Expense.STATUS.REJECTED}:
+            return 400, {"detail": "Only pending or rejected expenses can be deleted; approved/paid sources must remain auditable."}
         expense.delete()
         return 200, {"detail": "Expense deleted successfully"}
     except ValidationError as e:
