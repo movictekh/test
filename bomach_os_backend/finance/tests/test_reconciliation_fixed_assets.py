@@ -49,5 +49,19 @@ class ReconciliationFixedAssetsPassTests(RoleAPITestMixin,TestCase):
         e=self._capex(Decimal('100.00')); c=self._category(12); a=create_fixed_asset(category=c,source_expense=e,name='Disposal',acquisition_date=e.date,acquisition_cost=Decimal('100.00'),created_by=self.employee.user); a,cap,_=capitalize_fixed_asset(a,self.employee.user)
         with self.assertRaises(ValidationError): reverse_journal_entry(cap,self.employee.user)
         a,j,created=dispose_fixed_asset(a,disposal_date=date(2026,5,1),proceeds=Decimal('120.00'),finance_account=self.finance_account,reference='SALE-120',disposed_by=self.employee.user); self.assertTrue(created); self.assertEqual(j.total_debit,Decimal('120.00')); self.assertEqual(j.total_credit,Decimal('120.00')); self.assertEqual(j.lines.get(ledger_account__system_role=LedgerAccount.SYSTEM_ROLE.ASSET_DISPOSAL_GAIN).credit,Decimal('20.00')); self.assertEqual(a.status,FixedAsset.STATUS.DISPOSED)
-    def test_new_endpoints_are_mounted(self):
-        self.assertEqual(self.client.get('/api/v1/finance/bank-reconciliations',**self.headers).status_code,200); self.assertEqual(self.client.get('/api/v1/finance/fixed-asset-categories',**self.headers).status_code,200); self.assertEqual(self.client.get('/api/v1/finance/fixed-assets',**self.headers).status_code,200)
+    def test_bank_reconciliation_api_is_deferred_while_fixed_assets_remain_mounted(self):
+        # Bank Reconciliation backend code is intentionally retained, but its
+        # public API is deferred until the external bank-transaction ingestion
+        # and reconciliation product workflow are defined.
+        self.assertEqual(
+            self.client.get('/api/v1/finance/bank-reconciliations', **self.headers).status_code,
+            404,
+        )
+        self.assertEqual(
+            self.client.get('/api/v1/finance/fixed-asset-categories', **self.headers).status_code,
+            200,
+        )
+        self.assertEqual(
+            self.client.get('/api/v1/finance/fixed-assets', **self.headers).status_code,
+            200,
+        )

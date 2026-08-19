@@ -62,7 +62,10 @@ from services.api.v1 import (
 )
 from finance.api.v1 import (
     accounting as finance_accounting,
-    reconciliation as finance_reconciliation,
+    # Bank Reconciliation API exposure is intentionally deferred.
+    # Keep the implementation intact; we will come back to it when the bank
+    # statement ingestion and reconciliation product workflow is defined.
+    # reconciliation as finance_reconciliation,
     fixed_assets as finance_fixed_assets,
     accounts as finance_accounts,
     cashbook as finance_cashbook,
@@ -210,7 +213,11 @@ api.add_router("/stats", svc_stats.router)
 
 # === Finance routers ===
 api.add_router("/finance", finance_accounting.router)
-api.add_router("/finance", finance_reconciliation.router)
+# Bank Reconciliation API exposure is intentionally deferred.
+# The models, services, migrations, permissions, and tests remain in place.
+# We will come back to this API when the external bank-transaction ingestion
+# workflow and the intended reconciliation user experience are defined.
+# api.add_router("/finance", finance_reconciliation.router)
 api.add_router("/finance", finance_fixed_assets.router)
 api.add_router("/finance", finance_invoices.router)
 api.add_router("/finance", finance_accounts.router)
