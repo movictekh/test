@@ -71,7 +71,7 @@ class FixedAsset(models.Model):
     def clean(self):
         super().clean(); errors={}
         if not self.useful_life_months: errors['useful_life_months']='Useful life must be greater than zero.'
-        if self.residual_value is not None and self.acquisition_cost is not None and self.residual_value>self.acquisition_cost: errors['residual_value']='Residual value cannot exceed acquisition cost.'
+        if self.residual_value is not None and self.acquisition_cost is not None and self.residual_value>=self.acquisition_cost: errors['residual_value']='Residual value must be less than acquisition cost.'
         if self.depreciation_method!=FixedAssetCategory.DEPRECIATION_METHOD.STRAIGHT_LINE: errors['depreciation_method']='Only straight-line depreciation is supported.'
         if self.source_expense_id:
             e=self.source_expense

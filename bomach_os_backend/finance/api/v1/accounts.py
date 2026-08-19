@@ -1,14 +1,16 @@
 from datetime import date
+from decimal import Decimal
 from typing import List, Optional
 
 from django.db import transaction
+from django.db.models import Sum
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from ninja import Query, Router
 from ninja.pagination import LimitOffsetPagination, paginate
 
 from finance.api.schemas import FinanceAccountBalanceOut, FinanceAccountIn, FinanceAccountOut, FinanceAccountUpdate
-from finance.models import FinanceAccount
+from finance.models import FinanceAccount, JournalEntry, JournalLine
 from finance.service import ensure_finance_account_ledger_account, post_opening_balance_journal
 from services.api.schema.others import MessageSchema
 from user.models.branch import Branch
@@ -44,9 +46,22 @@ def list_finance_accounts(
     return accounts.order_by("display_name")
 
 
+def _ledger_book_balance(account, as_of):
+    if not account.ledger_account_id:
+        return None
+    totals = JournalLine.objects.filter(
+        ledger_account_id=account.ledger_account_id,
+        journal_entry__status=JournalEntry.STATUS.POSTED,
+        journal_entry__entry_date__lte=as_of,
+    ).aggregate(debit=Sum("debit"), credit=Sum("credit"))
+    debit = totals["debit"] or Decimal("0.00")
+    credit = totals["credit"] or Decimal("0.00")
+    return (debit - credit).quantize(Decimal("0.01"))
+
+
 @router.get(
     "/accounts/{account_id}/balance",
-    response={200: FinanceAccountBalanceOut, 404: MessageSchema},
+    response={200: FinanceAccountBalanceOut, 400: MessageSchema, 404: MessageSchema},
 )
 @require_permission("payments", "list")
 def get_finance_account_balance(
@@ -63,10 +78,11 @@ def get_finance_account_balance(
         id=account_id,
     )
     balance_date = as_of or timezone.localdate()
-
-    # Reuse the current Cashbook calculation. Do not create a second balance
-    # table or duplicate cash-movement logic.
-    from finance.api.v1.cashbook import cash_position_as_of
+    book_balance = _ledger_book_balance(account, balance_date)
+    if book_balance is None:
+        return 400, {
+            "detail": "Finance account requires a mapped Ledger Account before book balance can be calculated."
+        }
 
     return 200, {
         "account_id": account.id,
@@ -76,11 +92,7 @@ def get_finance_account_balance(
         "as_of": balance_date,
         "opening_balance": account.opening_balance,
         "opening_balance_date": account.opening_balance_date,
-        "book_balance": cash_position_as_of(
-            request,
-            balance_date,
-            finance_account_id=account.id,
-        ),
+        "book_balance": book_balance,
     }
 
 

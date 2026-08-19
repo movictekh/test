@@ -6,6 +6,7 @@ from django.test import TestCase
 from django.utils import timezone
 
 from finance.models import FinanceAccount, FinanceVendor, VendorBill
+from finance.service import post_opening_balance_journal, post_vendor_bill_payment_journal
 from user.models.branch import Branch
 from user.models.role import Role
 from user.tests.helpers import RoleAPITestMixin
@@ -134,8 +135,10 @@ class BankCashAccountPass1Tests(RoleAPITestMixin, TestCase):
 
         self.assertEqual(fresh.opening_balance, Decimal("350.00"))
 
-    def test_balance_endpoint_reuses_existing_cashbook_balance(self):
-        self._record_paid_vendor_bill(Decimal("500.00"))
+    def test_balance_endpoint_uses_posted_general_ledger_balance(self):
+        bill = self._record_paid_vendor_bill(Decimal("500.00"))
+        post_opening_balance_journal(self.account, self.employee.user)
+        post_vendor_bill_payment_journal(bill, self.employee.user)
 
         response = self.client.get(
             f"/api/v1/finance/accounts/{self.account.id}/balance",

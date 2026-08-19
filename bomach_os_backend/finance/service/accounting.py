@@ -153,6 +153,31 @@ def _validate_postable_lines(lines):
         line.full_clean()
 
 
+def _validate_closed_bank_reconciliation_cutoff(entry, lines):
+    # Local import avoids coupling the core accounting module at import time.
+    from finance.models import BankReconciliation
+
+    ledger_ids = {line.ledger_account_id for line in lines}
+    if not ledger_ids:
+        return
+    bank_accounts = FinanceAccount.objects.filter(
+        account_type=FinanceAccount.ACCOUNT_TYPE.BANK,
+        ledger_account_id__in=ledger_ids,
+    )
+    for account in bank_accounts:
+        closed = BankReconciliation.objects.filter(
+            finance_account_id=account.id,
+            status=BankReconciliation.STATUS.CLOSED,
+            statement_end_date__gte=entry.entry_date,
+        ).order_by("-statement_end_date").first()
+        if closed:
+            raise ValidationError(
+                f"Bank account '{account.display_name}' is closed through "
+                f"{closed.statement_end_date}; a journal dated {entry.entry_date} "
+                "would change a closed bank reconciliation."
+            )
+
+
 def post_journal_entry(journal_entry, posted_by):
     with transaction.atomic():
         entry = JournalEntry.objects.select_for_update().prefetch_related("lines__ledger_account").get(pk=journal_entry.pk)
@@ -160,6 +185,7 @@ def post_journal_entry(journal_entry, posted_by):
             raise ValidationError("Only draft journals can be posted.")
         lines = list(entry.lines.all())
         _validate_postable_lines(lines)
+        _validate_closed_bank_reconciliation_cutoff(entry, lines)
         entry.status = JournalEntry.STATUS.POSTED
         entry.posted_by = posted_by
         entry.posted_at = timezone.now()

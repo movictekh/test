@@ -24,6 +24,7 @@ class BankReconciliation(models.Model):
     class Meta:
         ordering=['-statement_end_date','-created_at']
         indexes=[models.Index(fields=['finance_account','statement_end_date']),models.Index(fields=['status','statement_end_date'])]
+        constraints=[models.UniqueConstraint(fields=['finance_account'],condition=Q(status='draft'),name='uniq_fin_bank_reconciliation_draft_account')]
     def clean(self):
         super().clean(); errors={}
         if self.statement_start_date and self.statement_end_date and self.statement_end_date<self.statement_start_date: errors['statement_end_date']='Statement end date cannot be before statement start date.'
@@ -35,6 +36,8 @@ class BankReconciliation(models.Model):
                 q=type(self).objects.filter(finance_account_id=self.finance_account_id,statement_start_date__lte=self.statement_end_date,statement_end_date__gte=self.statement_start_date)
                 if self.pk: q=q.exclude(pk=self.pk)
                 if q.exists(): errors['statement_start_date']='This statement period overlaps another reconciliation for the same bank account.'
+                if not self.pk and type(self).objects.filter(finance_account_id=self.finance_account_id,statement_start_date__gt=self.statement_end_date).exists():
+                    errors['statement_start_date']='Bank reconciliations must be created in chronological order; an existing later period cannot be backfilled behind.'
         if self.pk:
             old=type(self).objects.filter(pk=self.pk).first(); workflow=getattr(self,'_workflow_via_service',False)
             if old and old.status!=self.status and not workflow: errors['status']='Reconciliation status can only change through the reconciliation workflow service.'

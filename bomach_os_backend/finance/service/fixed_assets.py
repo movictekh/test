@@ -27,7 +27,7 @@ def create_fixed_asset(*,category,source_expense,name,acquisition_date,acquisiti
         cost=money(acquisition_cost)
         if cost<=ZERO: raise ValidationError('Acquisition cost must be positive.')
         residual=money(cost*money(c.default_residual_value_percent)/Decimal('100.00')) if residual_value is None else money(residual_value)
-        if residual<ZERO or residual>cost: raise ValidationError('Residual value must be between zero and acquisition cost.')
+        if residual<ZERO or residual>=cost: raise ValidationError('Residual value must be at least zero and less than acquisition cost.')
         life=useful_life_months or c.default_useful_life_months
         if not life or life<=0: raise ValidationError('Useful life must be greater than zero.')
         sb=_source_branch(e); selected=branch or sb
@@ -78,7 +78,8 @@ def post_fixed_asset_depreciation(asset,period_end,posted_by):
         event=f'depreciation:{end:%Y-%m}'; existing=JournalEntry.objects.filter(source_type='fixed_asset',source_id=str(a.id),source_event=event,status=JournalEntry.STATUS.POSTED).first()
         if existing: return a,existing,False
         latest=JournalEntry.objects.filter(source_type='fixed_asset',source_id=str(a.id),source_event__startswith='depreciation:',status=JournalEntry.STATUS.POSTED).order_by('-entry_date').first()
-        if latest and end<=latest.entry_date: raise ValidationError('Depreciation periods must be posted once and in chronological order.')
+        next_end=first if not latest else _month_end(_add_months(latest.entry_date,1))
+        if end!=next_end: raise ValidationError(f'Next depreciation period must be {next_end}. Post monthly depreciation without skipping periods.')
         elapsed=min(_months_between(first,end)+1,a.useful_life_months); dep=money(a.acquisition_cost-a.residual_value); target=dep if elapsed>=a.useful_life_months else money(dep*Decimal(elapsed)/Decimal(a.useful_life_months)); already=posted_depreciation_total(a); amount=money(target-already)
         if amount<=ZERO: raise ValidationError('No depreciation remains to post for this period.')
         j,created=_create_posted_source_journal(entry_date=end,currency=a.currency,lines=[{'ledger_account_id':a.depreciation_expense_ledger_account_id,'debit':amount,'credit':ZERO,'description':f'Depreciation {a.asset_number} {end:%Y-%m}'},{'ledger_account_id':a.accumulated_depreciation_ledger_account_id,'debit':ZERO,'credit':amount,'description':f'Accumulated depreciation {a.asset_number}'}],entry_type=JournalEntry.ENTRY_TYPE.AUTOMATIC,source_type='fixed_asset',source_id=a.id,source_event=event,reference=a.asset_number,memo=f'Straight-line depreciation for {a.name} through {end:%Y-%m}',branch=a.branch,created_by=posted_by)

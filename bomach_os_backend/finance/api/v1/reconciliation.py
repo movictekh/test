@@ -6,7 +6,7 @@ from ninja import Router
 from ninja.pagination import LimitOffsetPagination, paginate
 from finance.api.schemas.reconciliation import BankGLCandidateOut,BankReconciliationIn,BankReconciliationMatchIn,BankReconciliationMatchOut,BankReconciliationOut,BankReconciliationSummaryOut,BankStatementLineOut,BankStatementLinesIn
 from finance.models import BankReconciliation,BankReconciliationMatch,BankStatementLine,FinanceAccount,JournalLine
-from finance.service import add_bank_statement_lines,auto_match_bank_reconciliation,bank_gl_candidates,close_bank_reconciliation,create_bank_reconciliation,delete_bank_reconciliation_match,match_bank_statement_line,reconcile_bank_reconciliation,reconciliation_summary
+from finance.service import add_bank_statement_lines,auto_match_bank_reconciliation,bank_gl_candidates,close_bank_reconciliation,create_bank_reconciliation,delete_bank_reconciliation_match,discard_bank_reconciliation,match_bank_statement_line,reconcile_bank_reconciliation,reconciliation_summary
 from services.api.schema.others import MessageSchema
 from user.utils.perm import require_permission,scope_queryset
 router=Router(tags=['Finance Bank Reconciliation'])
@@ -29,6 +29,16 @@ def create_reconciliation(request,payload:BankReconciliationIn):
 @router.get('/bank-reconciliations/{reconciliation_id}',response={200:BankReconciliationOut,404:MessageSchema})
 @require_permission('bank_reconciliation','view')
 def get_reconciliation(request,reconciliation_id:int): return 200,_out(get_object_or_404(_scoped(request,_qs()),id=reconciliation_id))
+@router.post('/bank-reconciliations/{reconciliation_id}/discard',response={200:MessageSchema,400:MessageSchema,404:MessageSchema})
+@require_permission('bank_reconciliation','update')
+def discard_reconciliation(request,reconciliation_id:int):
+    try:
+        r=get_object_or_404(_scoped(request,_qs()),id=reconciliation_id)
+        discard_bank_reconciliation(r)
+        return 200,{'detail':'Draft bank reconciliation discarded.'}
+    except Exception as e:
+        return 400,{'detail':str(e)}
+
 @router.post('/bank-reconciliations/{reconciliation_id}/statement-lines',response={201:List[BankStatementLineOut],400:MessageSchema,404:MessageSchema})
 @require_permission('bank_reconciliation','update')
 def add_lines(request,reconciliation_id:int,payload:BankStatementLinesIn):

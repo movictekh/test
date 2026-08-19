@@ -331,8 +331,8 @@ class JournalLine(models.Model):
             if finance_account and self.journal_entry_id:
                 if finance_account.currency.upper() != self.journal_entry.currency.upper():
                     errors["ledger_account"] = "Cash/bank ledger currency must match the journal currency."
-                if self.journal_entry.branch_id and finance_account.branch_id and self.journal_entry.branch_id != finance_account.branch_id:
-                    errors["ledger_account"] = "Cash/bank ledger branch must match the journal branch."
+                if finance_account.branch_id and self.journal_entry.branch_id != finance_account.branch_id:
+                    errors["ledger_account"] = "Cash/bank ledger branch must exactly match the journal branch."
         if errors:
             raise ValidationError(errors)
 
