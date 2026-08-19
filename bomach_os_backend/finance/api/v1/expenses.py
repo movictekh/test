@@ -64,7 +64,7 @@ def _expense_queryset():
 
 
 def _get_scoped_account(request, account_id):
-    accounts = FinanceAccount.objects.filter(id=account_id)
+    accounts = FinanceAccount.objects.filter(id=account_id, is_active=True)
     branch_ids = getattr(request, "_perm_branch_ids", [])
     if getattr(request, "_perm_scope", "branches") != "company" and branch_ids:
         accounts = accounts.filter(Q(branch_id__in=branch_ids) | Q(branch__isnull=True))

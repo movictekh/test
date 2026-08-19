@@ -1,4 +1,9 @@
-from finance.api.schemas.accounts import FinanceAccountIn, FinanceAccountOut, FinanceAccountUpdate
+from finance.api.schemas.accounts import (
+    FinanceAccountBalanceOut,
+    FinanceAccountIn,
+    FinanceAccountOut,
+    FinanceAccountUpdate,
+)
 from finance.api.schemas.cashbook import CashbookRowOut, CashbookSummaryOut
 from finance.api.schemas.cash_flow import (
     CashFlowForecastItemOut,
@@ -108,6 +113,7 @@ __all__ = [
     "CommissionRuleUpdate",
     "IncentiveAwardOut",
     "IncentiveRejectIn",
+    "FinanceAccountBalanceOut",
     "FinanceAccountIn",
     "FinanceAccountOut",
     "FinanceAccountUpdate",

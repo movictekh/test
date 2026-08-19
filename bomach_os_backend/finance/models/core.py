@@ -55,6 +55,28 @@ class FinanceAccount(models.Model):
             models.Index(fields=["account_type", "is_active"]),
             models.Index(fields=["branch", "is_active"]),
         ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["bank_name", "account_number"],
+                condition=Q(account_type="bank"),
+                name="uniq_finance_bank_account_identity",
+            ),
+        ]
+
+    def has_financial_activity(self):
+        # Only settled events where real money has moved count as activity.
+        if not self.pk:
+            return False
+        return (
+            self.confirmed_payments.exists()
+            or self.expenses.filter(status="paid").exists()
+            or self.vendor_bill_payments.filter(status="paid").exists()
+            or self.petty_cash_advances.filter(
+                status__in=["issued", "partially_retired", "retired"]
+            ).exists()
+            or self.payroll_runs.filter(status="paid").exists()
+            or self.statutory_payments.filter(status="paid").exists()
+        )
 
     def clean(self):
         super().clean()
@@ -68,6 +90,28 @@ class FinanceAccount(models.Model):
                 errors["account_name"] = "Account name is required for bank accounts."
             if errors:
                 raise ValidationError(errors)
+
+        if self.pk:
+            original = type(self).objects.filter(pk=self.pk).first()
+            if original and self.has_financial_activity():
+                locked_fields = {
+                    "account_type": "Account type",
+                    "currency": "Currency",
+                    "branch_id": "Branch",
+                    "bank_name": "Bank name",
+                    "account_number": "Bank account number",
+                    "opening_balance": "Opening balance",
+                    "opening_balance_date": "Opening balance date",
+                }
+                history_errors = {}
+                for field, label in locked_fields.items():
+                    if getattr(self, field) != getattr(original, field):
+                        history_errors[field] = (
+                            f"{label} cannot be changed after financial activity "
+                            "has been recorded for this account."
+                        )
+                if history_errors:
+                    raise ValidationError(history_errors)
 
     def save(self, *args, **kwargs):
         self.full_clean()

@@ -1,10 +1,12 @@
+from datetime import date
 from typing import List, Optional
 
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from ninja import Query, Router
 from ninja.pagination import LimitOffsetPagination, paginate
 
-from finance.api.schemas import FinanceAccountIn, FinanceAccountOut, FinanceAccountUpdate
+from finance.api.schemas import FinanceAccountBalanceOut, FinanceAccountIn, FinanceAccountOut, FinanceAccountUpdate
 from finance.models import FinanceAccount
 from services.api.schema.others import MessageSchema
 from user.models.branch import Branch
@@ -40,18 +42,72 @@ def list_finance_accounts(
     return accounts.order_by("display_name")
 
 
+@router.get(
+    "/accounts/{account_id}/balance",
+    response={200: FinanceAccountBalanceOut, 404: MessageSchema},
+)
+@require_permission("payments", "list")
+def get_finance_account_balance(
+    request,
+    account_id: int,
+    as_of: Optional[date] = Query(None),
+):
+    account = get_object_or_404(
+        scope_queryset(
+            request,
+            _account_queryset(),
+            branch_field="branch_id",
+        ),
+        id=account_id,
+    )
+    balance_date = as_of or timezone.localdate()
+
+    # Reuse the current Cashbook calculation. Do not create a second balance
+    # table or duplicate cash-movement logic.
+    from finance.api.v1.cashbook import cash_position_as_of
+
+    return 200, {
+        "account_id": account.id,
+        "display_name": account.display_name,
+        "account_type": account.account_type,
+        "currency": account.currency,
+        "as_of": balance_date,
+        "opening_balance": account.opening_balance,
+        "opening_balance_date": account.opening_balance_date,
+        "book_balance": cash_position_as_of(
+            request,
+            balance_date,
+            finance_account_id=account.id,
+        ),
+    }
+
+
 @router.post("/accounts", response={201: FinanceAccountOut, 400: MessageSchema})
 @require_permission("payments", "create")
 def create_finance_account(request, payload: FinanceAccountIn):
     try:
         data = payload.dict()
         branch_id = data.pop("branch_id", None)
+        branch_ids = getattr(request, "_perm_branch_ids", [])
+        is_company_scope = getattr(request, "_perm_scope", "branches") == "company"
+        if not is_company_scope and branch_ids and not branch_id:
+            return 400, {
+                "detail": "Branch-scoped Finance account creation requires a branch_id."
+            }
+
         account = FinanceAccount(
             **data,
             created_by=request.user,
         )
         if branch_id:
-            account.branch = get_object_or_404(Branch, id=branch_id)
+            account.branch = get_object_or_404(
+                scope_queryset(
+                    request,
+                    Branch.objects.all(),
+                    branch_field="id",
+                ),
+                id=branch_id,
+            )
         account.save()
         return 201, account
     except Exception as exc:
@@ -62,11 +118,35 @@ def create_finance_account(request, payload: FinanceAccountIn):
 @require_permission("payments", "create")
 def update_finance_account(request, account_id: int, payload: FinanceAccountUpdate):
     try:
-        account = get_object_or_404(FinanceAccount, id=account_id)
+        account = get_object_or_404(
+            scope_queryset(
+                request,
+                FinanceAccount.objects.all(),
+                branch_field="branch_id",
+            ),
+            id=account_id,
+        )
         data = payload.dict(exclude_unset=True)
         if "branch_id" in data:
             branch_id = data.pop("branch_id")
-            account.branch = get_object_or_404(Branch, id=branch_id) if branch_id else None
+            branch_ids = getattr(request, "_perm_branch_ids", [])
+            is_company_scope = getattr(request, "_perm_scope", "branches") == "company"
+            if not is_company_scope and branch_ids and not branch_id:
+                return 400, {
+                    "detail": "Branch-scoped Finance accounts cannot be changed to company-wide."
+                }
+            account.branch = (
+                get_object_or_404(
+                    scope_queryset(
+                        request,
+                        Branch.objects.all(),
+                        branch_field="id",
+                    ),
+                    id=branch_id,
+                )
+                if branch_id
+                else None
+            )
         for field, value in data.items():
             setattr(account, field, value)
         account.save()
@@ -78,7 +158,14 @@ def update_finance_account(request, account_id: int, payload: FinanceAccountUpda
 @router.post("/accounts/{account_id}/deactivate", response={200: FinanceAccountOut, 404: MessageSchema})
 @require_permission("payments", "create")
 def deactivate_finance_account(request, account_id: int):
-    account = get_object_or_404(FinanceAccount, id=account_id)
+    account = get_object_or_404(
+        scope_queryset(
+            request,
+            FinanceAccount.objects.all(),
+            branch_field="branch_id",
+        ),
+        id=account_id,
+    )
     account.is_active = False
     account.save(update_fields=["is_active", "updated_at"])
     return 200, account

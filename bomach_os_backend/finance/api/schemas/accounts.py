@@ -59,3 +59,13 @@ class FinanceAccountOut(Schema):
     @staticmethod
     def resolve_branch_name(obj):
         return obj.branch.branch_name if obj.branch else ""
+
+class FinanceAccountBalanceOut(Schema):
+    account_id: int
+    display_name: str
+    account_type: str
+    currency: str
+    as_of: date
+    opening_balance: Decimal
+    opening_balance_date: Optional[date] = None
+    book_balance: Decimal
