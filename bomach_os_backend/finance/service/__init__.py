@@ -44,6 +44,30 @@ from .accounting import (
     update_manual_journal,
 )
 
+from .reconciliation import (
+    add_bank_statement_lines,
+    auto_match_bank_reconciliation,
+    bank_gl_candidates,
+    close_bank_reconciliation,
+    create_bank_reconciliation,
+    delete_bank_reconciliation_match,
+    journal_line_remaining,
+    match_bank_statement_line,
+    reconcile_bank_reconciliation,
+    reconciliation_summary,
+    statement_line_remaining,
+)
+
+from .fixed_assets import (
+    capitalize_fixed_asset,
+    create_fixed_asset,
+    depreciation_schedule,
+    dispose_fixed_asset,
+    fixed_asset_summary,
+    post_fixed_asset_depreciation,
+    posted_depreciation_total,
+)
+
 from .people_compliance import (
     refresh_payroll_line_totals,
     refresh_payroll_run_totals,
@@ -68,6 +92,24 @@ from .people_compliance import (
 )
 
 __all__ = [
+    "add_bank_statement_lines",
+    "auto_match_bank_reconciliation",
+    "bank_gl_candidates",
+    "close_bank_reconciliation",
+    "create_bank_reconciliation",
+    "delete_bank_reconciliation_match",
+    "journal_line_remaining",
+    "match_bank_statement_line",
+    "reconcile_bank_reconciliation",
+    "reconciliation_summary",
+    "statement_line_remaining",
+    "capitalize_fixed_asset",
+    "create_fixed_asset",
+    "depreciation_schedule",
+    "dispose_fixed_asset",
+    "fixed_asset_summary",
+    "post_fixed_asset_depreciation",
+    "posted_depreciation_total",
     "create_manual_journal",
     "ensure_finance_account_ledger_account",
     "get_system_ledger_account",

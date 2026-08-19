@@ -33,6 +33,8 @@ class LedgerAccount(models.Model):
         STATUTORY_PAYABLE = "statutory_payable", "Statutory Payable"
         PETTY_CASH_ADVANCE = "petty_cash_advance", "Petty Cash Advance"
         OPENING_BALANCE_EQUITY = "opening_balance_equity", "Opening Balance Equity"
+        ASSET_DISPOSAL_GAIN = "asset_disposal_gain", "Asset Disposal Gain"
+        ASSET_DISPOSAL_LOSS = "asset_disposal_loss", "Asset Disposal Loss"
 
     code = models.CharField(max_length=30, unique=True)
     name = models.CharField(max_length=160)
@@ -137,6 +139,8 @@ class LedgerAccount(models.Model):
                 self.SYSTEM_ROLE.STATUTORY_PAYABLE: (self.ACCOUNT_TYPE.LIABILITY, self.NORMAL_BALANCE.CREDIT),
                 self.SYSTEM_ROLE.PETTY_CASH_ADVANCE: (self.ACCOUNT_TYPE.ASSET, self.NORMAL_BALANCE.DEBIT),
                 self.SYSTEM_ROLE.OPENING_BALANCE_EQUITY: (self.ACCOUNT_TYPE.EQUITY, self.NORMAL_BALANCE.CREDIT),
+                self.SYSTEM_ROLE.ASSET_DISPOSAL_GAIN: (self.ACCOUNT_TYPE.REVENUE, self.NORMAL_BALANCE.CREDIT),
+                self.SYSTEM_ROLE.ASSET_DISPOSAL_LOSS: (self.ACCOUNT_TYPE.EXPENSE, self.NORMAL_BALANCE.DEBIT),
             }.get(self.system_role)
             if expected_role_shape and (self.account_type, self.normal_balance) != expected_role_shape:
                 errors["system_role"] = "This system role is incompatible with the ledger account type/normal balance."

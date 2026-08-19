@@ -243,6 +243,8 @@ def reverse_journal_entry(journal_entry, reversed_by, entry_date=None, memo=""):
         original = JournalEntry.objects.select_for_update().prefetch_related("lines__ledger_account").get(pk=journal_entry.pk)
         if original.status != JournalEntry.STATUS.POSTED:
             raise ValidationError("Only posted journals can be reversed.")
+        if original.source_type == "fixed_asset":
+            raise ValidationError("Fixed asset journals must be corrected through the fixed asset workflow.")
         if original.entry_type == JournalEntry.ENTRY_TYPE.REVERSAL:
             raise ValidationError("A reversal journal cannot itself be reversed in this pass.")
         if original.is_reversed:

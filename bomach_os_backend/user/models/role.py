@@ -110,6 +110,9 @@ PERMISSIONS_MAP = {
     "chart_of_accounts": ["create", "view", "list", "update", "deactivate"],
     "journals": ["create", "view", "list", "update", "post", "reverse"],
     "general_ledger": ["view", "list"],
+    "bank_reconciliation": ["create", "view", "list", "update", "match", "reconcile", "close"],
+    "fixed_asset_categories": ["create", "view", "list", "update", "deactivate"],
+    "fixed_assets": ["create", "view", "list", "update", "capitalize", "depreciate", "dispose"],
     "finance_payroll": [
         "list", "view", "create", "update", "calculate",
         "submit", "approve", "reject", "pay", "cancel",

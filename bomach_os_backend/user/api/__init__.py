@@ -62,6 +62,8 @@ from services.api.v1 import (
 )
 from finance.api.v1 import (
     accounting as finance_accounting,
+    reconciliation as finance_reconciliation,
+    fixed_assets as finance_fixed_assets,
     accounts as finance_accounts,
     cashbook as finance_cashbook,
     cash_flow as finance_cash_flow,
@@ -208,6 +210,8 @@ api.add_router("/stats", svc_stats.router)
 
 # === Finance routers ===
 api.add_router("/finance", finance_accounting.router)
+api.add_router("/finance", finance_reconciliation.router)
+api.add_router("/finance", finance_fixed_assets.router)
 api.add_router("/finance", finance_invoices.router)
 api.add_router("/finance", finance_accounts.router)
 api.add_router("/finance", finance_payments.router)

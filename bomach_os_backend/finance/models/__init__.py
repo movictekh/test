@@ -25,6 +25,17 @@ from .people_compliance import (
     StatutoryObligationItem,
 )
 
+from .reconciliation import (
+    BankReconciliation,
+    BankStatementLine,
+    BankReconciliationMatch,
+)
+
+from .fixed_assets import (
+    FixedAssetCategory,
+    FixedAsset,
+)
+
 __all__ = [
     "FinanceAccount",
     "FinanceWallet",
@@ -44,4 +55,9 @@ __all__ = [
     "IncentiveAward",
     "StatutoryObligation",
     "StatutoryObligationItem",
+    "BankReconciliation",
+    "BankStatementLine",
+    "BankReconciliationMatch",
+    "FixedAssetCategory",
+    "FixedAsset",
 ]
