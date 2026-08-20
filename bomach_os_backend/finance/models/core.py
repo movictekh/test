@@ -98,7 +98,9 @@ class FinanceAccount(models.Model):
             if not self.bank_name:
                 errors["bank_name"] = "Bank name is required for bank accounts."
             if not self.account_number:
-                errors["account_number"] = "Account number is required for bank accounts."
+                errors["account_number"] = (
+                    "Account number is required for bank accounts."
+                )
             if not self.account_name:
                 errors["account_name"] = "Account name is required for bank accounts."
             if errors:
@@ -107,15 +109,25 @@ class FinanceAccount(models.Model):
         if self.ledger_account_id:
             ledger_errors = {}
             if self.ledger_account.account_type != "asset":
-                ledger_errors["ledger_account"] = "Bank/cash Finance accounts must map to an Asset ledger account."
+                ledger_errors["ledger_account"] = (
+                    "Bank/cash Finance accounts must map to an Asset ledger account."
+                )
             elif self.ledger_account.normal_balance != "debit":
-                ledger_errors["ledger_account"] = "Bank/cash Finance accounts require a debit-normal ledger account."
+                ledger_errors["ledger_account"] = (
+                    "Bank/cash Finance accounts require a debit-normal ledger account."
+                )
             elif not self.ledger_account.is_active:
-                ledger_errors["ledger_account"] = "Bank/cash Finance accounts require an active ledger account."
+                ledger_errors["ledger_account"] = (
+                    "Bank/cash Finance accounts require an active ledger account."
+                )
             elif not self.ledger_account.is_postable:
-                ledger_errors["ledger_account"] = "Bank/cash Finance accounts must map to a postable ledger account."
+                ledger_errors["ledger_account"] = (
+                    "Bank/cash Finance accounts must map to a postable ledger account."
+                )
             elif not self.ledger_account.is_in_cash_bank_tree():
-                ledger_errors["ledger_account"] = "Bank/cash Finance accounts must map inside the canonical Cash & Bank ledger tree."
+                ledger_errors["ledger_account"] = (
+                    "Bank/cash Finance accounts must map inside the canonical Cash & Bank ledger tree."
+                )
             if ledger_errors:
                 raise ValidationError(ledger_errors)
 
@@ -129,9 +141,11 @@ class FinanceAccount(models.Model):
                     journal_entry__status="posted"
                 ).exists()
             ):
-                raise ValidationError({
-                    "ledger_account": "Ledger mapping cannot change after posted journal activity exists."
-                })
+                raise ValidationError(
+                    {
+                        "ledger_account": "Ledger mapping cannot change after posted journal activity exists."
+                    }
+                )
             if original and self.has_financial_activity():
                 locked_fields = {
                     "account_type": "Account type",
@@ -188,7 +202,9 @@ class FinanceWallet(models.Model):
     wallet_type = models.CharField(max_length=30, choices=WALLET_TYPE.choices)
     name = models.CharField(max_length=255)
     purpose = models.CharField(max_length=255, blank=True, default="")
-    status = models.CharField(max_length=20, choices=STATUS.choices, default=STATUS.ACTIVE)
+    status = models.CharField(
+        max_length=20, choices=STATUS.choices, default=STATUS.ACTIVE
+    )
     created_by = models.ForeignKey(
         "user.User",
         on_delete=models.PROTECT,
@@ -213,9 +229,17 @@ class FinanceWallet(models.Model):
             self.WALLET_TYPE.RESTRICTED_PROJECT,
         }
         if self.wallet_type in order_required_types and not self.service_order_id:
-            raise ValidationError({"service_order": "This wallet type requires a linked service order."})
-        if self.service_order_id and self.client_id and self.service_order.client_id != self.client_id:
-            raise ValidationError({"service_order": "Service order client must match the wallet client."})
+            raise ValidationError(
+                {"service_order": "This wallet type requires a linked service order."}
+            )
+        if (
+            self.service_order_id
+            and self.client_id
+            and self.service_order.client_id != self.client_id
+        ):
+            raise ValidationError(
+                {"service_order": "Service order client must match the wallet client."}
+            )
 
     def save(self, *args, **kwargs):
         if not self.wallet_number:
@@ -251,14 +275,20 @@ class FinanceWallet(models.Model):
             ),
             commitments=Sum(
                 Case(
-                    When(entry_type=FinanceWalletEntry.ENTRY_TYPE.COMMITMENT, then="amount"),
+                    When(
+                        entry_type=FinanceWalletEntry.ENTRY_TYPE.COMMITMENT,
+                        then="amount",
+                    ),
                     default=zero,
                     output_field=decimal_output,
                 )
             ),
             commitment_releases=Sum(
                 Case(
-                    When(entry_type=FinanceWalletEntry.ENTRY_TYPE.COMMITMENT_RELEASE, then="amount"),
+                    When(
+                        entry_type=FinanceWalletEntry.ENTRY_TYPE.COMMITMENT_RELEASE,
+                        then="amount",
+                    ),
                     default=zero,
                     output_field=decimal_output,
                 )
@@ -267,7 +297,9 @@ class FinanceWallet(models.Model):
         cents = Decimal("0.01")
         funded = (totals["funded"] or zero).quantize(cents)
         spent = (totals["spent"] or zero).quantize(cents)
-        committed = ((totals["commitments"] or zero) - (totals["commitment_releases"] or zero)).quantize(cents)
+        committed = (
+            (totals["commitments"] or zero) - (totals["commitment_releases"] or zero)
+        ).quantize(cents)
         summary = {
             "funded": funded,
             "spent": spent,
@@ -301,8 +333,12 @@ class FinanceVendor(models.Model):
     phone = models.CharField(max_length=30, blank=True, default="")
     address = models.TextField(blank=True, default="")
     tax_id = models.CharField(max_length=80, blank=True, default="")
-    default_category = models.CharField(max_length=40, choices=CATEGORY.choices, default=CATEGORY.OTHER)
-    status = models.CharField(max_length=20, choices=STATUS.choices, default=STATUS.ACTIVE)
+    default_category = models.CharField(
+        max_length=40, choices=CATEGORY.choices, default=CATEGORY.OTHER
+    )
+    status = models.CharField(
+        max_length=20, choices=STATUS.choices, default=STATUS.ACTIVE
+    )
     partner = models.ForeignKey(
         "user.Partner",
         on_delete=models.SET_NULL,
@@ -399,7 +435,9 @@ class VendorBill(models.Model):
     )
     bill_date = models.DateField()
     due_date = models.DateField()
-    status = models.CharField(max_length=30, choices=STATUS.choices, default=STATUS.AWAITING_APPROVAL)
+    status = models.CharField(
+        max_length=30, choices=STATUS.choices, default=STATUS.AWAITING_APPROVAL
+    )
     attachment = models.URLField(blank=True, null=True)
     approved_by = models.ForeignKey(
         "user.User",
@@ -450,17 +488,25 @@ class VendorBill(models.Model):
     def clean(self):
         super().clean()
         if self.withholding_tax > self.gross_amount:
-            raise ValidationError({"withholding_tax": "Withholding tax cannot exceed gross amount."})
+            raise ValidationError(
+                {"withholding_tax": "Withholding tax cannot exceed gross amount."}
+            )
         if self.service_order_id and self.branch_id and self.service_order.branch_id:
             if self.branch_id != self.service_order.branch_id:
-                raise ValidationError({"branch": "Bill branch must match the linked service order branch."})
+                raise ValidationError(
+                    {
+                        "branch": "Bill branch must match the linked service order branch."
+                    }
+                )
 
     def save(self, *args, **kwargs):
         if not self.bill_number:
             self.bill_number = f"BILL-{uuid.uuid4().hex[:12].upper()}"
         if self.service_order_id and not self.branch_id:
             self.branch_id = self.service_order.branch_id
-        self.net_amount = (self.gross_amount - self.withholding_tax).quantize(Decimal("0.01"))
+        self.net_amount = (self.gross_amount - self.withholding_tax).quantize(
+            Decimal("0.01")
+        )
         self.full_clean()
         super().save(*args, **kwargs)
 
@@ -541,7 +587,9 @@ class FinanceBudget(models.Model):
         default=Decimal("100.00"),
         validators=[MinValueValidator(Decimal("0.00"))],
     )
-    status = models.CharField(max_length=20, choices=STATUS.choices, default=STATUS.DRAFT)
+    status = models.CharField(
+        max_length=20, choices=STATUS.choices, default=STATUS.DRAFT
+    )
     notes = models.TextField(blank=True, default="")
     created_by = models.ForeignKey(
         "user.User",
@@ -584,13 +632,17 @@ class FinanceBudget(models.Model):
 
     @property
     def available(self):
-        return (self.approved_amount - self.spent - self.committed).quantize(Decimal("0.01"))
+        return (self.approved_amount - self.spent - self.committed).quantize(
+            Decimal("0.01")
+        )
 
     @property
     def utilization_pct(self):
         if not self.approved_amount:
             return Decimal("0.00")
-        return (((self.spent + self.committed) / self.approved_amount) * Decimal("100")).quantize(Decimal("0.01"))
+        return (
+            ((self.spent + self.committed) / self.approved_amount) * Decimal("100")
+        ).quantize(Decimal("0.01"))
 
     def clean(self):
         super().clean()
@@ -598,14 +650,27 @@ class FinanceBudget(models.Model):
         if self.warning_threshold_pct > Decimal("100.00"):
             errors["warning_threshold_pct"] = "Warning threshold cannot exceed 100%."
         if self.block_threshold_pct < self.warning_threshold_pct:
-            errors["block_threshold_pct"] = "Block threshold cannot be below warning threshold."
-        if self.period_start and self.period_end and self.period_end < self.period_start:
+            errors["block_threshold_pct"] = (
+                "Block threshold cannot be below warning threshold."
+            )
+        if (
+            self.period_start
+            and self.period_end
+            and self.period_end < self.period_start
+        ):
             errors["period_end"] = "Period end cannot be before period start."
-        if self.budget_type == self.BUDGET_TYPE.SERVICE_ORDER and not self.service_order_id:
-            errors["service_order"] = "Service order budgets require a linked service order."
+        if (
+            self.budget_type == self.BUDGET_TYPE.SERVICE_ORDER
+            and not self.service_order_id
+        ):
+            errors["service_order"] = (
+                "Service order budgets require a linked service order."
+            )
         if self.service_order_id and self.branch_id and self.service_order.branch_id:
             if self.branch_id != self.service_order.branch_id:
-                errors["branch"] = "Budget branch must match the linked service order branch."
+                errors["branch"] = (
+                    "Budget branch must match the linked service order branch."
+                )
         if errors:
             raise ValidationError(errors)
 
@@ -690,7 +755,9 @@ class PettyCashAdvance(models.Model):
     due_date = models.DateField()
     issued_at = models.DateTimeField(null=True, blank=True)
     retired_at = models.DateTimeField(null=True, blank=True)
-    status = models.CharField(max_length=30, choices=STATUS.choices, default=STATUS.REQUESTED)
+    status = models.CharField(
+        max_length=30, choices=STATUS.choices, default=STATUS.REQUESTED
+    )
     attachment = models.URLField(blank=True, null=True)
     notes = models.TextField(blank=True, default="")
     approved_by = models.ForeignKey(
@@ -745,26 +812,56 @@ class PettyCashAdvance(models.Model):
 
     @property
     def unretired_amount(self):
-        return (self.amount_issued - self.amount_retired - self.amount_returned).quantize(Decimal("0.01"))
+        return (
+            self.amount_issued - self.amount_retired - self.amount_returned
+        ).quantize(Decimal("0.01"))
 
     @property
     def is_overdue(self):
-        return self.status in {self.STATUS.ISSUED, self.STATUS.PARTIALLY_RETIRED} and self.due_date < timezone.localdate()
+        return (
+            self.status in {self.STATUS.ISSUED, self.STATUS.PARTIALLY_RETIRED}
+            and self.due_date < timezone.localdate()
+        )
 
     def clean(self):
         super().clean()
-        if self.finance_account_id and self.finance_account.account_type != FinanceAccount.ACCOUNT_TYPE.CASH:
-            raise ValidationError({"finance_account": "Petty cash advances must use a cash Finance account."})
-        if self.finance_account_id and self.branch_id and self.finance_account.branch_id:
+        if (
+            self.finance_account_id
+            and self.finance_account.account_type != FinanceAccount.ACCOUNT_TYPE.CASH
+        ):
+            raise ValidationError(
+                {
+                    "finance_account": "Petty cash advances must use a cash Finance account."
+                }
+            )
+        if (
+            self.finance_account_id
+            and self.branch_id
+            and self.finance_account.branch_id
+        ):
             if self.branch_id != self.finance_account.branch_id:
-                raise ValidationError({"branch": "Advance branch must match the petty cash account branch."})
+                raise ValidationError(
+                    {
+                        "branch": "Advance branch must match the petty cash account branch."
+                    }
+                )
         if self.service_order_id and self.branch_id and self.service_order.branch_id:
             if self.branch_id != self.service_order.branch_id:
-                raise ValidationError({"branch": "Advance branch must match the linked service order branch."})
+                raise ValidationError(
+                    {
+                        "branch": "Advance branch must match the linked service order branch."
+                    }
+                )
         if self.amount_issued and self.amount_issued > self.amount_requested:
-            raise ValidationError({"amount_issued": "Issued amount cannot exceed requested amount."})
+            raise ValidationError(
+                {"amount_issued": "Issued amount cannot exceed requested amount."}
+            )
         if self.amount_retired + self.amount_returned > self.amount_issued:
-            raise ValidationError({"amount_retired": "Retired and returned amounts cannot exceed issued amount."})
+            raise ValidationError(
+                {
+                    "amount_retired": "Retired and returned amounts cannot exceed issued amount."
+                }
+            )
 
     def save(self, *args, **kwargs):
         if not self.advance_number:
@@ -832,14 +929,29 @@ class PettyCashRetirementLine(models.Model):
     def clean(self):
         super().clean()
         if self.amount_spent and self.amount_returned:
-            raise ValidationError("A retirement line cannot be both spend and returned cash.")
+            raise ValidationError(
+                "A retirement line cannot be both spend and returned cash."
+            )
         if not self.amount_spent and not self.amount_returned:
-            raise ValidationError("A retirement line must record spent or returned cash.")
+            raise ValidationError(
+                "A retirement line must record spent or returned cash."
+            )
         if self.amount_spent and not self.category:
-            raise ValidationError({"category": "Category is required for petty cash spend."})
-        if self.service_order_id and self.advance_id and self.advance.branch_id and self.service_order.branch_id:
+            raise ValidationError(
+                {"category": "Category is required for petty cash spend."}
+            )
+        if (
+            self.service_order_id
+            and self.advance_id
+            and self.advance.branch_id
+            and self.service_order.branch_id
+        ):
             if self.advance.branch_id != self.service_order.branch_id:
-                raise ValidationError({"service_order": "Retirement line service order branch must match the advance branch."})
+                raise ValidationError(
+                    {
+                        "service_order": "Retirement line service order branch must match the advance branch."
+                    }
+                )
 
     def save(self, *args, **kwargs):
         if self.advance_id and not self.service_order_id:
@@ -870,7 +982,9 @@ class FinanceWalletEntry(models.Model):
         related_name="entries",
     )
     entry_type = models.CharField(max_length=30, choices=ENTRY_TYPE.choices)
-    status = models.CharField(max_length=20, choices=STATUS.choices, default=STATUS.POSTED)
+    status = models.CharField(
+        max_length=20, choices=STATUS.choices, default=STATUS.POSTED
+    )
     amount = models.DecimalField(
         max_digits=15,
         decimal_places=2,
@@ -960,56 +1074,157 @@ class FinanceWalletEntry(models.Model):
         super().clean()
         if self.service_order_id and self.wallet_id and self.wallet.service_order_id:
             if self.service_order_id != self.wallet.service_order_id:
-                raise ValidationError({"service_order": "Entry service order must match the wallet service order."})
+                raise ValidationError(
+                    {
+                        "service_order": "Entry service order must match the wallet service order."
+                    }
+                )
         if self.invoice_id and self.wallet_id:
             if self.invoice.client_id != self.wallet.client_id:
-                raise ValidationError({"invoice": "Invoice client must match the wallet client."})
-            if self.wallet.service_order_id and self.invoice.order_id != self.wallet.service_order_id:
-                raise ValidationError({"invoice": "Invoice order must match the wallet service order."})
-        if self.payment_id and self.invoice_id and self.payment.invoice_id != self.invoice_id:
-            raise ValidationError({"payment": "Payment invoice must match the entry invoice."})
+                raise ValidationError(
+                    {"invoice": "Invoice client must match the wallet client."}
+                )
+            if (
+                self.wallet.service_order_id
+                and self.invoice.order_id != self.wallet.service_order_id
+            ):
+                raise ValidationError(
+                    {"invoice": "Invoice order must match the wallet service order."}
+                )
+        if (
+            self.payment_id
+            and self.invoice_id
+            and self.payment.invoice_id != self.invoice_id
+        ):
+            raise ValidationError(
+                {"payment": "Payment invoice must match the entry invoice."}
+            )
         if self.payment_id and self.entry_type != self.ENTRY_TYPE.FUNDING:
-            raise ValidationError({"entry_type": "Payment-linked wallet entries must be funding entries."})
+            raise ValidationError(
+                {"entry_type": "Payment-linked wallet entries must be funding entries."}
+            )
         if self.expense_id and self.entry_type not in {
             self.ENTRY_TYPE.SPEND,
             self.ENTRY_TYPE.COMMITMENT,
             self.ENTRY_TYPE.COMMITMENT_RELEASE,
         }:
-            raise ValidationError({"entry_type": "Expense-linked wallet entries must be spend or commitment entries."})
+            raise ValidationError(
+                {
+                    "entry_type": "Expense-linked wallet entries must be spend or commitment entries."
+                }
+            )
         if self.expense_id and (self.invoice_id or self.payment_id):
-            raise ValidationError({"expense": "Expense-linked wallet entries cannot also link an invoice or payment."})
+            raise ValidationError(
+                {
+                    "expense": "Expense-linked wallet entries cannot also link an invoice or payment."
+                }
+            )
         if self.vendor_bill_id and self.entry_type not in {
             self.ENTRY_TYPE.SPEND,
             self.ENTRY_TYPE.COMMITMENT,
             self.ENTRY_TYPE.COMMITMENT_RELEASE,
         }:
-            raise ValidationError({"entry_type": "Vendor bill-linked wallet entries must be spend or commitment entries."})
-        if self.vendor_bill_id and (self.invoice_id or self.payment_id or self.expense_id):
-            raise ValidationError({"vendor_bill": "Vendor bill-linked wallet entries cannot also link an invoice, payment, or expense."})
-        if self.petty_cash_retirement_line_id and self.entry_type != self.ENTRY_TYPE.SPEND:
-            raise ValidationError({"entry_type": "Petty cash retirement lines can only post spend entries."})
+            raise ValidationError(
+                {
+                    "entry_type": "Vendor bill-linked wallet entries must be spend or commitment entries."
+                }
+            )
+        if self.vendor_bill_id and (
+            self.invoice_id or self.payment_id or self.expense_id
+        ):
+            raise ValidationError(
+                {
+                    "vendor_bill": "Vendor bill-linked wallet entries cannot also link an invoice, payment, or expense."
+                }
+            )
+        if (
+            self.petty_cash_retirement_line_id
+            and self.entry_type != self.ENTRY_TYPE.SPEND
+        ):
+            raise ValidationError(
+                {
+                    "entry_type": "Petty cash retirement lines can only post spend entries."
+                }
+            )
         if self.petty_cash_retirement_line_id and (
             self.invoice_id or self.payment_id or self.expense_id or self.vendor_bill_id
         ):
-            raise ValidationError({"petty_cash_retirement_line": "Petty cash-linked wallet entries cannot also link another source document."})
+            raise ValidationError(
+                {
+                    "petty_cash_retirement_line": "Petty cash-linked wallet entries cannot also link another source document."
+                }
+            )
         if self.expense_id and self.service_order_id and self.expense.service_order_id:
             if self.expense.service_order_id != self.service_order_id:
-                raise ValidationError({"expense": "Expense service order must match the entry service order."})
-        if self.expense_id and self.wallet_id and self.wallet.service_order_id and self.expense.service_order_id:
+                raise ValidationError(
+                    {
+                        "expense": "Expense service order must match the entry service order."
+                    }
+                )
+        if (
+            self.expense_id
+            and self.wallet_id
+            and self.wallet.service_order_id
+            and self.expense.service_order_id
+        ):
             if self.expense.service_order_id != self.wallet.service_order_id:
-                raise ValidationError({"expense": "Expense service order must match the wallet service order."})
-        if self.vendor_bill_id and self.service_order_id and self.vendor_bill.service_order_id:
+                raise ValidationError(
+                    {
+                        "expense": "Expense service order must match the wallet service order."
+                    }
+                )
+        if (
+            self.vendor_bill_id
+            and self.service_order_id
+            and self.vendor_bill.service_order_id
+        ):
             if self.vendor_bill.service_order_id != self.service_order_id:
-                raise ValidationError({"vendor_bill": "Vendor bill service order must match the entry service order."})
-        if self.vendor_bill_id and self.wallet_id and self.wallet.service_order_id and self.vendor_bill.service_order_id:
+                raise ValidationError(
+                    {
+                        "vendor_bill": "Vendor bill service order must match the entry service order."
+                    }
+                )
+        if (
+            self.vendor_bill_id
+            and self.wallet_id
+            and self.wallet.service_order_id
+            and self.vendor_bill.service_order_id
+        ):
             if self.vendor_bill.service_order_id != self.wallet.service_order_id:
-                raise ValidationError({"vendor_bill": "Vendor bill service order must match the wallet service order."})
-        if self.petty_cash_retirement_line_id and self.service_order_id and self.petty_cash_retirement_line.service_order_id:
-            if self.petty_cash_retirement_line.service_order_id != self.service_order_id:
-                raise ValidationError({"petty_cash_retirement_line": "Petty cash line service order must match the entry service order."})
-        if self.petty_cash_retirement_line_id and self.wallet_id and self.wallet.service_order_id and self.petty_cash_retirement_line.service_order_id:
-            if self.petty_cash_retirement_line.service_order_id != self.wallet.service_order_id:
-                raise ValidationError({"petty_cash_retirement_line": "Petty cash line service order must match the wallet service order."})
+                raise ValidationError(
+                    {
+                        "vendor_bill": "Vendor bill service order must match the wallet service order."
+                    }
+                )
+        if (
+            self.petty_cash_retirement_line_id
+            and self.service_order_id
+            and self.petty_cash_retirement_line.service_order_id
+        ):
+            if (
+                self.petty_cash_retirement_line.service_order_id
+                != self.service_order_id
+            ):
+                raise ValidationError(
+                    {
+                        "petty_cash_retirement_line": "Petty cash line service order must match the entry service order."
+                    }
+                )
+        if (
+            self.petty_cash_retirement_line_id
+            and self.wallet_id
+            and self.wallet.service_order_id
+            and self.petty_cash_retirement_line.service_order_id
+        ):
+            if (
+                self.petty_cash_retirement_line.service_order_id
+                != self.wallet.service_order_id
+            ):
+                raise ValidationError(
+                    {
+                        "petty_cash_retirement_line": "Petty cash line service order must match the wallet service order."
+                    }
+                )
 
     def save(self, *args, **kwargs):
         if self.wallet_id and not self.service_order_id:

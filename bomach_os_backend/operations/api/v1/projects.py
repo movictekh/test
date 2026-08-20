@@ -5,7 +5,13 @@ from django.db.models import Q
 from django.core.exceptions import ValidationError
 
 from operations.models import Project
-from ..schema.schemas import ProjectCreateSchema, ProjectUpdateSchema, ProjectOutSchema, MessageSchema, PaginatedEmployeeResponse
+from ..schema.schemas import (
+    ProjectCreateSchema,
+    ProjectUpdateSchema,
+    ProjectOutSchema,
+    MessageSchema,
+    PaginatedEmployeeResponse,
+)
 from ninja.pagination import paginate, LimitOffsetPagination
 from user.utils.perm import require_permission
 
@@ -33,9 +39,9 @@ def list_projects(
         projects = projects.filter(client_id=client_id)
     if search:
         projects = projects.filter(
-            Q(name__icontains=search) |
-            Q(short_code__icontains=search) |
-            Q(category__icontains=search)
+            Q(name__icontains=search)
+            | Q(short_code__icontains=search)
+            | Q(category__icontains=search)
         )
 
     return list(projects)
@@ -55,13 +61,13 @@ def create_project(request, payload: ProjectCreateSchema):
     """Create a new project"""
     try:
         data = payload.dict()
-        employee_ids = data.pop('employee_ids', [])
+        employee_ids = data.pop("employee_ids", [])
         project = Project.objects.create(**data)
         if employee_ids:
             project.employees.set(employee_ids)
         return project
     except ValidationError as e:
-        return 400, {'detail': e.messages[0]}
+        return 400, {"detail": e.messages[0]}
 
 
 @router.put("/{project_id}", response={200: ProjectOutSchema, 400: MessageSchema})
@@ -72,7 +78,7 @@ def update_project(request, project_id: int, payload: ProjectUpdateSchema):
         project = get_object_or_404(Project, id=project_id)
 
         update_data = payload.dict(exclude_unset=True)
-        employee_ids = update_data.pop('employee_ids', None)
+        employee_ids = update_data.pop("employee_ids", None)
 
         for attr, value in update_data.items():
             setattr(project, attr, value)
@@ -84,7 +90,7 @@ def update_project(request, project_id: int, payload: ProjectUpdateSchema):
 
         return project
     except ValidationError as e:
-        return 400, {'detail': e.messages[0]}
+        return 400, {"detail": e.messages[0]}
 
 
 @router.delete("/{project_id}")
@@ -111,7 +117,7 @@ def list_project_employees(request, project_id: int, limit: int = 10, offset: in
     project = get_object_or_404(Project, id=project_id)
     total = project.employees.count()
 
-    employees = project.employees.all()[offset:offset + limit]
+    employees = project.employees.all()[offset : offset + limit]
 
     if not employees:
         return {"items": [], "count": total}
@@ -119,12 +125,12 @@ def list_project_employees(request, project_id: int, limit: int = 10, offset: in
     try:
         items = [
             {
-                'id': str(e.pk),
-                'employee_id': getattr(e, 'employee_id', str(e.pk)),
-                'full_name': getattr(e, 'full_name', ''),
-                'email': getattr(e, 'email', ''),
-                'is_active': getattr(e, 'is_active', True),
-                'position': getattr(e, 'position', ''),
+                "id": str(e.pk),
+                "employee_id": getattr(e, "employee_id", str(e.pk)),
+                "full_name": getattr(e, "full_name", ""),
+                "email": getattr(e, "email", ""),
+                "is_active": getattr(e, "is_active", True),
+                "position": getattr(e, "position", ""),
             }
             for e in employees
         ]

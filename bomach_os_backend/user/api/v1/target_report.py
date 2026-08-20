@@ -20,7 +20,6 @@ from user.api.schemas.target_report import (
 from user.models.role_targets import EmployeeTarget, EmployeeTargetReport
 from user.utils.perm import check_obj_permission, require_permission, scope_queryset
 
-
 target_report_api = Router(tags=["Target Reports"])
 
 
@@ -33,16 +32,15 @@ def _report_queryset():
 
 
 def _approved_progress(employee_target_id: int) -> Decimal:
-    return (
-        EmployeeTargetReport.objects.filter(
-            employee_target_id=employee_target_id,
-            status=EmployeeTargetReport.Status.APPROVED,
-        ).aggregate(total=Sum("progress_value"))["total"]
-        or Decimal("0.00")
-    )
+    return EmployeeTargetReport.objects.filter(
+        employee_target_id=employee_target_id,
+        status=EmployeeTargetReport.Status.APPROVED,
+    ).aggregate(total=Sum("progress_value"))["total"] or Decimal("0.00")
 
 
-def _validate_submission_target(target: EmployeeTarget, employee, progress_value: Decimal):
+def _validate_submission_target(
+    target: EmployeeTarget, employee, progress_value: Decimal
+):
     today = timezone.localdate()
     if target.employee_id != employee.id:
         raise ValidationError("You can only report progress against your own targets.")
@@ -51,7 +49,9 @@ def _validate_submission_target(target: EmployeeTarget, employee, progress_value
     if target.role_id is None or target.role_id != employee.role_id:
         raise ValidationError("Target does not belong to the employee's current role.")
     if today < target.period_start or today > target.period_end:
-        raise ValidationError("Target reports can only be submitted within the target period.")
+        raise ValidationError(
+            "Target reports can only be submitted within the target period."
+        )
     if not progress_value.is_finite() or progress_value <= 0:
         raise ValidationError("Progress value must be greater than zero.")
 
@@ -74,7 +74,9 @@ def _ensure_branch_access(request, report: EmployeeTargetReport):
     branch_ids = getattr(request, "_perm_branch_ids", [])
     employee_branch_id = report.employee_target.employee.branch_id
     if branch_ids and employee_branch_id not in branch_ids:
-        raise HttpError(403, "You do not have permission to access this employee's branch.")
+        raise HttpError(
+            403, "You do not have permission to access this employee's branch."
+        )
 
 
 def _get_locked_submitted_report(report_id: int):
@@ -82,7 +84,9 @@ def _get_locked_submitted_report(report_id: int):
         EmployeeTargetReport.objects.only("id", "employee_target_id"),
         id=report_id,
     )
-    EmployeeTarget.objects.select_for_update().get(id=report_reference.employee_target_id)
+    EmployeeTarget.objects.select_for_update().get(
+        id=report_reference.employee_target_id
+    )
     report = get_object_or_404(
         _report_queryset().select_for_update(),
         id=report_id,
@@ -105,7 +109,9 @@ def create_target_report(request, payload: TargetReportCreateSchema):
 
         with transaction.atomic():
             target = get_object_or_404(
-                EmployeeTarget.objects.select_for_update().select_related("employee__user"),
+                EmployeeTarget.objects.select_for_update().select_related(
+                    "employee__user"
+                ),
                 id=payload.employee_target_id,
             )
             _validate_submission_target(
@@ -123,7 +129,9 @@ def create_target_report(request, payload: TargetReportCreateSchema):
 
         return 201, _report_queryset().get(id=report.id)
     except ValidationError as exc:
-        return 400, {"detail": exc.messages[0] if hasattr(exc, "messages") else str(exc)}
+        return 400, {
+            "detail": exc.messages[0] if hasattr(exc, "messages") else str(exc)
+        }
     except IntegrityError:
         return 400, {"detail": "A submitted report already exists for this target."}
 
@@ -133,7 +141,9 @@ def create_target_report(request, payload: TargetReportCreateSchema):
     response=List[TargetReportResponseSchema],
 )
 @paginate(LimitOffsetPagination, page_size=10)
-@require_permission("target_reports", "list", owner_lookup="employee_target__employee__user")
+@require_permission(
+    "target_reports", "list", owner_lookup="employee_target__employee__user"
+)
 def list_my_target_reports(
     request,
     employee_target_id: Optional[int] = Query(None),
@@ -165,7 +175,9 @@ def list_my_target_reports(
     response=List[TargetReportResponseSchema],
 )
 @paginate(LimitOffsetPagination, page_size=10)
-@require_permission("target_reports", "list", owner_lookup="employee_target__employee__user")
+@require_permission(
+    "target_reports", "list", owner_lookup="employee_target__employee__user"
+)
 def list_target_reports(
     request,
     employee_target_id: Optional[int] = Query(None),
@@ -235,7 +247,9 @@ def _filter_reports(
     "/{report_id}",
     response={200: TargetReportResponseSchema, 404: MessageSchema},
 )
-@require_permission("target_reports", "view", owner_lookup="employee_target__employee__user")
+@require_permission(
+    "target_reports", "view", owner_lookup="employee_target__employee__user"
+)
 def get_target_report(request, report_id: int):
     report = get_object_or_404(_report_queryset(), id=report_id)
     check_obj_permission(request, report, owner_field="employee_target.employee.user")
@@ -254,11 +268,18 @@ def approve_target_report(request, report_id: int):
             report = _get_locked_submitted_report(report_id)
             _ensure_branch_access(request, report)
             if report.employee_target.employee.user_id == request.user.id:
-                return 400, {"detail": "Employees cannot approve their own target reports."}
+                return 400, {
+                    "detail": "Employees cannot approve their own target reports."
+                }
 
             approved_progress = _approved_progress(report.employee_target_id)
-            if approved_progress + report.progress_value > report.employee_target.target_value:
-                return 400, {"detail": "Approving this report would exceed the target value."}
+            if (
+                approved_progress + report.progress_value
+                > report.employee_target.target_value
+            ):
+                return 400, {
+                    "detail": "Approving this report would exceed the target value."
+                }
 
             report.status = EmployeeTargetReport.Status.APPROVED
             report.reviewed_by = request.user
@@ -269,7 +290,9 @@ def approve_target_report(request, report_id: int):
 
         return 200, report
     except ValidationError as exc:
-        return 400, {"detail": exc.messages[0] if hasattr(exc, "messages") else str(exc)}
+        return 400, {
+            "detail": exc.messages[0] if hasattr(exc, "messages") else str(exc)
+        }
 
 
 @target_report_api.post(
@@ -287,7 +310,9 @@ def reject_target_report(request, report_id: int, payload: TargetReportRejectSch
             report = _get_locked_submitted_report(report_id)
             _ensure_branch_access(request, report)
             if report.employee_target.employee.user_id == request.user.id:
-                return 400, {"detail": "Employees cannot reject their own target reports."}
+                return 400, {
+                    "detail": "Employees cannot reject their own target reports."
+                }
 
             report.status = EmployeeTargetReport.Status.REJECTED
             report.reviewed_by = request.user
@@ -298,4 +323,6 @@ def reject_target_report(request, report_id: int, payload: TargetReportRejectSch
 
         return 200, report
     except ValidationError as exc:
-        return 400, {"detail": exc.messages[0] if hasattr(exc, "messages") else str(exc)}
+        return 400, {
+            "detail": exc.messages[0] if hasattr(exc, "messages") else str(exc)
+        }

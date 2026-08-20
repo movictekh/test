@@ -64,7 +64,9 @@ class RoleDescriptionAPITests(RoleAPITestMixin, TestCase):
         self.assertEqual(updated["responsibilities"], patch_payload["responsibilities"])
         self.assertEqual(updated["job_description"], patch_payload["job_description"])
 
-    def test_employee_with_own_permissions_can_only_read_assigned_role_description(self):
+    def test_employee_with_own_permissions_can_only_read_assigned_role_description(
+        self,
+    ):
         employee_role = self.create_role(
             "Sales Executive",
             {"role_descriptions": ["view_own"]},

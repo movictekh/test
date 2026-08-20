@@ -71,6 +71,7 @@ class FinanceAccountOut(Schema):
     def resolve_ledger_account_name(obj):
         return obj.ledger_account.name if obj.ledger_account else ""
 
+
 class FinanceAccountBalanceOut(Schema):
     account_id: int
     display_name: str

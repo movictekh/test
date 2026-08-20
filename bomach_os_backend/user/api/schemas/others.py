@@ -3,10 +3,13 @@ from ninja import Schema
 
 class FileUploadResponseSchema(Schema):
     """Schema for file upload response"""
+
     url: str
+
 
 class MessageSchema(Schema):
     """Schema for success/error messages"""
+
     detail: str
 
 

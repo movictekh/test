@@ -4,7 +4,13 @@ from decimal import Decimal
 from django.test import Client as DjangoClient
 from django.test import TestCase
 
-from finance.models import FinanceAccount, FinanceVendor, PayrollRun, StatutoryObligation, VendorBill
+from finance.models import (
+    FinanceAccount,
+    FinanceVendor,
+    PayrollRun,
+    StatutoryObligation,
+    VendorBill,
+)
 from services.models.payment import Invoice, Payment
 from services.models.service import (
     Service,
@@ -346,10 +352,7 @@ class FinanceCashFlowForecastAPITests(RoleAPITestMixin, TestCase):
         body = response.json()
         self.assertEqual(body["opening_cash"], "12000.00")
         self.assertTrue(
-            all(
-                item["branch_id"] in {None, self.enugu.id}
-                for item in body["items"]
-            )
+            all(item["branch_id"] in {None, self.enugu.id} for item in body["items"])
         )
 
     def test_cash_flow_permission_is_required(self):
@@ -378,7 +381,10 @@ class FinanceCashFlowForecastAPITests(RoleAPITestMixin, TestCase):
 
         invalid = self._forecast(weeks=0)
         self.assertEqual(invalid.status_code, 400)
-    def test_approved_payroll_and_statutory_obligations_join_forecast_without_double_counting_paid_items(self):
+
+    def test_approved_payroll_and_statutory_obligations_join_forecast_without_double_counting_paid_items(
+        self,
+    ):
         payroll = PayrollRun.objects.create(
             period_month=8,
             period_year=2026,
@@ -472,7 +478,9 @@ class FinanceCashFlowForecastAPITests(RoleAPITestMixin, TestCase):
             Decimal("12000.00") - Decimal("999.00") - Decimal("300.00"),
         )
 
-    def test_overdue_payroll_and_statutory_move_to_week_one_without_mutating_source_records(self):
+    def test_overdue_payroll_and_statutory_move_to_week_one_without_mutating_source_records(
+        self,
+    ):
         payroll = PayrollRun.objects.create(
             period_month=7,
             period_year=2026,
@@ -505,11 +513,11 @@ class FinanceCashFlowForecastAPITests(RoleAPITestMixin, TestCase):
         body = response.json()
 
         payroll_item = next(
-            item for item in body["items"]
-            if item["reference"] == payroll.run_number
+            item for item in body["items"] if item["reference"] == payroll.run_number
         )
         statutory_item = next(
-            item for item in body["items"]
+            item
+            for item in body["items"]
             if item["reference"] == statutory.obligation_number
         )
         self.assertTrue(payroll_item["is_overdue"])

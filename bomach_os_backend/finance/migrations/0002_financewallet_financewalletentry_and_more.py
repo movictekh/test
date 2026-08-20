@@ -10,75 +10,224 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('finance', '0001_initial'),
-        ('services', '0035_payment_finance_account_and_proof'),
-        ('user', '0096_paymentsubmission_finance_metadata'),
+        ("finance", "0001_initial"),
+        ("services", "0035_payment_finance_account_and_proof"),
+        ("user", "0096_paymentsubmission_finance_metadata"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='FinanceWallet',
+            name="FinanceWallet",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('wallet_number', models.CharField(editable=False, max_length=50, unique=True)),
-                ('wallet_type', models.CharField(choices=[('client', 'Client Wallet'), ('project', 'Project Wallet'), ('property', 'Property Wallet'), ('restricted_project', 'Restricted Project Wallet')], max_length=30)),
-                ('name', models.CharField(max_length=255)),
-                ('purpose', models.CharField(blank=True, default='', max_length=255)),
-                ('status', models.CharField(choices=[('active', 'Active'), ('restricted', 'Restricted'), ('closed', 'Closed')], default='active', max_length=20)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('client', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='finance_wallets', to='user.client')),
-                ('created_by', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='created_finance_wallets', to=settings.AUTH_USER_MODEL)),
-                ('service_order', models.OneToOneField(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='finance_wallet', to='services.serviceorder')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "wallet_number",
+                    models.CharField(editable=False, max_length=50, unique=True),
+                ),
+                (
+                    "wallet_type",
+                    models.CharField(
+                        choices=[
+                            ("client", "Client Wallet"),
+                            ("project", "Project Wallet"),
+                            ("property", "Property Wallet"),
+                            ("restricted_project", "Restricted Project Wallet"),
+                        ],
+                        max_length=30,
+                    ),
+                ),
+                ("name", models.CharField(max_length=255)),
+                ("purpose", models.CharField(blank=True, default="", max_length=255)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("active", "Active"),
+                            ("restricted", "Restricted"),
+                            ("closed", "Closed"),
+                        ],
+                        default="active",
+                        max_length=20,
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "client",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="finance_wallets",
+                        to="user.client",
+                    ),
+                ),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="created_finance_wallets",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "service_order",
+                    models.OneToOneField(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="finance_wallet",
+                        to="services.serviceorder",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['name'],
+                "ordering": ["name"],
             },
         ),
         migrations.CreateModel(
-            name='FinanceWalletEntry',
+            name="FinanceWalletEntry",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('entry_type', models.CharField(choices=[('funding', 'Funding'), ('spend', 'Spend'), ('commitment', 'Commitment'), ('commitment_release', 'Commitment Release'), ('adjustment', 'Adjustment')], max_length=30)),
-                ('status', models.CharField(choices=[('pending', 'Pending'), ('posted', 'Posted'), ('void', 'Void')], default='posted', max_length=20)),
-                ('amount', models.DecimalField(decimal_places=2, max_digits=15, validators=[django.core.validators.MinValueValidator(Decimal('0.01'))])),
-                ('description', models.CharField(max_length=255)),
-                ('reference', models.CharField(blank=True, default='', max_length=100)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('created_by', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='created_finance_wallet_entries', to=settings.AUTH_USER_MODEL)),
-                ('invoice', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='wallet_entries', to='services.invoice')),
-                ('payment', models.OneToOneField(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='wallet_entry', to='services.payment')),
-                ('service_order', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='wallet_entries', to='services.serviceorder')),
-                ('wallet', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='entries', to='finance.financewallet')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "entry_type",
+                    models.CharField(
+                        choices=[
+                            ("funding", "Funding"),
+                            ("spend", "Spend"),
+                            ("commitment", "Commitment"),
+                            ("commitment_release", "Commitment Release"),
+                            ("adjustment", "Adjustment"),
+                        ],
+                        max_length=30,
+                    ),
+                ),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("pending", "Pending"),
+                            ("posted", "Posted"),
+                            ("void", "Void"),
+                        ],
+                        default="posted",
+                        max_length=20,
+                    ),
+                ),
+                (
+                    "amount",
+                    models.DecimalField(
+                        decimal_places=2,
+                        max_digits=15,
+                        validators=[
+                            django.core.validators.MinValueValidator(Decimal("0.01"))
+                        ],
+                    ),
+                ),
+                ("description", models.CharField(max_length=255)),
+                ("reference", models.CharField(blank=True, default="", max_length=100)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="created_finance_wallet_entries",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "invoice",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="wallet_entries",
+                        to="services.invoice",
+                    ),
+                ),
+                (
+                    "payment",
+                    models.OneToOneField(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="wallet_entry",
+                        to="services.payment",
+                    ),
+                ),
+                (
+                    "service_order",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="wallet_entries",
+                        to="services.serviceorder",
+                    ),
+                ),
+                (
+                    "wallet",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="entries",
+                        to="finance.financewallet",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-created_at'],
+                "ordering": ["-created_at"],
             },
         ),
         migrations.AddIndex(
-            model_name='financewallet',
-            index=models.Index(fields=['client', 'wallet_type'], name='finance_fin_client__bc1b3f_idx'),
+            model_name="financewallet",
+            index=models.Index(
+                fields=["client", "wallet_type"], name="finance_fin_client__bc1b3f_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='financewallet',
-            index=models.Index(fields=['service_order', 'status'], name='finance_fin_service_318299_idx'),
+            model_name="financewallet",
+            index=models.Index(
+                fields=["service_order", "status"],
+                name="finance_fin_service_318299_idx",
+            ),
         ),
         migrations.AddIndex(
-            model_name='financewallet',
-            index=models.Index(fields=['status'], name='finance_fin_status_b729e1_idx'),
+            model_name="financewallet",
+            index=models.Index(fields=["status"], name="finance_fin_status_b729e1_idx"),
         ),
         migrations.AddIndex(
-            model_name='financewalletentry',
-            index=models.Index(fields=['wallet', 'status'], name='finance_fin_wallet__266482_idx'),
+            model_name="financewalletentry",
+            index=models.Index(
+                fields=["wallet", "status"], name="finance_fin_wallet__266482_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='financewalletentry',
-            index=models.Index(fields=['entry_type', 'status'], name='finance_fin_entry_t_05a91b_idx'),
+            model_name="financewalletentry",
+            index=models.Index(
+                fields=["entry_type", "status"], name="finance_fin_entry_t_05a91b_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='financewalletentry',
-            index=models.Index(fields=['service_order', 'entry_type'], name='finance_fin_service_e6ebb2_idx'),
+            model_name="financewalletentry",
+            index=models.Index(
+                fields=["service_order", "entry_type"],
+                name="finance_fin_service_e6ebb2_idx",
+            ),
         ),
     ]

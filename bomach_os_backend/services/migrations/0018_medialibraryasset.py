@@ -8,40 +8,177 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('services', '0017_contentcalendaritem'),
-        ('user', '0093_employeetargetreport'),
+        ("services", "0017_contentcalendaritem"),
+        ("user", "0093_employeetargetreport"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='MediaLibraryAsset',
+            name="MediaLibraryAsset",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title', models.CharField(max_length=255)),
-                ('asset_type', models.CharField(choices=[('image', 'Image'), ('video', 'Video'), ('document', 'Document'), ('audio', 'Audio'), ('design_source', 'Design Source'), ('other', 'Other')], default='other', max_length=30)),
-                ('file_url', models.URLField(max_length=1000)),
-                ('thumbnail_url', models.URLField(blank=True, max_length=1000)),
-                ('mime_type', models.CharField(blank=True, max_length=120)),
-                ('file_size_bytes', models.PositiveBigIntegerField(default=0)),
-                ('division', models.CharField(blank=True, choices=[('real_estate', 'Real Estate'), ('engineering', 'Engineering'), ('surveying', 'Land Surveying'), ('benji', 'Benji'), ('ict', 'ICT / Tech'), ('agriculture', 'Agriculture')], max_length=30)),
-                ('owner_name', models.CharField(blank=True, max_length=120)),
-                ('tags', models.CharField(blank=True, max_length=500)),
-                ('description', models.TextField(blank=True)),
-                ('status', models.CharField(choices=[('active', 'Active'), ('archived', 'Archived')], default='active', max_length=20)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('branch', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='media_library_assets', to='user.branch')),
-                ('calendar_item', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='media_library_assets', to='services.contentcalendaritem')),
-                ('campaign', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='media_library_assets', to='services.marketingcampaign')),
-                ('campaign_asset', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='media_library_assets', to='services.campaignasset')),
-                ('content', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='media_library_assets', to='services.content')),
-                ('owner', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='media_library_assets', to='user.employee')),
-                ('uploaded_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='uploaded_media_library_assets', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("title", models.CharField(max_length=255)),
+                (
+                    "asset_type",
+                    models.CharField(
+                        choices=[
+                            ("image", "Image"),
+                            ("video", "Video"),
+                            ("document", "Document"),
+                            ("audio", "Audio"),
+                            ("design_source", "Design Source"),
+                            ("other", "Other"),
+                        ],
+                        default="other",
+                        max_length=30,
+                    ),
+                ),
+                ("file_url", models.URLField(max_length=1000)),
+                ("thumbnail_url", models.URLField(blank=True, max_length=1000)),
+                ("mime_type", models.CharField(blank=True, max_length=120)),
+                ("file_size_bytes", models.PositiveBigIntegerField(default=0)),
+                (
+                    "division",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("real_estate", "Real Estate"),
+                            ("engineering", "Engineering"),
+                            ("surveying", "Land Surveying"),
+                            ("benji", "Benji"),
+                            ("ict", "ICT / Tech"),
+                            ("agriculture", "Agriculture"),
+                        ],
+                        max_length=30,
+                    ),
+                ),
+                ("owner_name", models.CharField(blank=True, max_length=120)),
+                ("tags", models.CharField(blank=True, max_length=500)),
+                ("description", models.TextField(blank=True)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[("active", "Active"), ("archived", "Archived")],
+                        default="active",
+                        max_length=20,
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "branch",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="media_library_assets",
+                        to="user.branch",
+                    ),
+                ),
+                (
+                    "calendar_item",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="media_library_assets",
+                        to="services.contentcalendaritem",
+                    ),
+                ),
+                (
+                    "campaign",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="media_library_assets",
+                        to="services.marketingcampaign",
+                    ),
+                ),
+                (
+                    "campaign_asset",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="media_library_assets",
+                        to="services.campaignasset",
+                    ),
+                ),
+                (
+                    "content",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="media_library_assets",
+                        to="services.content",
+                    ),
+                ),
+                (
+                    "owner",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="media_library_assets",
+                        to="user.employee",
+                    ),
+                ),
+                (
+                    "uploaded_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="uploaded_media_library_assets",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-created_at'],
-                'indexes': [models.Index(fields=['asset_type', '-created_at'], name='services_me_asset_t_7e8568_idx'), models.Index(fields=['status', '-created_at'], name='services_me_status_3ed0e0_idx'), models.Index(fields=['division'], name='services_me_divisio_217816_idx'), models.Index(fields=['branch', 'division'], name='services_me_branch__8c1edf_idx'), models.Index(fields=['owner'], name='services_me_owner_i_d7a992_idx'), models.Index(fields=['campaign'], name='services_me_campaig_f9e6f3_idx'), models.Index(fields=['campaign_asset'], name='services_me_campaig_8ed62b_idx'), models.Index(fields=['content'], name='services_me_content_5eb1ca_idx'), models.Index(fields=['calendar_item'], name='services_me_calenda_094726_idx')],
+                "ordering": ["-created_at"],
+                "indexes": [
+                    models.Index(
+                        fields=["asset_type", "-created_at"],
+                        name="services_me_asset_t_7e8568_idx",
+                    ),
+                    models.Index(
+                        fields=["status", "-created_at"],
+                        name="services_me_status_3ed0e0_idx",
+                    ),
+                    models.Index(
+                        fields=["division"], name="services_me_divisio_217816_idx"
+                    ),
+                    models.Index(
+                        fields=["branch", "division"],
+                        name="services_me_branch__8c1edf_idx",
+                    ),
+                    models.Index(
+                        fields=["owner"], name="services_me_owner_i_d7a992_idx"
+                    ),
+                    models.Index(
+                        fields=["campaign"], name="services_me_campaig_f9e6f3_idx"
+                    ),
+                    models.Index(
+                        fields=["campaign_asset"], name="services_me_campaig_8ed62b_idx"
+                    ),
+                    models.Index(
+                        fields=["content"], name="services_me_content_5eb1ca_idx"
+                    ),
+                    models.Index(
+                        fields=["calendar_item"], name="services_me_calenda_094726_idx"
+                    ),
+                ],
             },
         ),
     ]

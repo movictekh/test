@@ -13,9 +13,16 @@ from user.utils.audit import log_activity
 from user.models.audit_log import AuditLog
 from user.models import Lead, Client, Employee
 from user.api.schemas.clients import (
-    ClientResponse, CreateLeadRequest, LeadResponse, UpdateLeadRequest,
-    CreateClientRequest, UpdateClientRequest, ClientProfileSchema, UpdatePersonalInfoSchema, UpdateCompanyInfoSchema, 
-    ClientListSchema
+    ClientResponse,
+    CreateLeadRequest,
+    LeadResponse,
+    UpdateLeadRequest,
+    CreateClientRequest,
+    UpdateClientRequest,
+    ClientProfileSchema,
+    UpdatePersonalInfoSchema,
+    UpdateCompanyInfoSchema,
+    ClientListSchema,
 )
 from ninja.pagination import paginate, LimitOffsetPagination
 from user.utils.generate_pass import generate_password
@@ -31,20 +38,27 @@ DOMAIN = settings.DOMAIN
 
 # ============== Lead Endpoints ==============
 
-@clients_api.get("/leads/", response={200: List[LeadResponse], 400: ErrorResponse}, auth=JWTAuthenticator())
+
+@clients_api.get(
+    "/leads/",
+    response={200: List[LeadResponse], 400: ErrorResponse},
+    auth=JWTAuthenticator(),
+)
 @paginate(LimitOffsetPagination, page_size=10)
 @require_permission("leads", "list")
-def list_leads(request: HttpRequest, search: str = None, status: str = None, source: str = None):
+def list_leads(
+    request: HttpRequest, search: str = None, status: str = None, source: str = None
+):
     """List all leads with pagination and filtering"""
     try:
-        leads = Lead.objects.select_related('assigned_to').all()
+        leads = Lead.objects.select_related("assigned_to").all()
 
         # Apply filters
         if search:
             leads = leads.filter(
-                Q(first_name__icontains=search) |
-                Q(last_name__icontains=search) |
-                Q(email__icontains=search)
+                Q(first_name__icontains=search)
+                | Q(last_name__icontains=search)
+                | Q(email__icontains=search)
             )
 
         if status:
@@ -59,18 +73,24 @@ def list_leads(request: HttpRequest, search: str = None, status: str = None, sou
         return 400, {"detail": str(e)}
 
 
-@clients_api.get("/leads/{lead_id}/", response={200: LeadResponse, 404: ErrorResponse}, auth=JWTAuthenticator())
+@clients_api.get(
+    "/leads/{lead_id}/",
+    response={200: LeadResponse, 404: ErrorResponse},
+    auth=JWTAuthenticator(),
+)
 @require_permission("leads", "view")
 def get_lead(request: HttpRequest, lead_id: int):
     """Get lead details by ID"""
     try:
-        lead = Lead.objects.select_related('assigned_to').get(id=lead_id)
+        lead = Lead.objects.select_related("assigned_to").get(id=lead_id)
         return lead
     except Lead.DoesNotExist:
         return 404, {"detail": "Lead not found"}
 
 
-@clients_api.post("/leads/", response={201: LeadResponse, 400: ErrorResponse}, auth=JWTAuthenticator())
+@clients_api.post(
+    "/leads/", response={201: LeadResponse, 400: ErrorResponse}, auth=JWTAuthenticator()
+)
 @require_permission("leads", "create")
 def create_lead(request: HttpRequest, payload: CreateLeadRequest):
     """Create a new lead"""
@@ -102,14 +122,22 @@ def create_lead(request: HttpRequest, payload: CreateLeadRequest):
             user=request.user,
             request=request,
             audit_status=AuditLog.AuditStatus.SUCCESS,
-            metadata={"lead_id": lead.id, "lead_name": f"{lead.first_name} {lead.last_name}", "email": lead.email},
+            metadata={
+                "lead_id": lead.id,
+                "lead_name": f"{lead.first_name} {lead.last_name}",
+                "email": lead.email,
+            },
         )
         return 201, lead
     except Exception as e:
         return 400, {"detail": str(e)}
 
 
-@clients_api.put("/leads/{lead_id}/", response={200: LeadResponse, 400: ErrorResponse, 404: ErrorResponse}, auth=JWTAuthenticator())
+@clients_api.put(
+    "/leads/{lead_id}/",
+    response={200: LeadResponse, 400: ErrorResponse, 404: ErrorResponse},
+    auth=JWTAuthenticator(),
+)
 @require_permission("leads", "update")
 def update_lead(request: HttpRequest, lead_id: int, payload: UpdateLeadRequest):
     """Update lead details"""
@@ -132,7 +160,11 @@ def update_lead(request: HttpRequest, lead_id: int, payload: UpdateLeadRequest):
         return 400, {"detail": str(e)}
 
 
-@clients_api.delete("/leads/{lead_id}/", response={200: MessageSchema, 404: ErrorResponse}, auth=JWTAuthenticator())
+@clients_api.delete(
+    "/leads/{lead_id}/",
+    response={200: MessageSchema, 404: ErrorResponse},
+    auth=JWTAuthenticator(),
+)
 @require_permission("leads", "delete")
 def delete_lead(request: HttpRequest, lead_id: int):
     """Delete a lead"""
@@ -148,20 +180,25 @@ def delete_lead(request: HttpRequest, lead_id: int):
 
 # ============== Client Endpoints ==============
 
-@clients_api.get("/clients/", response={200: List[ClientResponse], 400: ErrorResponse}, auth=JWTAuthenticator())
+
+@clients_api.get(
+    "/clients/",
+    response={200: List[ClientResponse], 400: ErrorResponse},
+    auth=JWTAuthenticator(),
+)
 @paginate(LimitOffsetPagination, page_size=10)
 @require_permission("clients", "list")
 def list_clients(request: HttpRequest, search: str = None):
     """List all clients with pagination and filtering"""
     try:
-        clients = Client.objects.select_related('user').all()
+        clients = Client.objects.select_related("user").all()
 
         # Apply filters
         if search:
             clients = clients.filter(
-                Q(user__email__icontains=search) |
-                Q(user__first_name__icontains=search) |
-                Q(user__last_name__icontains=search)
+                Q(user__email__icontains=search)
+                | Q(user__first_name__icontains=search)
+                | Q(user__last_name__icontains=search)
             )
 
         return clients
@@ -169,7 +206,11 @@ def list_clients(request: HttpRequest, search: str = None):
         return 400, {"detail": str(e)}
 
 
-@clients_api.get("/clients/{client_id}/", response={200: ClientResponse, 404: ErrorResponse}, auth=JWTAuthenticator())
+@clients_api.get(
+    "/clients/{client_id}/",
+    response={200: ClientResponse, 404: ErrorResponse},
+    auth=JWTAuthenticator(),
+)
 @require_permission("clients", "view")
 def get_client(request: HttpRequest, client_id: int):
     """Get client details by ID"""
@@ -180,18 +221,22 @@ def get_client(request: HttpRequest, client_id: int):
         return 404, {"detail": "Client not found"}
 
 
-@clients_api.post("/clients/", response={201: ClientResponse, 400: ErrorResponse}, auth=JWTAuthenticator())
+@clients_api.post(
+    "/clients/",
+    response={201: ClientResponse, 400: ErrorResponse},
+    auth=JWTAuthenticator(),
+)
 @require_permission("clients", "create")
 def create_client(request: HttpRequest, payload: CreateClientRequest):
     try:
         password = generate_password()
         with transaction.atomic():
-        # Check if email already exists
+            # Check if email already exists
             if User.objects.filter(email=payload.email).exists():
                 return 400, {"detail": "A user with this email already exists"}
 
             # Create username from email (before @ symbol)
-            username = payload.email.split('@')[0]
+            username = payload.email.split("@")[0]
 
             # Ensure username is unique by appending numbers if needed
             base_username = username
@@ -200,7 +245,6 @@ def create_client(request: HttpRequest, payload: CreateClientRequest):
                 username = f"{base_username}{counter}"
                 counter += 1
 
-
             # Create User with provided information
             user = User.objects.create_user(
                 username=username,
@@ -208,7 +252,7 @@ def create_client(request: HttpRequest, payload: CreateClientRequest):
                 password=make_password(password),
                 first_name=payload.first_name,
                 last_name=payload.last_name,
-                phone_number=payload.phone_number
+                phone_number=payload.phone_number,
             )
 
             # Create Client profile linked to the user
@@ -220,7 +264,11 @@ def create_client(request: HttpRequest, payload: CreateClientRequest):
                 user=request.user,
                 request=request,
                 audit_status=AuditLog.AuditStatus.SUCCESS,
-                metadata={"client_id": client.id, "client_name": user.get_full_name() or user.email, "email": user.email},
+                metadata={
+                    "client_id": client.id,
+                    "client_name": user.get_full_name() or user.email,
+                    "email": user.email,
+                },
             )
 
             def send_email():
@@ -229,11 +277,14 @@ def create_client(request: HttpRequest, payload: CreateClientRequest):
                     recipient=payload.email,
                     login_url=f"https://bomach-os-client.web.app/#/login",
                     client_name=f"{user.first_name} {user.last_name}",
-                    password_setup_url=f"https://bomach-os-client.web.app/client/setup-password?email={payload.email}"
+                    password_setup_url=f"https://bomach-os-client.web.app/client/setup-password?email={payload.email}",
                 )
 
                 if res.status_code not in [200, 201]:
-                    print(f"Warning: Welcome email could not be sent to {user.email}. Response: {res.status_code} - {res.text}")
+                    print(
+                        f"Warning: Welcome email could not be sent to {user.email}. Response: {res.status_code} - {res.text}"
+                    )
+
             transaction.on_commit(send_email)
 
         return 201, client
@@ -241,13 +292,17 @@ def create_client(request: HttpRequest, payload: CreateClientRequest):
         return 400, {"detail": str(e)}
 
 
-@clients_api.put("/clients/{client_id}/", response={200: ClientResponse, 400: ErrorResponse, 404: ErrorResponse}, auth=JWTAuthenticator())
+@clients_api.put(
+    "/clients/{client_id}/",
+    response={200: ClientResponse, 400: ErrorResponse, 404: ErrorResponse},
+    auth=JWTAuthenticator(),
+)
 @require_permission("clients", "update")
 def update_client(request: HttpRequest, client_id: int, payload: UpdateClientRequest):
     """Update client information"""
     try:
         # Get the client by user ID
-        client = Client.objects.select_related('user').get(user__id=client_id)
+        client = Client.objects.select_related("user").get(user__id=client_id)
         user = client.user
 
         # Update user fields
@@ -269,7 +324,11 @@ def update_client(request: HttpRequest, client_id: int, payload: UpdateClientReq
         return 400, {"detail": str(e)}
 
 
-@clients_api.post("/leads/{lead_id}/convert-to-client/", response={201: ClientResponse, 400: ErrorResponse, 404: ErrorResponse}, auth=JWTAuthenticator())
+@clients_api.post(
+    "/leads/{lead_id}/convert-to-client/",
+    response={201: ClientResponse, 400: ErrorResponse, 404: ErrorResponse},
+    auth=JWTAuthenticator(),
+)
 @require_permission("clients", "create")
 def convert_lead_to_client(request: HttpRequest, lead_id: int):
     try:
@@ -300,20 +359,16 @@ def update_personal_info(request, data: UpdatePersonalInfoSchema):
     client = get_object_or_404(Client, user=request.user)
 
     # User model fields
-    user_fields = {'first_name', 'last_name'}
+    user_fields = {"first_name", "last_name"}
     user_updates = {
-        k: v for k, v in data.dict(exclude_unset=True).items()
-        if k in user_fields
+        k: v for k, v in data.dict(exclude_unset=True).items() if k in user_fields
     }
     if user_updates:
         User.objects.filter(pk=request.user.pk).update(**user_updates)
 
     # Client model fields
     client_fields = data.dict(exclude_unset=True)
-    client_updates = {
-        k: v for k, v in client_fields.items()
-        if k not in user_fields
-    }
+    client_updates = {k: v for k, v in client_fields.items() if k not in user_fields}
     if client_updates:
         for key, value in client_updates.items():
             setattr(client, key, value)
@@ -336,14 +391,12 @@ def update_company_info(request, data: UpdateCompanyInfoSchema):
 
     return client
 
+
 @clients_api.get("/admin/clients", response=List[ClientListSchema])
 def list_all_clients(request):
-    return Client.objects.select_related('user').all()
+    return Client.objects.select_related("user").all()
+
 
 @clients_api.get("/admin/clients/{client_id}", response=ClientProfileSchema)
 def get_client_detail(request, client_id: int):
-    return get_object_or_404(
-        Client.objects.select_related('user'),
-        id=client_id
-    )
-
+    return get_object_or_404(Client.objects.select_related("user"), id=client_id)

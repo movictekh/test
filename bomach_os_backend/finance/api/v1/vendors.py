@@ -33,7 +33,6 @@ from user.models.branch import Branch
 from user.models.partner import Partner
 from user.utils.perm import require_permission
 
-
 router = Router(tags=["Finance Vendors And Payables"])
 
 OPEN_PAYABLE_STATUSES = {
@@ -90,7 +89,9 @@ def _get_scoped_account(request, account_id):
 
 
 def _get_scoped_order(request, order_id):
-    orders = ServiceOrder.objects.select_related("branch", "service").filter(id=order_id)
+    orders = ServiceOrder.objects.select_related("branch", "service").filter(
+        id=order_id
+    )
     branch_ids = getattr(request, "_perm_branch_ids", [])
     if getattr(request, "_perm_scope", "branches") != "company" and branch_ids:
         orders = orders.filter(Q(branch_id__in=branch_ids) | Q(branch__isnull=True))
@@ -108,13 +109,17 @@ def _get_scoped_branch(request, branch_id):
 def _assign_vendor_relations(vendor, data):
     if "partner_id" in data:
         partner_id = data.pop("partner_id")
-        vendor.partner = get_object_or_404(Partner, id=partner_id) if partner_id else None
+        vendor.partner = (
+            get_object_or_404(Partner, id=partner_id) if partner_id else None
+        )
 
 
 def _assign_bill_relations(request, bill, data):
     if "vendor_id" in data:
         vendor_id = data.pop("vendor_id")
-        bill.vendor = get_object_or_404(FinanceVendor, id=vendor_id, status=FinanceVendor.STATUS.ACTIVE)
+        bill.vendor = get_object_or_404(
+            FinanceVendor, id=vendor_id, status=FinanceVendor.STATUS.ACTIVE
+        )
     if "service_order_id" in data:
         order_id = data.pop("service_order_id")
         bill.service_order = _get_scoped_order(request, order_id) if order_id else None
@@ -164,13 +169,18 @@ def create_finance_vendor(request, payload: FinanceVendorIn):
         return 400, {"detail": str(exc)}
 
 
-@router.get("/vendors/{vendor_id}", response={200: FinanceVendorOut, 404: MessageSchema})
+@router.get(
+    "/vendors/{vendor_id}", response={200: FinanceVendorOut, 404: MessageSchema}
+)
 @require_permission("finance_vendors", "view")
 def get_finance_vendor(request, vendor_id: int):
     return 200, get_object_or_404(_vendor_queryset(), id=vendor_id)
 
 
-@router.patch("/vendors/{vendor_id}", response={200: FinanceVendorOut, 400: MessageSchema, 404: MessageSchema})
+@router.patch(
+    "/vendors/{vendor_id}",
+    response={200: FinanceVendorOut, 400: MessageSchema, 404: MessageSchema},
+)
 @require_permission("finance_vendors", "update")
 def update_finance_vendor(request, vendor_id: int, payload: FinanceVendorUpdate):
     try:
@@ -185,7 +195,10 @@ def update_finance_vendor(request, vendor_id: int, payload: FinanceVendorUpdate)
         return 400, {"detail": str(exc)}
 
 
-@router.post("/vendors/{vendor_id}/deactivate", response={200: FinanceVendorOut, 404: MessageSchema})
+@router.post(
+    "/vendors/{vendor_id}/deactivate",
+    response={200: FinanceVendorOut, 404: MessageSchema},
+)
 @require_permission("finance_vendors", "deactivate")
 def deactivate_finance_vendor(request, vendor_id: int):
     vendor = get_object_or_404(_vendor_queryset(), id=vendor_id)
@@ -217,7 +230,9 @@ def list_vendor_bills(
     if status:
         bills = bills.filter(status=status)
     if branch_id:
-        bills = bills.filter(Q(branch_id=branch_id) | Q(service_order__branch_id=branch_id))
+        bills = bills.filter(
+            Q(branch_id=branch_id) | Q(service_order__branch_id=branch_id)
+        )
     if service_order_id:
         bills = bills.filter(service_order_id=service_order_id)
     if category:
@@ -231,8 +246,12 @@ def list_vendor_bills(
     if due_date_to:
         bills = bills.filter(due_date__lte=due_date_to)
     if overdue is not None:
-        overdue_filter = Q(status__in=OPEN_PAYABLE_STATUSES, due_date__lt=timezone.localdate())
-        bills = bills.filter(overdue_filter) if overdue else bills.exclude(overdue_filter)
+        overdue_filter = Q(
+            status__in=OPEN_PAYABLE_STATUSES, due_date__lt=timezone.localdate()
+        )
+        bills = (
+            bills.filter(overdue_filter) if overdue else bills.exclude(overdue_filter)
+        )
     if search:
         q = search.strip()
         bills = bills.filter(
@@ -261,7 +280,9 @@ def vendor_bill_summary(
     if vendor_id:
         bills = bills.filter(vendor_id=vendor_id)
     if branch_id:
-        bills = bills.filter(Q(branch_id=branch_id) | Q(service_order__branch_id=branch_id))
+        bills = bills.filter(
+            Q(branch_id=branch_id) | Q(service_order__branch_id=branch_id)
+        )
     if service_order_id:
         bills = bills.filter(service_order_id=service_order_id)
 
@@ -275,11 +296,27 @@ def vendor_bill_summary(
             status_counts[status_value] = count
     return {
         "total_payable": _money(open_bills.aggregate(total=Sum("net_amount"))["total"]),
-        "overdue_payable": _money(overdue_bills.aggregate(total=Sum("net_amount"))["total"]),
-        "due_soon_payable": _money(due_soon_bills.aggregate(total=Sum("net_amount"))["total"]),
-        "approved_unpaid": _money(bills.filter(status=VendorBill.STATUS.APPROVED).aggregate(total=Sum("net_amount"))["total"]),
-        "scheduled_unpaid": _money(bills.filter(status=VendorBill.STATUS.SCHEDULED).aggregate(total=Sum("net_amount"))["total"]),
-        "paid_total": _money(bills.filter(status=VendorBill.STATUS.PAID).aggregate(total=Sum("net_amount"))["total"]),
+        "overdue_payable": _money(
+            overdue_bills.aggregate(total=Sum("net_amount"))["total"]
+        ),
+        "due_soon_payable": _money(
+            due_soon_bills.aggregate(total=Sum("net_amount"))["total"]
+        ),
+        "approved_unpaid": _money(
+            bills.filter(status=VendorBill.STATUS.APPROVED).aggregate(
+                total=Sum("net_amount")
+            )["total"]
+        ),
+        "scheduled_unpaid": _money(
+            bills.filter(status=VendorBill.STATUS.SCHEDULED).aggregate(
+                total=Sum("net_amount")
+            )["total"]
+        ),
+        "paid_total": _money(
+            bills.filter(status=VendorBill.STATUS.PAID).aggregate(
+                total=Sum("net_amount")
+            )["total"]
+        ),
         "bill_count": bills.count(),
         "overdue_count": overdue_bills.count(),
         "due_soon_count": due_soon_bills.count(),
@@ -302,23 +339,34 @@ def create_vendor_bill(request, payload: VendorBillIn):
         return 400, {"detail": str(exc)}
 
 
-@router.get("/vendor-bills/{bill_id}", response={200: VendorBillOut, 404: MessageSchema})
+@router.get(
+    "/vendor-bills/{bill_id}", response={200: VendorBillOut, 404: MessageSchema}
+)
 @require_permission("vendor_bills", "view")
 def get_vendor_bill(request, bill_id: int):
     bill = get_object_or_404(_apply_bill_scope(request, _bill_queryset()), id=bill_id)
     return 200, bill
 
 
-@router.patch("/vendor-bills/{bill_id}", response={200: VendorBillOut, 400: MessageSchema, 404: MessageSchema})
+@router.patch(
+    "/vendor-bills/{bill_id}",
+    response={200: VendorBillOut, 400: MessageSchema, 404: MessageSchema},
+)
 @require_permission("vendor_bills", "update")
 def update_vendor_bill(request, bill_id: int, payload: VendorBillUpdate):
     try:
-        bill = get_object_or_404(_apply_bill_scope(request, _bill_queryset()), id=bill_id)
+        bill = get_object_or_404(
+            _apply_bill_scope(request, _bill_queryset()), id=bill_id
+        )
         data = payload.dict(exclude_unset=True)
         if "status" in data:
-            return 400, {"detail": "Use the approve, reject, pay, or void endpoint to change vendor bill workflow status."}
+            return 400, {
+                "detail": "Use the approve, reject, pay, or void endpoint to change vendor bill workflow status."
+            }
         if bill.status != VendorBill.STATUS.AWAITING_APPROVAL:
-            return 400, {"detail": "Only vendor bills awaiting approval can be updated."}
+            return 400, {
+                "detail": "Only vendor bills awaiting approval can be updated."
+            }
         _assign_bill_relations(request, bill, data)
         for field, value in data.items():
             setattr(bill, field, value)
@@ -328,33 +376,48 @@ def update_vendor_bill(request, bill_id: int, payload: VendorBillUpdate):
         return 400, {"detail": str(exc)}
 
 
-@router.post("/vendor-bills/{bill_id}/approve", response={200: VendorBillOut, 400: MessageSchema, 404: MessageSchema})
+@router.post(
+    "/vendor-bills/{bill_id}/approve",
+    response={200: VendorBillOut, 400: MessageSchema, 404: MessageSchema},
+)
 @require_permission("vendor_bills", "approve")
 def approve_vendor_bill_endpoint(request, bill_id: int):
     try:
-        bill = get_object_or_404(_apply_bill_scope(request, _bill_queryset()), id=bill_id)
+        bill = get_object_or_404(
+            _apply_bill_scope(request, _bill_queryset()), id=bill_id
+        )
         approved = approve_vendor_bill(bill, request.user)
         return 200, _bill_queryset().get(id=approved.id)
     except Exception as exc:
         return 400, handle_payment_exception(exc)
 
 
-@router.post("/vendor-bills/{bill_id}/reject", response={200: VendorBillOut, 400: MessageSchema, 404: MessageSchema})
+@router.post(
+    "/vendor-bills/{bill_id}/reject",
+    response={200: VendorBillOut, 400: MessageSchema, 404: MessageSchema},
+)
 @require_permission("vendor_bills", "reject")
 def reject_vendor_bill_endpoint(request, bill_id: int, payload: VendorBillRejectIn):
     try:
-        bill = get_object_or_404(_apply_bill_scope(request, _bill_queryset()), id=bill_id)
+        bill = get_object_or_404(
+            _apply_bill_scope(request, _bill_queryset()), id=bill_id
+        )
         rejected = reject_vendor_bill(bill, request.user, payload.rejection_reason)
         return 200, _bill_queryset().get(id=rejected.id)
     except Exception as exc:
         return 400, handle_payment_exception(exc)
 
 
-@router.post("/vendor-bills/{bill_id}/pay", response={200: VendorBillOut, 400: MessageSchema, 404: MessageSchema})
+@router.post(
+    "/vendor-bills/{bill_id}/pay",
+    response={200: VendorBillOut, 400: MessageSchema, 404: MessageSchema},
+)
 @require_permission("vendor_bills", "pay")
 def pay_vendor_bill_endpoint(request, bill_id: int, payload: VendorBillPayIn):
     try:
-        bill = get_object_or_404(_apply_bill_scope(request, _bill_queryset()), id=bill_id)
+        bill = get_object_or_404(
+            _apply_bill_scope(request, _bill_queryset()), id=bill_id
+        )
         account = _get_scoped_account(request, payload.finance_account_id)
         paid = pay_vendor_bill(
             bill,
@@ -368,11 +431,16 @@ def pay_vendor_bill_endpoint(request, bill_id: int, payload: VendorBillPayIn):
         return 400, handle_payment_exception(exc)
 
 
-@router.post("/vendor-bills/{bill_id}/void", response={200: VendorBillOut, 400: MessageSchema, 404: MessageSchema})
+@router.post(
+    "/vendor-bills/{bill_id}/void",
+    response={200: VendorBillOut, 400: MessageSchema, 404: MessageSchema},
+)
 @require_permission("vendor_bills", "void")
 def void_vendor_bill_endpoint(request, bill_id: int):
     try:
-        bill = get_object_or_404(_apply_bill_scope(request, _bill_queryset()), id=bill_id)
+        bill = get_object_or_404(
+            _apply_bill_scope(request, _bill_queryset()), id=bill_id
+        )
         voided = void_vendor_bill(bill, request.user)
         return 200, _bill_queryset().get(id=voided.id)
     except Exception as exc:

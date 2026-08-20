@@ -41,7 +41,11 @@ class RoleCareerPath(BaseModel):
         ]
 
     def clean(self):
-        if self.from_role_id and self.to_role_id and self.from_role_id == self.to_role_id:
+        if (
+            self.from_role_id
+            and self.to_role_id
+            and self.from_role_id == self.to_role_id
+        ):
             raise ValidationError({"to_role": "A role cannot progress to itself."})
 
     def __str__(self):

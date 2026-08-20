@@ -6,8 +6,13 @@ from django.utils import timezone
 
 from services.models.feedback import ClientFeedback
 from services.models.service import (
-    Service, ServiceCategory, ServiceOrder, ServiceRequest,
-    ServiceRequestActivity, ServiceRequestForm, Quote,
+    Service,
+    ServiceCategory,
+    ServiceOrder,
+    ServiceRequest,
+    ServiceRequestActivity,
+    ServiceRequestForm,
+    Quote,
 )
 from services.models.payment import Invoice
 from services.models.expenses import Expense
@@ -23,25 +28,35 @@ class ReportsAPITests(RoleAPITestMixin, TestCase):
 
     def setUp(self):
         self.client = DjangoClient()
-        self.role = self.create_role("Reports Admin", {
-            "reports": ["view"],
-        })
+        self.role = self.create_role(
+            "Reports Admin",
+            {
+                "reports": ["view"],
+            },
+        )
         self.employee = self.create_user_with_employee(
-            "admin@test.com", "admin", "EMP-RPT-001", role=self.role,
+            "admin@test.com",
+            "admin",
+            "EMP-RPT-001",
+            role=self.role,
         )
         self.headers = self.auth_headers(self.employee)
 
         # Create branches
         self.branch_enugu = Branch.objects.create(
-            branch_name="Enugu", branch_id="BR-ENUGU-001",
-            country="Nigeria", state="Enugu",
+            branch_name="Enugu",
+            branch_id="BR-ENUGU-001",
+            country="Nigeria",
+            state="Enugu",
             office_address="123 Enugu Road",
             contact_email="enugu@test.com",
             contact_phone="+2348012345678",
         )
         self.branch_lagos = Branch.objects.create(
-            branch_name="Lagos", branch_id="BR-LAGOS-001",
-            country="Nigeria", state="Lagos",
+            branch_name="Lagos",
+            branch_id="BR-LAGOS-001",
+            country="Nigeria",
+            state="Lagos",
             office_address="456 Lagos Road",
             contact_email="lagos@test.com",
             contact_phone="+2348012345679",
@@ -49,10 +64,14 @@ class ReportsAPITests(RoleAPITestMixin, TestCase):
 
         # Create client customer
         self.client_user = User.objects.create_user(
-            email="customer@test.com", username="customer", password="password123",
+            email="customer@test.com",
+            username="customer",
+            password="password123",
         )
         self.customer = CustomerClient.objects.create(
-            user=self.client_user, phone="+2348012345678", company_name="Test Corp",
+            user=self.client_user,
+            phone="+2348012345678",
+            company_name="Test Corp",
         )
 
         # Create service
@@ -197,6 +216,7 @@ class ReportsAPITests(RoleAPITestMixin, TestCase):
     def test_kpis_empty(self):
         """KPIs should return zeros when no data exists."""
         from services.models.service import Quote as QuoteModel
+
         QuoteModel.objects.all().delete()
         ServiceOrder.objects.all().delete()
         Invoice.objects.all().delete()
@@ -224,7 +244,9 @@ class ReportsAPITests(RoleAPITestMixin, TestCase):
     def test_kpis_on_time_delivery_partial(self):
         """On-time should reflect partial compliance."""
         # Make the completed order late
-        self.order_completed.completed_at = self.order_completed.due_date + timedelta(days=5)
+        self.order_completed.completed_at = self.order_completed.due_date + timedelta(
+            days=5
+        )
         self.order_completed.save()
 
         response = self.client.get("/api/v1/reports/kpis", **self.headers)
@@ -235,7 +257,9 @@ class ReportsAPITests(RoleAPITestMixin, TestCase):
     # --- Service Performance ---
 
     def test_service_performance(self):
-        response = self.client.get("/api/v1/reports/service-performance", **self.headers)
+        response = self.client.get(
+            "/api/v1/reports/service-performance", **self.headers
+        )
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertIsInstance(data, list)
@@ -247,7 +271,9 @@ class ReportsAPITests(RoleAPITestMixin, TestCase):
         self.assertIn("revenue", item)
 
     def test_service_performance_completion_rate(self):
-        response = self.client.get("/api/v1/reports/service-performance", **self.headers)
+        response = self.client.get(
+            "/api/v1/reports/service-performance", **self.headers
+        )
         data = response.json()
         # 1 completed out of 3 orders = 33.33%
         building = [x for x in data if x["service_name"] == "Building Construction"]
@@ -256,7 +282,8 @@ class ReportsAPITests(RoleAPITestMixin, TestCase):
 
     def test_service_performance_export(self):
         response = self.client.get(
-            "/api/v1/reports/service-performance/export", **self.headers,
+            "/api/v1/reports/service-performance/export",
+            **self.headers,
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "text/csv")
@@ -305,7 +332,10 @@ class ReportsAPITests(RoleAPITestMixin, TestCase):
     def test_no_permission(self):
         role = self.create_role("No Reports", {"reports": []})
         emp = self.create_user_with_employee(
-            "noperm@test.com", "noperm", "EMP-RPT-NP", role=role,
+            "noperm@test.com",
+            "noperm",
+            "EMP-RPT-NP",
+            role=role,
         )
         headers = self.auth_headers(emp)
         response = self.client.get("/api/v1/reports/kpis", **headers)

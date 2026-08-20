@@ -6,7 +6,10 @@ from django.test import TestCase
 from django.utils import timezone
 
 from finance.models import FinanceAccount, FinanceVendor, VendorBill
-from finance.service import post_opening_balance_journal, post_vendor_bill_payment_journal
+from finance.service import (
+    post_opening_balance_journal,
+    post_vendor_bill_payment_journal,
+)
 from user.models.branch import Branch
 from user.models.role import Role
 from user.tests.helpers import RoleAPITestMixin
@@ -152,7 +155,9 @@ class BankCashAccountPass1Tests(RoleAPITestMixin, TestCase):
         self.assertEqual(body["book_balance"], "2000.00")
         self.assertEqual(body["currency"], "NGN")
 
-    def test_branch_scoped_user_cannot_modify_or_deactivate_another_branch_account(self):
+    def test_branch_scoped_user_cannot_modify_or_deactivate_another_branch_account(
+        self,
+    ):
         scoped_role = Role.objects.create(
             name="FIN AT1 Enugu Scoped",
             permissions={"payments": ["list", "create", "view"]},

@@ -6,17 +6,21 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('user', '0035_rename_recurrences_event_recurrence'),
+        ("user", "0035_rename_recurrences_event_recurrence"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='event',
-            name='reminder_time',
+            model_name="event",
+            name="reminder_time",
         ),
         migrations.AddField(
-            model_name='event',
-            name='reminder_offset',
-            field=models.PositiveIntegerField(blank=True, help_text='Time before meeting start to send reminder (in minutes).', null=True),
+            model_name="event",
+            name="reminder_offset",
+            field=models.PositiveIntegerField(
+                blank=True,
+                help_text="Time before meeting start to send reminder (in minutes).",
+                null=True,
+            ),
         ),
     ]

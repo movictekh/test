@@ -134,5 +134,3 @@ class VerifyTokenResponse(BaseModel):
     valid: bool
     user_id: Optional[int] = None
     detail: str = "Token verification complete"
-
-

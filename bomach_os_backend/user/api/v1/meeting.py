@@ -22,8 +22,10 @@ meeting_api = Router(tags=["Meetings"])
 @meeting_api.get("/choices", response=MeetingChoicesSchema, auth=None)
 def get_meeting_choices(request):
     return {
-        "statuses":       [{"value": v, "label": l} for v, l in Meeting.STATUS_CHOICES],
-        "location_types": [{"value": v, "label": l} for v, l in Meeting.LOCATION_TYPE_CHOICES],
+        "statuses": [{"value": v, "label": l} for v, l in Meeting.STATUS_CHOICES],
+        "location_types": [
+            {"value": v, "label": l} for v, l in Meeting.LOCATION_TYPE_CHOICES
+        ],
     }
 
 
@@ -39,7 +41,7 @@ def list_meetings(
     my_meetings: Optional[bool] = Query(None),
     search: Optional[str] = Query(None),
 ):
-    qs = Meeting.objects.prefetch_related('attendees').select_related('organizer').all()
+    qs = Meeting.objects.prefetch_related("attendees").select_related("organizer").all()
 
     if status:
         qs = qs.filter(status=status)
@@ -54,15 +56,13 @@ def list_meetings(
         qs = qs.filter(meeting_date__lte=date_to)
 
     if my_meetings:
-        qs = qs.filter(
-            Q(attendees=request.user) | Q(organizer=request.user)
-        ).distinct()
+        qs = qs.filter(Q(attendees=request.user) | Q(organizer=request.user)).distinct()
 
     if search:
         qs = qs.filter(
-            Q(title__icontains=search) |
-            Q(agenda__icontains=search) |
-            Q(meeting_id__icontains=search)
+            Q(title__icontains=search)
+            | Q(agenda__icontains=search)
+            | Q(meeting_id__icontains=search)
         )
 
     return qs
@@ -72,7 +72,11 @@ def list_meetings(
 @require_permission("meetings", "view")
 def get_meeting(request, meeting_id: int):
     try:
-        meeting = Meeting.objects.prefetch_related('attendees').select_related('organizer').get(id=meeting_id)
+        meeting = (
+            Meeting.objects.prefetch_related("attendees")
+            .select_related("organizer")
+            .get(id=meeting_id)
+        )
         return 200, meeting
     except Meeting.DoesNotExist:
         return 404, {"detail": "Meeting not found"}
@@ -111,14 +115,21 @@ def create_meeting(request, payload: MeetingCreateSchema):
         return 400, {"detail": str(e)}
 
 
-@meeting_api.put("/{meeting_id}", response={200: MeetingSchema, 400: MessageSchema, 404: MessageSchema})
+@meeting_api.put(
+    "/{meeting_id}",
+    response={200: MeetingSchema, 400: MessageSchema, 404: MessageSchema},
+)
 @require_permission("meetings", "update")
 def update_meeting(request, meeting_id: int, payload: MeetingUpdateSchema):
     try:
-        meeting = Meeting.objects.prefetch_related('attendees').select_related('organizer').get(id=meeting_id)
+        meeting = (
+            Meeting.objects.prefetch_related("attendees")
+            .select_related("organizer")
+            .get(id=meeting_id)
+        )
         data = payload.dict(exclude_unset=True)
 
-        attendee_ids = data.pop('attendee_ids', None)
+        attendee_ids = data.pop("attendee_ids", None)
 
         for field, value in data.items():
             setattr(meeting, field, value)
@@ -146,12 +157,15 @@ def update_meeting(request, meeting_id: int, payload: MeetingUpdateSchema):
         return 400, {"detail": str(e)}
 
 
-@meeting_api.delete("/{meeting_id}", response={200: MessageSchema, 400: MessageSchema, 404: MessageSchema})
+@meeting_api.delete(
+    "/{meeting_id}",
+    response={200: MessageSchema, 400: MessageSchema, 404: MessageSchema},
+)
 @require_permission("meetings", "delete")
 def cancel_meeting(request, meeting_id: int):
     try:
         meeting = Meeting.objects.get(id=meeting_id)
-        meeting.status = 'cancelled'
+        meeting.status = "cancelled"
         meeting.save()
         return 200, {"detail": "Meeting cancelled successfully"}
 

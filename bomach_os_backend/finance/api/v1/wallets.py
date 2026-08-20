@@ -20,7 +20,6 @@ from services.models.service import ServiceOrder
 from user.models.client import Client
 from user.utils.perm import require_permission
 
-
 router = Router(tags=["Finance Wallets"])
 
 
@@ -81,7 +80,9 @@ def _get_scoped_order(request, order_id):
 
 
 def _get_scoped_expense(request, expense_id):
-    expenses = Expense.objects.select_related("service_order", "branch", "finance_account").filter(id=expense_id)
+    expenses = Expense.objects.select_related(
+        "service_order", "branch", "finance_account"
+    ).filter(id=expense_id)
     branch_ids = getattr(request, "_perm_branch_ids", [])
     if getattr(request, "_perm_scope", "branches") != "company" and branch_ids:
         expenses = expenses.filter(
@@ -153,11 +154,15 @@ def list_finance_wallets(
     return wallets.distinct().order_by("name")
 
 
-@router.post("/wallets", response={201: FinanceWalletOut, 400: MessageSchema, 404: MessageSchema})
+@router.post(
+    "/wallets", response={201: FinanceWalletOut, 400: MessageSchema, 404: MessageSchema}
+)
 @require_permission("payments", "create")
 def create_finance_wallet(request, payload: FinanceWalletIn):
     try:
-        client = get_object_or_404(Client.objects.select_related("user"), id=payload.client_id)
+        client = get_object_or_404(
+            Client.objects.select_related("user"), id=payload.client_id
+        )
         wallet = FinanceWallet(
             client=client,
             wallet_type=payload.wallet_type,
@@ -173,18 +178,27 @@ def create_finance_wallet(request, payload: FinanceWalletIn):
         return 400, {"detail": str(exc)}
 
 
-@router.get("/wallets/{wallet_id}", response={200: FinanceWalletOut, 404: MessageSchema})
+@router.get(
+    "/wallets/{wallet_id}", response={200: FinanceWalletOut, 404: MessageSchema}
+)
 @require_permission("payments", "view")
 def get_finance_wallet(request, wallet_id: int):
-    wallet = get_object_or_404(_apply_wallet_scope(request, _wallet_queryset()), id=wallet_id)
+    wallet = get_object_or_404(
+        _apply_wallet_scope(request, _wallet_queryset()), id=wallet_id
+    )
     return 200, wallet
 
 
-@router.patch("/wallets/{wallet_id}", response={200: FinanceWalletOut, 400: MessageSchema, 404: MessageSchema})
+@router.patch(
+    "/wallets/{wallet_id}",
+    response={200: FinanceWalletOut, 400: MessageSchema, 404: MessageSchema},
+)
 @require_permission("payments", "create")
 def update_finance_wallet(request, wallet_id: int, payload: FinanceWalletUpdate):
     try:
-        wallet = get_object_or_404(_apply_wallet_scope(request, _wallet_queryset()), id=wallet_id)
+        wallet = get_object_or_404(
+            _apply_wallet_scope(request, _wallet_queryset()), id=wallet_id
+        )
         data = payload.dict(exclude_unset=True)
         if "service_order_id" in data:
             _assign_order(request, wallet, data.pop("service_order_id"))
@@ -205,7 +219,9 @@ def list_finance_wallet_entries(
     entry_type: Optional[str] = Query(None),
     status: Optional[str] = Query(None),
 ):
-    wallet = get_object_or_404(_apply_wallet_scope(request, _wallet_queryset()), id=wallet_id)
+    wallet = get_object_or_404(
+        _apply_wallet_scope(request, _wallet_queryset()), id=wallet_id
+    )
     entries = _entry_queryset().filter(wallet=wallet)
     if entry_type:
         entries = entries.filter(entry_type=entry_type)
@@ -214,11 +230,16 @@ def list_finance_wallet_entries(
     return entries.order_by("-created_at")
 
 
-@router.post("/wallets/{wallet_id}/entries", response={201: FinanceWalletEntryOut, 400: MessageSchema, 404: MessageSchema})
+@router.post(
+    "/wallets/{wallet_id}/entries",
+    response={201: FinanceWalletEntryOut, 400: MessageSchema, 404: MessageSchema},
+)
 @require_permission("payments", "create")
 def create_finance_wallet_entry(request, wallet_id: int, payload: FinanceWalletEntryIn):
     try:
-        wallet = get_object_or_404(_apply_wallet_scope(request, _wallet_queryset()), id=wallet_id)
+        wallet = get_object_or_404(
+            _apply_wallet_scope(request, _wallet_queryset()), id=wallet_id
+        )
         entry = FinanceWalletEntry(
             wallet=wallet,
             entry_type=payload.entry_type,
@@ -231,9 +252,16 @@ def create_finance_wallet_entry(request, wallet_id: int, payload: FinanceWalletE
         if payload.service_order_id:
             entry.service_order = _get_scoped_order(request, payload.service_order_id)
         if payload.invoice_id:
-            entry.invoice = get_object_or_404(Invoice.objects.select_related("client", "order"), id=payload.invoice_id)
+            entry.invoice = get_object_or_404(
+                Invoice.objects.select_related("client", "order"), id=payload.invoice_id
+            )
         if payload.payment_id:
-            entry.payment = get_object_or_404(Payment.objects.select_related("invoice", "invoice__client", "invoice__order"), id=payload.payment_id)
+            entry.payment = get_object_or_404(
+                Payment.objects.select_related(
+                    "invoice", "invoice__client", "invoice__order"
+                ),
+                id=payload.payment_id,
+            )
         if payload.expense_id:
             entry.expense = _get_scoped_expense(request, payload.expense_id)
         if payload.vendor_bill_id:
@@ -244,10 +272,15 @@ def create_finance_wallet_entry(request, wallet_id: int, payload: FinanceWalletE
         return 400, {"detail": str(exc)}
 
 
-@router.post("/wallets/{wallet_id}/entries/{entry_id}/void", response={200: FinanceWalletEntryOut, 404: MessageSchema})
+@router.post(
+    "/wallets/{wallet_id}/entries/{entry_id}/void",
+    response={200: FinanceWalletEntryOut, 404: MessageSchema},
+)
 @require_permission("payments", "create")
 def void_finance_wallet_entry(request, wallet_id: int, entry_id: int):
-    wallet = get_object_or_404(_apply_wallet_scope(request, _wallet_queryset()), id=wallet_id)
+    wallet = get_object_or_404(
+        _apply_wallet_scope(request, _wallet_queryset()), id=wallet_id
+    )
     entry = get_object_or_404(_entry_queryset(), id=entry_id, wallet=wallet)
     entry.status = FinanceWalletEntry.STATUS.VOID
     entry.save(update_fields=["status", "updated_at"])

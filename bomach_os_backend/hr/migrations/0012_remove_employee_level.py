@@ -6,20 +6,20 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('hr', '0011_reportattachment'),
+        ("hr", "0011_reportattachment"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='kpitemplate',
-            options={'ordering': ['department']},
+            name="kpitemplate",
+            options={"ordering": ["department"]},
         ),
         migrations.AlterUniqueTogether(
-            name='kpitemplate',
+            name="kpitemplate",
             unique_together=set(),
         ),
         migrations.RemoveField(
-            model_name='kpitemplate',
-            name='level',
+            model_name="kpitemplate",
+            name="level",
         ),
     ]

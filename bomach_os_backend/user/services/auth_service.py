@@ -18,10 +18,12 @@ class AuthService:
     DEFAULT_RESET_CODE_EXPIRY = 6000  # 100 minutes
 
     @staticmethod
-    def authenticate_user(username: str, password: str) -> Tuple[bool, Optional[User], str]:
+    def authenticate_user(
+        username: str, password: str
+    ) -> Tuple[bool, Optional[User], str]:
         # Authenticate using username
         user = authenticate(username=username, password=str(password))
-        
+
         if user is None:
             return False, None, "Invalid credentials"
 
@@ -32,9 +34,7 @@ class AuthService:
 
     @staticmethod
     def create_password_reset_code(
-        email: str,
-        ip_address: str = None,
-        user_agent: str = None
+        email: str, ip_address: str = None, user_agent: str = None
     ) -> Tuple[bool, str]:
         try:
             user = User.objects.get(email=email)
@@ -50,20 +50,20 @@ class AuthService:
                 expires_in_seconds=AuthService.DEFAULT_RESET_CODE_EXPIRY,
                 ip_address=ip_address,
                 user_agent=user_agent,
-                metadata={'email': email}
+                metadata={"email": email},
             )
             # Log OTP creation for debugging (only in development, never log actual code in production)
             if settings.DEBUG:
-                logger.debug(f'Password reset OTP created for user: {user.email}')
+                logger.debug(f"Password reset OTP created for user: {user.email}")
 
             # Send email
             emails = [{"email": email, "name": user.first_name}]
             try:
                 send_email_util(
                     recipients=emails,
-                    header='Password Reset Code',
+                    header="Password Reset Code",
                     title=f"Hi {user.first_name},",
-                    sub_title=f'Your password reset code is: {otp.code}\n\nThis code will expire in 10 minutes.',
+                    sub_title=f"Your password reset code is: {otp.code}\n\nThis code will expire in 10 minutes.",
                 )
             except Exception as e:
                 pass
@@ -75,9 +75,7 @@ class AuthService:
 
     @staticmethod
     def verify_and_reset_password(
-        email: str,
-        code: str,
-        new_password: str
+        email: str, code: str, new_password: str
     ) -> Tuple[bool, str]:
         try:
             user = User.objects.get(email=email)
@@ -86,8 +84,7 @@ class AuthService:
 
         # Get the OTP code
         otp = OTPCode.get_valid_code(
-            user=user,
-            intent=OTPCode.IntentChoices.PASSWORD_RESET
+            user=user, intent=OTPCode.IntentChoices.PASSWORD_RESET
         )
 
         if not otp:
@@ -108,11 +105,7 @@ class AuthService:
             return False, f"Error updating password: {str(e)}"
 
     @staticmethod
-    def verify_otp(
-        user: User,
-        code: str,
-        intent: str
-    ) -> Tuple[bool, str]:
+    def verify_otp(user: User, code: str, intent: str) -> Tuple[bool, str]:
         otp = OTPCode.get_valid_code(user=user, intent=intent)
 
         if not otp:
@@ -128,7 +121,7 @@ class AuthService:
         expires_in_seconds: int = 600,
         ip_address: str = None,
         user_agent: str = None,
-        metadata: dict = None
+        metadata: dict = None,
     ) -> Tuple[bool, Optional[OTPCode], str]:
         try:
             otp = OTPCode.create_code(
@@ -138,7 +131,7 @@ class AuthService:
                 expires_in_seconds=expires_in_seconds,
                 ip_address=ip_address,
                 user_agent=user_agent,
-                metadata=metadata or {}
+                metadata=metadata or {},
             )
             return True, otp, ""
         except Exception as e:
@@ -159,7 +152,9 @@ class AuthService:
         return pyjwt.encode(payload, settings.SECRET_KEY, algorithm="HS256")
 
     @staticmethod
-    def verify_two_factor_session(session_token: str) -> Tuple[bool, Optional[int], str]:
+    def verify_two_factor_session(
+        session_token: str,
+    ) -> Tuple[bool, Optional[int], str]:
         """Decode and validate a 2FA session token. Returns (success, user_id, error)."""
         try:
             payload = pyjwt.decode(

@@ -5,7 +5,12 @@ from django.db.models import Q
 from django.core.exceptions import ValidationError
 
 from operations.models import SiteEquipment, Worksite
-from ..schema.schemas import SiteEquipmentCreateSchema, SiteEquipmentUpdateSchema, SiteEquipmentOutSchema, MessageSchema
+from ..schema.schemas import (
+    SiteEquipmentCreateSchema,
+    SiteEquipmentUpdateSchema,
+    SiteEquipmentOutSchema,
+    MessageSchema,
+)
 from ninja.pagination import paginate, LimitOffsetPagination
 from user.utils.perm import require_permission
 
@@ -27,8 +32,7 @@ def list_site_equipment(
         equipment = equipment.filter(worksite_id=worksite_id)
     if search:
         equipment = equipment.filter(
-            Q(name__icontains=search) |
-            Q(unit_value__icontains=search)
+            Q(name__icontains=search) | Q(unit_value__icontains=search)
         )
 
     return list(equipment)
@@ -48,23 +52,27 @@ def create_site_equipment(request, payload: SiteEquipmentCreateSchema):
     """Create a new site equipment item"""
     try:
         equipment_data = payload.dict()
-        worksite = get_object_or_404(Worksite, id=equipment_data.pop('worksite_id'))
+        worksite = get_object_or_404(Worksite, id=equipment_data.pop("worksite_id"))
         equipment = SiteEquipment.objects.create(worksite=worksite, **equipment_data)
         return equipment
     except ValidationError as e:
-        return 400, {'detail': e.messages[0]}
+        return 400, {"detail": e.messages[0]}
 
 
-@router.put("/{equipment_id}", response={200: SiteEquipmentOutSchema, 400: MessageSchema})
+@router.put(
+    "/{equipment_id}", response={200: SiteEquipmentOutSchema, 400: MessageSchema}
+)
 @require_permission("site_equipment", "update")
-def update_site_equipment(request, equipment_id: int, payload: SiteEquipmentUpdateSchema):
+def update_site_equipment(
+    request, equipment_id: int, payload: SiteEquipmentUpdateSchema
+):
     """Update an existing site equipment item"""
     try:
         equipment = get_object_or_404(SiteEquipment, id=equipment_id)
 
         update_data = payload.dict(exclude_unset=True)
-        if 'worksite_id' in update_data:
-            worksite = get_object_or_404(Worksite, id=update_data.pop('worksite_id'))
+        if "worksite_id" in update_data:
+            worksite = get_object_or_404(Worksite, id=update_data.pop("worksite_id"))
             equipment.worksite = worksite
 
         for attr, value in update_data.items():
@@ -73,7 +81,7 @@ def update_site_equipment(request, equipment_id: int, payload: SiteEquipmentUpda
         equipment.save()
         return equipment
     except ValidationError as e:
-        return 400, {'detail': e.messages[0]}
+        return 400, {"detail": e.messages[0]}
 
 
 @router.delete("/{equipment_id}")

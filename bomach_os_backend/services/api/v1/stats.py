@@ -5,7 +5,6 @@ from user.utils.perm import require_permission
 from services.models.payment import Invoice
 from services.models.service import Quote, Service, ServiceOrder
 
-
 router = Router()
 
 

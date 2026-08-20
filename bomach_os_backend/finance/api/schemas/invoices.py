@@ -5,12 +5,15 @@ from typing import Dict, Optional
 from django.utils import timezone
 from ninja import Schema
 
-
 FINAL_INVOICE_STATUSES = {"paid", "cancelled"}
 
 
 def finance_invoice_status(invoice) -> str:
-    if invoice.status not in FINAL_INVOICE_STATUSES and invoice.balance > 0 and invoice.due_date < timezone.localdate():
+    if (
+        invoice.status not in FINAL_INVOICE_STATUSES
+        and invoice.balance > 0
+        and invoice.due_date < timezone.localdate()
+    ):
         return "overdue"
     return invoice.status
 
@@ -91,10 +94,12 @@ class FinanceInvoiceOut(Schema):
 
     @staticmethod
     def resolve_can_record_payment(obj):
-        return (
-            obj.balance > 0
-            and finance_invoice_status(obj) in {"sent", "viewed", "partially_paid", "overdue"}
-        )
+        return obj.balance > 0 and finance_invoice_status(obj) in {
+            "sent",
+            "viewed",
+            "partially_paid",
+            "overdue",
+        }
 
 
 class FinanceInvoiceSummaryOut(Schema):

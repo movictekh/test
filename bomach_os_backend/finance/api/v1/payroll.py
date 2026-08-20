@@ -30,7 +30,6 @@ from services.api.schema.others import MessageSchema
 from user.models.branch import Branch
 from user.utils.perm import require_permission
 
-
 router = Router(tags=["Finance Payroll"])
 
 
@@ -71,7 +70,6 @@ def _apply_run_scope(request, runs):
     if getattr(request, "_perm_scope", "branches") == "company" or not branch_ids:
         return runs
 
-  
     return runs.filter(branch_id__in=branch_ids)
 
 
@@ -91,10 +89,7 @@ def _get_scoped_account(request, account_id):
     accounts = FinanceAccount.objects.filter(id=account_id, is_active=True)
     branch_ids = getattr(request, "_perm_branch_ids", [])
     if getattr(request, "_perm_scope", "branches") != "company" and branch_ids:
-        accounts = accounts.filter(
-            Q(branch_id__in=branch_ids)
-            | Q(branch__isnull=True)
-        )
+        accounts = accounts.filter(Q(branch_id__in=branch_ids) | Q(branch__isnull=True))
     return get_object_or_404(accounts)
 
 
@@ -190,9 +185,7 @@ def _run_detail(payroll_run):
 
 
 def _active_period_conflict(period_year, period_month, branch):
-    active = PayrollRun.objects.exclude(
-        status=PayrollRun.STATUS.CANCELLED
-    ).filter(
+    active = PayrollRun.objects.exclude(status=PayrollRun.STATUS.CANCELLED).filter(
         period_year=period_year,
         period_month=period_month,
     )
@@ -202,10 +195,7 @@ def _active_period_conflict(period_year, period_month, branch):
         return active.exists()
 
     # A branch run conflicts with a company run or another run for this branch.
-    return active.filter(
-        Q(branch__isnull=True)
-        | Q(branch=branch)
-    ).exists()
+    return active.filter(Q(branch__isnull=True) | Q(branch=branch)).exists()
 
 
 @router.get("/payroll", response=List[PayrollRunOut])

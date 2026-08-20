@@ -7,47 +7,102 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('user', '0081_split_company_settings'),
+        ("user", "0081_split_company_settings"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='RoleDescription',
+            name="RoleDescription",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='When this record was created')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text='When this record was last updated')),
-                ('title', models.CharField(max_length=255)),
-                ('content', models.TextField()),
-                ('role', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='role_descriptions', to='user.role')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, help_text="When this record was created"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, help_text="When this record was last updated"
+                    ),
+                ),
+                ("title", models.CharField(max_length=255)),
+                ("content", models.TextField()),
+                (
+                    "role",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="role_descriptions",
+                        to="user.role",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Role Description',
-                'verbose_name_plural': 'Role Descriptions',
-                'ordering': ['created_at', 'id'],
+                "verbose_name": "Role Description",
+                "verbose_name_plural": "Role Descriptions",
+                "ordering": ["created_at", "id"],
             },
         ),
         migrations.CreateModel(
-            name='RoleDescriptionAttachment',
+            name="RoleDescriptionAttachment",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='When this record was created')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text='When this record was last updated')),
-                ('file_url', models.URLField(max_length=1000)),
-                ('role_description', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='attachments', to='user.roledescription')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, help_text="When this record was created"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, help_text="When this record was last updated"
+                    ),
+                ),
+                ("file_url", models.URLField(max_length=1000)),
+                (
+                    "role_description",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="attachments",
+                        to="user.roledescription",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Role Description Attachment',
-                'verbose_name_plural': 'Role Description Attachments',
-                'ordering': ['created_at', 'id'],
+                "verbose_name": "Role Description Attachment",
+                "verbose_name_plural": "Role Description Attachments",
+                "ordering": ["created_at", "id"],
             },
         ),
         migrations.AddIndex(
-            model_name='roledescription',
-            index=models.Index(fields=['role', 'created_at'], name='user_rolede_role_id_c00c04_idx'),
+            model_name="roledescription",
+            index=models.Index(
+                fields=["role", "created_at"], name="user_rolede_role_id_c00c04_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='roledescriptionattachment',
-            index=models.Index(fields=['role_description', 'created_at'], name='user_rolede_role_de_f54b8a_idx'),
+            model_name="roledescriptionattachment",
+            index=models.Index(
+                fields=["role_description", "created_at"],
+                name="user_rolede_role_de_f54b8a_idx",
+            ),
         ),
     ]

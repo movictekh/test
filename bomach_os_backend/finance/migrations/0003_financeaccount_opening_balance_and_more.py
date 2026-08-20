@@ -8,18 +8,23 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('finance', '0002_financewallet_financewalletentry_and_more'),
+        ("finance", "0002_financewallet_financewalletentry_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='financeaccount',
-            name='opening_balance',
-            field=models.DecimalField(decimal_places=2, default=Decimal('0.00'), max_digits=15, validators=[django.core.validators.MinValueValidator(Decimal('0.00'))]),
+            model_name="financeaccount",
+            name="opening_balance",
+            field=models.DecimalField(
+                decimal_places=2,
+                default=Decimal("0.00"),
+                max_digits=15,
+                validators=[django.core.validators.MinValueValidator(Decimal("0.00"))],
+            ),
         ),
         migrations.AddField(
-            model_name='financeaccount',
-            name='opening_balance_date',
+            model_name="financeaccount",
+            name="opening_balance_date",
             field=models.DateField(blank=True, null=True),
         ),
     ]

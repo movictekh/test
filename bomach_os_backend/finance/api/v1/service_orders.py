@@ -20,7 +20,6 @@ from services.models.payment import Invoice, Payment
 from services.models.service import ServiceOrder
 from user.utils.perm import require_permission
 
-
 router = Router(tags=["Finance Service Order Profitability"])
 
 SOURCE_LABELS = {
@@ -98,7 +97,9 @@ def _apply_branch_scope(request, orders):
     branch_ids = getattr(request, "_perm_branch_ids", [])
     if getattr(request, "_perm_scope", "branches") == "company" or not branch_ids:
         return orders
-    return orders.filter(Q(branch_id__in=branch_ids) | Q(service_request__branch_id__in=branch_ids))
+    return orders.filter(
+        Q(branch_id__in=branch_ids) | Q(service_request__branch_id__in=branch_ids)
+    )
 
 
 def _apply_order_filters(
@@ -113,7 +114,9 @@ def _apply_order_filters(
 ):
     orders = _apply_branch_scope(request, _order_queryset())
     if branch_id:
-        orders = orders.filter(Q(branch_id=branch_id) | Q(service_request__branch_id=branch_id))
+        orders = orders.filter(
+            Q(branch_id=branch_id) | Q(service_request__branch_id=branch_id)
+        )
     if client_id:
         orders = orders.filter(client_id=client_id)
     if service_id:
@@ -149,8 +152,12 @@ def _invoice_queryset(order, date_from=None, date_to=None):
     return invoices
 
 
-def _payment_queryset(order, date_from=None, date_to=None, finance_account_id=None, search=None):
-    payments = Payment.objects.select_related("invoice", "finance_account").filter(invoice__order=order)
+def _payment_queryset(
+    order, date_from=None, date_to=None, finance_account_id=None, search=None
+):
+    payments = Payment.objects.select_related("invoice", "finance_account").filter(
+        invoice__order=order
+    )
     if date_from:
         payments = payments.filter(payment_date__gte=date_from)
     if date_to:
@@ -244,7 +251,9 @@ def _profitability_row(order, date_from=None, date_to=None):
     paid_expenses = expenses.filter(status=Expense.STATUS.PAID)
     committed_expenses = expenses.filter(status=Expense.STATUS.APPROVED)
     paid_vendor_bills = vendor_bills.filter(status=VendorBill.STATUS.PAID)
-    committed_vendor_bills = vendor_bills.filter(status__in=COMMITTED_VENDOR_BILL_STATUSES)
+    committed_vendor_bills = vendor_bills.filter(
+        status__in=COMMITTED_VENDOR_BILL_STATUSES
+    )
 
     invoiced_total = _sum(invoices, "total_amount")
     collected_total = _sum(payments, "amount")
@@ -253,7 +262,10 @@ def _profitability_row(order, date_from=None, date_to=None):
         + _sum(paid_vendor_bills, "gross_amount")
         + _sum(petty_cash_lines, "amount_spent")
     )
-    committed_costs = _money(_sum(committed_expenses, "amount") + _sum(committed_vendor_bills, "gross_amount"))
+    committed_costs = _money(
+        _sum(committed_expenses, "amount")
+        + _sum(committed_vendor_bills, "gross_amount")
+    )
     cash_contribution = _money(collected_total - paid_costs)
     accrued_profit = _money(invoiced_total - paid_costs)
     branch = _branch(order)
@@ -279,7 +291,9 @@ def _profitability_row(order, date_from=None, date_to=None):
         "payment_status_display": order.get_payment_status_display(),
         "progress": order.progress,
         "stage": order.stage,
-        "start_date": order.started_at.date() if order.started_at else order.created_at.date(),
+        "start_date": (
+            order.started_at.date() if order.started_at else order.created_at.date()
+        ),
         "due_date": order.due_date,
         "owner_name": _owner_name(order),
         "invoiced_total": invoiced_total,
@@ -339,10 +353,14 @@ def _profitability_rows(
         search=search,
     ).order_by("-created_at")
     rows = [_profitability_row(order, date_from, date_to) for order in orders]
-    return [row for row in rows if _profitability_status_matches(row, profitability_status)]
+    return [
+        row for row in rows if _profitability_status_matches(row, profitability_status)
+    ]
 
 
-@router.get("/service-orders/profitability", response=List[ServiceOrderProfitabilityOut])
+@router.get(
+    "/service-orders/profitability", response=List[ServiceOrderProfitabilityOut]
+)
 @paginate(LimitOffsetPagination, page_size=10)
 @require_permission("service_invoices", "list")
 def list_service_order_profitability(
@@ -373,7 +391,10 @@ def list_service_order_profitability(
     )
 
 
-@router.get("/service-orders/profitability/summary", response=ServiceOrderProfitabilitySummaryOut)
+@router.get(
+    "/service-orders/profitability/summary",
+    response=ServiceOrderProfitabilitySummaryOut,
+)
 @require_permission("service_invoices", "list")
 def service_order_profitability_summary(
     request,
@@ -406,19 +427,34 @@ def service_order_profitability_summary(
         "total_contract_value": _money(sum(row["contract_value"] for row in rows)),
         "total_invoiced": _money(sum(row["invoiced_total"] for row in rows)),
         "total_collected": _money(sum(row["collected_total"] for row in rows)),
-        "total_outstanding": _money(sum(row["outstanding_invoice_balance"] for row in rows)),
+        "total_outstanding": _money(
+            sum(row["outstanding_invoice_balance"] for row in rows)
+        ),
         "total_paid_costs": _money(sum(row["paid_costs"] for row in rows)),
         "total_committed_costs": _money(sum(row["committed_costs"] for row in rows)),
-        "total_cash_contribution": _money(sum(row["cash_contribution"] for row in rows)),
+        "total_cash_contribution": _money(
+            sum(row["cash_contribution"] for row in rows)
+        ),
         "total_accrued_profit": _money(sum(row["accrued_profit"] for row in rows)),
-        "profitable_order_count": sum(1 for row in rows if row["accrued_profit"] >= Decimal("0.00")),
-        "loss_making_order_count": sum(1 for row in rows if row["accrued_profit"] < Decimal("0.00")),
-        "cash_positive_order_count": sum(1 for row in rows if row["cash_contribution"] >= Decimal("0.00")),
-        "cash_negative_order_count": sum(1 for row in rows if row["cash_contribution"] < Decimal("0.00")),
+        "profitable_order_count": sum(
+            1 for row in rows if row["accrued_profit"] >= Decimal("0.00")
+        ),
+        "loss_making_order_count": sum(
+            1 for row in rows if row["accrued_profit"] < Decimal("0.00")
+        ),
+        "cash_positive_order_count": sum(
+            1 for row in rows if row["cash_contribution"] >= Decimal("0.00")
+        ),
+        "cash_negative_order_count": sum(
+            1 for row in rows if row["cash_contribution"] < Decimal("0.00")
+        ),
     }
 
 
-@router.get("/service-orders/{order_id}/profitability", response={200: ServiceOrderProfitabilityOut, 404: MessageSchema})
+@router.get(
+    "/service-orders/{order_id}/profitability",
+    response={200: ServiceOrderProfitabilityOut, 404: MessageSchema},
+)
 @require_permission("service_invoices", "list")
 def get_service_order_profitability(
     request,
@@ -426,7 +462,9 @@ def get_service_order_profitability(
     date_from: Optional[date] = Query(None),
     date_to: Optional[date] = Query(None),
 ):
-    order = get_object_or_404(_apply_branch_scope(request, _order_queryset()), id=order_id)
+    order = get_object_or_404(
+        _apply_branch_scope(request, _order_queryset()), id=order_id
+    )
     return 200, _profitability_row(order, date_from, date_to)
 
 
@@ -445,7 +483,9 @@ def list_service_order_costs(
     billable: Optional[bool] = Query(None),
     search: Optional[str] = Query(None),
 ):
-    order = get_object_or_404(_apply_branch_scope(request, _order_queryset()), id=order_id)
+    order = get_object_or_404(
+        _apply_branch_scope(request, _order_queryset()), id=order_id
+    )
     expenses = _expense_queryset(order, date_from, date_to)
     vendor_bills = _vendor_bill_queryset(order, date_from, date_to)
     petty_cash_lines = _petty_cash_line_queryset(order, date_from, date_to)
@@ -516,7 +556,9 @@ def list_service_order_costs(
             "billable": expense.billable,
             "client_visible": expense.client_visible,
             "finance_account_id": expense.finance_account_id,
-            "finance_account_name": expense.finance_account.display_name if expense.finance_account else "",
+            "finance_account_name": (
+                expense.finance_account.display_name if expense.finance_account else ""
+            ),
             "attachment": expense.attachment,
             "paid_at": expense.paid_at.date() if expense.paid_at else None,
         }
@@ -545,7 +587,9 @@ def list_service_order_costs(
             "billable": False,
             "client_visible": False,
             "finance_account_id": bill.finance_account_id,
-            "finance_account_name": bill.finance_account.display_name if bill.finance_account else "",
+            "finance_account_name": (
+                bill.finance_account.display_name if bill.finance_account else ""
+            ),
             "attachment": bill.attachment,
             "paid_at": bill.paid_at.date() if bill.paid_at else None,
         }
@@ -566,7 +610,8 @@ def list_service_order_costs(
             "cost_type_display": line.cost_type.replace("_", " ").title(),
             "stage": line.stage,
             "description": line.description,
-            "beneficiary": line.advance.requester.get_full_name() or line.advance.requester.email,
+            "beneficiary": line.advance.requester.get_full_name()
+            or line.advance.requester.email,
             "vendor": "",
             "amount": _money(line.amount_spent),
             "status": "paid",
@@ -574,7 +619,11 @@ def list_service_order_costs(
             "billable": line.billable,
             "client_visible": line.client_visible,
             "finance_account_id": line.advance.finance_account_id,
-            "finance_account_name": line.advance.finance_account.display_name if line.advance.finance_account else "",
+            "finance_account_name": (
+                line.advance.finance_account.display_name
+                if line.advance.finance_account
+                else ""
+            ),
             "attachment": line.attachment,
             "paid_at": line.created_at.date(),
         }
@@ -583,7 +632,9 @@ def list_service_order_costs(
     return sorted(rows, key=lambda item: (item["date"], item["id"]), reverse=True)
 
 
-@router.get("/service-orders/{order_id}/transactions", response=List[ServiceOrderTransactionOut])
+@router.get(
+    "/service-orders/{order_id}/transactions", response=List[ServiceOrderTransactionOut]
+)
 @paginate(LimitOffsetPagination, page_size=10)
 @require_permission("payments", "list")
 def list_service_order_transactions(
@@ -595,15 +646,23 @@ def list_service_order_transactions(
     source: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
 ):
-    order = get_object_or_404(_apply_branch_scope(request, _order_queryset()), id=order_id)
+    order = get_object_or_404(
+        _apply_branch_scope(request, _order_queryset()), id=order_id
+    )
     payments = _payment_queryset(order, date_from, date_to, finance_account_id, search)
-    expenses = _expense_queryset(order, date_from, date_to).filter(status=Expense.STATUS.PAID)
-    vendor_bills = _vendor_bill_queryset(order, date_from, date_to).filter(status=VendorBill.STATUS.PAID)
+    expenses = _expense_queryset(order, date_from, date_to).filter(
+        status=Expense.STATUS.PAID
+    )
+    vendor_bills = _vendor_bill_queryset(order, date_from, date_to).filter(
+        status=VendorBill.STATUS.PAID
+    )
     petty_cash_lines = _petty_cash_line_queryset(order, date_from, date_to)
     if finance_account_id:
         expenses = expenses.filter(finance_account_id=finance_account_id)
         vendor_bills = vendor_bills.filter(finance_account_id=finance_account_id)
-        petty_cash_lines = petty_cash_lines.filter(advance__finance_account_id=finance_account_id)
+        petty_cash_lines = petty_cash_lines.filter(
+            advance__finance_account_id=finance_account_id
+        )
     if source == "client_payment":
         expenses = expenses.none()
         vendor_bills = vendor_bills.none()
@@ -647,7 +706,11 @@ def list_service_order_transactions(
         account = payment.finance_account
         rows.append(
             {
-                "sort_key": (payment.payment_date, payment.created_at, f"payment-{payment.id}"),
+                "sort_key": (
+                    payment.payment_date,
+                    payment.created_at,
+                    f"payment-{payment.id}",
+                ),
                 "date": payment.payment_date,
                 "reference": payment.payment_reference,
                 "source": "client_payment",
@@ -685,7 +748,11 @@ def list_service_order_transactions(
         paid_date = bill.paid_at.date() if bill.paid_at else bill.bill_date
         rows.append(
             {
-                "sort_key": (paid_date, bill.paid_at or bill.created_at, f"vendor-bill-{bill.id}"),
+                "sort_key": (
+                    paid_date,
+                    bill.paid_at or bill.created_at,
+                    f"vendor-bill-{bill.id}",
+                ),
                 "date": paid_date,
                 "reference": bill.payment_reference or bill.bill_number,
                 "source": "vendor_bill",
@@ -704,7 +771,11 @@ def list_service_order_transactions(
         account = line.advance.finance_account
         rows.append(
             {
-                "sort_key": (line.created_at.date(), line.created_at, f"petty-cash-{line.id}"),
+                "sort_key": (
+                    line.created_at.date(),
+                    line.created_at,
+                    f"petty-cash-{line.id}",
+                ),
                 "date": line.created_at.date(),
                 "reference": line.advance.advance_number,
                 "source": "petty_cash",

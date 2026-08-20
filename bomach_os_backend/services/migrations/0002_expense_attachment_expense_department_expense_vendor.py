@@ -7,24 +7,30 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('services', '0001_initial'),
-        ('user', '0047_alter_branch_branch_role_alter_review_review_date'),
+        ("services", "0001_initial"),
+        ("user", "0047_alter_branch_branch_role_alter_review_review_date"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='expense',
-            name='attachment',
+            model_name="expense",
+            name="attachment",
             field=models.URLField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='expense',
-            name='department',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='expenses', to='user.department'),
+            model_name="expense",
+            name="department",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="expenses",
+                to="user.department",
+            ),
         ),
         migrations.AddField(
-            model_name='expense',
-            name='vendor',
+            model_name="expense",
+            name="vendor",
             field=models.CharField(blank=True, max_length=100, null=True),
         ),
     ]

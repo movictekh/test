@@ -6,13 +6,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('hr', '0009_rename_achievements_dailyworkreport_work_activities_and_more'),
+        ("hr", "0009_rename_achievements_dailyworkreport_work_activities_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='dailyworkreport',
-            name='task_details',
-            field=models.TextField(blank=True, help_text='Details about tasks worked on', null=True),
+            model_name="dailyworkreport",
+            name="task_details",
+            field=models.TextField(
+                blank=True, help_text="Details about tasks worked on", null=True
+            ),
         ),
     ]

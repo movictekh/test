@@ -7,36 +7,46 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('hr', '0002_alter_disciplinarycase_action_date'),
+        ("hr", "0002_alter_disciplinarycase_action_date"),
     ]
 
     operations = [
         migrations.RemoveIndex(
-            model_name='payroll',
-            name='payroll_employe_87d660_idx',
+            model_name="payroll",
+            name="payroll_employe_87d660_idx",
         ),
         migrations.AlterUniqueTogether(
-            name='payroll',
+            name="payroll",
             unique_together=set(),
         ),
         migrations.AddField(
-            model_name='payroll',
-            name='period_date',
+            model_name="payroll",
+            name="period_date",
             field=models.DateField(default=datetime.date(2026, 1, 1)),
             preserve_default=False,
         ),
         migrations.AlterField(
-            model_name='payroll',
-            name='disbursement_date',
+            model_name="payroll",
+            name="disbursement_date",
             field=models.DateField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='payroll',
-            name='status',
-            field=models.CharField(choices=[('pending', 'Pending'), ('approved', 'Approved'), ('cancelled', 'Cancelled'), ('paid', 'Paid')], db_index=True, default='pending', max_length=20),
+            model_name="payroll",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("pending", "Pending"),
+                    ("approved", "Approved"),
+                    ("cancelled", "Cancelled"),
+                    ("paid", "Paid"),
+                ],
+                db_index=True,
+                default="pending",
+                max_length=20,
+            ),
         ),
         migrations.RemoveField(
-            model_name='payroll',
-            name='payroll_period',
+            model_name="payroll",
+            name="payroll_period",
         ),
     ]

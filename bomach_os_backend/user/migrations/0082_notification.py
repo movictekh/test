@@ -8,27 +8,76 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('user', '0081_split_company_settings'),
+        ("user", "0081_split_company_settings"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Notification',
+            name="Notification",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='When this record was created')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text='When this record was last updated')),
-                ('title', models.CharField(max_length=255)),
-                ('message', models.TextField()),
-                ('notification_type', models.CharField(choices=[('info', 'Informational'), ('warning', 'Warning'), ('success', 'Success'), ('error', 'Error'), ('approval', 'Approval Required'), ('task', 'Task Assignment'), ('system', 'System')], default='info', max_length=20)),
-                ('is_read', models.BooleanField(default=False)),
-                ('link', models.CharField(blank=True, max_length=500)),
-                ('metadata', models.JSONField(blank=True, default=dict)),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='notifications', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, help_text="When this record was created"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, help_text="When this record was last updated"
+                    ),
+                ),
+                ("title", models.CharField(max_length=255)),
+                ("message", models.TextField()),
+                (
+                    "notification_type",
+                    models.CharField(
+                        choices=[
+                            ("info", "Informational"),
+                            ("warning", "Warning"),
+                            ("success", "Success"),
+                            ("error", "Error"),
+                            ("approval", "Approval Required"),
+                            ("task", "Task Assignment"),
+                            ("system", "System"),
+                        ],
+                        default="info",
+                        max_length=20,
+                    ),
+                ),
+                ("is_read", models.BooleanField(default=False)),
+                ("link", models.CharField(blank=True, max_length=500)),
+                ("metadata", models.JSONField(blank=True, default=dict)),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="notifications",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-created_at'],
-                'indexes': [models.Index(fields=['user', 'is_read'], name='user_notifi_user_id_c3061c_idx'), models.Index(fields=['user', '-created_at'], name='user_notifi_user_id_7c7879_idx')],
+                "ordering": ["-created_at"],
+                "indexes": [
+                    models.Index(
+                        fields=["user", "is_read"],
+                        name="user_notifi_user_id_c3061c_idx",
+                    ),
+                    models.Index(
+                        fields=["user", "-created_at"],
+                        name="user_notifi_user_id_7c7879_idx",
+                    ),
+                ],
             },
         ),
     ]

@@ -24,4 +24,5 @@ class HRStats(Schema):
 
 class MessageSchema(Schema):
     """Generic message response schema"""
+
     detail: str

@@ -6,11 +6,13 @@ from decimal import Decimal
 
 class CartItemCreateSchema(Schema):
     """Schema for adding a property to the cart"""
+
     property_id: int
 
 
 class CartItemSchema(Schema):
     """Schema for a cart item response"""
+
     id: int
     property_id: int
     property_name: str
@@ -98,6 +100,7 @@ class CartItemSchema(Schema):
 
 class CartSchema(Schema):
     """Schema for the full cart response"""
+
     id: int
     items: List[CartItemSchema]
     total_items: int
@@ -108,9 +111,9 @@ class CartSchema(Schema):
     @staticmethod
     def resolve_items(obj):
         return list(
-            obj.items.select_related(
-                'property', 'property__estate'
-            ).prefetch_related('property__images').all()
+            obj.items.select_related("property", "property__estate")
+            .prefetch_related("property__images")
+            .all()
         )
 
     @staticmethod
