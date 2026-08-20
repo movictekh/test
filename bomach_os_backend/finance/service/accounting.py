@@ -7,6 +7,7 @@ from django.utils import timezone
 
 from finance.models import (
     FinanceAccount,
+    FinanceSettings,
     JournalEntry,
     JournalLine,
     LedgerAccount,
@@ -207,6 +208,18 @@ def _validate_postable_lines(lines):
         line.full_clean()
 
 
+def _validate_finance_close_cutoff(entry):
+    settings = FinanceSettings.get_settings()
+    if (
+        settings.closed_through_date
+        and entry.entry_date <= settings.closed_through_date
+    ):
+        raise ValidationError(
+            f"Finance is closed through {settings.closed_through_date}; "
+            f"journal {entry.journal_number} dated {entry.entry_date} cannot be posted."
+        )
+
+
 def _validate_closed_bank_reconciliation_cutoff(entry, lines):
     # Local import avoids coupling the core accounting module at import time.
     from finance.models import BankReconciliation
@@ -247,6 +260,7 @@ def post_journal_entry(journal_entry, posted_by):
             raise ValidationError("Only draft journals can be posted.")
         lines = list(entry.lines.all())
         _validate_postable_lines(lines)
+        _validate_finance_close_cutoff(entry)
         _validate_closed_bank_reconciliation_cutoff(entry, lines)
         entry.status = JournalEntry.STATUS.POSTED
         entry.posted_by = posted_by

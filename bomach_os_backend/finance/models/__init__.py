@@ -36,6 +36,8 @@ from .fixed_assets import (
     FixedAsset,
 )
 
+from .settings import FinanceSettings
+
 __all__ = [
     "FinanceAccount",
     "FinanceWallet",
@@ -60,4 +62,5 @@ __all__ = [
     "BankReconciliationMatch",
     "FixedAssetCategory",
     "FixedAsset",
+    "FinanceSettings",
 ]

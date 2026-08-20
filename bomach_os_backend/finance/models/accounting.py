@@ -438,8 +438,11 @@ class JournalEntry(models.Model):
     def save(self, *args, **kwargs):
         self.currency = (self.currency or "NGN").upper()
         if not self.journal_number:
+            from finance.models.settings import FinanceSettings
+
+            prefix = FinanceSettings.get_settings().journal_prefix
             self.journal_number = (
-                f"JRN-{self.entry_date.year}-{uuid.uuid4().hex[:10].upper()}"
+                f"{prefix}-{self.entry_date.year}-{uuid.uuid4().hex[:10].upper()}"
             )
         self.full_clean()
         super().save(*args, **kwargs)

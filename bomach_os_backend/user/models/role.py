@@ -292,6 +292,8 @@ PERMISSIONS_MAP = {
     "chart_of_accounts": ["create", "view", "list", "update", "deactivate"],
     "journals": ["create", "view", "list", "update", "post", "reverse"],
     "general_ledger": ["view", "list"],
+    "finance_settings": ["view", "update"],
+    "financial_reports": ["view"],
     "bank_reconciliation": [
         "create",
         "view",
