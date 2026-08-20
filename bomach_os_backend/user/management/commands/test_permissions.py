@@ -7,6 +7,7 @@ then hits every endpoint and records pass/fail results.
 Usage:
     python manage.py test_permissions
 """
+
 import json
 import uuid
 from datetime import datetime, timedelta
@@ -22,83 +23,73 @@ from user.models.role import Role
 from user.models.branch import Branch
 from user.services.jwt_service import JWTService
 
-
 # ── Endpoint registry ─────────────────────────────────────────────────────────
 # Each entry: (method, url, description, body_or_none, requires_id)
 # We use Django's test client to hit these via the full URL.
 
 ENDPOINTS = [
     # ── Roles ──
-    ("GET",  "/api/v1/roles/",               "roles:list",           None),
-    ("GET",  "/api/v1/roles/permissions-map", "roles:permissions-map", None),
-    ("POST", "/api/v1/roles/",               "roles:create",
-     {"name": f"TestRole-{uuid.uuid4().hex[:6]}", "permissions": {"employees": ["list"]}}),
+    ("GET", "/api/v1/roles/", "roles:list", None),
+    ("GET", "/api/v1/roles/permissions-map", "roles:permissions-map", None),
+    (
+        "POST",
+        "/api/v1/roles/",
+        "roles:create",
+        {
+            "name": f"TestRole-{uuid.uuid4().hex[:6]}",
+            "permissions": {"employees": ["list"]},
+        },
+    ),
     # roles:view, update, delete tested with created role id below
-
     # ── Employees ──
-    ("GET",  "/api/v1/employees/employees",  "employees:list",       None),
-    ("GET",  "/api/v1/employees/department", "departments:list",     None),
-    ("GET",  "/api/v1/employees/unit",       "department_units:list", None),
-
+    ("GET", "/api/v1/employees/employees", "employees:list", None),
+    ("GET", "/api/v1/employees/department", "departments:list", None),
+    ("GET", "/api/v1/employees/unit", "department_units:list", None),
     # ── Branches ──
-    ("GET",  "/api/v1/branch/",              "branches:list",        None),
-
+    ("GET", "/api/v1/branch/", "branches:list", None),
     # ── Company ──
-    ("GET",  "/api/v1/company/",             "company:view",         None),
-
+    ("GET", "/api/v1/company/", "company:view", None),
     # ── Clients / Leads ──
-    ("GET",  "/api/v1/clients/leads/",       "leads:list",           None),
-    ("GET",  "/api/v1/clients/clients/",     "clients:list",         None),
-
+    ("GET", "/api/v1/clients/leads/", "leads:list", None),
+    ("GET", "/api/v1/clients/clients/", "clients:list", None),
     # ── Estates ──
-    ("GET",  "/api/v1/estates/",             "estates:list",         None),
-    ("GET",  "/api/v1/estates/properties/",  "properties:list",      None),
-
+    ("GET", "/api/v1/estates/", "estates:list", None),
+    ("GET", "/api/v1/estates/properties/", "properties:list", None),
     # ── Estate Invoices ──
-    ("GET",  "/api/v1/estate-invoices/",     "estate_invoices:list", None),
-
+    ("GET", "/api/v1/estate-invoices/", "estate_invoices:list", None),
     # ── Partners ──
-    ("GET",  "/api/v1/partners/",            "partners:list",        None),
-
+    ("GET", "/api/v1/partners/", "partners:list", None),
     # ── Legal / Compliance ──
-    ("GET",  "/api/v1/cases/",               "legal_cases:list",     None),
-    ("GET",  "/api/v1/compliance/",          "compliance_records:list", None),
-    ("GET",  "/api/v1/audits/",              "compliance_audits:list", None),
-    ("GET",  "/api/v1/audit-logs/",          "audit_logs:list",      None),
-
+    ("GET", "/api/v1/cases/", "legal_cases:list", None),
+    ("GET", "/api/v1/compliance/", "compliance_records:list", None),
+    ("GET", "/api/v1/audits/", "compliance_audits:list", None),
+    ("GET", "/api/v1/audit-logs/", "audit_logs:list", None),
     # ── Corporate ──
-    ("GET",  "/api/v1/announcements/",       "announcements:list",   None),
-    ("GET",  "/api/v1/board-resolutions/",   "board_resolutions:list", None),
-    ("GET",  "/api/v1/shareholders/",        "shareholders:list",    None),
-    ("GET",  "/api/v1/meetings/",            "meetings:list",        None),
-    ("GET",  "/api/v1/policies/",            "policies:list",        None),
-    ("GET",  "/api/v1/events/",              "events:list",          None),
-
+    ("GET", "/api/v1/announcements/", "announcements:list", None),
+    ("GET", "/api/v1/board-resolutions/", "board_resolutions:list", None),
+    ("GET", "/api/v1/shareholders/", "shareholders:list", None),
+    ("GET", "/api/v1/meetings/", "meetings:list", None),
+    ("GET", "/api/v1/policies/", "policies:list", None),
+    ("GET", "/api/v1/events/", "events:list", None),
     # ── Loans ──
-    ("GET",  "/api/v1/loans",                "loans:list",           None),
-
+    ("GET", "/api/v1/loans", "loans:list", None),
     # ── Approvals ──
-    ("GET",  "/api/v1/approvals/flows",      "approval_flows:list",  None),
-    ("GET",  "/api/v1/approvals/requests",   "approval_requests:list", None),
-
+    ("GET", "/api/v1/approvals/flows", "approval_flows:list", None),
+    ("GET", "/api/v1/approvals/requests", "approval_requests:list", None),
     # ── Drawing Bank ──
-    ("GET",  "/api/v1/drawing-bank/",        "drawings:list",        None),
-
+    ("GET", "/api/v1/drawing-bank/", "drawings:list", None),
     # ── Wallet ──
-    ("GET",  "/api/v1/wallet/transactions/", "wallet:list",          None),
-
+    ("GET", "/api/v1/wallet/transactions/", "wallet:list", None),
     # ── Client Inventory ──
-    ("GET",  "/api/v1/inventory/",           "client_inventory:list", None),
-
+    ("GET", "/api/v1/inventory/", "client_inventory:list", None),
     # ── HR ──
-    ("GET",  "/api/v1/job-postings",         "job_postings:list",    None),
-    ("GET",  "/api/v1/leave-requests",       "leave_requests:list",  None),
-    ("GET",  "/api/v1/payroll",              "payroll:list",         None),
-    ("GET",  "/api/v1/assets",               "assets:list",          None),
-    ("GET",  "/api/v1/awards",               "awards:list",          None),
-
+    ("GET", "/api/v1/job-postings", "job_postings:list", None),
+    ("GET", "/api/v1/leave-requests", "leave_requests:list", None),
+    ("GET", "/api/v1/payroll", "payroll:list", None),
+    ("GET", "/api/v1/assets", "assets:list", None),
+    ("GET", "/api/v1/awards", "awards:list", None),
     # ── Expenses ──
-    ("GET",  "/api/v1/expenses",             "expenses:list",        None),
+    ("GET", "/api/v1/expenses", "expenses:list", None),
 ]
 
 
@@ -108,8 +99,9 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # Allow testserver host for Django test client
         from django.conf import settings
-        if 'testserver' not in settings.ALLOWED_HOSTS:
-            settings.ALLOWED_HOSTS.append('testserver')
+
+        if "testserver" not in settings.ALLOWED_HOSTS:
+            settings.ALLOWED_HOSTS.append("testserver")
 
         self.stdout.write("\n" + "=" * 80)
         self.stdout.write("  PERMISSION ENDPOINT TEST SUITE")
@@ -134,9 +126,9 @@ class Command(BaseCommand):
         # 4. Cleanup
         self._cleanup(test_data)
 
-        self.stdout.write(self.style.SUCCESS(
-            f"\nResults written to: test_permission_results.md"
-        ))
+        self.stdout.write(
+            self.style.SUCCESS(f"\nResults written to: test_permission_results.md")
+        )
 
     def _create_test_data(self):
         """Create employees at various levels with appropriate roles."""
@@ -164,12 +156,15 @@ class Command(BaseCommand):
 
         # Department + Unit
         dept, _ = Department.objects.get_or_create(name="operations")
-        unit, _ = Unit.objects.get_or_create(name=f"TestUnit-{uuid.uuid4().hex[:6]}", department=dept)
+        unit, _ = Unit.objects.get_or_create(
+            name=f"TestUnit-{uuid.uuid4().hex[:6]}", department=dept
+        )
 
         # ── Roles ──
         # CEO role: full access to everything
         ceo_perms = {}
         from user.models.role import PERMISSIONS_MAP
+
         for resource, actions in PERMISSIONS_MAP.items():
             # Give all non-_own actions
             ceo_perms[resource] = [a for a in actions if not a.endswith("_own")]
@@ -188,12 +183,27 @@ class Command(BaseCommand):
             "roles": ["view", "list"],
             "branches": ["view", "list"],
             "company_settings": ["view"],
-            "leads": ["create", "view", "list", "update", "delete", "convert_to_client"],
+            "leads": [
+                "create",
+                "view",
+                "list",
+                "update",
+                "delete",
+                "convert_to_client",
+            ],
             "clients": ["create", "view", "list", "update"],
             "estates": ["create", "view", "list", "update", "delete"],
             "properties": ["create", "view", "list", "update", "delete"],
-            "estate_invoices": ["create", "view", "list", "update", "delete",
-                                "submit_for_approval", "approve", "record_payment"],
+            "estate_invoices": [
+                "create",
+                "view",
+                "list",
+                "update",
+                "delete",
+                "submit_for_approval",
+                "approve",
+                "record_payment",
+            ],
             "partners": ["view", "list"],
             "legal_cases": ["create", "view", "list", "update"],
             "compliance_records": ["create", "view", "list", "update"],
@@ -208,7 +218,15 @@ class Command(BaseCommand):
             "loans": ["view", "list", "approve", "reject"],
             "approval_flows": ["view", "list"],
             "approval_requests": ["create", "view", "list", "approve", "reject"],
-            "drawings": ["create", "view", "list", "update", "approve", "reject", "download"],
+            "drawings": [
+                "create",
+                "view",
+                "list",
+                "update",
+                "approve",
+                "reject",
+                "download",
+            ],
             "wallet": ["view", "list"],
             "client_inventory": ["create", "view", "list", "update", "delete"],
             "job_postings": ["create", "view", "list", "update"],
@@ -302,12 +320,12 @@ class Command(BaseCommand):
 
         employees = {}
         test_configs = {
-            "ceo":             {"role": ceo_role,     "branch": branch,  "dept": dept},
-            "manager":         {"role": manager_role, "branch": branch,  "dept": dept},
+            "ceo": {"role": ceo_role, "branch": branch, "dept": dept},
+            "manager": {"role": manager_role, "branch": branch, "dept": dept},
             "manager_branch2": {"role": manager_role, "branch": branch2, "dept": dept},
-            "head_operations": {"role": head_role,    "branch": branch,  "dept": dept},
-            "junior":          {"role": junior_role,  "branch": branch,  "dept": dept},
-            "intern":          {"role": intern_role,  "branch": branch,  "dept": dept},
+            "head_operations": {"role": head_role, "branch": branch, "dept": dept},
+            "junior": {"role": junior_role, "branch": branch, "dept": dept},
+            "intern": {"role": intern_role, "branch": branch, "dept": dept},
         }
 
         for key, config in test_configs.items():
@@ -330,7 +348,11 @@ class Command(BaseCommand):
                 is_active=True,
             )
             emp.department_units.add(unit)
-            employees[key] = {"user": user, "employee": emp, "role_name": config["role"].name}
+            employees[key] = {
+                "user": user,
+                "employee": emp,
+                "role_name": config["role"].name,
+            }
 
         return {
             "employees": employees,
@@ -344,6 +366,7 @@ class Command(BaseCommand):
     def _test_endpoints(self, level_key, token, info):
         """Test all endpoints for a given employee."""
         from django.test import Client as TestClient
+
         client = TestClient()
         results = []
 
@@ -411,7 +434,9 @@ class Command(BaseCommand):
                 results.append((desc, result, detail))
 
             except Exception as e:
-                self.stdout.write(self.style.ERROR(f"  ERROR    {method:6s} {desc:40s} {str(e)[:60]}"))
+                self.stdout.write(
+                    self.style.ERROR(f"  ERROR    {method:6s} {desc:40s} {str(e)[:60]}")
+                )
                 results.append((desc, "ERROR", str(e)[:100]))
 
         return results
@@ -471,8 +496,11 @@ class Command(BaseCommand):
                     lines.append(f"| {desc} | {detail} |")
 
             # Errors/Other
-            other = [(d, r, det) for d, r, det in results
-                     if not r.startswith("PASS") and r != "DENIED"]
+            other = [
+                (d, r, det)
+                for d, r, det in results
+                if not r.startswith("PASS") and r != "DENIED"
+            ]
             if other:
                 lines.append("\n### Errors / Other\n")
                 lines.append("| Endpoint | Status | Detail |")

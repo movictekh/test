@@ -6,18 +6,28 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('user', '0039_loan'),
+        ("user", "0039_loan"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='user',
-            name='first_name',
-            field=models.CharField(blank=True, db_index=True, help_text='Employee first name', max_length=100),
+            model_name="user",
+            name="first_name",
+            field=models.CharField(
+                blank=True,
+                db_index=True,
+                help_text="Employee first name",
+                max_length=100,
+            ),
         ),
         migrations.AlterField(
-            model_name='user',
-            name='last_name',
-            field=models.CharField(blank=True, db_index=True, help_text='Employee last name', max_length=100),
+            model_name="user",
+            name="last_name",
+            field=models.CharField(
+                blank=True,
+                db_index=True,
+                help_text="Employee last name",
+                max_length=100,
+            ),
         ),
     ]

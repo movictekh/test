@@ -93,7 +93,11 @@ class RealEstateAPITests(RoleAPITestMixin, TestCase):
         plot = Property.objects.get(estate=self.estate, plot_number=4)
         response = self.client.patch(
             f"/api/v1/estates/{self.estate.id}/plots/{plot.id}/quick-update",
-            data={"status": "hold", "client_name": "Reserved Client", "price": "5000000"},
+            data={
+                "status": "hold",
+                "client_name": "Reserved Client",
+                "price": "5000000",
+            },
             content_type="application/json",
             **self.headers,
         )

@@ -6,23 +6,23 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('user', '0063_clientservice_servicerequest'),
+        ("user", "0063_clientservice_servicerequest"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='client',
-            name='address',
-            field=models.TextField(blank=True, default='', max_length=500),
+            model_name="client",
+            name="address",
+            field=models.TextField(blank=True, default="", max_length=500),
         ),
         migrations.AddField(
-            model_name='client',
-            name='company_name',
-            field=models.CharField(blank=True, default='', max_length=255),
+            model_name="client",
+            name="company_name",
+            field=models.CharField(blank=True, default="", max_length=255),
         ),
         migrations.AddField(
-            model_name='client',
-            name='phone',
-            field=models.CharField(blank=True, default='', max_length=20),
+            model_name="client",
+            name="phone",
+            field=models.CharField(blank=True, default="", max_length=20),
         ),
     ]

@@ -10,188 +10,674 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('services', '0015_leadfunnelevent'),
-        ('user', '0093_employeetargetreport'),
+        ("services", "0015_leadfunnelevent"),
+        ("user", "0093_employeetargetreport"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='CampaignPostAnalysis',
+            name="CampaignPostAnalysis",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('conclusion', models.TextField()),
-                ('worked', models.TextField(blank=True)),
-                ('failed', models.TextField(blank=True)),
-                ('lessons', models.TextField(blank=True)),
-                ('next_actions', models.TextField(blank=True)),
-                ('reusable_assets', models.TextField(blank=True)),
-                ('analysis_date', models.DateField()),
-                ('approver', models.CharField(blank=True, max_length=120)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('author', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='campaign_post_analyses', to=settings.AUTH_USER_MODEL)),
-                ('campaign', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='post_analysis', to='services.marketingcampaign')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("conclusion", models.TextField()),
+                ("worked", models.TextField(blank=True)),
+                ("failed", models.TextField(blank=True)),
+                ("lessons", models.TextField(blank=True)),
+                ("next_actions", models.TextField(blank=True)),
+                ("reusable_assets", models.TextField(blank=True)),
+                ("analysis_date", models.DateField()),
+                ("approver", models.CharField(blank=True, max_length=120)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "author",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="campaign_post_analyses",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "campaign",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="post_analysis",
+                        to="services.marketingcampaign",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-analysis_date', '-created_at'],
+                "ordering": ["-analysis_date", "-created_at"],
             },
         ),
         migrations.CreateModel(
-            name='CampaignAsset',
+            name="CampaignAsset",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=255)),
-                ('asset_type', models.CharField(choices=[('video', 'Video'), ('graphic', 'Graphic'), ('carousel', 'Carousel'), ('landing_page', 'Landing Page'), ('email', 'Email'), ('whatsapp_template', 'WhatsApp Template'), ('radio_script', 'Radio Script'), ('billboard_artwork', 'Billboard Artwork'), ('brochure', 'Brochure / PDF'), ('sales_kit', 'Sales Kit'), ('event_material', 'Event Material'), ('other', 'Other')], default='other', max_length=40)),
-                ('owner_name', models.CharField(blank=True, max_length=120)),
-                ('due_date', models.DateField(blank=True, null=True)),
-                ('status', models.CharField(choices=[('briefed', 'Briefed'), ('in_progress', 'In Progress'), ('review', 'Review'), ('approved', 'Approved'), ('live', 'Live'), ('rejected', 'Rejected')], default='briefed', max_length=30)),
-                ('description', models.TextField(blank=True)),
-                ('specifications', models.TextField(blank=True)),
-                ('approval_notes', models.TextField(blank=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('campaign', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='workspace_assets', to='services.marketingcampaign')),
-                ('content', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='campaign_assets', to='services.content')),
-                ('created_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='created_campaign_assets', to=settings.AUTH_USER_MODEL)),
-                ('owner', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='campaign_assets', to='user.employee')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=255)),
+                (
+                    "asset_type",
+                    models.CharField(
+                        choices=[
+                            ("video", "Video"),
+                            ("graphic", "Graphic"),
+                            ("carousel", "Carousel"),
+                            ("landing_page", "Landing Page"),
+                            ("email", "Email"),
+                            ("whatsapp_template", "WhatsApp Template"),
+                            ("radio_script", "Radio Script"),
+                            ("billboard_artwork", "Billboard Artwork"),
+                            ("brochure", "Brochure / PDF"),
+                            ("sales_kit", "Sales Kit"),
+                            ("event_material", "Event Material"),
+                            ("other", "Other"),
+                        ],
+                        default="other",
+                        max_length=40,
+                    ),
+                ),
+                ("owner_name", models.CharField(blank=True, max_length=120)),
+                ("due_date", models.DateField(blank=True, null=True)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("briefed", "Briefed"),
+                            ("in_progress", "In Progress"),
+                            ("review", "Review"),
+                            ("approved", "Approved"),
+                            ("live", "Live"),
+                            ("rejected", "Rejected"),
+                        ],
+                        default="briefed",
+                        max_length=30,
+                    ),
+                ),
+                ("description", models.TextField(blank=True)),
+                ("specifications", models.TextField(blank=True)),
+                ("approval_notes", models.TextField(blank=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "campaign",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="workspace_assets",
+                        to="services.marketingcampaign",
+                    ),
+                ),
+                (
+                    "content",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="campaign_assets",
+                        to="services.content",
+                    ),
+                ),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="created_campaign_assets",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "owner",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="campaign_assets",
+                        to="user.employee",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['due_date', '-created_at'],
-                'indexes': [models.Index(fields=['campaign', 'status'], name='services_ca_campaig_e89884_idx'), models.Index(fields=['asset_type'], name='services_ca_asset_t_af9e86_idx')],
+                "ordering": ["due_date", "-created_at"],
+                "indexes": [
+                    models.Index(
+                        fields=["campaign", "status"],
+                        name="services_ca_campaig_e89884_idx",
+                    ),
+                    models.Index(
+                        fields=["asset_type"], name="services_ca_asset_t_af9e86_idx"
+                    ),
+                ],
             },
         ),
         migrations.CreateModel(
-            name='CampaignDecision',
+            name="CampaignDecision",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('decision_date', models.DateField()),
-                ('decision', models.TextField()),
-                ('owner', models.CharField(blank=True, max_length=120)),
-                ('approver', models.CharField(blank=True, max_length=120)),
-                ('reason', models.TextField(blank=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('campaign', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='workspace_decisions', to='services.marketingcampaign')),
-                ('created_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='created_campaign_decisions', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("decision_date", models.DateField()),
+                ("decision", models.TextField()),
+                ("owner", models.CharField(blank=True, max_length=120)),
+                ("approver", models.CharField(blank=True, max_length=120)),
+                ("reason", models.TextField(blank=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "campaign",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="workspace_decisions",
+                        to="services.marketingcampaign",
+                    ),
+                ),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="created_campaign_decisions",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-decision_date', '-created_at'],
-                'indexes': [models.Index(fields=['campaign', '-decision_date'], name='services_ca_campaig_84368f_idx')],
+                "ordering": ["-decision_date", "-created_at"],
+                "indexes": [
+                    models.Index(
+                        fields=["campaign", "-decision_date"],
+                        name="services_ca_campaig_84368f_idx",
+                    )
+                ],
             },
         ),
         migrations.CreateModel(
-            name='CampaignExpense',
+            name="CampaignExpense",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('expense_date', models.DateField()),
-                ('category', models.CharField(choices=[('paid_media', 'Paid Media'), ('creative_production', 'Creative Production'), ('partners', 'Partners / Influencers / Realtors'), ('offline_media', 'Offline Media / Activation'), ('tools', 'Tools / Technology'), ('contingency', 'Contingency'), ('other', 'Other')], default='other', max_length=40)),
-                ('vendor', models.CharField(max_length=160)),
-                ('amount', models.DecimalField(decimal_places=2, max_digits=12, validators=[django.core.validators.MinValueValidator(Decimal('0.00'))])),
-                ('description', models.TextField(blank=True)),
-                ('status', models.CharField(choices=[('requested', 'Requested'), ('approved', 'Approved'), ('paid', 'Paid'), ('rejected', 'Rejected')], default='requested', max_length=20)),
-                ('reference', models.CharField(blank=True, max_length=160)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('campaign', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='workspace_expenses', to='services.marketingcampaign')),
-                ('created_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='created_campaign_expenses', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("expense_date", models.DateField()),
+                (
+                    "category",
+                    models.CharField(
+                        choices=[
+                            ("paid_media", "Paid Media"),
+                            ("creative_production", "Creative Production"),
+                            ("partners", "Partners / Influencers / Realtors"),
+                            ("offline_media", "Offline Media / Activation"),
+                            ("tools", "Tools / Technology"),
+                            ("contingency", "Contingency"),
+                            ("other", "Other"),
+                        ],
+                        default="other",
+                        max_length=40,
+                    ),
+                ),
+                ("vendor", models.CharField(max_length=160)),
+                (
+                    "amount",
+                    models.DecimalField(
+                        decimal_places=2,
+                        max_digits=12,
+                        validators=[
+                            django.core.validators.MinValueValidator(Decimal("0.00"))
+                        ],
+                    ),
+                ),
+                ("description", models.TextField(blank=True)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("requested", "Requested"),
+                            ("approved", "Approved"),
+                            ("paid", "Paid"),
+                            ("rejected", "Rejected"),
+                        ],
+                        default="requested",
+                        max_length=20,
+                    ),
+                ),
+                ("reference", models.CharField(blank=True, max_length=160)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "campaign",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="workspace_expenses",
+                        to="services.marketingcampaign",
+                    ),
+                ),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="created_campaign_expenses",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-expense_date', '-created_at'],
-                'indexes': [models.Index(fields=['campaign', '-expense_date'], name='services_ca_campaig_f0adb9_idx'), models.Index(fields=['status'], name='services_ca_status_21fabf_idx'), models.Index(fields=['category'], name='services_ca_categor_7b183b_idx')],
+                "ordering": ["-expense_date", "-created_at"],
+                "indexes": [
+                    models.Index(
+                        fields=["campaign", "-expense_date"],
+                        name="services_ca_campaig_f0adb9_idx",
+                    ),
+                    models.Index(
+                        fields=["status"], name="services_ca_status_21fabf_idx"
+                    ),
+                    models.Index(
+                        fields=["category"], name="services_ca_categor_7b183b_idx"
+                    ),
+                ],
             },
         ),
         migrations.CreateModel(
-            name='CampaignRequest',
+            name="CampaignRequest",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title', models.CharField(max_length=255)),
-                ('department', models.CharField(blank=True, max_length=120)),
-                ('division', models.CharField(blank=True, max_length=30)),
-                ('needed_by', models.DateField(blank=True, null=True)),
-                ('priority', models.CharField(choices=[('low', 'Low'), ('medium', 'Medium'), ('high', 'High'), ('critical', 'Critical')], default='medium', max_length=20)),
-                ('proposed_budget', models.DecimalField(decimal_places=2, default=Decimal('0.00'), max_digits=12, validators=[django.core.validators.MinValueValidator(Decimal('0.00'))])),
-                ('problem', models.TextField()),
-                ('audience', models.TextField(blank=True)),
-                ('product', models.CharField(blank=True, max_length=255)),
-                ('expected_outcome', models.CharField(blank=True, max_length=255)),
-                ('context', models.TextField(blank=True)),
-                ('status', models.CharField(choices=[('new', 'New'), ('under_review', 'Under Review'), ('approved', 'Approved'), ('rejected', 'Rejected'), ('converted', 'Converted')], default='new', max_length=30)),
-                ('review_note', models.TextField(blank=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('branch', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='campaign_requests', to='user.branch')),
-                ('converted_campaign', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='source_requests', to='services.marketingcampaign')),
-                ('requester', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='campaign_requests', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("title", models.CharField(max_length=255)),
+                ("department", models.CharField(blank=True, max_length=120)),
+                ("division", models.CharField(blank=True, max_length=30)),
+                ("needed_by", models.DateField(blank=True, null=True)),
+                (
+                    "priority",
+                    models.CharField(
+                        choices=[
+                            ("low", "Low"),
+                            ("medium", "Medium"),
+                            ("high", "High"),
+                            ("critical", "Critical"),
+                        ],
+                        default="medium",
+                        max_length=20,
+                    ),
+                ),
+                (
+                    "proposed_budget",
+                    models.DecimalField(
+                        decimal_places=2,
+                        default=Decimal("0.00"),
+                        max_digits=12,
+                        validators=[
+                            django.core.validators.MinValueValidator(Decimal("0.00"))
+                        ],
+                    ),
+                ),
+                ("problem", models.TextField()),
+                ("audience", models.TextField(blank=True)),
+                ("product", models.CharField(blank=True, max_length=255)),
+                ("expected_outcome", models.CharField(blank=True, max_length=255)),
+                ("context", models.TextField(blank=True)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("new", "New"),
+                            ("under_review", "Under Review"),
+                            ("approved", "Approved"),
+                            ("rejected", "Rejected"),
+                            ("converted", "Converted"),
+                        ],
+                        default="new",
+                        max_length=30,
+                    ),
+                ),
+                ("review_note", models.TextField(blank=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "branch",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="campaign_requests",
+                        to="user.branch",
+                    ),
+                ),
+                (
+                    "converted_campaign",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="source_requests",
+                        to="services.marketingcampaign",
+                    ),
+                ),
+                (
+                    "requester",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="campaign_requests",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-created_at'],
-                'indexes': [models.Index(fields=['status', '-created_at'], name='services_ca_status_0849d0_idx'), models.Index(fields=['priority'], name='services_ca_priorit_300493_idx'), models.Index(fields=['branch', 'division'], name='services_ca_branch__2fb1a4_idx')],
+                "ordering": ["-created_at"],
+                "indexes": [
+                    models.Index(
+                        fields=["status", "-created_at"],
+                        name="services_ca_status_0849d0_idx",
+                    ),
+                    models.Index(
+                        fields=["priority"], name="services_ca_priorit_300493_idx"
+                    ),
+                    models.Index(
+                        fields=["branch", "division"],
+                        name="services_ca_branch__2fb1a4_idx",
+                    ),
+                ],
             },
         ),
         migrations.CreateModel(
-            name='CampaignRisk',
+            name="CampaignRisk",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('record_type', models.CharField(choices=[('risk', 'Risk'), ('blocker', 'Blocker'), ('issue', 'Issue'), ('change_request', 'Change Request'), ('dependency', 'Dependency'), ('assumption', 'Assumption')], default='risk', max_length=30)),
-                ('severity', models.CharField(choices=[('low', 'Low'), ('medium', 'Medium'), ('high', 'High'), ('critical', 'Critical')], default='medium', max_length=20)),
-                ('title', models.TextField()),
-                ('owner_name', models.CharField(blank=True, max_length=120)),
-                ('due_date', models.DateField(blank=True, null=True)),
-                ('mitigation', models.TextField(blank=True)),
-                ('impact', models.TextField(blank=True)),
-                ('approver', models.CharField(blank=True, max_length=120)),
-                ('status', models.CharField(choices=[('open', 'Open'), ('monitoring', 'Monitoring'), ('approved', 'Approved'), ('rejected', 'Rejected'), ('closed', 'Closed')], default='open', max_length=20)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('campaign', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='workspace_risks', to='services.marketingcampaign')),
-                ('created_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='created_campaign_risks', to=settings.AUTH_USER_MODEL)),
-                ('owner', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='campaign_risks', to='user.employee')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "record_type",
+                    models.CharField(
+                        choices=[
+                            ("risk", "Risk"),
+                            ("blocker", "Blocker"),
+                            ("issue", "Issue"),
+                            ("change_request", "Change Request"),
+                            ("dependency", "Dependency"),
+                            ("assumption", "Assumption"),
+                        ],
+                        default="risk",
+                        max_length=30,
+                    ),
+                ),
+                (
+                    "severity",
+                    models.CharField(
+                        choices=[
+                            ("low", "Low"),
+                            ("medium", "Medium"),
+                            ("high", "High"),
+                            ("critical", "Critical"),
+                        ],
+                        default="medium",
+                        max_length=20,
+                    ),
+                ),
+                ("title", models.TextField()),
+                ("owner_name", models.CharField(blank=True, max_length=120)),
+                ("due_date", models.DateField(blank=True, null=True)),
+                ("mitigation", models.TextField(blank=True)),
+                ("impact", models.TextField(blank=True)),
+                ("approver", models.CharField(blank=True, max_length=120)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("open", "Open"),
+                            ("monitoring", "Monitoring"),
+                            ("approved", "Approved"),
+                            ("rejected", "Rejected"),
+                            ("closed", "Closed"),
+                        ],
+                        default="open",
+                        max_length=20,
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "campaign",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="workspace_risks",
+                        to="services.marketingcampaign",
+                    ),
+                ),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="created_campaign_risks",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "owner",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="campaign_risks",
+                        to="user.employee",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-created_at'],
-                'indexes': [models.Index(fields=['campaign', 'status'], name='services_ca_campaig_44a288_idx'), models.Index(fields=['record_type'], name='services_ca_record__9b74f4_idx'), models.Index(fields=['severity'], name='services_ca_severit_9b0550_idx')],
+                "ordering": ["-created_at"],
+                "indexes": [
+                    models.Index(
+                        fields=["campaign", "status"],
+                        name="services_ca_campaig_44a288_idx",
+                    ),
+                    models.Index(
+                        fields=["record_type"], name="services_ca_record__9b74f4_idx"
+                    ),
+                    models.Index(
+                        fields=["severity"], name="services_ca_severit_9b0550_idx"
+                    ),
+                ],
             },
         ),
         migrations.CreateModel(
-            name='CampaignTask',
+            name="CampaignTask",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title', models.CharField(max_length=255)),
-                ('description', models.TextField(blank=True)),
-                ('owner_name', models.CharField(blank=True, max_length=120)),
-                ('due_date', models.DateField(blank=True, null=True)),
-                ('status', models.CharField(choices=[('todo', 'To Do'), ('in_progress', 'In Progress'), ('review', 'Review'), ('done', 'Done'), ('blocked', 'Blocked')], default='todo', max_length=20)),
-                ('priority', models.CharField(choices=[('low', 'Low'), ('medium', 'Medium'), ('high', 'High'), ('critical', 'Critical')], default='medium', max_length=20)),
-                ('completed_at', models.DateTimeField(blank=True, null=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('campaign', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='workspace_tasks', to='services.marketingcampaign')),
-                ('created_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='created_campaign_tasks', to=settings.AUTH_USER_MODEL)),
-                ('owner', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='campaign_tasks', to='user.employee')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("title", models.CharField(max_length=255)),
+                ("description", models.TextField(blank=True)),
+                ("owner_name", models.CharField(blank=True, max_length=120)),
+                ("due_date", models.DateField(blank=True, null=True)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("todo", "To Do"),
+                            ("in_progress", "In Progress"),
+                            ("review", "Review"),
+                            ("done", "Done"),
+                            ("blocked", "Blocked"),
+                        ],
+                        default="todo",
+                        max_length=20,
+                    ),
+                ),
+                (
+                    "priority",
+                    models.CharField(
+                        choices=[
+                            ("low", "Low"),
+                            ("medium", "Medium"),
+                            ("high", "High"),
+                            ("critical", "Critical"),
+                        ],
+                        default="medium",
+                        max_length=20,
+                    ),
+                ),
+                ("completed_at", models.DateTimeField(blank=True, null=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "campaign",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="workspace_tasks",
+                        to="services.marketingcampaign",
+                    ),
+                ),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="created_campaign_tasks",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "owner",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="campaign_tasks",
+                        to="user.employee",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['due_date', '-created_at'],
-                'indexes': [models.Index(fields=['campaign', 'status'], name='services_ca_campaig_fc78a4_idx'), models.Index(fields=['owner', 'due_date'], name='services_ca_owner_i_723cc7_idx')],
+                "ordering": ["due_date", "-created_at"],
+                "indexes": [
+                    models.Index(
+                        fields=["campaign", "status"],
+                        name="services_ca_campaig_fc78a4_idx",
+                    ),
+                    models.Index(
+                        fields=["owner", "due_date"],
+                        name="services_ca_owner_i_723cc7_idx",
+                    ),
+                ],
             },
         ),
         migrations.CreateModel(
-            name='CampaignUpdate',
+            name="CampaignUpdate",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('update_type', models.CharField(choices=[('progress', 'Progress'), ('result', 'Result'), ('blocker', 'Blocker'), ('decision_request', 'Decision Request'), ('insight', 'Insight'), ('handover', 'Handover')], default='progress', max_length=30)),
-                ('update_date', models.DateField()),
-                ('text', models.TextField()),
-                ('blocker', models.TextField(blank=True)),
-                ('next_action', models.CharField(blank=True, max_length=255)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('author', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='campaign_updates', to=settings.AUTH_USER_MODEL)),
-                ('campaign', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='workspace_updates', to='services.marketingcampaign')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "update_type",
+                    models.CharField(
+                        choices=[
+                            ("progress", "Progress"),
+                            ("result", "Result"),
+                            ("blocker", "Blocker"),
+                            ("decision_request", "Decision Request"),
+                            ("insight", "Insight"),
+                            ("handover", "Handover"),
+                        ],
+                        default="progress",
+                        max_length=30,
+                    ),
+                ),
+                ("update_date", models.DateField()),
+                ("text", models.TextField()),
+                ("blocker", models.TextField(blank=True)),
+                ("next_action", models.CharField(blank=True, max_length=255)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "author",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="campaign_updates",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "campaign",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="workspace_updates",
+                        to="services.marketingcampaign",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-update_date', '-created_at'],
-                'indexes': [models.Index(fields=['campaign', '-update_date'], name='services_ca_campaig_9d2ee5_idx'), models.Index(fields=['update_type'], name='services_ca_update__d6e4f4_idx')],
+                "ordering": ["-update_date", "-created_at"],
+                "indexes": [
+                    models.Index(
+                        fields=["campaign", "-update_date"],
+                        name="services_ca_campaig_9d2ee5_idx",
+                    ),
+                    models.Index(
+                        fields=["update_type"], name="services_ca_update__d6e4f4_idx"
+                    ),
+                ],
             },
         ),
     ]

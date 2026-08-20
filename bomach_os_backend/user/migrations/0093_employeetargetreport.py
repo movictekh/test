@@ -10,28 +10,97 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('user', '0092_rolereportingline'),
+        ("user", "0092_rolereportingline"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='EmployeeTargetReport',
+            name="EmployeeTargetReport",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='When this record was created')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text='When this record was last updated')),
-                ('summary', models.TextField()),
-                ('progress_value', models.DecimalField(decimal_places=2, max_digits=12, validators=[django.core.validators.MinValueValidator(Decimal('0.01'))])),
-                ('status', models.CharField(choices=[('submitted', 'Submitted'), ('approved', 'Approved'), ('rejected', 'Rejected')], default='submitted', max_length=20)),
-                ('reviewed_at', models.DateTimeField(blank=True, null=True)),
-                ('rejection_reason', models.TextField(blank=True, default='')),
-                ('employee_target', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='progress_reports', to='user.employeetarget')),
-                ('reviewed_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='reviewed_target_reports', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, help_text="When this record was created"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, help_text="When this record was last updated"
+                    ),
+                ),
+                ("summary", models.TextField()),
+                (
+                    "progress_value",
+                    models.DecimalField(
+                        decimal_places=2,
+                        max_digits=12,
+                        validators=[
+                            django.core.validators.MinValueValidator(Decimal("0.01"))
+                        ],
+                    ),
+                ),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("submitted", "Submitted"),
+                            ("approved", "Approved"),
+                            ("rejected", "Rejected"),
+                        ],
+                        default="submitted",
+                        max_length=20,
+                    ),
+                ),
+                ("reviewed_at", models.DateTimeField(blank=True, null=True)),
+                ("rejection_reason", models.TextField(blank=True, default="")),
+                (
+                    "employee_target",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="progress_reports",
+                        to="user.employeetarget",
+                    ),
+                ),
+                (
+                    "reviewed_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="reviewed_target_reports",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'ordering': ['created_at', 'id'],
-                'indexes': [models.Index(fields=['employee_target', 'status'], name='user_employ_employe_9f0655_idx'), models.Index(fields=['status', 'created_at'], name='user_employ_status_8522b7_idx')],
-                'constraints': [models.UniqueConstraint(condition=models.Q(('status', 'submitted')), fields=('employee_target',), name='uniq_submitted_report_per_target')],
+                "ordering": ["created_at", "id"],
+                "indexes": [
+                    models.Index(
+                        fields=["employee_target", "status"],
+                        name="user_employ_employe_9f0655_idx",
+                    ),
+                    models.Index(
+                        fields=["status", "created_at"],
+                        name="user_employ_status_8522b7_idx",
+                    ),
+                ],
+                "constraints": [
+                    models.UniqueConstraint(
+                        condition=models.Q(("status", "submitted")),
+                        fields=("employee_target",),
+                        name="uniq_submitted_report_per_target",
+                    )
+                ],
             },
         ),
     ]

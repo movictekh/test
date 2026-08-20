@@ -32,6 +32,7 @@ class BiometricClockInRequest(Schema):
 
 class BiometricClockInResponse(Schema):
     """Response after successful biometric clock-in/out"""
+
     employee_id: int
     employee_name: str
     attendance_type: str
@@ -43,6 +44,7 @@ class BiometricClockInResponse(Schema):
 
 class BiometricStatusResponse(Schema):
     """Check biometric status for current user"""
+
     biometric_enabled: bool
     has_fingerprint: bool
     has_face: bool
@@ -50,11 +52,13 @@ class BiometricStatusResponse(Schema):
 
 class RemoveBiometricRequest(Schema):
     """Remove biometric data"""
+
     biometric_type: str  # "fingerprint", "face", or "all"
 
 
 class AttendanceRecordResponse(Schema):
     """Single attendance record"""
+
     id: int
     attendance_type: str
     timestamp: datetime
@@ -67,6 +71,7 @@ class AttendanceRecordResponse(Schema):
 
 class AttendanceListResponse(Schema):
     """List of attendance records"""
+
     success: bool
     message: str
     records: list
@@ -75,8 +80,10 @@ class AttendanceListResponse(Schema):
 
 # ── Work Location Schemas ─────────────────────────────────────────────
 
+
 class WorkLocationSchema(Schema):
     """Response schema for work location"""
+
     id: int
     name: str
     location_type: str
@@ -100,6 +107,7 @@ class WorkLocationSchema(Schema):
 
 class WorkLocationListResponse(Schema):
     """List of work locations"""
+
     locations: list[WorkLocationSchema]
     total: int
 
@@ -107,6 +115,7 @@ class WorkLocationListResponse(Schema):
 class SubmitWorkLocationRequest(Schema):
     """Employee-facing submission — always creates a PENDING proposal.
     allowed_radius_meters is NOT accepted here (admin-only field)."""
+
     name: str
     location_type: str  # "branch", "remote", "site"
     latitude: float
@@ -119,6 +128,7 @@ class SubmitWorkLocationRequest(Schema):
 class AdminCreateWorkLocationRequest(Schema):
     """Admin-facing direct whitelist — creates a location already APPROVED
     for a target employee. allowed_radius_meters is required."""
+
     name: str
     location_type: str
     latitude: float
@@ -133,6 +143,7 @@ class AdminCreateWorkLocationRequest(Schema):
 class AdminUpdateWorkLocationRequest(Schema):
     """Admin-only edit of an existing location. Radius and active flag are
     exclusively managed here."""
+
     name: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
@@ -145,22 +156,26 @@ class AdminUpdateWorkLocationRequest(Schema):
 class ApproveWorkLocationRequest(Schema):
     """Admin approval of a pending proposal. Admin may set radius here if it
     wasn't set already."""
+
     allowed_radius_meters: Optional[int] = None
 
 
 class RejectWorkLocationRequest(Schema):
     """Admin rejection of a pending proposal."""
+
     reason: str
 
 
 class LocationOverrideRequest(Schema):
     """Request to override location for an attendance record (admin)"""
+
     attendance_id: int
     reason: str
 
 
 class LocationStatusResponse(Schema):
     """Response for location verification status"""
+
     is_valid: bool
     location_name: Optional[str] = None
     distance_meters: Optional[float] = None
@@ -170,6 +185,7 @@ class LocationStatusResponse(Schema):
 
 class LocationVerificationError(Schema):
     """Error response when location verification fails"""
+
     detail: str
     is_within_range: bool = False
     nearest_location: Optional[str] = None

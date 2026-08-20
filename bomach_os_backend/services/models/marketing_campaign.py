@@ -9,159 +9,146 @@ class MarketingCampaign(models.Model):
     """
     Model to track marketing campaign performance
     """
-    
+
     STATUS_CHOICES = [
-        ('active', 'Active'),
-        ('paused', 'Paused'),
-        ('completed', 'Completed'),
-        ('draft', 'Draft'),
+        ("active", "Active"),
+        ("paused", "Paused"),
+        ("completed", "Completed"),
+        ("draft", "Draft"),
     ]
-    
+
     CHANNEL_CHOICES = [
-        ('social_media', 'Social Media'),
-        ('email', 'Email'),
-        ('search', 'Search'),
-        ('display', 'Display'),
-        ('video', 'Video'),
-        ('other', 'Other'),
+        ("social_media", "Social Media"),
+        ("email", "Email"),
+        ("search", "Search"),
+        ("display", "Display"),
+        ("video", "Video"),
+        ("other", "Other"),
     ]
-    
+
     # Campaign Basic Information
     name = models.CharField(
         max_length=255,
         verbose_name=_("Campaign Name"),
-        help_text=_("Name of the marketing campaign")
+        help_text=_("Name of the marketing campaign"),
     )
-    
+
     description = models.TextField(
         blank=True,
         null=True,
         verbose_name=_("Description"),
-        help_text=_("Brief description of the campaign target audience or purpose")
+        help_text=_("Brief description of the campaign target audience or purpose"),
     )
-    
+
     status = models.CharField(
-        max_length=20,
-        choices=STATUS_CHOICES,
-        default='draft',
-        verbose_name=_("Status")
+        max_length=20, choices=STATUS_CHOICES, default="draft", verbose_name=_("Status")
     )
-    
+
     channel = models.CharField(
-        max_length=50,
-        choices=CHANNEL_CHOICES,
-        verbose_name=_("Marketing Channel")
+        max_length=50, choices=CHANNEL_CHOICES, verbose_name=_("Marketing Channel")
     )
-    
+
     # Performance Metrics
     impressions = models.PositiveIntegerField(
         default=0,
         verbose_name=_("Impressions"),
-        help_text=_("Total number of times the campaign was displayed")
+        help_text=_("Total number of times the campaign was displayed"),
     )
-    
+
     ctr = models.DecimalField(
         max_digits=5,
         decimal_places=2,
-        default=Decimal('0.00'),
+        default=Decimal("0.00"),
         validators=[MinValueValidator(0), MaxValueValidator(100)],
         verbose_name=_("CTR (%)"),
-        help_text=_("Click-through rate as a percentage")
+        help_text=_("Click-through rate as a percentage"),
     )
-    
+
     roi = models.DecimalField(
         max_digits=6,
         decimal_places=2,
-        default=Decimal('0.00'),
+        default=Decimal("0.00"),
         verbose_name=_("ROI (%)"),
-        help_text=_("Return on Investment as a percentage")
+        help_text=_("Return on Investment as a percentage"),
     )
-    
+
     # Progress/Completion
     progress_percentage = models.DecimalField(
         max_digits=5,
         decimal_places=2,
-        default=Decimal('0.00'),
+        default=Decimal("0.00"),
         validators=[MinValueValidator(0), MaxValueValidator(100)],
         verbose_name=_("Progress (%)"),
-        help_text=_("Campaign completion percentage")
+        help_text=_("Campaign completion percentage"),
     )
-    
+
     # Budget Information
     budget_allocated = models.DecimalField(
         max_digits=12,
         decimal_places=2,
-        validators=[MinValueValidator(Decimal('0.00'))],
+        validators=[MinValueValidator(Decimal("0.00"))],
         verbose_name=_("Budget Allocated"),
-        help_text=_("Total budget allocated for the campaign")
+        help_text=_("Total budget allocated for the campaign"),
     )
 
     budget_spent = models.DecimalField(
         max_digits=12,
         decimal_places=2,
-        default=Decimal('0.00'),
-        validators=[MinValueValidator(Decimal('0.00'))],
+        default=Decimal("0.00"),
+        validators=[MinValueValidator(Decimal("0.00"))],
         verbose_name=_("Budget Spent"),
-        help_text=_("Amount spent so far")
+        help_text=_("Amount spent so far"),
     )
 
     # Timestamps
     created_at = models.DateTimeField(
         auto_now_add=True,
     )
-    
+
     updated_at = models.DateTimeField(
         auto_now=True,
     )
-    
-    start_date = models.DateField(
-        blank=True,
-        null=True,
-        verbose_name=_("Start Date")
-    )
-    
-    end_date = models.DateField(
-        blank=True,
-        null=True,
-        verbose_name=_("End Date")
-    )
-    
+
+    start_date = models.DateField(blank=True, null=True, verbose_name=_("Start Date"))
+
+    end_date = models.DateField(blank=True, null=True, verbose_name=_("End Date"))
+
     class Meta:
         verbose_name = _("Marketing Campaign")
         verbose_name_plural = _("Marketing Campaigns")
-        ordering = ['-created_at']
+        ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=['status', '-created_at']),
-            models.Index(fields=['channel']),
+            models.Index(fields=["status", "-created_at"]),
+            models.Index(fields=["channel"]),
         ]
-    
+
     def __str__(self):
         return f"{self.name} - {self.get_status_display()}"
-    
+
     @property
     def budget_remaining(self):
         """Calculate remaining budget"""
         return self.budget_allocated - self.budget_spent
-    
+
     @property
     def budget_utilization_percentage(self):
         """Calculate budget utilization percentage"""
         if self.budget_allocated > 0:
             return (self.budget_spent / self.budget_allocated) * 100
         return 0
-    
+
     @property
     def is_over_budget(self):
         """Check if campaign is over budget"""
         return self.budget_spent > self.budget_allocated
-    
+
     @property
     def clicks(self):
         """Calculate total clicks based on impressions and CTR"""
         if self.impressions > 0 and self.ctr > 0:
             return int((self.ctr / 100) * self.impressions)
         return 0
-    
+
     def save(self, *args, **kwargs):
         """Override save to calculate progress based on budget spent"""
         if self.budget_allocated > 0:
@@ -174,68 +161,70 @@ class MarketingCampaign(models.Model):
 
 class CampaignRequest(models.Model):
     STATUS_CHOICES = [
-        ('new', 'New'),
-        ('under_review', 'Under Review'),
-        ('approved', 'Approved'),
-        ('rejected', 'Rejected'),
-        ('converted', 'Converted'),
+        ("new", "New"),
+        ("under_review", "Under Review"),
+        ("approved", "Approved"),
+        ("rejected", "Rejected"),
+        ("converted", "Converted"),
     ]
 
     PRIORITY_CHOICES = [
-        ('low', 'Low'),
-        ('medium', 'Medium'),
-        ('high', 'High'),
-        ('critical', 'Critical'),
+        ("low", "Low"),
+        ("medium", "Medium"),
+        ("high", "High"),
+        ("critical", "Critical"),
     ]
 
     title = models.CharField(max_length=255)
     requester = models.ForeignKey(
-        'user.User',
+        "user.User",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='campaign_requests',
+        related_name="campaign_requests",
     )
     department = models.CharField(max_length=120, blank=True)
     division = models.CharField(max_length=30, blank=True)
     branch = models.ForeignKey(
-        'user.Branch',
+        "user.Branch",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='campaign_requests',
+        related_name="campaign_requests",
     )
     needed_by = models.DateField(null=True, blank=True)
-    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='medium')
+    priority = models.CharField(
+        max_length=20, choices=PRIORITY_CHOICES, default="medium"
+    )
     proposed_budget = models.DecimalField(
         max_digits=12,
         decimal_places=2,
-        default=Decimal('0.00'),
-        validators=[MinValueValidator(Decimal('0.00'))],
+        default=Decimal("0.00"),
+        validators=[MinValueValidator(Decimal("0.00"))],
     )
     problem = models.TextField()
     audience = models.TextField(blank=True)
     product = models.CharField(max_length=255, blank=True)
     expected_outcome = models.CharField(max_length=255, blank=True)
     context = models.TextField(blank=True)
-    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='new')
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default="new")
     review_note = models.TextField(blank=True)
     converted_campaign = models.ForeignKey(
         MarketingCampaign,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='source_requests',
+        related_name="source_requests",
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=['status', '-created_at']),
-            models.Index(fields=['priority']),
-            models.Index(fields=['branch', 'division']),
+            models.Index(fields=["status", "-created_at"]),
+            models.Index(fields=["priority"]),
+            models.Index(fields=["branch", "division"]),
         ]
 
     def __str__(self):
@@ -244,11 +233,11 @@ class CampaignRequest(models.Model):
 
 class CampaignTask(models.Model):
     STATUS_CHOICES = [
-        ('todo', 'To Do'),
-        ('in_progress', 'In Progress'),
-        ('review', 'Review'),
-        ('done', 'Done'),
-        ('blocked', 'Blocked'),
+        ("todo", "To Do"),
+        ("in_progress", "In Progress"),
+        ("review", "Review"),
+        ("done", "Done"),
+        ("blocked", "Blocked"),
     ]
 
     PRIORITY_CHOICES = CampaignRequest.PRIORITY_CHOICES
@@ -256,37 +245,39 @@ class CampaignTask(models.Model):
     campaign = models.ForeignKey(
         MarketingCampaign,
         on_delete=models.CASCADE,
-        related_name='workspace_tasks',
+        related_name="workspace_tasks",
     )
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     owner = models.ForeignKey(
-        'user.Employee',
+        "user.Employee",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='campaign_tasks',
+        related_name="campaign_tasks",
     )
     owner_name = models.CharField(max_length=120, blank=True)
     due_date = models.DateField(null=True, blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='todo')
-    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='medium')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="todo")
+    priority = models.CharField(
+        max_length=20, choices=PRIORITY_CHOICES, default="medium"
+    )
     completed_at = models.DateTimeField(null=True, blank=True)
     created_by = models.ForeignKey(
-        'user.User',
+        "user.User",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='created_campaign_tasks',
+        related_name="created_campaign_tasks",
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['due_date', '-created_at']
+        ordering = ["due_date", "-created_at"]
         indexes = [
-            models.Index(fields=['campaign', 'status']),
-            models.Index(fields=['owner', 'due_date']),
+            models.Index(fields=["campaign", "status"]),
+            models.Index(fields=["owner", "due_date"]),
         ]
 
     def __str__(self):
@@ -295,39 +286,41 @@ class CampaignTask(models.Model):
 
 class CampaignUpdate(models.Model):
     UPDATE_TYPE_CHOICES = [
-        ('progress', 'Progress'),
-        ('result', 'Result'),
-        ('blocker', 'Blocker'),
-        ('decision_request', 'Decision Request'),
-        ('insight', 'Insight'),
-        ('handover', 'Handover'),
+        ("progress", "Progress"),
+        ("result", "Result"),
+        ("blocker", "Blocker"),
+        ("decision_request", "Decision Request"),
+        ("insight", "Insight"),
+        ("handover", "Handover"),
     ]
 
     campaign = models.ForeignKey(
         MarketingCampaign,
         on_delete=models.CASCADE,
-        related_name='workspace_updates',
+        related_name="workspace_updates",
     )
-    update_type = models.CharField(max_length=30, choices=UPDATE_TYPE_CHOICES, default='progress')
+    update_type = models.CharField(
+        max_length=30, choices=UPDATE_TYPE_CHOICES, default="progress"
+    )
     update_date = models.DateField()
     text = models.TextField()
     blocker = models.TextField(blank=True)
     next_action = models.CharField(max_length=255, blank=True)
     author = models.ForeignKey(
-        'user.User',
+        "user.User",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='campaign_updates',
+        related_name="campaign_updates",
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-update_date', '-created_at']
+        ordering = ["-update_date", "-created_at"]
         indexes = [
-            models.Index(fields=['campaign', '-update_date']),
-            models.Index(fields=['update_type']),
+            models.Index(fields=["campaign", "-update_date"]),
+            models.Index(fields=["update_type"]),
         ]
 
     def __str__(self):
@@ -336,54 +329,58 @@ class CampaignUpdate(models.Model):
 
 class CampaignExpense(models.Model):
     STATUS_CHOICES = [
-        ('requested', 'Requested'),
-        ('approved', 'Approved'),
-        ('paid', 'Paid'),
-        ('rejected', 'Rejected'),
+        ("requested", "Requested"),
+        ("approved", "Approved"),
+        ("paid", "Paid"),
+        ("rejected", "Rejected"),
     ]
 
     CATEGORY_CHOICES = [
-        ('paid_media', 'Paid Media'),
-        ('creative_production', 'Creative Production'),
-        ('partners', 'Partners / Influencers / Realtors'),
-        ('offline_media', 'Offline Media / Activation'),
-        ('tools', 'Tools / Technology'),
-        ('contingency', 'Contingency'),
-        ('other', 'Other'),
+        ("paid_media", "Paid Media"),
+        ("creative_production", "Creative Production"),
+        ("partners", "Partners / Influencers / Realtors"),
+        ("offline_media", "Offline Media / Activation"),
+        ("tools", "Tools / Technology"),
+        ("contingency", "Contingency"),
+        ("other", "Other"),
     ]
 
     campaign = models.ForeignKey(
         MarketingCampaign,
         on_delete=models.CASCADE,
-        related_name='workspace_expenses',
+        related_name="workspace_expenses",
     )
     expense_date = models.DateField()
-    category = models.CharField(max_length=40, choices=CATEGORY_CHOICES, default='other')
+    category = models.CharField(
+        max_length=40, choices=CATEGORY_CHOICES, default="other"
+    )
     vendor = models.CharField(max_length=160)
     amount = models.DecimalField(
         max_digits=12,
         decimal_places=2,
-        validators=[MinValueValidator(Decimal('0.00'))],
+        validators=[MinValueValidator(Decimal("0.00"))],
     )
     description = models.TextField(blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='requested')
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default="requested"
+    )
     reference = models.CharField(max_length=160, blank=True)
     created_by = models.ForeignKey(
-        'user.User',
+        "user.User",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='created_campaign_expenses',
+        related_name="created_campaign_expenses",
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-expense_date', '-created_at']
+        ordering = ["-expense_date", "-created_at"]
         indexes = [
-            models.Index(fields=['campaign', '-expense_date']),
-            models.Index(fields=['status']),
-            models.Index(fields=['category']),
+            models.Index(fields=["campaign", "-expense_date"]),
+            models.Index(fields=["status"]),
+            models.Index(fields=["category"]),
         ]
 
     def __str__(self):
@@ -392,71 +389,73 @@ class CampaignExpense(models.Model):
 
 class CampaignAsset(models.Model):
     STATUS_CHOICES = [
-        ('briefed', 'Briefed'),
-        ('in_progress', 'In Progress'),
-        ('review', 'Review'),
-        ('approved', 'Approved'),
-        ('live', 'Live'),
-        ('rejected', 'Rejected'),
+        ("briefed", "Briefed"),
+        ("in_progress", "In Progress"),
+        ("review", "Review"),
+        ("approved", "Approved"),
+        ("live", "Live"),
+        ("rejected", "Rejected"),
     ]
 
     ASSET_TYPE_CHOICES = [
-        ('video', 'Video'),
-        ('graphic', 'Graphic'),
-        ('carousel', 'Carousel'),
-        ('landing_page', 'Landing Page'),
-        ('email', 'Email'),
-        ('whatsapp_template', 'WhatsApp Template'),
-        ('radio_script', 'Radio Script'),
-        ('billboard_artwork', 'Billboard Artwork'),
-        ('brochure', 'Brochure / PDF'),
-        ('sales_kit', 'Sales Kit'),
-        ('event_material', 'Event Material'),
-        ('other', 'Other'),
+        ("video", "Video"),
+        ("graphic", "Graphic"),
+        ("carousel", "Carousel"),
+        ("landing_page", "Landing Page"),
+        ("email", "Email"),
+        ("whatsapp_template", "WhatsApp Template"),
+        ("radio_script", "Radio Script"),
+        ("billboard_artwork", "Billboard Artwork"),
+        ("brochure", "Brochure / PDF"),
+        ("sales_kit", "Sales Kit"),
+        ("event_material", "Event Material"),
+        ("other", "Other"),
     ]
 
     campaign = models.ForeignKey(
         MarketingCampaign,
         on_delete=models.CASCADE,
-        related_name='workspace_assets',
+        related_name="workspace_assets",
     )
     name = models.CharField(max_length=255)
-    asset_type = models.CharField(max_length=40, choices=ASSET_TYPE_CHOICES, default='other')
+    asset_type = models.CharField(
+        max_length=40, choices=ASSET_TYPE_CHOICES, default="other"
+    )
     owner = models.ForeignKey(
-        'user.Employee',
+        "user.Employee",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='campaign_assets',
+        related_name="campaign_assets",
     )
     owner_name = models.CharField(max_length=120, blank=True)
     due_date = models.DateField(null=True, blank=True)
-    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='briefed')
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default="briefed")
     description = models.TextField(blank=True)
     specifications = models.TextField(blank=True)
     approval_notes = models.TextField(blank=True)
     content = models.ForeignKey(
-        'services.Content',
+        "services.Content",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='campaign_assets',
+        related_name="campaign_assets",
     )
     created_by = models.ForeignKey(
-        'user.User',
+        "user.User",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='created_campaign_assets',
+        related_name="created_campaign_assets",
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['due_date', '-created_at']
+        ordering = ["due_date", "-created_at"]
         indexes = [
-            models.Index(fields=['campaign', 'status']),
-            models.Index(fields=['asset_type']),
+            models.Index(fields=["campaign", "status"]),
+            models.Index(fields=["asset_type"]),
         ]
 
     def __str__(self):
@@ -465,66 +464,68 @@ class CampaignAsset(models.Model):
 
 class CampaignRisk(models.Model):
     TYPE_CHOICES = [
-        ('risk', 'Risk'),
-        ('blocker', 'Blocker'),
-        ('issue', 'Issue'),
-        ('change_request', 'Change Request'),
-        ('dependency', 'Dependency'),
-        ('assumption', 'Assumption'),
+        ("risk", "Risk"),
+        ("blocker", "Blocker"),
+        ("issue", "Issue"),
+        ("change_request", "Change Request"),
+        ("dependency", "Dependency"),
+        ("assumption", "Assumption"),
     ]
 
     SEVERITY_CHOICES = [
-        ('low', 'Low'),
-        ('medium', 'Medium'),
-        ('high', 'High'),
-        ('critical', 'Critical'),
+        ("low", "Low"),
+        ("medium", "Medium"),
+        ("high", "High"),
+        ("critical", "Critical"),
     ]
 
     STATUS_CHOICES = [
-        ('open', 'Open'),
-        ('monitoring', 'Monitoring'),
-        ('approved', 'Approved'),
-        ('rejected', 'Rejected'),
-        ('closed', 'Closed'),
+        ("open", "Open"),
+        ("monitoring", "Monitoring"),
+        ("approved", "Approved"),
+        ("rejected", "Rejected"),
+        ("closed", "Closed"),
     ]
 
     campaign = models.ForeignKey(
         MarketingCampaign,
         on_delete=models.CASCADE,
-        related_name='workspace_risks',
+        related_name="workspace_risks",
     )
-    record_type = models.CharField(max_length=30, choices=TYPE_CHOICES, default='risk')
-    severity = models.CharField(max_length=20, choices=SEVERITY_CHOICES, default='medium')
+    record_type = models.CharField(max_length=30, choices=TYPE_CHOICES, default="risk")
+    severity = models.CharField(
+        max_length=20, choices=SEVERITY_CHOICES, default="medium"
+    )
     title = models.TextField()
     owner = models.ForeignKey(
-        'user.Employee',
+        "user.Employee",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='campaign_risks',
+        related_name="campaign_risks",
     )
     owner_name = models.CharField(max_length=120, blank=True)
     due_date = models.DateField(null=True, blank=True)
     mitigation = models.TextField(blank=True)
     impact = models.TextField(blank=True)
     approver = models.CharField(max_length=120, blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="open")
     created_by = models.ForeignKey(
-        'user.User',
+        "user.User",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='created_campaign_risks',
+        related_name="created_campaign_risks",
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=['campaign', 'status']),
-            models.Index(fields=['record_type']),
-            models.Index(fields=['severity']),
+            models.Index(fields=["campaign", "status"]),
+            models.Index(fields=["record_type"]),
+            models.Index(fields=["severity"]),
         ]
 
     def __str__(self):
@@ -535,7 +536,7 @@ class CampaignDecision(models.Model):
     campaign = models.ForeignKey(
         MarketingCampaign,
         on_delete=models.CASCADE,
-        related_name='workspace_decisions',
+        related_name="workspace_decisions",
     )
     decision_date = models.DateField()
     decision = models.TextField()
@@ -543,26 +544,26 @@ class CampaignDecision(models.Model):
     approver = models.CharField(max_length=120, blank=True)
     reason = models.TextField(blank=True)
     created_by = models.ForeignKey(
-        'user.User',
+        "user.User",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='created_campaign_decisions',
+        related_name="created_campaign_decisions",
     )
     source_meeting_context = models.ForeignKey(
-        'services.MarketingMeetingContext',
+        "services.MarketingMeetingContext",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='campaign_decisions',
+        related_name="campaign_decisions",
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-decision_date', '-created_at']
+        ordering = ["-decision_date", "-created_at"]
         indexes = [
-            models.Index(fields=['campaign', '-decision_date']),
+            models.Index(fields=["campaign", "-decision_date"]),
         ]
 
     def __str__(self):
@@ -571,35 +572,35 @@ class CampaignDecision(models.Model):
 
 class MarketingMeetingContext(models.Model):
     MEETING_TYPE_CHOICES = [
-        ('general_marketing', 'General Marketing'),
-        ('pre_campaign_planning', 'Pre-Campaign Planning'),
-        ('campaign_kickoff', 'Campaign Kickoff'),
-        ('creative_review', 'Creative Review'),
-        ('live_optimization_review', 'Live Optimization Review'),
-        ('sales_alignment', 'Sales Alignment'),
-        ('budget_review', 'Budget Review'),
-        ('partner_influencer_briefing', 'Partner / Influencer Briefing'),
-        ('post_campaign_analysis', 'Post-Campaign Analysis'),
-        ('crisis_issue', 'Crisis / Issue'),
-        ('one_on_one_coaching', 'One-on-One Coaching'),
+        ("general_marketing", "General Marketing"),
+        ("pre_campaign_planning", "Pre-Campaign Planning"),
+        ("campaign_kickoff", "Campaign Kickoff"),
+        ("creative_review", "Creative Review"),
+        ("live_optimization_review", "Live Optimization Review"),
+        ("sales_alignment", "Sales Alignment"),
+        ("budget_review", "Budget Review"),
+        ("partner_influencer_briefing", "Partner / Influencer Briefing"),
+        ("post_campaign_analysis", "Post-Campaign Analysis"),
+        ("crisis_issue", "Crisis / Issue"),
+        ("one_on_one_coaching", "One-on-One Coaching"),
     ]
 
     meeting = models.OneToOneField(
-        'user.Meeting',
+        "user.Meeting",
         on_delete=models.CASCADE,
-        related_name='marketing_context',
+        related_name="marketing_context",
     )
     campaign = models.ForeignKey(
         MarketingCampaign,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='marketing_meeting_contexts',
+        related_name="marketing_meeting_contexts",
     )
     meeting_type = models.CharField(
         max_length=50,
         choices=MEETING_TYPE_CHOICES,
-        default='general_marketing',
+        default="general_marketing",
     )
     facilitator = models.CharField(max_length=120, blank=True)
     recorder = models.CharField(max_length=120, blank=True)
@@ -609,10 +610,10 @@ class MarketingMeetingContext(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-meeting__meeting_date', '-meeting__meeting_time']
+        ordering = ["-meeting__meeting_date", "-meeting__meeting_time"]
         indexes = [
-            models.Index(fields=['campaign', 'meeting_type']),
-            models.Index(fields=['meeting_type']),
+            models.Index(fields=["campaign", "meeting_type"]),
+            models.Index(fields=["meeting_type"]),
         ]
 
     def __str__(self):
@@ -621,53 +622,55 @@ class MarketingMeetingContext(models.Model):
 
 class MarketingMeetingAction(models.Model):
     STATUS_CHOICES = [
-        ('open', 'Open'),
-        ('in_progress', 'In Progress'),
-        ('done', 'Done'),
-        ('cancelled', 'Cancelled'),
+        ("open", "Open"),
+        ("in_progress", "In Progress"),
+        ("done", "Done"),
+        ("cancelled", "Cancelled"),
     ]
 
     PRIORITY_CHOICES = [
-        ('low', 'Low'),
-        ('medium', 'Medium'),
-        ('high', 'High'),
-        ('critical', 'Critical'),
+        ("low", "Low"),
+        ("medium", "Medium"),
+        ("high", "High"),
+        ("critical", "Critical"),
     ]
 
     meeting_context = models.ForeignKey(
         MarketingMeetingContext,
         on_delete=models.CASCADE,
-        related_name='actions',
+        related_name="actions",
     )
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     owner = models.ForeignKey(
-        'user.Employee',
+        "user.Employee",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='marketing_meeting_actions',
+        related_name="marketing_meeting_actions",
     )
     owner_name = models.CharField(max_length=120, blank=True)
     due_date = models.DateField(null=True, blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')
-    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='medium')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="open")
+    priority = models.CharField(
+        max_length=20, choices=PRIORITY_CHOICES, default="medium"
+    )
     completed_at = models.DateTimeField(null=True, blank=True)
     created_by = models.ForeignKey(
-        'user.User',
+        "user.User",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='created_marketing_meeting_actions',
+        related_name="created_marketing_meeting_actions",
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['status', 'due_date', '-created_at']
+        ordering = ["status", "due_date", "-created_at"]
         indexes = [
-            models.Index(fields=['status', 'due_date']),
-            models.Index(fields=['priority']),
+            models.Index(fields=["status", "due_date"]),
+            models.Index(fields=["priority"]),
         ]
 
     def __str__(self):
@@ -676,87 +679,89 @@ class MarketingMeetingAction(models.Model):
 
 class TraditionalMediaPlacement(models.Model):
     PLACEMENT_TYPE_CHOICES = [
-        ('billboard', 'Billboard'),
-        ('radio', 'Radio'),
-        ('television', 'Television'),
-        ('led_screen', 'LED Screen'),
-        ('print_newspaper', 'Print / Newspaper'),
-        ('field_activation', 'Field Activation'),
-        ('branded_vehicle', 'Branded Vehicle'),
-        ('other', 'Other'),
+        ("billboard", "Billboard"),
+        ("radio", "Radio"),
+        ("television", "Television"),
+        ("led_screen", "LED Screen"),
+        ("print_newspaper", "Print / Newspaper"),
+        ("field_activation", "Field Activation"),
+        ("branded_vehicle", "Branded Vehicle"),
+        ("other", "Other"),
     ]
 
     OWNERSHIP_CHOICES = [
-        ('rented', 'Rented'),
-        ('company_owned', 'Company-owned'),
-        ('partnership', 'Partnership'),
+        ("rented", "Rented"),
+        ("company_owned", "Company-owned"),
+        ("partnership", "Partnership"),
     ]
 
     STATUS_CHOICES = [
-        ('active', 'Active'),
-        ('expired', 'Expired'),
-        ('archived', 'Archived'),
-        ('cancelled', 'Cancelled'),
+        ("active", "Active"),
+        ("expired", "Expired"),
+        ("archived", "Archived"),
+        ("cancelled", "Cancelled"),
     ]
 
     DIVISION_CHOICES = [
-        ('real_estate', 'Real Estate'),
-        ('engineering', 'Engineering'),
-        ('surveying', 'Land Surveying'),
-        ('benji', 'Benji'),
-        ('ict', 'ICT / Tech'),
-        ('agriculture', 'Agriculture'),
+        ("real_estate", "Real Estate"),
+        ("engineering", "Engineering"),
+        ("surveying", "Land Surveying"),
+        ("benji", "Benji"),
+        ("ict", "ICT / Tech"),
+        ("agriculture", "Agriculture"),
     ]
 
     placement_type = models.CharField(max_length=40, choices=PLACEMENT_TYPE_CHOICES)
     name = models.CharField(max_length=255)
     vendor = models.CharField(max_length=160, blank=True)
     location = models.CharField(max_length=255, blank=True)
-    ownership = models.CharField(max_length=30, choices=OWNERSHIP_CHOICES, default='rented')
+    ownership = models.CharField(
+        max_length=30, choices=OWNERSHIP_CHOICES, default="rented"
+    )
     amount_paid = models.DecimalField(
         max_digits=12,
         decimal_places=2,
-        default=Decimal('0.00'),
-        validators=[MinValueValidator(Decimal('0.00'))],
+        default=Decimal("0.00"),
+        validators=[MinValueValidator(Decimal("0.00"))],
     )
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField()
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="active")
     proof_url = models.URLField(max_length=1000, blank=True)
     campaign = models.ForeignKey(
         MarketingCampaign,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='traditional_media_placements',
+        related_name="traditional_media_placements",
     )
     branch = models.ForeignKey(
-        'user.Branch',
+        "user.Branch",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='traditional_media_placements',
+        related_name="traditional_media_placements",
     )
     division = models.CharField(max_length=30, choices=DIVISION_CHOICES, blank=True)
     notes = models.TextField(blank=True)
     created_by = models.ForeignKey(
-        'user.User',
+        "user.User",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='created_traditional_media_placements',
+        related_name="created_traditional_media_placements",
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['end_date', '-created_at']
+        ordering = ["end_date", "-created_at"]
         indexes = [
-            models.Index(fields=['placement_type', 'status']),
-            models.Index(fields=['ownership']),
-            models.Index(fields=['end_date']),
-            models.Index(fields=['campaign']),
-            models.Index(fields=['branch', 'division']),
+            models.Index(fields=["placement_type", "status"]),
+            models.Index(fields=["ownership"]),
+            models.Index(fields=["end_date"]),
+            models.Index(fields=["campaign"]),
+            models.Index(fields=["branch", "division"]),
         ]
 
     def __str__(self):
@@ -765,27 +770,27 @@ class TraditionalMediaPlacement(models.Model):
 
 class PartnerInvitation(models.Model):
     STATUS_CHOICES = [
-        ('sent', 'Sent'),
-        ('accepted', 'Accepted'),
-        ('expired', 'Expired'),
-        ('revoked', 'Revoked'),
+        ("sent", "Sent"),
+        ("accepted", "Accepted"),
+        ("expired", "Expired"),
+        ("revoked", "Revoked"),
     ]
 
     partner = models.ForeignKey(
-        'user.Partner',
+        "user.Partner",
         on_delete=models.CASCADE,
-        related_name='marketing_invitations',
+        related_name="marketing_invitations",
     )
     email = models.EmailField()
     token_hash = models.CharField(max_length=64, unique=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='sent')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="sent")
     invite_url = models.URLField(max_length=1000, blank=True)
     invited_by = models.ForeignKey(
-        'user.User',
+        "user.User",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='sent_partner_invitations',
+        related_name="sent_partner_invitations",
     )
     expires_at = models.DateTimeField()
     accepted_at = models.DateTimeField(null=True, blank=True)
@@ -794,11 +799,11 @@ class PartnerInvitation(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=['partner', 'status']),
-            models.Index(fields=['email']),
-            models.Index(fields=['expires_at']),
+            models.Index(fields=["partner", "status"]),
+            models.Index(fields=["email"]),
+            models.Index(fields=["expires_at"]),
         ]
 
     @property
@@ -811,62 +816,64 @@ class PartnerInvitation(models.Model):
 
 class PartnerTask(models.Model):
     PARTNER_TYPE_CHOICES = [
-        ('realtor', 'Realtor'),
-        ('influencer', 'Influencer'),
-        ('institutional_partner', 'Institutional Partner'),
-        ('external_partner', 'External Partner'),
+        ("realtor", "Realtor"),
+        ("influencer", "Influencer"),
+        ("institutional_partner", "Institutional Partner"),
+        ("external_partner", "External Partner"),
     ]
 
     STATUS_CHOICES = [
-        ('assigned', 'Assigned'),
-        ('in_progress', 'In Progress'),
-        ('report_submitted', 'Report Submitted'),
-        ('approved', 'Approved'),
-        ('cancelled', 'Cancelled'),
+        ("assigned", "Assigned"),
+        ("in_progress", "In Progress"),
+        ("report_submitted", "Report Submitted"),
+        ("approved", "Approved"),
+        ("cancelled", "Cancelled"),
     ]
 
     partner = models.ForeignKey(
-        'user.Partner',
+        "user.Partner",
         on_delete=models.CASCADE,
-        related_name='marketing_tasks',
+        related_name="marketing_tasks",
     )
     campaign = models.ForeignKey(
         MarketingCampaign,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='partner_tasks',
+        related_name="partner_tasks",
     )
-    partner_type = models.CharField(max_length=30, choices=PARTNER_TYPE_CHOICES, default='external_partner')
+    partner_type = models.CharField(
+        max_length=30, choices=PARTNER_TYPE_CHOICES, default="external_partner"
+    )
     title = models.CharField(max_length=255)
     objective = models.TextField(blank=True)
     due_date = models.DateField(null=True, blank=True)
     fee = models.DecimalField(
         max_digits=12,
         decimal_places=2,
-        default=Decimal('0.00'),
-        validators=[MinValueValidator(Decimal('0.00'))],
+        default=Decimal("0.00"),
+        validators=[MinValueValidator(Decimal("0.00"))],
     )
     proof_requirement = models.TextField(blank=True)
     tracking_url = models.URLField(max_length=1000, blank=True)
-    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='assigned')
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default="assigned")
     assigned_by = models.ForeignKey(
-        'user.User',
+        "user.User",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='assigned_partner_tasks',
+        related_name="assigned_partner_tasks",
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['status', 'due_date', '-created_at']
+        ordering = ["status", "due_date", "-created_at"]
         indexes = [
-            models.Index(fields=['partner', 'status']),
-            models.Index(fields=['campaign']),
-            models.Index(fields=['partner_type']),
-            models.Index(fields=['due_date']),
+            models.Index(fields=["partner", "status"]),
+            models.Index(fields=["campaign"]),
+            models.Index(fields=["partner_type"]),
+            models.Index(fields=["due_date"]),
         ]
 
     def __str__(self):
@@ -875,32 +882,34 @@ class PartnerTask(models.Model):
 
 class PartnerReport(models.Model):
     STATUS_CHOICES = [
-        ('submitted', 'Submitted'),
-        ('approved', 'Approved'),
-        ('rejected', 'Rejected'),
+        ("submitted", "Submitted"),
+        ("approved", "Approved"),
+        ("rejected", "Rejected"),
     ]
 
     task = models.ForeignKey(
         PartnerTask,
         on_delete=models.CASCADE,
-        related_name='reports',
+        related_name="reports",
     )
     partner = models.ForeignKey(
-        'user.Partner',
+        "user.Partner",
         on_delete=models.CASCADE,
-        related_name='marketing_reports',
+        related_name="marketing_reports",
     )
     reach = models.PositiveIntegerField(default=0)
     lead_count = models.PositiveIntegerField(default=0)
     proof_url = models.URLField(max_length=1000, blank=True)
     note = models.TextField(blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='submitted')
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default="submitted"
+    )
     reviewed_by = models.ForeignKey(
-        'user.User',
+        "user.User",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='reviewed_partner_reports',
+        related_name="reviewed_partner_reports",
     )
     reviewed_at = models.DateTimeField(null=True, blank=True)
     review_note = models.TextField(blank=True)
@@ -908,11 +917,11 @@ class PartnerReport(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=['partner', 'status']),
-            models.Index(fields=['task', 'status']),
-            models.Index(fields=['created_at']),
+            models.Index(fields=["partner", "status"]),
+            models.Index(fields=["task", "status"]),
+            models.Index(fields=["created_at"]),
         ]
 
     def __str__(self):
@@ -921,49 +930,54 @@ class PartnerReport(models.Model):
 
 class PartnerCommission(models.Model):
     STATUS_CHOICES = [
-        ('pending_verification', 'Pending Verification'),
-        ('approved', 'Approved'),
-        ('paid', 'Paid'),
-        ('rejected', 'Rejected'),
+        ("pending_verification", "Pending Verification"),
+        ("approved", "Approved"),
+        ("paid", "Paid"),
+        ("rejected", "Rejected"),
     ]
 
     partner = models.ForeignKey(
-        'user.Partner',
+        "user.Partner",
         on_delete=models.CASCADE,
-        related_name='marketing_commissions',
+        related_name="marketing_commissions",
     )
     lead = models.ForeignKey(
-        'services.Lead',
+        "services.Lead",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='partner_commissions',
+        related_name="partner_commissions",
     )
     amount_basis = models.DecimalField(
         max_digits=15,
         decimal_places=2,
-        default=Decimal('0.00'),
-        validators=[MinValueValidator(Decimal('0.00'))],
+        default=Decimal("0.00"),
+        validators=[MinValueValidator(Decimal("0.00"))],
     )
     commission_rate = models.DecimalField(
         max_digits=5,
         decimal_places=2,
-        default=Decimal('0.00'),
-        validators=[MinValueValidator(Decimal('0.00')), MaxValueValidator(Decimal('100.00'))],
+        default=Decimal("0.00"),
+        validators=[
+            MinValueValidator(Decimal("0.00")),
+            MaxValueValidator(Decimal("100.00")),
+        ],
     )
     commission_due = models.DecimalField(
         max_digits=15,
         decimal_places=2,
-        default=Decimal('0.00'),
-        validators=[MinValueValidator(Decimal('0.00'))],
+        default=Decimal("0.00"),
+        validators=[MinValueValidator(Decimal("0.00"))],
     )
-    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='pending_verification')
+    status = models.CharField(
+        max_length=30, choices=STATUS_CHOICES, default="pending_verification"
+    )
     approved_by = models.ForeignKey(
-        'user.User',
+        "user.User",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='approved_partner_commissions',
+        related_name="approved_partner_commissions",
     )
     approved_at = models.DateTimeField(null=True, blank=True)
     paid_at = models.DateTimeField(null=True, blank=True)
@@ -973,15 +987,17 @@ class PartnerCommission(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['status', '-created_at']
+        ordering = ["status", "-created_at"]
         indexes = [
-            models.Index(fields=['partner', 'status']),
-            models.Index(fields=['lead']),
-            models.Index(fields=['status']),
+            models.Index(fields=["partner", "status"]),
+            models.Index(fields=["lead"]),
+            models.Index(fields=["status"]),
         ]
 
     def calculate_due(self):
-        self.commission_due = (self.amount_basis * self.commission_rate / Decimal('100')).quantize(Decimal('0.01'))
+        self.commission_due = (
+            self.amount_basis * self.commission_rate / Decimal("100")
+        ).quantize(Decimal("0.01"))
         return self.commission_due
 
     def __str__(self):
@@ -992,7 +1008,7 @@ class CampaignPostAnalysis(models.Model):
     campaign = models.OneToOneField(
         MarketingCampaign,
         on_delete=models.CASCADE,
-        related_name='post_analysis',
+        related_name="post_analysis",
     )
     conclusion = models.TextField()
     worked = models.TextField(blank=True)
@@ -1003,17 +1019,17 @@ class CampaignPostAnalysis(models.Model):
     analysis_date = models.DateField()
     approver = models.CharField(max_length=120, blank=True)
     author = models.ForeignKey(
-        'user.User',
+        "user.User",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='campaign_post_analyses',
+        related_name="campaign_post_analyses",
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-analysis_date', '-created_at']
+        ordering = ["-analysis_date", "-created_at"]
 
     def __str__(self):
         return f"Post-analysis: {self.campaign.name}"
@@ -1021,36 +1037,36 @@ class CampaignPostAnalysis(models.Model):
 
 class EmailMarketingCampaign(models.Model):
     STATUS_CHOICES = [
-        ('draft', 'Draft'),
-        ('sent', 'Sent'),
-        ('failed', 'Failed'),
+        ("draft", "Draft"),
+        ("sent", "Sent"),
+        ("failed", "Failed"),
     ]
 
     subject = models.CharField(max_length=255)
     body = models.TextField()
     audience_groups = models.JSONField(default=list, blank=True)
     filters = models.JSONField(default=dict, blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="draft")
     recipient_count = models.PositiveIntegerField(default=0)
     sent_count = models.PositiveIntegerField(default=0)
     failed_count = models.PositiveIntegerField(default=0)
     created_by = models.ForeignKey(
-        'user.User',
+        "user.User",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='created_email_marketing_campaigns',
+        related_name="created_email_marketing_campaigns",
     )
     sent_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=['status', '-created_at']),
-            models.Index(fields=['sent_at']),
-            models.Index(fields=['created_by']),
+            models.Index(fields=["status", "-created_at"]),
+            models.Index(fields=["sent_at"]),
+            models.Index(fields=["created_by"]),
         ]
 
     def __str__(self):
@@ -1059,33 +1075,33 @@ class EmailMarketingCampaign(models.Model):
 
 class EmailMarketingRecipient(models.Model):
     STATUS_CHOICES = [
-        ('sent', 'Sent'),
-        ('failed', 'Failed'),
-        ('skipped', 'Skipped'),
+        ("sent", "Sent"),
+        ("failed", "Failed"),
+        ("skipped", "Skipped"),
     ]
 
     campaign = models.ForeignKey(
         EmailMarketingCampaign,
         on_delete=models.CASCADE,
-        related_name='recipients',
+        related_name="recipients",
     )
     email = models.EmailField()
     name = models.CharField(max_length=255, blank=True)
     source_group = models.CharField(max_length=50)
     source_object_type = models.CharField(max_length=80, blank=True)
     source_object_id = models.PositiveIntegerField(null=True, blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='skipped')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="skipped")
     provider_status_code = models.PositiveIntegerField(null=True, blank=True)
     error = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['email']
+        ordering = ["email"]
         indexes = [
-            models.Index(fields=['campaign', 'status']),
-            models.Index(fields=['email']),
-            models.Index(fields=['source_group']),
+            models.Index(fields=["campaign", "status"]),
+            models.Index(fields=["email"]),
+            models.Index(fields=["source_group"]),
         ]
 
     def __str__(self):

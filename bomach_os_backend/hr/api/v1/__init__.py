@@ -17,7 +17,6 @@
 # from .offer_letters import router as offer_letters_router
 
 
-
 # # Create v1 router
 # v1_router = Router()
 

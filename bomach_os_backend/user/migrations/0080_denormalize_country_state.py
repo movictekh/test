@@ -40,68 +40,105 @@ class Migration(migrations.Migration):
             model_name="estate",
             name="user_estate_country_6d8d65_idx",
         ),
-
         # ── 2. Add the new string columns alongside the existing FKs ──
         migrations.AddField(
             model_name="branch",
             name="country_str",
-            field=models.CharField(default="", help_text="Country name", max_length=100, verbose_name="Country"),
+            field=models.CharField(
+                default="",
+                help_text="Country name",
+                max_length=100,
+                verbose_name="Country",
+            ),
             preserve_default=False,
         ),
         migrations.AddField(
             model_name="branch",
             name="country_code",
-            field=models.CharField(blank=True, default="", help_text="ISO 3166-1 alpha-3 code (e.g., USA, GBR, NGA)", max_length=3, verbose_name="Country Code"),
+            field=models.CharField(
+                blank=True,
+                default="",
+                help_text="ISO 3166-1 alpha-3 code (e.g., USA, GBR, NGA)",
+                max_length=3,
+                verbose_name="Country Code",
+            ),
         ),
         migrations.AddField(
             model_name="branch",
             name="state_str",
-            field=models.CharField(default="", help_text="State or province name", max_length=100, verbose_name="State"),
+            field=models.CharField(
+                default="",
+                help_text="State or province name",
+                max_length=100,
+                verbose_name="State",
+            ),
             preserve_default=False,
         ),
         migrations.AddField(
             model_name="branch",
             name="state_code",
-            field=models.CharField(blank=True, default="", help_text="State / province code", max_length=10, verbose_name="State Code"),
+            field=models.CharField(
+                blank=True,
+                default="",
+                help_text="State / province code",
+                max_length=10,
+                verbose_name="State Code",
+            ),
         ),
         migrations.AddField(
             model_name="branch",
             name="city",
-            field=models.CharField(blank=True, default="", max_length=100, verbose_name="City"),
+            field=models.CharField(
+                blank=True, default="", max_length=100, verbose_name="City"
+            ),
         ),
         migrations.AddField(
             model_name="estate",
             name="country_str",
-            field=models.CharField(default="", help_text="Country name", max_length=100, verbose_name="Country"),
+            field=models.CharField(
+                default="",
+                help_text="Country name",
+                max_length=100,
+                verbose_name="Country",
+            ),
             preserve_default=False,
         ),
         migrations.AddField(
             model_name="estate",
             name="country_code",
-            field=models.CharField(blank=True, default="", help_text="ISO 3166-1 alpha-3 code", max_length=3, verbose_name="Country Code"),
+            field=models.CharField(
+                blank=True,
+                default="",
+                help_text="ISO 3166-1 alpha-3 code",
+                max_length=3,
+                verbose_name="Country Code",
+            ),
         ),
-
         # ── 3. Backfill the new columns from the FKs ──
         migrations.RunPython(copy_location_to_strings, reverse_noop),
-
         # ── 4. Drop the FK fields (cascades the FK-column auto-indexes) ──
         migrations.RemoveField(model_name="branch", name="country"),
         migrations.RemoveField(model_name="branch", name="state"),
         migrations.RemoveField(model_name="estate", name="country"),
-
         # ── 5. Rename the string columns into their final names ──
-        migrations.RenameField(model_name="branch", old_name="country_str", new_name="country"),
-        migrations.RenameField(model_name="branch", old_name="state_str", new_name="state"),
-        migrations.RenameField(model_name="estate", old_name="country_str", new_name="country"),
-
+        migrations.RenameField(
+            model_name="branch", old_name="country_str", new_name="country"
+        ),
+        migrations.RenameField(
+            model_name="branch", old_name="state_str", new_name="state"
+        ),
+        migrations.RenameField(
+            model_name="estate", old_name="country_str", new_name="country"
+        ),
         # ── 6. Drop the Country and State models ──
         migrations.DeleteModel(name="State"),
         migrations.DeleteModel(name="Country"),
-
         # ── 7. Re-add single-column indexes on the new text columns ──
         migrations.AddIndex(
             model_name="branch",
-            index=models.Index(fields=["country"], name="user_branch_country_a6e042_idx"),
+            index=models.Index(
+                fields=["country"], name="user_branch_country_a6e042_idx"
+            ),
         ),
         migrations.AddIndex(
             model_name="branch",

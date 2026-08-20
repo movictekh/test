@@ -8,23 +8,36 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('finance', '0003_financeaccount_opening_balance_and_more'),
-        ('services', '0037_expense_approved_at_expense_approved_by_and_more'),
+        ("finance", "0003_financeaccount_opening_balance_and_more"),
+        ("services", "0037_expense_approved_at_expense_approved_by_and_more"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='financewalletentry',
-            name='expense',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='wallet_entries', to='services.expense'),
+            model_name="financewalletentry",
+            name="expense",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="wallet_entries",
+                to="services.expense",
+            ),
         ),
         migrations.AddIndex(
-            model_name='financewalletentry',
-            index=models.Index(fields=['expense', 'entry_type', 'status'], name='finance_fin_expense_dd2dc7_idx'),
+            model_name="financewalletentry",
+            index=models.Index(
+                fields=["expense", "entry_type", "status"],
+                name="finance_fin_expense_dd2dc7_idx",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='financewalletentry',
-            constraint=models.UniqueConstraint(condition=models.Q(('expense__isnull', False)), fields=('wallet', 'expense', 'entry_type'), name='uniq_fin_wallet_expense_type'),
+            model_name="financewalletentry",
+            constraint=models.UniqueConstraint(
+                condition=models.Q(("expense__isnull", False)),
+                fields=("wallet", "expense", "entry_type"),
+                name="uniq_fin_wallet_expense_type",
+            ),
         ),
     ]

@@ -6,13 +6,37 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('services', '0029_serviceorderactivity_serviceordermilestone_and_more'),
+        ("services", "0029_serviceorderactivity_serviceordermilestone_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='servicerequestactivity',
-            name='activity_type',
-            field=models.CharField(choices=[('request_created', 'Request Created'), ('control_update', 'Control Update'), ('assessment_scheduled', 'Assessment Scheduled'), ('assessment_result', 'Assessment Result'), ('document_received', 'Document Received'), ('internal_note', 'Internal Note'), ('phone_call', 'Phone Call'), ('whatsapp', 'WhatsApp'), ('email', 'Email'), ('meeting', 'Meeting'), ('quote_prepared', 'Quote Prepared'), ('quote_sent', 'Quote Sent'), ('quote_accepted', 'Quote Accepted'), ('quote_rejected', 'Quote Rejected'), ('invoice_issued', 'Invoice Issued'), ('payment_submitted', 'Payment Submitted'), ('payment_confirmed', 'Payment Confirmed'), ('payment_threshold_met', 'Payment Threshold Met'), ('order_created', 'Order Created'), ('status_change', 'Status Change')], max_length=40),
+            model_name="servicerequestactivity",
+            name="activity_type",
+            field=models.CharField(
+                choices=[
+                    ("request_created", "Request Created"),
+                    ("control_update", "Control Update"),
+                    ("assessment_scheduled", "Assessment Scheduled"),
+                    ("assessment_result", "Assessment Result"),
+                    ("document_received", "Document Received"),
+                    ("internal_note", "Internal Note"),
+                    ("phone_call", "Phone Call"),
+                    ("whatsapp", "WhatsApp"),
+                    ("email", "Email"),
+                    ("meeting", "Meeting"),
+                    ("quote_prepared", "Quote Prepared"),
+                    ("quote_sent", "Quote Sent"),
+                    ("quote_accepted", "Quote Accepted"),
+                    ("quote_rejected", "Quote Rejected"),
+                    ("invoice_issued", "Invoice Issued"),
+                    ("payment_submitted", "Payment Submitted"),
+                    ("payment_confirmed", "Payment Confirmed"),
+                    ("payment_threshold_met", "Payment Threshold Met"),
+                    ("order_created", "Order Created"),
+                    ("status_change", "Status Change"),
+                ],
+                max_length=40,
+            ),
         ),
     ]

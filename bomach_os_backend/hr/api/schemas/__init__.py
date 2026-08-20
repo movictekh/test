@@ -32,7 +32,7 @@ from .payroll import (
     PayrollFilterSchema,
     ProcessPayrollSchema,
     EmployeeOut,
-    PayrollSummaryOut
+    PayrollSummaryOut,
 )
 from .training_program import (
     TrainingProgramCreateSchema,

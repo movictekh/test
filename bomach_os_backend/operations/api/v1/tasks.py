@@ -6,15 +6,24 @@ from django.core.exceptions import ValidationError
 from ninja.errors import HttpError
 from django.db import transaction
 from operations.models import Milestone, Task, Project
-from ..schema.schemas import TaskCreateSchema, TaskUpdateSchema, TaskOutSchema, MessageSchema
+from ..schema.schemas import (
+    TaskCreateSchema,
+    TaskUpdateSchema,
+    TaskOutSchema,
+    MessageSchema,
+)
 from ninja.pagination import paginate, LimitOffsetPagination
 from user.utils.perm import require_permission
-from user.utils.send_email import send_task_assignment_email, send_associate_task_assignment_email
+from user.utils.send_email import (
+    send_task_assignment_email,
+    send_associate_task_assignment_email,
+)
 from django.conf import settings
 
 router = Router(tags=["Tasks"])
 
 DOMAIN = settings.DOMAIN
+
 
 @router.get("", response=List[TaskOutSchema])
 @paginate(LimitOffsetPagination, page_size=10)
@@ -40,8 +49,7 @@ def list_tasks(
         tasks = tasks.filter(priority=priority)
     if search:
         tasks = tasks.filter(
-            Q(name__icontains=search) |
-            Q(description__icontains=search)
+            Q(name__icontains=search) | Q(description__icontains=search)
         )
 
     return list(tasks)
@@ -62,22 +70,32 @@ def create_task(request, payload: TaskCreateSchema):
     try:
         with transaction.atomic():
             task_data = payload.dict()
-            assigned_to_ids = task_data.pop('assigned_to', [])
-            if 'milestone_id' in task_data and task_data['milestone_id'] is not None:
-                milestone = get_object_or_404(Milestone, id=task_data.pop('milestone_id'))
+            assigned_to_ids = task_data.pop("assigned_to", [])
+            if "milestone_id" in task_data and task_data["milestone_id"] is not None:
+                milestone = get_object_or_404(
+                    Milestone, id=task_data.pop("milestone_id")
+                )
             else:
-                task_data.pop('milestone_id', None)
+                task_data.pop("milestone_id", None)
                 milestone = None
             task = Task.objects.create(milestone=milestone, **task_data)
             if assigned_to_ids:
                 task.assigned_to.set(assigned_to_ids)
 
             def send_email():
-                project_name = task.milestone.project.name if task.milestone and task.milestone.project else "N/A"
+                project_name = (
+                    task.milestone.project.name
+                    if task.milestone and task.milestone.project
+                    else "N/A"
+                )
                 assigned_by_name = request.user.get_full_name() or request.user.email
 
-                for employee in task.assigned_to.select_related('user').all():
-                    due_date_str = task.due_date.strftime("%B %d, %Y") if task.due_date else "No due date"
+                for employee in task.assigned_to.select_related("user").all():
+                    due_date_str = (
+                        task.due_date.strftime("%B %d, %Y")
+                        if task.due_date
+                        else "No due date"
+                    )
 
                     if employee.is_associate():
                         res = send_associate_task_assignment_email(
@@ -100,11 +118,14 @@ def create_task(request, payload: TaskCreateSchema):
                         )
 
                     if res.status_code not in [200, 201]:
-                        print(f"Warning: Task email could not be sent to {employee.user.email}. Response: {res.status_code} - {res.text}")
+                        print(
+                            f"Warning: Task email could not be sent to {employee.user.email}. Response: {res.status_code} - {res.text}"
+                        )
+
             transaction.on_commit(send_email)
             return 201, task
     except ValidationError as e:
-        return 400, {'detail': e.messages[0]}
+        return 400, {"detail": e.messages[0]}
 
 
 @router.put("/{task_id}", response={200: TaskOutSchema, 400: MessageSchema})
@@ -115,10 +136,10 @@ def update_task(request, task_id: int, payload: TaskUpdateSchema):
         task = get_object_or_404(Task, id=task_id)
 
         update_data = payload.dict(exclude_unset=True)
-        assigned_to_ids = update_data.pop('assigned_to', None)
+        assigned_to_ids = update_data.pop("assigned_to", None)
 
-        if 'milestone_id' in update_data:
-            milestone = get_object_or_404(Milestone, id=update_data.pop('milestone_id'))
+        if "milestone_id" in update_data:
+            milestone = get_object_or_404(Milestone, id=update_data.pop("milestone_id"))
             task.milestone = milestone
 
         for attr, value in update_data.items():
@@ -131,7 +152,7 @@ def update_task(request, task_id: int, payload: TaskUpdateSchema):
 
         return task
     except ValidationError as e:
-        return 400, {'detail': e.messages[0]}
+        return 400, {"detail": e.messages[0]}
 
 
 @router.delete("/{task_id}")

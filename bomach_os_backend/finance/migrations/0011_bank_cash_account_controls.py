@@ -5,8 +5,7 @@ from django.db.models import Count, Q
 def validate_no_duplicate_bank_accounts(apps, schema_editor):
     FinanceAccount = apps.get_model("finance", "FinanceAccount")
     duplicates = list(
-        FinanceAccount.objects
-        .filter(account_type="bank")
+        FinanceAccount.objects.filter(account_type="bank")
         .values("bank_name", "account_number")
         .annotate(row_count=Count("id"))
         .filter(row_count__gt=1)

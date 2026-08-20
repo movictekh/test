@@ -111,7 +111,7 @@ class EventOut(Schema):
 
     @staticmethod
     def resolve_team_members(obj):
-        return list(obj.team_members.values_list('id', flat=True))
+        return list(obj.team_members.values_list("id", flat=True))
 
 
 class EventListOut(Schema):

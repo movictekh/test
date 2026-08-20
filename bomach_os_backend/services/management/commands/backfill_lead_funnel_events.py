@@ -16,7 +16,7 @@ class Command(BaseCommand):
         if options["branch_id"]:
             leads = leads.filter(branch_id=options["branch_id"])
         if options["limit"]:
-            leads = leads[:options["limit"]]
+            leads = leads[: options["limit"]]
 
         result = backfill_lead_funnel_events(leads)
         self.stdout.write(

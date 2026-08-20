@@ -37,7 +37,7 @@ class AuthBearerWithUser(HttpBearer):
 
         if success and user_data:
             request.user_data = user_data
-            request.user_id = user_data.get('id')
+            request.user_id = user_data.get("id")
             request.auth_token = token
             return user_data
         return None
@@ -67,7 +67,7 @@ optional_auth = OptionalAuthBearer()
 
 def get_token_from_request(request: HttpRequest) -> Optional[str]:
     """Extract bearer token from request headers."""
-    auth_header = request.headers.get('Authorization', '')
-    if auth_header.startswith('Bearer '):
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header.startswith("Bearer "):
         return auth_header[7:]
     return None

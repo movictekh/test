@@ -150,7 +150,9 @@ class EmployeeKPIRecordAPITests(RoleAPITestMixin, KPIMetricFactoryMixin, TestCas
         manual_metric = self.create_metric("Monthly Site Visits")
         system_metric = self.create_metric("Attendance Rate", "percentage")
         self.create_role_kpi(field_role, manual_metric, "manual", sequence=1)
-        self.create_role_kpi(field_role, system_metric, "system", sequence=2, target_value="95.00")
+        self.create_role_kpi(
+            field_role, system_metric, "system", sequence=2, target_value="95.00"
+        )
         employee = self.create_user_with_employee(
             email="kpi-employee@example.com",
             username="kpiemployee",

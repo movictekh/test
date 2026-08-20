@@ -28,15 +28,15 @@ class MeetingCreateSchema(Schema):
     meeting_date: date
     meeting_time: time
     duration_minutes: int
-    status: str = 'scheduled'
-    location_type: str = 'physical'
+    status: str = "scheduled"
+    location_type: str = "physical"
     location: Optional[str] = None
     # User IDs of attendees
     attendee_ids: List[int] = []
     notes: Optional[str] = None
     file_url: Optional[str] = None
 
-    @field_validator('meeting_time', mode='before')
+    @field_validator("meeting_time", mode="before")
     @classmethod
     def strip_timezone(cls, v):
         if isinstance(v, time) and v.tzinfo is not None:
@@ -57,7 +57,7 @@ class MeetingUpdateSchema(Schema):
     notes: Optional[str] = None
     file_url: Optional[str] = None
 
-    @field_validator('meeting_time', mode='before')
+    @field_validator("meeting_time", mode="before")
     @classmethod
     def strip_timezone(cls, v):
         if isinstance(v, time) and v.tzinfo is not None:
@@ -91,7 +91,7 @@ class MeetingSchema(Schema):
 
     @staticmethod
     def resolve_meeting_time(obj):
-        return obj.meeting_time.strftime('%H:%M')
+        return obj.meeting_time.strftime("%H:%M")
 
     @staticmethod
     def resolve_duration_display(obj):
@@ -120,7 +120,10 @@ class MeetingSchema(Schema):
     @staticmethod
     def resolve_organizer_name(obj):
         if obj.organizer:
-            return f"{obj.organizer.first_name} {obj.organizer.last_name}".strip() or obj.organizer.email
+            return (
+                f"{obj.organizer.first_name} {obj.organizer.last_name}".strip()
+                or obj.organizer.email
+            )
         return None
 
 

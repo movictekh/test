@@ -10,107 +10,339 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('finance', '0005_financevendor_vendorbill_and_more'),
-        ('services', '0037_expense_approved_at_expense_approved_by_and_more'),
-        ('user', '0096_paymentsubmission_finance_metadata'),
+        ("finance", "0005_financevendor_vendorbill_and_more"),
+        ("services", "0037_expense_approved_at_expense_approved_by_and_more"),
+        ("user", "0096_paymentsubmission_finance_metadata"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='PettyCashAdvance',
+            name="PettyCashAdvance",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('advance_number', models.CharField(editable=False, max_length=50, unique=True)),
-                ('purpose', models.CharField(max_length=255)),
-                ('amount_requested', models.DecimalField(decimal_places=2, max_digits=15, validators=[django.core.validators.MinValueValidator(Decimal('0.01'))])),
-                ('amount_issued', models.DecimalField(decimal_places=2, default=Decimal('0.00'), max_digits=15, validators=[django.core.validators.MinValueValidator(Decimal('0.00'))])),
-                ('amount_retired', models.DecimalField(decimal_places=2, default=Decimal('0.00'), max_digits=15, validators=[django.core.validators.MinValueValidator(Decimal('0.00'))])),
-                ('amount_returned', models.DecimalField(decimal_places=2, default=Decimal('0.00'), max_digits=15, validators=[django.core.validators.MinValueValidator(Decimal('0.00'))])),
-                ('due_date', models.DateField()),
-                ('issued_at', models.DateTimeField(blank=True, null=True)),
-                ('retired_at', models.DateTimeField(blank=True, null=True)),
-                ('status', models.CharField(choices=[('requested', 'Requested'), ('approved', 'Approved'), ('rejected', 'Rejected'), ('issued', 'Issued'), ('partially_retired', 'Partially Retired'), ('retired', 'Retired'), ('cancelled', 'Cancelled')], default='requested', max_length=30)),
-                ('attachment', models.URLField(blank=True, null=True)),
-                ('notes', models.TextField(blank=True, default='')),
-                ('approved_at', models.DateTimeField(blank=True, null=True)),
-                ('rejected_at', models.DateTimeField(blank=True, null=True)),
-                ('rejection_reason', models.TextField(blank=True, default='')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('approved_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='approved_petty_cash_advances', to=settings.AUTH_USER_MODEL)),
-                ('branch', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='petty_cash_advances', to='user.branch')),
-                ('created_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='created_petty_cash_advances', to=settings.AUTH_USER_MODEL)),
-                ('custodian', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='custodied_petty_cash_advances', to=settings.AUTH_USER_MODEL)),
-                ('finance_account', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='petty_cash_advances', to='finance.financeaccount')),
-                ('issued_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='issued_petty_cash_advances', to=settings.AUTH_USER_MODEL)),
-                ('rejected_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='rejected_petty_cash_advances', to=settings.AUTH_USER_MODEL)),
-                ('requester', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='petty_cash_advances', to=settings.AUTH_USER_MODEL)),
-                ('retired_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='retired_petty_cash_advances', to=settings.AUTH_USER_MODEL)),
-                ('service_order', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='petty_cash_advances', to='services.serviceorder')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "advance_number",
+                    models.CharField(editable=False, max_length=50, unique=True),
+                ),
+                ("purpose", models.CharField(max_length=255)),
+                (
+                    "amount_requested",
+                    models.DecimalField(
+                        decimal_places=2,
+                        max_digits=15,
+                        validators=[
+                            django.core.validators.MinValueValidator(Decimal("0.01"))
+                        ],
+                    ),
+                ),
+                (
+                    "amount_issued",
+                    models.DecimalField(
+                        decimal_places=2,
+                        default=Decimal("0.00"),
+                        max_digits=15,
+                        validators=[
+                            django.core.validators.MinValueValidator(Decimal("0.00"))
+                        ],
+                    ),
+                ),
+                (
+                    "amount_retired",
+                    models.DecimalField(
+                        decimal_places=2,
+                        default=Decimal("0.00"),
+                        max_digits=15,
+                        validators=[
+                            django.core.validators.MinValueValidator(Decimal("0.00"))
+                        ],
+                    ),
+                ),
+                (
+                    "amount_returned",
+                    models.DecimalField(
+                        decimal_places=2,
+                        default=Decimal("0.00"),
+                        max_digits=15,
+                        validators=[
+                            django.core.validators.MinValueValidator(Decimal("0.00"))
+                        ],
+                    ),
+                ),
+                ("due_date", models.DateField()),
+                ("issued_at", models.DateTimeField(blank=True, null=True)),
+                ("retired_at", models.DateTimeField(blank=True, null=True)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("requested", "Requested"),
+                            ("approved", "Approved"),
+                            ("rejected", "Rejected"),
+                            ("issued", "Issued"),
+                            ("partially_retired", "Partially Retired"),
+                            ("retired", "Retired"),
+                            ("cancelled", "Cancelled"),
+                        ],
+                        default="requested",
+                        max_length=30,
+                    ),
+                ),
+                ("attachment", models.URLField(blank=True, null=True)),
+                ("notes", models.TextField(blank=True, default="")),
+                ("approved_at", models.DateTimeField(blank=True, null=True)),
+                ("rejected_at", models.DateTimeField(blank=True, null=True)),
+                ("rejection_reason", models.TextField(blank=True, default="")),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "approved_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="approved_petty_cash_advances",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "branch",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="petty_cash_advances",
+                        to="user.branch",
+                    ),
+                ),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="created_petty_cash_advances",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "custodian",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="custodied_petty_cash_advances",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "finance_account",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="petty_cash_advances",
+                        to="finance.financeaccount",
+                    ),
+                ),
+                (
+                    "issued_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="issued_petty_cash_advances",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "rejected_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="rejected_petty_cash_advances",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "requester",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="petty_cash_advances",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "retired_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="retired_petty_cash_advances",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "service_order",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="petty_cash_advances",
+                        to="services.serviceorder",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-created_at'],
+                "ordering": ["-created_at"],
             },
         ),
         migrations.CreateModel(
-            name='PettyCashRetirementLine',
+            name="PettyCashRetirementLine",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('category', models.CharField(blank=True, default='', max_length=120)),
-                ('cost_type', models.CharField(blank=True, default='', max_length=30)),
-                ('stage', models.CharField(blank=True, default='', max_length=120)),
-                ('description', models.CharField(max_length=255)),
-                ('amount_spent', models.DecimalField(decimal_places=2, default=Decimal('0.00'), max_digits=15, validators=[django.core.validators.MinValueValidator(Decimal('0.00'))])),
-                ('amount_returned', models.DecimalField(decimal_places=2, default=Decimal('0.00'), max_digits=15, validators=[django.core.validators.MinValueValidator(Decimal('0.00'))])),
-                ('attachment', models.URLField(blank=True, null=True)),
-                ('billable', models.BooleanField(default=False)),
-                ('client_visible', models.BooleanField(default=False)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('advance', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='retirement_lines', to='finance.pettycashadvance')),
-                ('created_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='created_petty_cash_retirement_lines', to=settings.AUTH_USER_MODEL)),
-                ('service_order', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='petty_cash_retirement_lines', to='services.serviceorder')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("category", models.CharField(blank=True, default="", max_length=120)),
+                ("cost_type", models.CharField(blank=True, default="", max_length=30)),
+                ("stage", models.CharField(blank=True, default="", max_length=120)),
+                ("description", models.CharField(max_length=255)),
+                (
+                    "amount_spent",
+                    models.DecimalField(
+                        decimal_places=2,
+                        default=Decimal("0.00"),
+                        max_digits=15,
+                        validators=[
+                            django.core.validators.MinValueValidator(Decimal("0.00"))
+                        ],
+                    ),
+                ),
+                (
+                    "amount_returned",
+                    models.DecimalField(
+                        decimal_places=2,
+                        default=Decimal("0.00"),
+                        max_digits=15,
+                        validators=[
+                            django.core.validators.MinValueValidator(Decimal("0.00"))
+                        ],
+                    ),
+                ),
+                ("attachment", models.URLField(blank=True, null=True)),
+                ("billable", models.BooleanField(default=False)),
+                ("client_visible", models.BooleanField(default=False)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "advance",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="retirement_lines",
+                        to="finance.pettycashadvance",
+                    ),
+                ),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="created_petty_cash_retirement_lines",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "service_order",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="petty_cash_retirement_lines",
+                        to="services.serviceorder",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-created_at'],
+                "ordering": ["-created_at"],
             },
         ),
         migrations.AddField(
-            model_name='financewalletentry',
-            name='petty_cash_retirement_line',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='wallet_entries', to='finance.pettycashretirementline'),
+            model_name="financewalletentry",
+            name="petty_cash_retirement_line",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="wallet_entries",
+                to="finance.pettycashretirementline",
+            ),
         ),
         migrations.AddIndex(
-            model_name='financewalletentry',
-            index=models.Index(fields=['petty_cash_retirement_line', 'entry_type', 'status'], name='finance_fin_petty_c_97a7f1_idx'),
+            model_name="financewalletentry",
+            index=models.Index(
+                fields=["petty_cash_retirement_line", "entry_type", "status"],
+                name="finance_fin_petty_c_97a7f1_idx",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='financewalletentry',
-            constraint=models.UniqueConstraint(condition=models.Q(('petty_cash_retirement_line__isnull', False)), fields=('wallet', 'petty_cash_retirement_line', 'entry_type'), name='uniq_fin_wallet_petty_cash_line_type'),
+            model_name="financewalletentry",
+            constraint=models.UniqueConstraint(
+                condition=models.Q(("petty_cash_retirement_line__isnull", False)),
+                fields=("wallet", "petty_cash_retirement_line", "entry_type"),
+                name="uniq_fin_wallet_petty_cash_line_type",
+            ),
         ),
         migrations.AddIndex(
-            model_name='pettycashadvance',
-            index=models.Index(fields=['requester', 'status'], name='finance_pet_request_dcbfe3_idx'),
+            model_name="pettycashadvance",
+            index=models.Index(
+                fields=["requester", "status"], name="finance_pet_request_dcbfe3_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='pettycashadvance',
-            index=models.Index(fields=['finance_account', 'status'], name='finance_pet_finance_03a929_idx'),
+            model_name="pettycashadvance",
+            index=models.Index(
+                fields=["finance_account", "status"],
+                name="finance_pet_finance_03a929_idx",
+            ),
         ),
         migrations.AddIndex(
-            model_name='pettycashadvance',
-            index=models.Index(fields=['branch', 'due_date'], name='finance_pet_branch__e4f8bf_idx'),
+            model_name="pettycashadvance",
+            index=models.Index(
+                fields=["branch", "due_date"], name="finance_pet_branch__e4f8bf_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='pettycashadvance',
-            index=models.Index(fields=['service_order', 'status'], name='finance_pet_service_70dc74_idx'),
+            model_name="pettycashadvance",
+            index=models.Index(
+                fields=["service_order", "status"],
+                name="finance_pet_service_70dc74_idx",
+            ),
         ),
         migrations.AddIndex(
-            model_name='pettycashretirementline',
-            index=models.Index(fields=['advance', 'created_at'], name='finance_pet_advance_eb0b92_idx'),
+            model_name="pettycashretirementline",
+            index=models.Index(
+                fields=["advance", "created_at"], name="finance_pet_advance_eb0b92_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='pettycashretirementline',
-            index=models.Index(fields=['service_order', 'created_at'], name='finance_pet_service_0c530b_idx'),
+            model_name="pettycashretirementline",
+            index=models.Index(
+                fields=["service_order", "created_at"],
+                name="finance_pet_service_0c530b_idx",
+            ),
         ),
     ]

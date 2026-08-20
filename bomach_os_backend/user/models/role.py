@@ -3,7 +3,6 @@ from django.db.utils import NotSupportedError
 from django.core.exceptions import ValidationError
 from user.models.base import BaseModel
 
-
 # ── Every resource and its valid actions ────────────────────────────────────
 # Format: { "resource_key": ["action", ...] }
 # This is the single source of truth. The frontend reads it via the
@@ -13,52 +12,178 @@ PERMISSIONS_MAP = {
     # ── User / Core ──
     #   _own variants: every employee can view/update their own profile & docs
     "employees": ["create", "view", "view_own", "list", "update", "update_own", "exit"],
-    "employee_documents": ["upload", "upload_own", "view", "view_own", "list", "list_own", "delete"],
-    "employee_reviews": ["create", "view", "view_own", "list", "list_own", "update", "delete"],
+    "employee_documents": [
+        "upload",
+        "upload_own",
+        "view",
+        "view_own",
+        "list",
+        "list_own",
+        "delete",
+    ],
+    "employee_reviews": [
+        "create",
+        "view",
+        "view_own",
+        "list",
+        "list_own",
+        "update",
+        "delete",
+    ],
     "departments": ["create", "list", "update"],
     "department_units": ["create", "list", "update"],
     "roles": ["create", "view", "list", "update", "delete", "view_own"],
-    "role_career_paths": ["create", "view", "view_own", "list", "list_own", "update", "delete"],
-    "role_reporting_lines": ["create", "view", "view_own", "list", "list_own", "update", "delete"],
+    "role_career_paths": [
+        "create",
+        "view",
+        "view_own",
+        "list",
+        "list_own",
+        "update",
+        "delete",
+    ],
+    "role_reporting_lines": [
+        "create",
+        "view",
+        "view_own",
+        "list",
+        "list_own",
+        "update",
+        "delete",
+    ],
     "role_kpis": ["create", "view", "view_own", "list", "list_own", "update", "delete"],
-    "employee_kpis": ["create", "view", "view_own", "list", "list_own", "update", "update_own", "delete"],
+    "employee_kpis": [
+        "create",
+        "view",
+        "view_own",
+        "list",
+        "list_own",
+        "update",
+        "update_own",
+        "delete",
+    ],
     "branches": ["create", "view", "list", "update", "set_business_hours"],
-    "role_descriptions": ["create", "view", "view_own", "list", "list_own", "update", "delete"],
-    "role_resources": ["create", "view", "view_own", "list", "list_own", "update", "delete"],
+    "role_descriptions": [
+        "create",
+        "view",
+        "view_own",
+        "list",
+        "list_own",
+        "update",
+        "delete",
+    ],
+    "role_resources": [
+        "create",
+        "view",
+        "view_own",
+        "list",
+        "list_own",
+        "update",
+        "delete",
+    ],
     "role_sops": ["create", "view", "view_own", "list", "list_own", "update", "delete"],
-    "role_success_playbook": ["create", "view", "view_own", "list", "list_own", "update", "delete"],
-    "role_target_templates": ["create", "view", "view_own", "list", "list_own", "update", "delete"],
-    "role_training_requirements": ["create", "view", "view_own", "list", "list_own", "update", "delete"],
-    "role_task_templates": ["create", "view", "view_own", "list", "list_own", "update", "delete"],
-    "role_daily_routines": ["create", "view", "view_own", "list", "list_own", "update", "delete"],
-    "employee_targets": ["create", "view", "view_own", "list", "list_own", "update", "delete"],
-    "target_reports": ["create", "view", "view_own", "list", "list_own", "approve", "reject"],
+    "role_success_playbook": [
+        "create",
+        "view",
+        "view_own",
+        "list",
+        "list_own",
+        "update",
+        "delete",
+    ],
+    "role_target_templates": [
+        "create",
+        "view",
+        "view_own",
+        "list",
+        "list_own",
+        "update",
+        "delete",
+    ],
+    "role_training_requirements": [
+        "create",
+        "view",
+        "view_own",
+        "list",
+        "list_own",
+        "update",
+        "delete",
+    ],
+    "role_task_templates": [
+        "create",
+        "view",
+        "view_own",
+        "list",
+        "list_own",
+        "update",
+        "delete",
+    ],
+    "role_daily_routines": [
+        "create",
+        "view",
+        "view_own",
+        "list",
+        "list_own",
+        "update",
+        "delete",
+    ],
+    "employee_targets": [
+        "create",
+        "view",
+        "view_own",
+        "list",
+        "list_own",
+        "update",
+        "delete",
+    ],
+    "target_reports": [
+        "create",
+        "view",
+        "view_own",
+        "list",
+        "list_own",
+        "approve",
+        "reject",
+    ],
     "company_settings": ["view", "update"],
-
     # ── Clients / Leads ──
     "leads": ["create", "view", "list", "update", "delete", "convert_to_client"],
     "clients": ["create", "view", "list", "update"],
-
     # ── Real Estate ──
     "estates": ["create", "view", "list", "update", "delete"],
     "properties": ["create", "view", "list", "update", "delete"],
-    "estate_invoices": ["create", "view", "view_own", "list", "list_own",
-                        "update", "update_own", "delete",
-                        "submit_for_approval", "approve", "reject", "record_payment"],
+    "estate_invoices": [
+        "create",
+        "view",
+        "view_own",
+        "list",
+        "list_own",
+        "update",
+        "update_own",
+        "delete",
+        "submit_for_approval",
+        "approve",
+        "reject",
+        "record_payment",
+    ],
     "brokerage": ["create", "view", "list", "update", "delete"],
     "cart": ["view", "add_item", "remove_item", "clear"],
-
     # ── Partners ──
     "partners": ["create", "view", "list", "update", "delete"],
     "partner_agreements": ["create", "view", "list", "update", "delete"],
-
     # ── Legal / Compliance ──
     "legal_cases": ["create", "view", "list", "update", "delete", "update_status"],
     "compliance_records": ["create", "view", "list", "update"],
-    "compliance_audits": ["create", "view", "list", "update", "delete",
-                          "update_status", "update_score"],
+    "compliance_audits": [
+        "create",
+        "view",
+        "list",
+        "update",
+        "delete",
+        "update_status",
+        "update_score",
+    ],
     "audit_logs": ["list"],
-
     # ── Corporate ──
     "announcements": ["create", "view", "list", "update", "delete"],
     "board_resolutions": ["create", "view", "list", "update", "delete", "approve"],
@@ -66,63 +191,158 @@ PERMISSIONS_MAP = {
     "meetings": ["create", "view", "list", "update", "delete"],
     "policies": ["create", "view", "list", "update", "delete"],
     "events": ["create", "view", "list", "update", "delete"],
-    "loans": ["create", "view", "view_own", "list", "list_own", "update", "delete",
-              "approve", "reject"],
-
+    "loans": [
+        "create",
+        "view",
+        "view_own",
+        "list",
+        "list_own",
+        "update",
+        "delete",
+        "approve",
+        "reject",
+    ],
     # ── Approvals ──
     "approval_flows": ["create", "view", "list", "update", "delete"],
-    "approval_requests": ["create", "view", "view_own", "list", "list_own",
-                          "approve", "reject", "cancel"],
-
+    "approval_requests": [
+        "create",
+        "view",
+        "view_own",
+        "list",
+        "list_own",
+        "approve",
+        "reject",
+        "cancel",
+    ],
     # ── Drawing Bank ──
-    "drawings": ["create", "view", "list", "update", "delete",
-                  "approve", "reject", "download"],
-
+    "drawings": [
+        "create",
+        "view",
+        "list",
+        "update",
+        "delete",
+        "approve",
+        "reject",
+        "download",
+    ],
     # ── Wallet ──
     "wallet": ["view", "view_own", "list", "list_own", "fund"],
-
     # ── Client Inventory ──
     "client_inventory": ["create", "view", "list", "update", "delete"],
-
     # ── Dashboard / Stats ──
     "dashboard": ["view"],
     "stats": ["view"],
-
     # ── Operations ──
     "projects": ["create", "view", "list", "update", "delete"],
-    "tasks": ["create", "view", "view_own", "list", "list_own", "update", "update_own", "delete"],
+    "tasks": [
+        "create",
+        "view",
+        "view_own",
+        "list",
+        "list_own",
+        "update",
+        "update_own",
+        "delete",
+    ],
     "worksites": ["create", "view", "list", "update", "delete"],
     "contracts": ["create", "view", "list", "update", "delete"],
     "timelines": ["create", "view", "list", "update", "delete"],
     "milestones": ["create", "view", "list", "update", "delete"],
     "site_equipment": ["create", "view", "list", "update", "delete"],
-
     # ── Services ──
     "categories": ["create", "view", "list", "update", "delete"],
     "content": ["create", "view", "list", "update", "delete"],
     "documents": ["create", "view", "list", "update", "delete"],
-    "expenses": ["create", "view", "view_own", "list", "list_own",
-                  "update", "update_own", "delete", "approve", "reject", "pay"],
+    "expenses": [
+        "create",
+        "view",
+        "view_own",
+        "list",
+        "list_own",
+        "update",
+        "update_own",
+        "delete",
+        "approve",
+        "reject",
+        "pay",
+    ],
     "finance_vendors": ["create", "view", "list", "update", "deactivate"],
-    "vendor_bills": ["create", "view", "list", "update", "approve", "reject", "pay", "void"],
-    "petty_cash": ["create", "view", "list", "update", "approve", "reject", "issue", "retire", "cancel"],
+    "vendor_bills": [
+        "create",
+        "view",
+        "list",
+        "update",
+        "approve",
+        "reject",
+        "pay",
+        "void",
+    ],
+    "petty_cash": [
+        "create",
+        "view",
+        "list",
+        "update",
+        "approve",
+        "reject",
+        "issue",
+        "retire",
+        "cancel",
+    ],
     "cash_flow": ["view"],
     "chart_of_accounts": ["create", "view", "list", "update", "deactivate"],
     "journals": ["create", "view", "list", "update", "post", "reverse"],
     "general_ledger": ["view", "list"],
-    "bank_reconciliation": ["create", "view", "list", "update", "match", "reconcile", "close"],
+    "bank_reconciliation": [
+        "create",
+        "view",
+        "list",
+        "update",
+        "match",
+        "reconcile",
+        "close",
+    ],
     "fixed_asset_categories": ["create", "view", "list", "update", "deactivate"],
-    "fixed_assets": ["create", "view", "list", "update", "capitalize", "depreciate", "dispose"],
+    "fixed_assets": [
+        "create",
+        "view",
+        "list",
+        "update",
+        "capitalize",
+        "depreciate",
+        "dispose",
+    ],
     "finance_payroll": [
-        "list", "view", "create", "update", "calculate",
-        "submit", "approve", "reject", "pay", "cancel",
+        "list",
+        "view",
+        "create",
+        "update",
+        "calculate",
+        "submit",
+        "approve",
+        "reject",
+        "pay",
+        "cancel",
     ],
     "commissions": [
-        "list", "view", "create", "update", "calculate", "approve", "reject",
+        "list",
+        "view",
+        "create",
+        "update",
+        "calculate",
+        "approve",
+        "reject",
     ],
     "statutory": [
-        "list", "view", "create", "update", "generate", "submit",
-        "approve", "reject", "pay", "void",
+        "list",
+        "view",
+        "create",
+        "update",
+        "generate",
+        "submit",
+        "approve",
+        "reject",
+        "pay",
+        "void",
     ],
     "service_invoices": ["create", "view", "list", "update", "delete"],
     "service_leads": ["create", "view", "list", "update", "delete"],
@@ -139,31 +359,77 @@ PERMISSIONS_MAP = {
     "service_workflows": ["create", "view", "list", "update", "delete"],
     "feedback": ["create", "view", "list", "update", "delete"],
     "reports": ["view"],
-
     # ── HR ──
     "job_postings": ["create", "view", "list", "update", "delete", "update_status"],
     "applicants": ["create", "view", "list", "update", "delete", "update_status"],
     "interviews": ["create", "view", "list", "update", "delete", "submit_feedback"],
     "offer_letters": ["create", "view", "list", "update"],
-    "leave_requests": ["create", "view", "view_own", "list", "list_own",
-                       "update", "update_own", "delete", "delete_own",
-                       "approve", "reject"],
+    "leave_requests": [
+        "create",
+        "view",
+        "view_own",
+        "list",
+        "list_own",
+        "update",
+        "update_own",
+        "delete",
+        "delete_own",
+        "approve",
+        "reject",
+    ],
     "payroll": ["list", "list_own", "process_batch", "make_payment", "authorize"],
-    "performance_reviews": ["create", "view", "view_own", "list", "list_own",
-                            "update", "delete"],
+    "performance_reviews": [
+        "create",
+        "view",
+        "view_own",
+        "list",
+        "list_own",
+        "update",
+        "delete",
+    ],
     "training_programs": ["create", "view", "list", "update", "delete"],
     "assets": ["create", "view", "view_own", "list", "list_own", "update", "delete"],
     "awards": ["create", "view", "view_own", "list", "list_own", "update", "delete"],
-    "work_reports": ["create", "view", "view_own", "list", "list_own",
-                     "update", "update_own", "delete", "approve", "reject"],
-    "disciplinary_cases": ["create", "view", "view_own", "list", "list_own",
-                           "update", "delete"],
-    "monthly_scorecards": ["create", "view", "view_own", "list", "list_own",
-                           "update", "delete"],
-    "employee_evaluations": ["create", "view", "view_own", "list", "list_own",
-                             "update", "delete"],
+    "work_reports": [
+        "create",
+        "view",
+        "view_own",
+        "list",
+        "list_own",
+        "update",
+        "update_own",
+        "delete",
+        "approve",
+        "reject",
+    ],
+    "disciplinary_cases": [
+        "create",
+        "view",
+        "view_own",
+        "list",
+        "list_own",
+        "update",
+        "delete",
+    ],
+    "monthly_scorecards": [
+        "create",
+        "view",
+        "view_own",
+        "list",
+        "list_own",
+        "update",
+        "delete",
+    ],
+    "employee_evaluations": [
+        "create",
+        "view",
+        "view_own",
+        "list",
+        "list_own",
+        "update",
+        "delete",
+    ],
     "kpis": ["create", "view", "view_own", "list", "list_own", "update", "delete"],
-
     # ── CRM / Sales Pipeline ──
     "funnel": ["view"],
     "marketing_dashboard": ["view"],
@@ -172,23 +438,26 @@ PERMISSIONS_MAP = {
     "deals": ["create", "view", "list", "update", "delete"],
     "pipeline": ["view"],
     "revenue_execution": ["create", "view", "list", "update", "delete", "complete"],
-
     # ── Biometric / Attendance ──
     #   work_locations: employee-facing actions (submit a location proposal,
     #   view/list own or all locations, delete own pending proposal).
     #   work_location_approvals: admin-facing actions (review pending proposals,
     #   approve/reject, directly whitelist, edit radius, override attendance).
     "work_locations": ["submit", "view", "view_own", "list", "list_own", "delete_own"],
-    "work_location_approvals": ["create", "list_pending", "approve", "reject",
-                                 "manage", "override", "force_delete"],
+    "work_location_approvals": [
+        "create",
+        "list_pending",
+        "approve",
+        "reject",
+        "manage",
+        "override",
+        "force_delete",
+    ],
     "attendance": ["view", "list", "view_own", "list_own"],
-
     # ── Notifications ──
     "notifications": ["view", "list", "mark_read", "mark_all_read"],
-
     # ── Command Center ──
     "command_center": ["view"],
-
     # ── Workflow Rules ──
     "workflow_rules": ["create", "view", "list", "update", "delete"],
 }
@@ -385,9 +654,7 @@ def _validate_permissions(value):
                 f"Valid resources: {', '.join(sorted(PERMISSIONS_MAP.keys()))}"
             )
         if not isinstance(actions, list):
-            raise ValidationError(
-                f"Actions for '{resource}' must be a list."
-            )
+            raise ValidationError(f"Actions for '{resource}' must be a list.")
         valid_actions = set(PERMISSIONS_MAP[resource])
         for action in actions:
             if action not in valid_actions:
@@ -410,6 +677,7 @@ def get_permission_helper(resource: str, action: str) -> dict:
         "helper_text": f"{action_label} {resource.replace('_', ' ')}.",
     }
 
+
 class Role(BaseModel):
     """
     A named set of permissions with branch-based scoping.
@@ -426,9 +694,9 @@ class Role(BaseModel):
     name = models.CharField(max_length=100, unique=True)
 
     branches = models.ManyToManyField(
-        'Branch',
+        "Branch",
         blank=True,
-        related_name='roles',
+        related_name="roles",
         help_text="Branches this role grants access to. Empty = company-wide.",
     )
 
@@ -442,7 +710,7 @@ class Role(BaseModel):
     class Meta:
         verbose_name = "Role"
         verbose_name_plural = "Roles"
-        ordering = ['-created_at']
+        ordering = ["-created_at"]
 
     def __str__(self):
         return self.name
@@ -462,7 +730,7 @@ class Role(BaseModel):
 
     def get_branch_ids(self) -> list:
         """Return the list of branch IDs this role is scoped to."""
-        return list(self.branches.values_list('id', flat=True))
+        return list(self.branches.values_list("id", flat=True))
 
     @staticmethod
     def employee_has_permission(employee, resource: str, action: str) -> bool:
@@ -471,7 +739,7 @@ class Role(BaseModel):
         Uses DB-level __contains on PostgreSQL, falls back to Python
         filtering on SQLite.
         """
-        role = getattr(employee, 'role', None)
+        role = getattr(employee, "role", None)
         if role is None:
             return False
         try:

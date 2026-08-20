@@ -43,9 +43,31 @@ class AccountingSignoffFixTests(RoleAPITestMixin, TestCase):
             "FIN Signoff Tester",
             {
                 "payments": ["list", "view", "create"],
-                "bank_reconciliation": ["create", "view", "list", "update", "match", "reconcile", "close"],
-                "fixed_asset_categories": ["create", "view", "list", "update", "deactivate"],
-                "fixed_assets": ["create", "view", "list", "update", "capitalize", "depreciate", "dispose"],
+                "bank_reconciliation": [
+                    "create",
+                    "view",
+                    "list",
+                    "update",
+                    "match",
+                    "reconcile",
+                    "close",
+                ],
+                "fixed_asset_categories": [
+                    "create",
+                    "view",
+                    "list",
+                    "update",
+                    "deactivate",
+                ],
+                "fixed_assets": [
+                    "create",
+                    "view",
+                    "list",
+                    "update",
+                    "capitalize",
+                    "depreciate",
+                    "dispose",
+                ],
                 "journals": ["create", "view", "list", "update", "post", "reverse"],
                 "general_ledger": ["view", "list"],
             },
@@ -130,7 +152,9 @@ class AccountingSignoffFixTests(RoleAPITestMixin, TestCase):
             code=f"SIGN-{life}",
             name=f"Signoff Assets {life}",
             asset_ledger_account=LedgerAccount.objects.get(code="1610"),
-            accumulated_depreciation_ledger_account=LedgerAccount.objects.get(code="1690"),
+            accumulated_depreciation_ledger_account=LedgerAccount.objects.get(
+                code="1690"
+            ),
             depreciation_expense_ledger_account=LedgerAccount.objects.get(code="6300"),
             default_useful_life_months=life,
             default_residual_value_percent=Decimal("0.00"),
@@ -232,12 +256,12 @@ class AccountingSignoffFixTests(RoleAPITestMixin, TestCase):
                 ],
             )
 
-    def test_first_reconciliation_ignores_historical_items_already_in_opening_balance(self):
+    def test_first_reconciliation_ignores_historical_items_already_in_opening_balance(
+        self,
+    ):
         self._bank_move(Decimal("100.00"), True, date(2026, 1, 5), "OLD-IN")
         self._bank_move(Decimal("20.00"), False, date(2026, 1, 6), "OLD-OUT")
-        current = self._bank_move(
-            Decimal("50.00"), True, date(2026, 8, 5), "AUG-IN"
-        )
+        current = self._bank_move(Decimal("50.00"), True, date(2026, 8, 5), "AUG-IN")
 
         reconciliation = create_bank_reconciliation(
             finance_account=self.finance_account,

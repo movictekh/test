@@ -15,27 +15,35 @@ class TrainingProgramCreateSchema(Schema):
     target_audience: str
     status: str = "pending"
 
-    @validator('end_date')
+    @validator("end_date")
     def validate_dates(cls, v, values):
-        if 'start_date' in values and v < values['start_date']:
-            raise ValueError('End date must be after start date')
+        if "start_date" in values and v < values["start_date"]:
+            raise ValueError("End date must be after start date")
         return v
 
-    @validator('status')
+    @validator("status")
     def validate_status(cls, v):
-        valid_statuses = ['pending', 'in_progress', 'completed', 'cancelled']
+        valid_statuses = ["pending", "in_progress", "completed", "cancelled"]
         if v not in valid_statuses:
             raise ValueError(f'Status must be one of: {", ".join(valid_statuses)}')
         return v
 
-    @validator('target_audience')
+    @validator("target_audience")
     def validate_target_audience(cls, v):
         valid_audiences = [
-            'all_employees', 'management', 'new_hires', 'department_specific',
-            'leadership_team', 'technical_staff', 'sales_team', 'customer_service'
+            "all_employees",
+            "management",
+            "new_hires",
+            "department_specific",
+            "leadership_team",
+            "technical_staff",
+            "sales_team",
+            "customer_service",
         ]
         if v not in valid_audiences:
-            raise ValueError(f'Target audience must be one of: {", ".join(valid_audiences)}')
+            raise ValueError(
+                f'Target audience must be one of: {", ".join(valid_audiences)}'
+            )
         return v
 
 
@@ -49,23 +57,31 @@ class TrainingProgramUpdateSchema(Schema):
     target_audience: Optional[str] = None
     status: Optional[str] = None
 
-    @validator('status')
+    @validator("status")
     def validate_status(cls, v):
         if v is not None:
-            valid_statuses = ['pending', 'in_progress', 'completed', 'cancelled']
+            valid_statuses = ["pending", "in_progress", "completed", "cancelled"]
             if v not in valid_statuses:
                 raise ValueError(f'Status must be one of: {", ".join(valid_statuses)}')
         return v
 
-    @validator('target_audience')
+    @validator("target_audience")
     def validate_target_audience(cls, v):
         if v is not None:
             valid_audiences = [
-                'all_employees', 'management', 'new_hires', 'department_specific',
-                'leadership_team', 'technical_staff', 'sales_team', 'customer_service'
+                "all_employees",
+                "management",
+                "new_hires",
+                "department_specific",
+                "leadership_team",
+                "technical_staff",
+                "sales_team",
+                "customer_service",
             ]
             if v not in valid_audiences:
-                raise ValueError(f'Target audience must be one of: {", ".join(valid_audiences)}')
+                raise ValueError(
+                    f'Target audience must be one of: {", ".join(valid_audiences)}'
+                )
         return v
 
 
@@ -96,6 +112,7 @@ class TrainingProgramResponseSchema(Schema):
 
 class TrainingProgramListSchema(Schema):
     """Simplified schema for list view"""
+
     id: int
     program_name: str
     start_date: date

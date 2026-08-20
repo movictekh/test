@@ -8,32 +8,146 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('services', '0009_lead'),
+        ("services", "0009_lead"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='LeadActivity',
+            name="LeadActivity",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='When this record was created')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text='When this record was last updated')),
-                ('sequence', models.PositiveIntegerField()),
-                ('activity_type', models.CharField(choices=[('phone_call', 'Phone Call'), ('whatsapp', 'WhatsApp'), ('email', 'Email'), ('meeting', 'Meeting'), ('site_inspection', 'Site Inspection'), ('proposal_sent', 'Proposal Sent'), ('payment_update', 'Payment Update'), ('internal_note', 'Internal Note')], max_length=30)),
-                ('outcome', models.CharField(blank=True, choices=[('connected', 'Connected'), ('no_answer', 'No Answer'), ('interested', 'Interested'), ('needs_follow_up', 'Needs Follow-up'), ('inspection_booked', 'Inspection Booked'), ('proposal_requested', 'Proposal Requested'), ('payment_discussion', 'Payment Discussion'), ('not_interested', 'Not Interested')], max_length=30)),
-                ('note', models.TextField()),
-                ('next_follow_up_at', models.DateTimeField(blank=True, null=True)),
-                ('next_action', models.CharField(blank=True, max_length=255)),
-                ('from_status', models.CharField(blank=True, choices=[('new', 'New'), ('contacted', 'Contacted'), ('qualified', 'Qualified'), ('proposal_sent', 'Proposal Sent'), ('negotiation', 'Negotiation'), ('won', 'Won'), ('lost', 'Lost'), ('dormant', 'Dormant')], max_length=30)),
-                ('to_status', models.CharField(blank=True, choices=[('new', 'New'), ('contacted', 'Contacted'), ('qualified', 'Qualified'), ('proposal_sent', 'Proposal Sent'), ('negotiation', 'Negotiation'), ('won', 'Won'), ('lost', 'Lost'), ('dormant', 'Dormant')], max_length=30)),
-                ('created_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='created_lead_activities', to=settings.AUTH_USER_MODEL)),
-                ('lead', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='activities', to='services.lead')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, help_text="When this record was created"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, help_text="When this record was last updated"
+                    ),
+                ),
+                ("sequence", models.PositiveIntegerField()),
+                (
+                    "activity_type",
+                    models.CharField(
+                        choices=[
+                            ("phone_call", "Phone Call"),
+                            ("whatsapp", "WhatsApp"),
+                            ("email", "Email"),
+                            ("meeting", "Meeting"),
+                            ("site_inspection", "Site Inspection"),
+                            ("proposal_sent", "Proposal Sent"),
+                            ("payment_update", "Payment Update"),
+                            ("internal_note", "Internal Note"),
+                        ],
+                        max_length=30,
+                    ),
+                ),
+                (
+                    "outcome",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("connected", "Connected"),
+                            ("no_answer", "No Answer"),
+                            ("interested", "Interested"),
+                            ("needs_follow_up", "Needs Follow-up"),
+                            ("inspection_booked", "Inspection Booked"),
+                            ("proposal_requested", "Proposal Requested"),
+                            ("payment_discussion", "Payment Discussion"),
+                            ("not_interested", "Not Interested"),
+                        ],
+                        max_length=30,
+                    ),
+                ),
+                ("note", models.TextField()),
+                ("next_follow_up_at", models.DateTimeField(blank=True, null=True)),
+                ("next_action", models.CharField(blank=True, max_length=255)),
+                (
+                    "from_status",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("new", "New"),
+                            ("contacted", "Contacted"),
+                            ("qualified", "Qualified"),
+                            ("proposal_sent", "Proposal Sent"),
+                            ("negotiation", "Negotiation"),
+                            ("won", "Won"),
+                            ("lost", "Lost"),
+                            ("dormant", "Dormant"),
+                        ],
+                        max_length=30,
+                    ),
+                ),
+                (
+                    "to_status",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("new", "New"),
+                            ("contacted", "Contacted"),
+                            ("qualified", "Qualified"),
+                            ("proposal_sent", "Proposal Sent"),
+                            ("negotiation", "Negotiation"),
+                            ("won", "Won"),
+                            ("lost", "Lost"),
+                            ("dormant", "Dormant"),
+                        ],
+                        max_length=30,
+                    ),
+                ),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="created_lead_activities",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "lead",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="activities",
+                        to="services.lead",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-sequence'],
-                'indexes': [models.Index(fields=['lead', '-sequence'], name='services_le_lead_id_bc8029_idx'), models.Index(fields=['activity_type'], name='services_le_activit_814992_idx'), models.Index(fields=['outcome'], name='services_le_outcome_7c301a_idx'), models.Index(fields=['created_by'], name='services_le_created_23e09c_idx'), models.Index(fields=['created_at'], name='services_le_created_3fb04b_idx')],
-                'unique_together': {('lead', 'sequence')},
+                "ordering": ["-sequence"],
+                "indexes": [
+                    models.Index(
+                        fields=["lead", "-sequence"],
+                        name="services_le_lead_id_bc8029_idx",
+                    ),
+                    models.Index(
+                        fields=["activity_type"], name="services_le_activit_814992_idx"
+                    ),
+                    models.Index(
+                        fields=["outcome"], name="services_le_outcome_7c301a_idx"
+                    ),
+                    models.Index(
+                        fields=["created_by"], name="services_le_created_23e09c_idx"
+                    ),
+                    models.Index(
+                        fields=["created_at"], name="services_le_created_3fb04b_idx"
+                    ),
+                ],
+                "unique_together": {("lead", "sequence")},
             },
         ),
     ]

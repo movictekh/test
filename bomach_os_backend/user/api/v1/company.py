@@ -20,7 +20,6 @@ from user.models.company import (
 )
 from user.utils.perm import require_permission
 
-
 company_api = Router(tags=["Company"])
 
 
@@ -33,13 +32,18 @@ def _apply_update(instance, payload):
 
 # ── Profile ────────────────────────────────────────────────────────────
 
-@company_api.get("/company/profile", response={200: CompanyProfileSchema, 404: MessageSchema})
+
+@company_api.get(
+    "/company/profile", response={200: CompanyProfileSchema, 404: MessageSchema}
+)
 @require_permission("company_settings", "view")
 def get_company_profile(request):
     return 200, CompanyProfile.get_settings()
 
 
-@company_api.put("/company/profile", response={200: CompanyProfileSchema, 400: MessageSchema})
+@company_api.put(
+    "/company/profile", response={200: CompanyProfileSchema, 400: MessageSchema}
+)
 @require_permission("company_settings", "update")
 def update_company_profile(request, payload: CompanyProfileUpdateSchema):
     try:
@@ -51,13 +55,18 @@ def update_company_profile(request, payload: CompanyProfileUpdateSchema):
 
 # ── Branding ───────────────────────────────────────────────────────────
 
-@company_api.get("/company/branding", response={200: CompanyBrandingSchema, 404: MessageSchema})
+
+@company_api.get(
+    "/company/branding", response={200: CompanyBrandingSchema, 404: MessageSchema}
+)
 @require_permission("company_settings", "view")
 def get_company_branding(request):
     return 200, CompanyBranding.get_settings()
 
 
-@company_api.put("/company/branding", response={200: CompanyBrandingSchema, 400: MessageSchema})
+@company_api.put(
+    "/company/branding", response={200: CompanyBrandingSchema, 400: MessageSchema}
+)
 @require_permission("company_settings", "update")
 def update_company_branding(request, payload: CompanyBrandingUpdateSchema):
     try:
@@ -69,13 +78,18 @@ def update_company_branding(request, payload: CompanyBrandingUpdateSchema):
 
 # ── Preferences ────────────────────────────────────────────────────────
 
-@company_api.get("/company/preferences", response={200: CompanyPreferencesSchema, 404: MessageSchema})
+
+@company_api.get(
+    "/company/preferences", response={200: CompanyPreferencesSchema, 404: MessageSchema}
+)
 @require_permission("company_settings", "view")
 def get_company_preferences(request):
     return 200, CompanyPreferences.get_settings()
 
 
-@company_api.put("/company/preferences", response={200: CompanyPreferencesSchema, 400: MessageSchema})
+@company_api.put(
+    "/company/preferences", response={200: CompanyPreferencesSchema, 400: MessageSchema}
+)
 @require_permission("company_settings", "update")
 def update_company_preferences(request, payload: CompanyPreferencesUpdateSchema):
     try:
@@ -86,6 +100,7 @@ def update_company_preferences(request, payload: CompanyPreferencesUpdateSchema)
 
 
 # ── Choices (for frontend dropdowns) ───────────────────────────────────
+
 
 @company_api.get("/company/choices", response={200: CompanyChoicesSchema})
 @require_permission("company_settings", "view")

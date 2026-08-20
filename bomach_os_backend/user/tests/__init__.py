@@ -7,5 +7,8 @@ from .test_role_resources import RoleResourceAPITests
 from .test_role_success_playbook import RoleSuccessPlaybookAPITests
 from .test_role_targets import EmployeeTargetAPITests, RoleTargetTemplateAPITests
 from .test_target_reports import TargetReportAPITests
-from .test_role_training_and_sops import RoleSOPAPITests, RoleTrainingRequirementAPITests
+from .test_role_training_and_sops import (
+    RoleSOPAPITests,
+    RoleTrainingRequirementAPITests,
+)
 from .test_role_workflows import RoleDailyRoutineAPITests, RoleTaskTemplateAPITests

@@ -3,14 +3,17 @@ from typing import Optional
 from datetime import date, datetime
 from decimal import Decimal
 
-
 # ============== Legal Case Schemas ==============
+
 
 class CreateLegalCaseRequest(Schema):
     """Request schema for creating a new legal case"""
+
     case_name: str
     case_type: str  # contract_dispute, employment, regulatory, civil, criminal, corporate, intellectual_property
-    status: Optional[str] = 'open'  # in_progress, settled, open, closed, pending, dismissed, won, lost
+    status: Optional[str] = (
+        "open"  # in_progress, settled, open, closed, pending, dismissed, won, lost
+    )
     exposure: Optional[Decimal] = None
     next_hearing: Optional[date] = None
     case_number: Optional[str] = None
@@ -21,6 +24,7 @@ class CreateLegalCaseRequest(Schema):
 
 class UpdateLegalCaseRequest(Schema):
     """Request schema for updating a legal case"""
+
     case_name: Optional[str] = None
     case_type: Optional[str] = None
     status: Optional[str] = None
@@ -34,11 +38,13 @@ class UpdateLegalCaseRequest(Schema):
 
 class UpdateCaseStatusRequest(Schema):
     """Request schema for updating case status"""
+
     status: str
 
 
 class LegalCaseResponse(Schema):
     """Response schema for legal case details"""
+
     id: int
     case_name: str
     case_type: str
@@ -65,6 +71,7 @@ class LegalCaseResponse(Schema):
 
 class LegalCaseStatisticsResponse(Schema):
     """Response schema for legal case statistics"""
+
     total_cases: int
     open_cases: int
     in_progress_cases: int
