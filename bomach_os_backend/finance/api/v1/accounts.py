@@ -9,19 +9,28 @@ from django.utils import timezone
 from ninja import Query, Router
 from ninja.pagination import LimitOffsetPagination, paginate
 
-from finance.api.schemas import FinanceAccountBalanceOut, FinanceAccountIn, FinanceAccountOut, FinanceAccountUpdate
+from finance.api.schemas import (
+    FinanceAccountBalanceOut,
+    FinanceAccountIn,
+    FinanceAccountOut,
+    FinanceAccountUpdate,
+)
 from finance.models import FinanceAccount, JournalEntry, JournalLine
-from finance.service import ensure_finance_account_ledger_account, post_opening_balance_journal
+from finance.service import (
+    ensure_finance_account_ledger_account,
+    post_opening_balance_journal,
+)
 from services.api.schema.others import MessageSchema
 from user.models.branch import Branch
 from user.utils.perm import require_permission, scope_queryset
-
 
 router = Router(tags=["Finance Accounts"])
 
 
 def _account_queryset():
-    return FinanceAccount.objects.select_related("branch", "ledger_account", "created_by")
+    return FinanceAccount.objects.select_related(
+        "branch", "ledger_account", "created_by"
+    )
 
 
 @router.get("/accounts", response=List[FinanceAccountOut])
@@ -132,7 +141,10 @@ def create_finance_account(request, payload: FinanceAccountIn):
         return 400, {"detail": str(exc)}
 
 
-@router.patch("/accounts/{account_id}", response={200: FinanceAccountOut, 400: MessageSchema, 404: MessageSchema})
+@router.patch(
+    "/accounts/{account_id}",
+    response={200: FinanceAccountOut, 400: MessageSchema, 404: MessageSchema},
+)
 @require_permission("payments", "create")
 def update_finance_account(request, account_id: int, payload: FinanceAccountUpdate):
     try:
@@ -173,7 +185,10 @@ def update_finance_account(request, account_id: int, payload: FinanceAccountUpda
         return 400, {"detail": str(exc)}
 
 
-@router.post("/accounts/{account_id}/deactivate", response={200: FinanceAccountOut, 404: MessageSchema})
+@router.post(
+    "/accounts/{account_id}/deactivate",
+    response={200: FinanceAccountOut, 404: MessageSchema},
+)
 @require_permission("payments", "create")
 def deactivate_finance_account(request, account_id: int):
     account = get_object_or_404(

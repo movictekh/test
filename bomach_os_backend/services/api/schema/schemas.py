@@ -482,7 +482,9 @@ class InvoiceUpdate(Schema):
 class InvoiceFromQuoteIn(Schema):
     due_date: date
     payment_schedule: str = "Deposit / mobilisation"
-    payment_instructions: str = "Pay through client wallet, payment gateway, bank transfer or approved POS."
+    payment_instructions: str = (
+        "Pay through client wallet, payment gateway, bank transfer or approved POS."
+    )
     notes: Optional[str] = ""
 
 

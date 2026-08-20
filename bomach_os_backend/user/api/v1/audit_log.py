@@ -14,10 +14,8 @@ from user.api.schemas import (
 
 audit_log_api = Router(tags=["Audit Logs"])
 
-@audit_log_api.get(
-    "",
-    response={200: List[AuditLogResponse], 401: ErrorResponse}
-)
+
+@audit_log_api.get("", response={200: List[AuditLogResponse], 401: ErrorResponse})
 @paginate(LimitOffsetPagination, page_size=10)
 @require_permission("audit_logs", "list")
 def list_audit_logs(
@@ -29,14 +27,14 @@ def list_audit_logs(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
 ):
-    queryset = AuditLog.objects.select_related('user').all()
+    queryset = AuditLog.objects.select_related("user").all()
 
     if search:
         queryset = queryset.filter(
-            Q(activity__icontains=search) |
-            Q(user__first_name__icontains=search) |
-            Q(user__last_name__icontains=search) |
-            Q(user__email__icontains=search)
+            Q(activity__icontains=search)
+            | Q(user__first_name__icontains=search)
+            | Q(user__last_name__icontains=search)
+            | Q(user__email__icontains=search)
         )
 
     if user_id:
@@ -50,7 +48,9 @@ def list_audit_logs(
 
     if start_date:
         try:
-            queryset = queryset.filter(created_at__gte=datetime.fromisoformat(start_date))
+            queryset = queryset.filter(
+                created_at__gte=datetime.fromisoformat(start_date)
+            )
         except ValueError:
             pass
 

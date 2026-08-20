@@ -15,7 +15,13 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="payment",
             name="finance_account",
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name="confirmed_payments", to="finance.financeaccount"),
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="confirmed_payments",
+                to="finance.financeaccount",
+            ),
         ),
         migrations.AddField(
             model_name="payment",

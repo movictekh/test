@@ -45,9 +45,7 @@ class FaceRecognitionServiceClientTests(SimpleTestCase):
 
     @patch("user.services.face_recognition_service.requests.post")
     def test_rejects_boolean_embedding_value(self, post):
-        post.return_value = self.response(
-            payload={"embedding": [0.1] * 511 + [True]}
-        )
+        post.return_value = self.response(payload={"embedding": [0.1] * 511 + [True]})
 
         with self.assertRaises(service.FaceServiceBadGateway):
             service.extract_embedding("image")

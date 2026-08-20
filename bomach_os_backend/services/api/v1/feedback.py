@@ -6,7 +6,10 @@ from django.db.models.functions import Coalesce
 from decimal import Decimal
 
 from services.api.schema.feedback_schemas import (
-    FeedbackIn, FeedbackOut, FeedbackUpdate, FeedbackStatsSchema,
+    FeedbackIn,
+    FeedbackOut,
+    FeedbackUpdate,
+    FeedbackStatsSchema,
 )
 from services.api.schema.others import MessageSchema
 from services.models.feedback import ClientFeedback
@@ -45,7 +48,8 @@ def list_feedback(
 ):
     """List all feedback with optional filtering."""
     feedbacks = ClientFeedback.objects.select_related(
-        'order', 'recorded_by',
+        "order",
+        "recorded_by",
     ).all()
 
     if status:
@@ -56,9 +60,9 @@ def list_feedback(
         feedbacks = feedbacks.filter(rating__gte=rating_min)
     if search:
         feedbacks = feedbacks.filter(
-            Q(client_name__icontains=search) |
-            Q(service_name__icontains=search) |
-            Q(comment__icontains=search)
+            Q(client_name__icontains=search)
+            | Q(service_name__icontains=search)
+            | Q(comment__icontains=search)
         )
 
     return [_feedback_out(fb) for fb in feedbacks]
@@ -71,14 +75,18 @@ def create_feedback(request, payload: FeedbackIn):
     from services.models.service import ServiceOrder
 
     try:
-        order = ServiceOrder.objects.select_related('client', 'service').get(
+        order = ServiceOrder.objects.select_related("client", "service").get(
             id=payload.order_id,
         )
     except ServiceOrder.DoesNotExist:
         return 400, {"detail": "Order not found"}
 
     try:
-        client_name = order.client.company_name or order.client.user.get_full_name() or str(order.client)
+        client_name = (
+            order.client.company_name
+            or order.client.user.get_full_name()
+            or str(order.client)
+        )
     except Exception:
         client_name = str(order.client)
 
@@ -115,27 +123,30 @@ def feedback_stats(request):
             repeat_clients=Decimal("0.00"),
         )
 
-    avg_rating = qs.aggregate(avg=Coalesce(Avg('rating'), Decimal('0'), output_field=DecimalField()))['avg']
+    avg_rating = qs.aggregate(
+        avg=Coalesce(Avg("rating"), Decimal("0"), output_field=DecimalField())
+    )["avg"]
     if isinstance(avg_rating, float):
-        avg_rating = Decimal(str(avg_rating)).quantize(Decimal('0.01'))
+        avg_rating = Decimal(str(avg_rating)).quantize(Decimal("0.01"))
 
     # Client satisfaction = % with rating >= 4
     satisfied = qs.filter(rating__gte=4).count()
-    satisfaction = (Decimal(satisfied) / Decimal(total) * 100).quantize(Decimal('0.01'))
+    satisfaction = (Decimal(satisfied) / Decimal(total) * 100).quantize(Decimal("0.01"))
 
     # Rework rate = % with type defect_rework
-    rework_count = qs.filter(feedback_type='defect_rework').count()
-    rework = (Decimal(rework_count) / Decimal(total) * 100).quantize(Decimal('0.01'))
+    rework_count = qs.filter(feedback_type="defect_rework").count()
+    rework = (Decimal(rework_count) / Decimal(total) * 100).quantize(Decimal("0.01"))
 
     # Repeat clients = % of distinct clients with >1 feedback
     repeat = (
-        qs.values('client_name')
-        .annotate(cnt=Count('id'))
-        .filter(cnt__gt=1)
-        .count()
+        qs.values("client_name").annotate(cnt=Count("id")).filter(cnt__gt=1).count()
     )
-    distinct_clients = qs.values('client_name').distinct().count()
-    repeat_pct = (Decimal(repeat) / Decimal(distinct_clients) * 100).quantize(Decimal('0.01')) if distinct_clients else Decimal('0.00')
+    distinct_clients = qs.values("client_name").distinct().count()
+    repeat_pct = (
+        (Decimal(repeat) / Decimal(distinct_clients) * 100).quantize(Decimal("0.01"))
+        if distinct_clients
+        else Decimal("0.00")
+    )
 
     return 200, FeedbackStatsSchema(
         total=total,
@@ -151,13 +162,16 @@ def feedback_stats(request):
 def get_feedback(request, feedback_id: int):
     """Get a specific feedback record."""
     fb = get_object_or_404(
-        ClientFeedback.objects.select_related('order', 'recorded_by'),
+        ClientFeedback.objects.select_related("order", "recorded_by"),
         id=feedback_id,
     )
     return _feedback_out(fb)
 
 
-@router.put("/{feedback_id}", response={200: FeedbackOut, 400: MessageSchema, 404: MessageSchema})
+@router.put(
+    "/{feedback_id}",
+    response={200: FeedbackOut, 400: MessageSchema, 404: MessageSchema},
+)
 @require_permission("feedback", "update")
 def update_feedback(request, feedback_id: int, payload: FeedbackUpdate):
     """Update a feedback record."""
@@ -166,7 +180,7 @@ def update_feedback(request, feedback_id: int, payload: FeedbackUpdate):
         for attr, value in payload.dict(exclude_unset=True).items():
             setattr(fb, attr, value)
         fb.save()
-        fb = ClientFeedback.objects.select_related('order', 'recorded_by').get(id=fb.id)
+        fb = ClientFeedback.objects.select_related("order", "recorded_by").get(id=fb.id)
         return 200, _feedback_out(fb)
     except Exception as e:
         return 400, {"detail": str(e)}

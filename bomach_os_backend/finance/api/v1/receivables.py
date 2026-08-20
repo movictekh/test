@@ -22,7 +22,6 @@ from services.models.payment import Invoice
 from services.models.service import ServiceRequestActivity
 from user.utils.perm import require_permission
 
-
 router = Router(tags=["Finance Receivables"])
 
 RECEIVABLE_REMINDER_MARKER = "Receivables reminder"
@@ -59,9 +58,11 @@ def _apply_branch_scope(request, invoices):
 
 
 def _receivable_queryset(request):
-    return _apply_branch_scope(request, _invoice_queryset()).exclude(
-        status__in=["draft", "cancelled"]
-    ).filter(total_amount__gt=F("amount_paid"))
+    return (
+        _apply_branch_scope(request, _invoice_queryset())
+        .exclude(status__in=["draft", "cancelled"])
+        .filter(total_amount__gt=F("amount_paid"))
+    )
 
 
 def _age_days(invoice, today=None):
@@ -102,8 +103,7 @@ def _apply_filters(
     receivables = _receivable_queryset(request)
     if branch_id:
         receivables = receivables.filter(
-            Q(service_request__branch_id=branch_id)
-            | Q(order__branch_id=branch_id)
+            Q(service_request__branch_id=branch_id) | Q(order__branch_id=branch_id)
         )
     if client_id:
         receivables = receivables.filter(client_id=client_id)
@@ -129,9 +129,15 @@ def _apply_filters(
         )
 
     today = timezone.localdate()
-    decorated = [_decorate_receivable(invoice, today=today) for invoice in receivables.distinct()]
+    decorated = [
+        _decorate_receivable(invoice, today=today) for invoice in receivables.distinct()
+    ]
     if ageing_bucket:
-        decorated = [invoice for invoice in decorated if invoice.receivable_ageing_bucket == ageing_bucket]
+        decorated = [
+            invoice
+            for invoice in decorated
+            if invoice.receivable_ageing_bucket == ageing_bucket
+        ]
     return decorated
 
 
@@ -174,7 +180,9 @@ def list_receivables(
         due_to=due_to,
         search=search,
     )
-    return sorted(receivables, key=lambda invoice: (invoice.due_date, invoice.invoice_number))
+    return sorted(
+        receivables, key=lambda invoice: (invoice.due_date, invoice.invoice_number)
+    )
 
 
 @router.get("/receivables/summary", response=ReceivableSummaryOut)
@@ -219,10 +227,14 @@ def receivables_summary(
         total_paid += invoice.amount_paid
 
     total_receivables = sum(buckets.values(), Decimal("0.00"))
-    overdue_total = buckets["1_30"] + buckets["31_60"] + buckets["61_90"] + buckets["90_plus"]
+    overdue_total = (
+        buckets["1_30"] + buckets["31_60"] + buckets["61_90"] + buckets["90_plus"]
+    )
     collection_rate = Decimal("0.00")
     if total_invoiced > 0:
-        collection_rate = (total_paid / total_invoiced * Decimal("100")).quantize(Decimal("0.01"))
+        collection_rate = (total_paid / total_invoiced * Decimal("100")).quantize(
+            Decimal("0.01")
+        )
 
     return {
         "total_receivables": total_receivables,
@@ -232,14 +244,20 @@ def receivables_summary(
         "bucket_61_90": buckets["61_90"],
         "bucket_90_plus": buckets["90_plus"],
         "overdue_total": overdue_total,
-        "overdue_count": bucket_counts["1_30"] + bucket_counts["31_60"] + bucket_counts["61_90"] + bucket_counts["90_plus"],
+        "overdue_count": bucket_counts["1_30"]
+        + bucket_counts["31_60"]
+        + bucket_counts["61_90"]
+        + bucket_counts["90_plus"],
         "receivable_count": len(receivables),
         "collection_rate": collection_rate,
         "bucket_counts": bucket_counts,
     }
 
 
-@router.post("/receivables/{invoice_id}/send-reminder", response={200: ReceivableReminderOut, 400: MessageSchema, 404: MessageSchema})
+@router.post(
+    "/receivables/{invoice_id}/send-reminder",
+    response={200: ReceivableReminderOut, 400: MessageSchema, 404: MessageSchema},
+)
 @require_permission("service_invoices", "update")
 def send_receivable_reminder(request, invoice_id: int, payload: ReceivableReminderIn):
     try:
@@ -249,7 +267,11 @@ def send_receivable_reminder(request, invoice_id: int, payload: ReceivableRemind
             return 400, {"detail": "Client email is not available."}
 
         portal_url = _portal_invoice_url(invoice)
-        client_name = invoice.client.user.get_full_name() or invoice.client.company_name or invoice.client.user.email
+        client_name = (
+            invoice.client.user.get_full_name()
+            or invoice.client.company_name
+            or invoice.client.user.email
+        )
         body = (
             f"Hello {client_name},\n\n"
             f"This is a reminder that invoice {invoice.invoice_number} for {invoice.service.name} has an unpaid balance.\n\n"

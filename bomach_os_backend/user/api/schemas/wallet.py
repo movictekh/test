@@ -3,11 +3,12 @@ from typing import Optional
 from datetime import datetime
 from decimal import Decimal
 
-
 # ============== Transaction Schemas ==============
+
 
 class CreateTransactionRequest(Schema):
     """Request schema for creating a new transaction"""
+
     user_id: int
     description: str
     amount: Decimal
@@ -17,11 +18,13 @@ class CreateTransactionRequest(Schema):
 
 class UpdateTransactionStatusRequest(Schema):
     """Request schema for updating transaction status"""
+
     status: str  # 'pending', 'completed', 'failed', 'cancelled'
 
 
 class TransactionResponse(Schema):
     """Response schema for transaction details"""
+
     id: int
     user_id: int
     user_full_name: str
@@ -50,6 +53,7 @@ class TransactionResponse(Schema):
 
 class WalletBalanceResponse(Schema):
     """Response schema for wallet balance"""
+
     user_id: int
     user_full_name: str
     total_credits: Decimal

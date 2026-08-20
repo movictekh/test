@@ -6,18 +6,46 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('user', '0073_remove_role_department_remove_role_level_and_more'),
+        ("user", "0073_remove_role_department_remove_role_level_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='auditlog',
-            name='audit_type',
-            field=models.CharField(choices=[('login', 'Login'), ('login_failed', 'Login Failed'), ('logout', 'Logout'), ('forgot_password', 'Forgot Password'), ('reset_password', 'Reset Password'), ('two_factor_sent', '2FA Code Sent'), ('two_factor_verified', '2FA Code Verified'), ('two_factor_failed', '2FA Code Failed'), ('add_employee', 'Add Employee'), ('update_employee', 'Update Employee'), ('update_profile', 'Update Profile'), ('add_client', 'Add Client'), ('add_lead', 'Add Lead')], help_text='Audit type', max_length=100),
+            model_name="auditlog",
+            name="audit_type",
+            field=models.CharField(
+                choices=[
+                    ("login", "Login"),
+                    ("login_failed", "Login Failed"),
+                    ("logout", "Logout"),
+                    ("forgot_password", "Forgot Password"),
+                    ("reset_password", "Reset Password"),
+                    ("two_factor_sent", "2FA Code Sent"),
+                    ("two_factor_verified", "2FA Code Verified"),
+                    ("two_factor_failed", "2FA Code Failed"),
+                    ("add_employee", "Add Employee"),
+                    ("update_employee", "Update Employee"),
+                    ("update_profile", "Update Profile"),
+                    ("add_client", "Add Client"),
+                    ("add_lead", "Add Lead"),
+                ],
+                help_text="Audit type",
+                max_length=100,
+            ),
         ),
         migrations.AlterField(
-            model_name='otpcode',
-            name='intent',
-            field=models.CharField(choices=[('password_reset', 'Password Reset'), ('email_verification', 'Email Verification'), ('phone_verification', 'Phone Verification'), ('two_factor_auth', 'Two Factor Authentication')], default='password_reset', help_text='Purpose/intent of this OTP code', max_length=50),
+            model_name="otpcode",
+            name="intent",
+            field=models.CharField(
+                choices=[
+                    ("password_reset", "Password Reset"),
+                    ("email_verification", "Email Verification"),
+                    ("phone_verification", "Phone Verification"),
+                    ("two_factor_auth", "Two Factor Authentication"),
+                ],
+                default="password_reset",
+                help_text="Purpose/intent of this OTP code",
+                max_length=50,
+            ),
         ),
     ]

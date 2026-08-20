@@ -3,6 +3,7 @@ from typing import Optional
 from pydantic import Field
 from datetime import datetime
 
+
 class AwardSchema(Schema):
     id: int
     title: str
@@ -16,12 +17,14 @@ class AwardSchema(Schema):
     class Config:
         from_attributes = True
 
+
 class AwardCreateSchema(Schema):
     title: str
     category: str
     date_awarded: datetime
     rank_level: str
     description: Optional[str] = None
+
 
 class AwardUpdateSchema(Schema):
     title: Optional[str] = None

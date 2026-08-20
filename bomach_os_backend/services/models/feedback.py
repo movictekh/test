@@ -5,27 +5,27 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 class ClientFeedback(models.Model):
 
     class FEEDBACK_TYPE(models.TextChoices):
-        COMPLETION = 'completion', 'Completion'
-        MILESTONE = 'milestone', 'Milestone'
-        COMPLAINT = 'complaint', 'Complaint'
-        DEFECT_REWORK = 'defect_rework', 'Defect / Rework'
-        TESTIMONIAL = 'testimonial', 'Testimonial'
-        REFERRAL = 'referral', 'Referral'
+        COMPLETION = "completion", "Completion"
+        MILESTONE = "milestone", "Milestone"
+        COMPLAINT = "complaint", "Complaint"
+        DEFECT_REWORK = "defect_rework", "Defect / Rework"
+        TESTIMONIAL = "testimonial", "Testimonial"
+        REFERRAL = "referral", "Referral"
 
     class STATUS(models.TextChoices):
-        OPEN = 'open', 'Open'
-        ACTION_REQUIRED = 'action_required', 'Action Required'
-        CLOSED = 'closed', 'Closed'
+        OPEN = "open", "Open"
+        ACTION_REQUIRED = "action_required", "Action Required"
+        CLOSED = "closed", "Closed"
 
     order = models.ForeignKey(
-        'services.ServiceOrder',
+        "services.ServiceOrder",
         on_delete=models.CASCADE,
-        related_name='feedbacks',
+        related_name="feedbacks",
     )
     recorded_by = models.ForeignKey(
-        'user.User',
+        "user.User",
         on_delete=models.CASCADE,
-        related_name='recorded_feedbacks',
+        related_name="recorded_feedbacks",
     )
     client_name = models.CharField(max_length=255)
     service_name = models.CharField(max_length=255)
@@ -47,14 +47,14 @@ class ClientFeedback(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-created_at']
-        verbose_name = 'Client Feedback'
-        verbose_name_plural = 'Client Feedbacks'
+        ordering = ["-created_at"]
+        verbose_name = "Client Feedback"
+        verbose_name_plural = "Client Feedbacks"
         indexes = [
-            models.Index(fields=['status']),
-            models.Index(fields=['feedback_type']),
-            models.Index(fields=['order']),
-            models.Index(fields=['-created_at']),
+            models.Index(fields=["status"]),
+            models.Index(fields=["feedback_type"]),
+            models.Index(fields=["order"]),
+            models.Index(fields=["-created_at"]),
         ]
 
     def __str__(self):

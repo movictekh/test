@@ -5,7 +5,12 @@ from django.db.models import Q
 from django.core.exceptions import ValidationError
 
 from operations.models import Timeline, Project
-from ..schema.schemas import TimelineCreateSchema, TimelineUpdateSchema, TimelineOutSchema, MessageSchema
+from ..schema.schemas import (
+    TimelineCreateSchema,
+    TimelineUpdateSchema,
+    TimelineOutSchema,
+    MessageSchema,
+)
 from ninja.pagination import paginate, LimitOffsetPagination
 from user.utils.perm import require_permission
 
@@ -30,8 +35,7 @@ def list_timelines(
         timelines = timelines.filter(status=status)
     if search:
         timelines = timelines.filter(
-            Q(name__icontains=search) |
-            Q(description__icontains=search)
+            Q(name__icontains=search) | Q(description__icontains=search)
         )
 
     return list(timelines)
@@ -51,11 +55,11 @@ def create_timeline(request, payload: TimelineCreateSchema):
     """Create a new timeline"""
     try:
         timeline_data = payload.dict()
-        project = get_object_or_404(Project, id=timeline_data.pop('project_id'))
+        project = get_object_or_404(Project, id=timeline_data.pop("project_id"))
         timeline = Timeline.objects.create(project=project, **timeline_data)
         return timeline
     except ValidationError as e:
-        return 400, {'detail': e.messages[0]}
+        return 400, {"detail": e.messages[0]}
 
 
 @router.put("/{timeline_id}", response={200: TimelineOutSchema, 400: MessageSchema})
@@ -66,8 +70,8 @@ def update_timeline(request, timeline_id: int, payload: TimelineUpdateSchema):
         timeline = get_object_or_404(Timeline, id=timeline_id)
 
         update_data = payload.dict(exclude_unset=True)
-        if 'project_id' in update_data:
-            project = get_object_or_404(Project, id=update_data.pop('project_id'))
+        if "project_id" in update_data:
+            project = get_object_or_404(Project, id=update_data.pop("project_id"))
             timeline.project = project
 
         for attr, value in update_data.items():
@@ -76,7 +80,7 @@ def update_timeline(request, timeline_id: int, payload: TimelineUpdateSchema):
         timeline.save()
         return timeline
     except ValidationError as e:
-        return 400, {'detail': e.messages[0]}
+        return 400, {"detail": e.messages[0]}
 
 
 @router.delete("/{timeline_id}")

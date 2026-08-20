@@ -5,7 +5,12 @@ from django.db.models import Q
 from django.core.exceptions import ValidationError
 
 from operations.models import Milestone, Project
-from ..schema.schemas import MilestoneCreateSchema, MilestoneUpdateSchema, MilestoneOutSchema, MessageSchema
+from ..schema.schemas import (
+    MilestoneCreateSchema,
+    MilestoneUpdateSchema,
+    MilestoneOutSchema,
+    MessageSchema,
+)
 from ninja.pagination import paginate, LimitOffsetPagination
 from user.utils.perm import require_permission
 
@@ -33,8 +38,7 @@ def list_milestones(
         milestones = milestones.filter(priority=priority)
     if search:
         milestones = milestones.filter(
-            Q(name__icontains=search) |
-            Q(description__icontains=search)
+            Q(name__icontains=search) | Q(description__icontains=search)
         )
 
     return list(milestones)
@@ -54,11 +58,11 @@ def create_milestone(request, payload: MilestoneCreateSchema):
     """Create a new milestone"""
     try:
         milestone_data = payload.dict()
-        project = get_object_or_404(Project, id=milestone_data.pop('project_id'))
+        project = get_object_or_404(Project, id=milestone_data.pop("project_id"))
         milestone = Milestone.objects.create(project=project, **milestone_data)
         return milestone
     except ValidationError as e:
-        return 400, {'detail': e.messages[0]}
+        return 400, {"detail": e.messages[0]}
 
 
 @router.put("/{milestone_id}", response={200: MilestoneOutSchema, 400: MessageSchema})
@@ -69,8 +73,8 @@ def update_milestone(request, milestone_id: int, payload: MilestoneUpdateSchema)
         milestone = get_object_or_404(Milestone, id=milestone_id)
 
         update_data = payload.dict(exclude_unset=True)
-        if 'project_id' in update_data:
-            project = get_object_or_404(Project, id=update_data.pop('project_id'))
+        if "project_id" in update_data:
+            project = get_object_or_404(Project, id=update_data.pop("project_id"))
             milestone.project = project
 
         for attr, value in update_data.items():
@@ -79,7 +83,7 @@ def update_milestone(request, milestone_id: int, payload: MilestoneUpdateSchema)
         milestone.save()
         return milestone
     except ValidationError as e:
-        return 400, {'detail': e.messages[0]}
+        return 400, {"detail": e.messages[0]}
 
 
 @router.delete("/{milestone_id}")

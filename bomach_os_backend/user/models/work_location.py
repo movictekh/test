@@ -24,104 +24,95 @@ class WorkLocation(BaseModel):
 
     name = models.CharField(
         max_length=255,
-        help_text="Name of the work location (e.g., 'Home Office', 'Branch HQ')"
+        help_text="Name of the work location (e.g., 'Home Office', 'Branch HQ')",
     )
 
     location_type = models.CharField(
         max_length=20,
         choices=LocationType.choices,
         default=LocationType.REMOTE,
-        help_text="Type of work location"
+        help_text="Type of work location",
     )
 
     latitude = models.DecimalField(
-        max_digits=9,
-        decimal_places=6,
-        help_text="GPS latitude coordinate"
+        max_digits=9, decimal_places=6, help_text="GPS latitude coordinate"
     )
 
     longitude = models.DecimalField(
-        max_digits=9,
-        decimal_places=6,
-        help_text="GPS longitude coordinate"
+        max_digits=9, decimal_places=6, help_text="GPS longitude coordinate"
     )
 
     allowed_radius_meters = models.PositiveIntegerField(
-        default=100,
-        help_text="Allowed radius in meters. Admin-only field."
+        default=100, help_text="Allowed radius in meters. Admin-only field."
     )
 
     branch = models.ForeignKey(
-        'Branch',
+        "Branch",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name='work_locations',
-        help_text="Associated branch (optional)"
+        related_name="work_locations",
+        help_text="Associated branch (optional)",
     )
 
     employee = models.ForeignKey(
-        'Employee',
+        "Employee",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name='work_locations',
-        help_text="Employee who owns this location (for personal remote locations)"
+        related_name="work_locations",
+        help_text="Employee who owns this location (for personal remote locations)",
     )
 
     status = models.CharField(
         max_length=20,
         choices=Status.choices,
         default=Status.PENDING,
-        help_text="Approval status — set by admin via approve/reject endpoints"
+        help_text="Approval status — set by admin via approve/reject endpoints",
     )
 
     rejection_reason = models.TextField(
         blank=True,
         default="",
-        help_text="Reason provided by admin when rejecting a proposal"
+        help_text="Reason provided by admin when rejecting a proposal",
     )
 
     verified_by = models.ForeignKey(
-        'Employee',
+        "Employee",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='verified_locations',
-        help_text="Admin who approved or rejected this location"
+        related_name="verified_locations",
+        help_text="Admin who approved or rejected this location",
     )
 
     verified_at = models.DateTimeField(
-        null=True,
-        blank=True,
-        help_text="When the approval decision was made"
+        null=True, blank=True, help_text="When the approval decision was made"
     )
 
     expires_at = models.DateTimeField(
         null=True,
         blank=True,
-        help_text="When this location expires (for temporary locations)"
+        help_text="When this location expires (for temporary locations)",
     )
 
     is_active = models.BooleanField(
-        default=True,
-        help_text="Whether this location is active"
+        default=True, help_text="Whether this location is active"
     )
 
     notes = models.TextField(
-        blank=True,
-        help_text="Additional notes about this location"
+        blank=True, help_text="Additional notes about this location"
     )
 
     class Meta:
         verbose_name = "Work Location"
         verbose_name_plural = "Work Locations"
-        ordering = ['-created_at']
+        ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=['employee', 'is_active']),
-            models.Index(fields=['branch', 'is_active']),
-            models.Index(fields=['location_type', 'status']),
-            models.Index(fields=['expires_at']),
+            models.Index(fields=["employee", "is_active"]),
+            models.Index(fields=["branch", "is_active"]),
+            models.Index(fields=["location_type", "status"]),
+            models.Index(fields=["expires_at"]),
         ]
 
     def __str__(self):

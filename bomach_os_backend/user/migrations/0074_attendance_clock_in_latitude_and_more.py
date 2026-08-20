@@ -7,80 +7,260 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('user', '0073_remove_role_department_remove_role_level_and_more'),
+        ("user", "0073_remove_role_department_remove_role_level_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='attendance',
-            name='clock_in_latitude',
-            field=models.DecimalField(blank=True, decimal_places=6, help_text='GPS latitude when clocking in', max_digits=9, null=True),
+            model_name="attendance",
+            name="clock_in_latitude",
+            field=models.DecimalField(
+                blank=True,
+                decimal_places=6,
+                help_text="GPS latitude when clocking in",
+                max_digits=9,
+                null=True,
+            ),
         ),
         migrations.AddField(
-            model_name='attendance',
-            name='clock_in_longitude',
-            field=models.DecimalField(blank=True, decimal_places=6, help_text='GPS longitude when clocking in', max_digits=9, null=True),
+            model_name="attendance",
+            name="clock_in_longitude",
+            field=models.DecimalField(
+                blank=True,
+                decimal_places=6,
+                help_text="GPS longitude when clocking in",
+                max_digits=9,
+                null=True,
+            ),
         ),
         migrations.AddField(
-            model_name='attendance',
-            name='distance_meters',
-            field=models.DecimalField(blank=True, decimal_places=2, help_text='Distance from approved location in meters', max_digits=10, null=True),
+            model_name="attendance",
+            name="distance_meters",
+            field=models.DecimalField(
+                blank=True,
+                decimal_places=2,
+                help_text="Distance from approved location in meters",
+                max_digits=10,
+                null=True,
+            ),
         ),
         migrations.AddField(
-            model_name='attendance',
-            name='location_override_by',
-            field=models.ForeignKey(blank=True, help_text='Admin who overrode the location check', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='location_overrides', to='user.employee'),
+            model_name="attendance",
+            name="location_override_by",
+            field=models.ForeignKey(
+                blank=True,
+                help_text="Admin who overrode the location check",
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="location_overrides",
+                to="user.employee",
+            ),
         ),
         migrations.AddField(
-            model_name='attendance',
-            name='location_override_reason',
-            field=models.TextField(blank=True, help_text='Reason for location override'),
+            model_name="attendance",
+            name="location_override_reason",
+            field=models.TextField(
+                blank=True, help_text="Reason for location override"
+            ),
         ),
         migrations.AddField(
-            model_name='attendance',
-            name='location_used_name',
-            field=models.CharField(blank=True, help_text='Name of the work location used for verification', max_length=255),
+            model_name="attendance",
+            name="location_used_name",
+            field=models.CharField(
+                blank=True,
+                help_text="Name of the work location used for verification",
+                max_length=255,
+            ),
         ),
         migrations.AddField(
-            model_name='attendance',
-            name='location_verified',
-            field=models.BooleanField(default=False, help_text='Whether the location was verified against whitelist'),
+            model_name="attendance",
+            name="location_verified",
+            field=models.BooleanField(
+                default=False,
+                help_text="Whether the location was verified against whitelist",
+            ),
         ),
         migrations.AddField(
-            model_name='branch',
-            name='latitude',
-            field=models.DecimalField(blank=True, decimal_places=6, help_text='GPS latitude coordinate for attendance verification', max_digits=9, null=True, verbose_name='Latitude'),
+            model_name="branch",
+            name="latitude",
+            field=models.DecimalField(
+                blank=True,
+                decimal_places=6,
+                help_text="GPS latitude coordinate for attendance verification",
+                max_digits=9,
+                null=True,
+                verbose_name="Latitude",
+            ),
         ),
         migrations.AddField(
-            model_name='branch',
-            name='longitude',
-            field=models.DecimalField(blank=True, decimal_places=6, help_text='GPS longitude coordinate for attendance verification', max_digits=9, null=True, verbose_name='Longitude'),
+            model_name="branch",
+            name="longitude",
+            field=models.DecimalField(
+                blank=True,
+                decimal_places=6,
+                help_text="GPS longitude coordinate for attendance verification",
+                max_digits=9,
+                null=True,
+                verbose_name="Longitude",
+            ),
         ),
         migrations.CreateModel(
-            name='WorkLocation',
+            name="WorkLocation",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='When this record was created')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text='When this record was last updated')),
-                ('name', models.CharField(help_text="Name of the work location (e.g., 'Home Office', 'Branch HQ')", max_length=255)),
-                ('location_type', models.CharField(choices=[('branch', 'Branch Location'), ('remote', 'Remote Location'), ('site', 'On-Site Location')], default='remote', help_text='Type of work location', max_length=20)),
-                ('latitude', models.DecimalField(decimal_places=6, help_text='GPS latitude coordinate', max_digits=9)),
-                ('longitude', models.DecimalField(decimal_places=6, help_text='GPS longitude coordinate', max_digits=9)),
-                ('allowed_radius_meters', models.PositiveIntegerField(default=100, help_text='Allowed radius in meters for this location')),
-                ('is_verified', models.BooleanField(default=False, help_text='Whether this location has been verified by admin')),
-                ('verified_at', models.DateTimeField(blank=True, help_text='When the location was verified', null=True)),
-                ('expires_at', models.DateTimeField(blank=True, help_text='When this location expires (for temporary locations)', null=True)),
-                ('is_active', models.BooleanField(default=True, help_text='Whether this location is active')),
-                ('notes', models.TextField(blank=True, help_text='Additional notes about this location')),
-                ('branch', models.ForeignKey(blank=True, help_text='Associated branch (optional)', null=True, on_delete=django.db.models.deletion.CASCADE, related_name='work_locations', to='user.branch')),
-                ('employee', models.ForeignKey(blank=True, help_text='Employee who owns this location (for personal remote locations)', null=True, on_delete=django.db.models.deletion.CASCADE, related_name='work_locations', to='user.employee')),
-                ('verified_by', models.ForeignKey(blank=True, help_text='Admin who verified this location', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='verified_locations', to='user.employee')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, help_text="When this record was created"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, help_text="When this record was last updated"
+                    ),
+                ),
+                (
+                    "name",
+                    models.CharField(
+                        help_text="Name of the work location (e.g., 'Home Office', 'Branch HQ')",
+                        max_length=255,
+                    ),
+                ),
+                (
+                    "location_type",
+                    models.CharField(
+                        choices=[
+                            ("branch", "Branch Location"),
+                            ("remote", "Remote Location"),
+                            ("site", "On-Site Location"),
+                        ],
+                        default="remote",
+                        help_text="Type of work location",
+                        max_length=20,
+                    ),
+                ),
+                (
+                    "latitude",
+                    models.DecimalField(
+                        decimal_places=6,
+                        help_text="GPS latitude coordinate",
+                        max_digits=9,
+                    ),
+                ),
+                (
+                    "longitude",
+                    models.DecimalField(
+                        decimal_places=6,
+                        help_text="GPS longitude coordinate",
+                        max_digits=9,
+                    ),
+                ),
+                (
+                    "allowed_radius_meters",
+                    models.PositiveIntegerField(
+                        default=100,
+                        help_text="Allowed radius in meters for this location",
+                    ),
+                ),
+                (
+                    "is_verified",
+                    models.BooleanField(
+                        default=False,
+                        help_text="Whether this location has been verified by admin",
+                    ),
+                ),
+                (
+                    "verified_at",
+                    models.DateTimeField(
+                        blank=True,
+                        help_text="When the location was verified",
+                        null=True,
+                    ),
+                ),
+                (
+                    "expires_at",
+                    models.DateTimeField(
+                        blank=True,
+                        help_text="When this location expires (for temporary locations)",
+                        null=True,
+                    ),
+                ),
+                (
+                    "is_active",
+                    models.BooleanField(
+                        default=True, help_text="Whether this location is active"
+                    ),
+                ),
+                (
+                    "notes",
+                    models.TextField(
+                        blank=True, help_text="Additional notes about this location"
+                    ),
+                ),
+                (
+                    "branch",
+                    models.ForeignKey(
+                        blank=True,
+                        help_text="Associated branch (optional)",
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="work_locations",
+                        to="user.branch",
+                    ),
+                ),
+                (
+                    "employee",
+                    models.ForeignKey(
+                        blank=True,
+                        help_text="Employee who owns this location (for personal remote locations)",
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="work_locations",
+                        to="user.employee",
+                    ),
+                ),
+                (
+                    "verified_by",
+                    models.ForeignKey(
+                        blank=True,
+                        help_text="Admin who verified this location",
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="verified_locations",
+                        to="user.employee",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Work Location',
-                'verbose_name_plural': 'Work Locations',
-                'ordering': ['-created_at'],
-                'indexes': [models.Index(fields=['employee', 'is_active'], name='user_worklo_employe_c651c4_idx'), models.Index(fields=['branch', 'is_active'], name='user_worklo_branch__95a728_idx'), models.Index(fields=['location_type', 'is_verified'], name='user_worklo_locatio_78cf9d_idx'), models.Index(fields=['expires_at'], name='user_worklo_expires_deca51_idx')],
+                "verbose_name": "Work Location",
+                "verbose_name_plural": "Work Locations",
+                "ordering": ["-created_at"],
+                "indexes": [
+                    models.Index(
+                        fields=["employee", "is_active"],
+                        name="user_worklo_employe_c651c4_idx",
+                    ),
+                    models.Index(
+                        fields=["branch", "is_active"],
+                        name="user_worklo_branch__95a728_idx",
+                    ),
+                    models.Index(
+                        fields=["location_type", "is_verified"],
+                        name="user_worklo_locatio_78cf9d_idx",
+                    ),
+                    models.Index(
+                        fields=["expires_at"], name="user_worklo_expires_deca51_idx"
+                    ),
+                ],
             },
         ),
     ]

@@ -11,12 +11,12 @@ class WorkflowRule(BaseModel):
     """
 
     TRIGGER_CHOICES = [
-        ('service_order_status_changed', 'Service Order Status Changed'),
-        ('quote_status_changed', 'Quote Status Changed'),
+        ("service_order_status_changed", "Service Order Status Changed"),
+        ("quote_status_changed", "Quote Status Changed"),
     ]
 
     ACTION_CHOICES = [
-        ('send_notification', 'Send Notification'),
+        ("send_notification", "Send Notification"),
     ]
 
     name = models.CharField(max_length=255, unique=True)
@@ -33,14 +33,14 @@ class WorkflowRule(BaseModel):
 
     is_active = models.BooleanField(default=True)
     created_by = models.ForeignKey(
-        'user.User',
+        "user.User",
         on_delete=models.SET_NULL,
         null=True,
-        related_name='workflow_rules_created',
+        related_name="workflow_rules_created",
     )
 
     class Meta:
-        ordering = ['name']
+        ordering = ["name"]
 
     def __str__(self):
         return f"{self.name} ({self.get_trigger_event_display()})"
@@ -54,7 +54,7 @@ class WorkflowRuleLog(BaseModel):
     rule = models.ForeignKey(
         WorkflowRule,
         on_delete=models.CASCADE,
-        related_name='execution_logs',
+        related_name="execution_logs",
     )
     trigger_event = models.CharField(max_length=50)
     trigger_object_id = models.PositiveIntegerField()
@@ -64,7 +64,7 @@ class WorkflowRuleLog(BaseModel):
     error_message = models.TextField(blank=True)
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ["-created_at"]
 
     def __str__(self):
         status = "executed" if self.action_executed else "skipped"

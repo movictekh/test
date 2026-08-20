@@ -9,79 +9,224 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('services', '0012_alter_dailyexecutionday_unique_together_and_more'),
-        ('user', '0093_employeetargetreport'),
+        ("services", "0012_alter_dailyexecutionday_unique_together_and_more"),
+        ("user", "0093_employeetargetreport"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='TurnaroundPlan',
+            name="TurnaroundPlan",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='When this record was created')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text='When this record was last updated')),
-                ('name', models.CharField(max_length=255)),
-                ('start_date', models.DateField()),
-                ('end_date', models.DateField()),
-                ('status', models.CharField(choices=[('draft', 'Draft'), ('active', 'Active'), ('closed', 'Closed'), ('archived', 'Archived')], default='draft', max_length=20)),
-                ('branch', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='turnaround_plans', to='user.branch')),
-                ('created_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='created_turnaround_plans', to=settings.AUTH_USER_MODEL)),
-                ('primary_owner', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='owned_turnaround_plans', to='user.employee')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, help_text="When this record was created"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, help_text="When this record was last updated"
+                    ),
+                ),
+                ("name", models.CharField(max_length=255)),
+                ("start_date", models.DateField()),
+                ("end_date", models.DateField()),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("draft", "Draft"),
+                            ("active", "Active"),
+                            ("closed", "Closed"),
+                            ("archived", "Archived"),
+                        ],
+                        default="draft",
+                        max_length=20,
+                    ),
+                ),
+                (
+                    "branch",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="turnaround_plans",
+                        to="user.branch",
+                    ),
+                ),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="created_turnaround_plans",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "primary_owner",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="owned_turnaround_plans",
+                        to="user.employee",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-start_date', '-created_at'],
+                "ordering": ["-start_date", "-created_at"],
             },
         ),
         migrations.CreateModel(
-            name='TurnaroundAction',
+            name="TurnaroundAction",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='When this record was created')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text='When this record was last updated')),
-                ('phase', models.CharField(choices=[('stabilise', 'Stabilise'), ('standardise', 'Standardise'), ('scale', 'Scale')], max_length=20)),
-                ('title', models.CharField(max_length=255)),
-                ('owner_text', models.CharField(blank=True, max_length=255)),
-                ('week_start', models.PositiveSmallIntegerField(validators=[django.core.validators.MinValueValidator(1), django.core.validators.MaxValueValidator(13)])),
-                ('week_end', models.PositiveSmallIntegerField(validators=[django.core.validators.MinValueValidator(1), django.core.validators.MaxValueValidator(13)])),
-                ('status', models.CharField(choices=[('open', 'Open'), ('completed', 'Completed')], default='open', max_length=20)),
-                ('completed_at', models.DateTimeField(blank=True, null=True)),
-                ('completion_note', models.TextField(blank=True)),
-                ('sort_order', models.PositiveIntegerField(default=0)),
-                ('completed_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='completed_turnaround_actions', to=settings.AUTH_USER_MODEL)),
-                ('owner', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='turnaround_actions', to='user.employee')),
-                ('plan', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='actions', to='services.turnaroundplan')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, help_text="When this record was created"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, help_text="When this record was last updated"
+                    ),
+                ),
+                (
+                    "phase",
+                    models.CharField(
+                        choices=[
+                            ("stabilise", "Stabilise"),
+                            ("standardise", "Standardise"),
+                            ("scale", "Scale"),
+                        ],
+                        max_length=20,
+                    ),
+                ),
+                ("title", models.CharField(max_length=255)),
+                ("owner_text", models.CharField(blank=True, max_length=255)),
+                (
+                    "week_start",
+                    models.PositiveSmallIntegerField(
+                        validators=[
+                            django.core.validators.MinValueValidator(1),
+                            django.core.validators.MaxValueValidator(13),
+                        ]
+                    ),
+                ),
+                (
+                    "week_end",
+                    models.PositiveSmallIntegerField(
+                        validators=[
+                            django.core.validators.MinValueValidator(1),
+                            django.core.validators.MaxValueValidator(13),
+                        ]
+                    ),
+                ),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[("open", "Open"), ("completed", "Completed")],
+                        default="open",
+                        max_length=20,
+                    ),
+                ),
+                ("completed_at", models.DateTimeField(blank=True, null=True)),
+                ("completion_note", models.TextField(blank=True)),
+                ("sort_order", models.PositiveIntegerField(default=0)),
+                (
+                    "completed_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="completed_turnaround_actions",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "owner",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="turnaround_actions",
+                        to="user.employee",
+                    ),
+                ),
+                (
+                    "plan",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="actions",
+                        to="services.turnaroundplan",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['sort_order', 'week_start', 'created_at'],
+                "ordering": ["sort_order", "week_start", "created_at"],
             },
         ),
         migrations.AddIndex(
-            model_name='turnaroundplan',
-            index=models.Index(fields=['status', 'start_date'], name='services_tu_status_b1d97d_idx'),
+            model_name="turnaroundplan",
+            index=models.Index(
+                fields=["status", "start_date"], name="services_tu_status_b1d97d_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='turnaroundplan',
-            index=models.Index(fields=['branch', 'status'], name='services_tu_branch__797e91_idx'),
+            model_name="turnaroundplan",
+            index=models.Index(
+                fields=["branch", "status"], name="services_tu_branch__797e91_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='turnaroundplan',
-            index=models.Index(fields=['primary_owner'], name='services_tu_primary_a7a434_idx'),
+            model_name="turnaroundplan",
+            index=models.Index(
+                fields=["primary_owner"], name="services_tu_primary_a7a434_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='turnaroundaction',
-            index=models.Index(fields=['plan', 'phase'], name='services_tu_plan_id_c8cc64_idx'),
+            model_name="turnaroundaction",
+            index=models.Index(
+                fields=["plan", "phase"], name="services_tu_plan_id_c8cc64_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='turnaroundaction',
-            index=models.Index(fields=['plan', 'status'], name='services_tu_plan_id_80615c_idx'),
+            model_name="turnaroundaction",
+            index=models.Index(
+                fields=["plan", "status"], name="services_tu_plan_id_80615c_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='turnaroundaction',
-            index=models.Index(fields=['owner'], name='services_tu_owner_i_e33cdf_idx'),
+            model_name="turnaroundaction",
+            index=models.Index(fields=["owner"], name="services_tu_owner_i_e33cdf_idx"),
         ),
         migrations.AddIndex(
-            model_name='turnaroundaction',
-            index=models.Index(fields=['completed_at'], name='services_tu_complet_7338d1_idx'),
+            model_name="turnaroundaction",
+            index=models.Index(
+                fields=["completed_at"], name="services_tu_complet_7338d1_idx"
+            ),
         ),
     ]

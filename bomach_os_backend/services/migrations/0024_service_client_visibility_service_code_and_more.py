@@ -10,269 +10,668 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('services', '0023_partner_operations_and_lead_referral_partner'),
-        ('user', '0093_employeetargetreport'),
+        ("services", "0023_partner_operations_and_lead_referral_partner"),
+        ("user", "0093_employeetargetreport"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='service',
-            name='client_visibility',
-            field=models.CharField(choices=[('visible', 'Visible in Catalogue'), ('internal', 'Internal Only'), ('hidden', 'Hidden')], default='visible', max_length=20),
+            model_name="service",
+            name="client_visibility",
+            field=models.CharField(
+                choices=[
+                    ("visible", "Visible in Catalogue"),
+                    ("internal", "Internal Only"),
+                    ("hidden", "Hidden"),
+                ],
+                default="visible",
+                max_length=20,
+            ),
         ),
         migrations.AddField(
-            model_name='service',
-            name='code',
+            model_name="service",
+            name="code",
             field=models.CharField(blank=True, max_length=50, null=True, unique=True),
         ),
         migrations.AddField(
-            model_name='service',
-            name='default_sla_days',
+            model_name="service",
+            name="default_sla_days",
             field=models.PositiveIntegerField(default=0),
         ),
         migrations.AddField(
-            model_name='service',
-            name='division',
+            model_name="service",
+            name="division",
             field=models.CharField(blank=True, max_length=100),
         ),
         migrations.AddField(
-            model_name='service',
-            name='fulfillment_mode',
-            field=models.CharField(blank=True, choices=[('quick_order', 'Quick Service Order'), ('managed_case', 'Managed Service Case'), ('project_worksite', 'Project & Worksite'), ('transaction_allocation', 'Transaction & Allocation'), ('supply_order', 'Supply Order')], max_length=40),
+            model_name="service",
+            name="fulfillment_mode",
+            field=models.CharField(
+                blank=True,
+                choices=[
+                    ("quick_order", "Quick Service Order"),
+                    ("managed_case", "Managed Service Case"),
+                    ("project_worksite", "Project & Worksite"),
+                    ("transaction_allocation", "Transaction & Allocation"),
+                    ("supply_order", "Supply Order"),
+                ],
+                max_length=40,
+            ),
         ),
         migrations.AddField(
-            model_name='service',
-            name='owner_role',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='owned_services', to='user.role'),
+            model_name="service",
+            name="owner_role",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="owned_services",
+                to="user.role",
+            ),
         ),
         migrations.AlterField(
-            model_name='service',
-            name='status',
-            field=models.CharField(choices=[('active', 'Active'), ('inactive', 'Inactive'), ('draft', 'Draft'), ('paused', 'Paused')], default='active', max_length=20),
+            model_name="service",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("active", "Active"),
+                    ("inactive", "Inactive"),
+                    ("draft", "Draft"),
+                    ("paused", "Paused"),
+                ],
+                default="active",
+                max_length=20,
+            ),
         ),
         migrations.CreateModel(
-            name='ServicePricingConfig',
+            name="ServicePricingConfig",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=255)),
-                ('version', models.PositiveIntegerField(default=1)),
-                ('pricing_type', models.CharField(choices=[('fixed', 'Fixed'), ('unit_rate', 'Unit Rate'), ('area_rate', 'Area Rate'), ('percentage', 'Percentage'), ('formula', 'Formula')], max_length=20)),
-                ('formula', models.TextField(blank=True)),
-                ('tax_rate', models.DecimalField(decimal_places=2, default=Decimal('0.00'), max_digits=5, validators=[django.core.validators.MinValueValidator(Decimal('0.00'))])),
-                ('deposit_percent', models.DecimalField(decimal_places=2, default=Decimal('0.00'), max_digits=5, validators=[django.core.validators.MinValueValidator(Decimal('0.00')), django.core.validators.MaxValueValidator(Decimal('100.00'))])),
-                ('discount_approval_threshold_percent', models.DecimalField(decimal_places=2, default=Decimal('0.00'), max_digits=5, validators=[django.core.validators.MinValueValidator(Decimal('0.00')), django.core.validators.MaxValueValidator(Decimal('100.00'))])),
-                ('status', models.CharField(choices=[('draft', 'Draft'), ('active', 'Active'), ('archived', 'Archived')], default='draft', max_length=20)),
-                ('is_active', models.BooleanField(default=False)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('created_by', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='created_service_pricing_configs', to=settings.AUTH_USER_MODEL)),
-                ('service', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='pricing_configs', to='services.service')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=255)),
+                ("version", models.PositiveIntegerField(default=1)),
+                (
+                    "pricing_type",
+                    models.CharField(
+                        choices=[
+                            ("fixed", "Fixed"),
+                            ("unit_rate", "Unit Rate"),
+                            ("area_rate", "Area Rate"),
+                            ("percentage", "Percentage"),
+                            ("formula", "Formula"),
+                        ],
+                        max_length=20,
+                    ),
+                ),
+                ("formula", models.TextField(blank=True)),
+                (
+                    "tax_rate",
+                    models.DecimalField(
+                        decimal_places=2,
+                        default=Decimal("0.00"),
+                        max_digits=5,
+                        validators=[
+                            django.core.validators.MinValueValidator(Decimal("0.00"))
+                        ],
+                    ),
+                ),
+                (
+                    "deposit_percent",
+                    models.DecimalField(
+                        decimal_places=2,
+                        default=Decimal("0.00"),
+                        max_digits=5,
+                        validators=[
+                            django.core.validators.MinValueValidator(Decimal("0.00")),
+                            django.core.validators.MaxValueValidator(Decimal("100.00")),
+                        ],
+                    ),
+                ),
+                (
+                    "discount_approval_threshold_percent",
+                    models.DecimalField(
+                        decimal_places=2,
+                        default=Decimal("0.00"),
+                        max_digits=5,
+                        validators=[
+                            django.core.validators.MinValueValidator(Decimal("0.00")),
+                            django.core.validators.MaxValueValidator(Decimal("100.00")),
+                        ],
+                    ),
+                ),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("draft", "Draft"),
+                            ("active", "Active"),
+                            ("archived", "Archived"),
+                        ],
+                        default="draft",
+                        max_length=20,
+                    ),
+                ),
+                ("is_active", models.BooleanField(default=False)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="created_service_pricing_configs",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "service",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="pricing_configs",
+                        to="services.service",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['service', '-version'],
+                "ordering": ["service", "-version"],
             },
         ),
         migrations.AddField(
-            model_name='service',
-            name='active_pricing_config',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='active_for_services', to='services.servicepricingconfig'),
+            model_name="service",
+            name="active_pricing_config",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="active_for_services",
+                to="services.servicepricingconfig",
+            ),
         ),
         migrations.CreateModel(
-            name='ServicePricingField',
+            name="ServicePricingField",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('key', models.SlugField(max_length=100)),
-                ('label', models.CharField(max_length=255)),
-                ('field_type', models.CharField(choices=[('text', 'Text'), ('textarea', 'Textarea'), ('number', 'Number'), ('money', 'Money'), ('date', 'Date'), ('select', 'Select'), ('multiselect', 'Multi-select'), ('checkbox', 'Checkbox'), ('file', 'File'), ('location', 'Location'), ('email', 'Email'), ('phone', 'Phone')], max_length=20)),
-                ('default_value', models.JSONField(blank=True, null=True)),
-                ('required', models.BooleanField(default=False)),
-                ('options', models.JSONField(blank=True, default=list)),
-                ('validation', models.JSONField(blank=True, default=dict)),
-                ('sort_order', models.PositiveIntegerField(default=0)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('pricing_config', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='fields', to='services.servicepricingconfig')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("key", models.SlugField(max_length=100)),
+                ("label", models.CharField(max_length=255)),
+                (
+                    "field_type",
+                    models.CharField(
+                        choices=[
+                            ("text", "Text"),
+                            ("textarea", "Textarea"),
+                            ("number", "Number"),
+                            ("money", "Money"),
+                            ("date", "Date"),
+                            ("select", "Select"),
+                            ("multiselect", "Multi-select"),
+                            ("checkbox", "Checkbox"),
+                            ("file", "File"),
+                            ("location", "Location"),
+                            ("email", "Email"),
+                            ("phone", "Phone"),
+                        ],
+                        max_length=20,
+                    ),
+                ),
+                ("default_value", models.JSONField(blank=True, null=True)),
+                ("required", models.BooleanField(default=False)),
+                ("options", models.JSONField(blank=True, default=list)),
+                ("validation", models.JSONField(blank=True, default=dict)),
+                ("sort_order", models.PositiveIntegerField(default=0)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "pricing_config",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="fields",
+                        to="services.servicepricingconfig",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['sort_order', 'id'],
+                "ordering": ["sort_order", "id"],
             },
         ),
         migrations.CreateModel(
-            name='ServiceRequestForm',
+            name="ServiceRequestForm",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=255)),
-                ('version', models.PositiveIntegerField(default=1)),
-                ('status', models.CharField(choices=[('draft', 'Draft'), ('active', 'Active'), ('archived', 'Archived')], default='draft', max_length=20)),
-                ('is_active', models.BooleanField(default=False)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('created_by', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='created_service_request_forms', to=settings.AUTH_USER_MODEL)),
-                ('service', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='request_forms', to='services.service')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=255)),
+                ("version", models.PositiveIntegerField(default=1)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("draft", "Draft"),
+                            ("active", "Active"),
+                            ("archived", "Archived"),
+                        ],
+                        default="draft",
+                        max_length=20,
+                    ),
+                ),
+                ("is_active", models.BooleanField(default=False)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="created_service_request_forms",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "service",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="request_forms",
+                        to="services.service",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['service', '-version'],
+                "ordering": ["service", "-version"],
             },
         ),
         migrations.CreateModel(
-            name='ServiceRequestField',
+            name="ServiceRequestField",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('key', models.SlugField(max_length=100)),
-                ('label', models.CharField(max_length=255)),
-                ('field_type', models.CharField(choices=[('text', 'Text'), ('textarea', 'Textarea'), ('number', 'Number'), ('money', 'Money'), ('date', 'Date'), ('select', 'Select'), ('multiselect', 'Multi-select'), ('checkbox', 'Checkbox'), ('file', 'File'), ('location', 'Location'), ('email', 'Email'), ('phone', 'Phone')], max_length=20)),
-                ('required', models.BooleanField(default=False)),
-                ('options', models.JSONField(blank=True, default=list)),
-                ('validation', models.JSONField(blank=True, default=dict)),
-                ('help_text', models.CharField(blank=True, max_length=255)),
-                ('placeholder', models.CharField(blank=True, max_length=255)),
-                ('sort_order', models.PositiveIntegerField(default=0)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('form', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='fields', to='services.servicerequestform')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("key", models.SlugField(max_length=100)),
+                ("label", models.CharField(max_length=255)),
+                (
+                    "field_type",
+                    models.CharField(
+                        choices=[
+                            ("text", "Text"),
+                            ("textarea", "Textarea"),
+                            ("number", "Number"),
+                            ("money", "Money"),
+                            ("date", "Date"),
+                            ("select", "Select"),
+                            ("multiselect", "Multi-select"),
+                            ("checkbox", "Checkbox"),
+                            ("file", "File"),
+                            ("location", "Location"),
+                            ("email", "Email"),
+                            ("phone", "Phone"),
+                        ],
+                        max_length=20,
+                    ),
+                ),
+                ("required", models.BooleanField(default=False)),
+                ("options", models.JSONField(blank=True, default=list)),
+                ("validation", models.JSONField(blank=True, default=dict)),
+                ("help_text", models.CharField(blank=True, max_length=255)),
+                ("placeholder", models.CharField(blank=True, max_length=255)),
+                ("sort_order", models.PositiveIntegerField(default=0)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "form",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="fields",
+                        to="services.servicerequestform",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['sort_order', 'id'],
+                "ordering": ["sort_order", "id"],
             },
         ),
         migrations.AddField(
-            model_name='service',
-            name='active_request_form',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='active_for_services', to='services.servicerequestform'),
+            model_name="service",
+            name="active_request_form",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="active_for_services",
+                to="services.servicerequestform",
+            ),
         ),
         migrations.CreateModel(
-            name='ServiceSubService',
+            name="ServiceSubService",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('code', models.CharField(max_length=50)),
-                ('name', models.CharField(max_length=255)),
-                ('description', models.TextField(blank=True)),
-                ('status', models.CharField(choices=[('active', 'Active'), ('inactive', 'Inactive'), ('draft', 'Draft'), ('paused', 'Paused')], default='active', max_length=20)),
-                ('default_sla_days', models.PositiveIntegerField(default=0)),
-                ('sort_order', models.PositiveIntegerField(default=0)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('service', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='subservices', to='services.service')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("code", models.CharField(max_length=50)),
+                ("name", models.CharField(max_length=255)),
+                ("description", models.TextField(blank=True)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("active", "Active"),
+                            ("inactive", "Inactive"),
+                            ("draft", "Draft"),
+                            ("paused", "Paused"),
+                        ],
+                        default="active",
+                        max_length=20,
+                    ),
+                ),
+                ("default_sla_days", models.PositiveIntegerField(default=0)),
+                ("sort_order", models.PositiveIntegerField(default=0)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "service",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="subservices",
+                        to="services.service",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['sort_order', 'name'],
+                "ordering": ["sort_order", "name"],
             },
         ),
         migrations.CreateModel(
-            name='ServiceWorkflow',
+            name="ServiceWorkflow",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=255)),
-                ('version', models.PositiveIntegerField(default=1)),
-                ('status', models.CharField(choices=[('draft', 'Draft'), ('active', 'Active'), ('archived', 'Archived')], default='draft', max_length=20)),
-                ('is_active', models.BooleanField(default=False)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('created_by', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='created_service_workflows', to=settings.AUTH_USER_MODEL)),
-                ('service', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='workflows', to='services.service')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=255)),
+                ("version", models.PositiveIntegerField(default=1)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("draft", "Draft"),
+                            ("active", "Active"),
+                            ("archived", "Archived"),
+                        ],
+                        default="draft",
+                        max_length=20,
+                    ),
+                ),
+                ("is_active", models.BooleanField(default=False)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="created_service_workflows",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "service",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="workflows",
+                        to="services.service",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['service', '-version'],
+                "ordering": ["service", "-version"],
             },
         ),
         migrations.AddField(
-            model_name='service',
-            name='active_workflow',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='active_for_services', to='services.serviceworkflow'),
+            model_name="service",
+            name="active_workflow",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="active_for_services",
+                to="services.serviceworkflow",
+            ),
         ),
         migrations.CreateModel(
-            name='ServiceWorkflowStage',
+            name="ServiceWorkflowStage",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=255)),
-                ('sla_days', models.PositiveIntegerField(default=0)),
-                ('requires_approval', models.BooleanField(default=False)),
-                ('requires_evidence', models.BooleanField(default=False)),
-                ('client_visible', models.BooleanField(default=False)),
-                ('sort_order', models.PositiveIntegerField(default=0)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('owner_role', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='owned_service_workflow_stages', to='user.role')),
-                ('workflow', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='stages', to='services.serviceworkflow')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=255)),
+                ("sla_days", models.PositiveIntegerField(default=0)),
+                ("requires_approval", models.BooleanField(default=False)),
+                ("requires_evidence", models.BooleanField(default=False)),
+                ("client_visible", models.BooleanField(default=False)),
+                ("sort_order", models.PositiveIntegerField(default=0)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "owner_role",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="owned_service_workflow_stages",
+                        to="user.role",
+                    ),
+                ),
+                (
+                    "workflow",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="stages",
+                        to="services.serviceworkflow",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['sort_order', 'id'],
+                "ordering": ["sort_order", "id"],
             },
         ),
         migrations.CreateModel(
-            name='ServiceBranchActivation',
+            name="ServiceBranchActivation",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('status', models.CharField(choices=[('draft', 'Draft'), ('active', 'Active'), ('paused', 'Paused'), ('inactive', 'Inactive')], default='draft', max_length=20)),
-                ('client_visible', models.BooleanField(default=True)),
-                ('capacity', models.PositiveIntegerField(blank=True, null=True)),
-                ('activated_at', models.DateTimeField(blank=True, null=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('branch', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='service_activations', to='user.branch')),
-                ('service', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='branch_activations', to='services.service')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("draft", "Draft"),
+                            ("active", "Active"),
+                            ("paused", "Paused"),
+                            ("inactive", "Inactive"),
+                        ],
+                        default="draft",
+                        max_length=20,
+                    ),
+                ),
+                ("client_visible", models.BooleanField(default=True)),
+                ("capacity", models.PositiveIntegerField(blank=True, null=True)),
+                ("activated_at", models.DateTimeField(blank=True, null=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "branch",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="service_activations",
+                        to="user.branch",
+                    ),
+                ),
+                (
+                    "service",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="branch_activations",
+                        to="services.service",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['service', 'branch'],
-                'indexes': [models.Index(fields=['branch', 'status'], name='services_se_branch__79604e_idx'), models.Index(fields=['service', 'status'], name='services_se_service_ba12dc_idx')],
-                'constraints': [models.UniqueConstraint(fields=('service', 'branch'), name='unique_service_branch_activation')],
+                "ordering": ["service", "branch"],
+                "indexes": [
+                    models.Index(
+                        fields=["branch", "status"],
+                        name="services_se_branch__79604e_idx",
+                    ),
+                    models.Index(
+                        fields=["service", "status"],
+                        name="services_se_service_ba12dc_idx",
+                    ),
+                ],
+                "constraints": [
+                    models.UniqueConstraint(
+                        fields=("service", "branch"),
+                        name="unique_service_branch_activation",
+                    )
+                ],
             },
         ),
         migrations.AddIndex(
-            model_name='servicepricingconfig',
-            index=models.Index(fields=['service', 'status'], name='services_se_service_c98c73_idx'),
+            model_name="servicepricingconfig",
+            index=models.Index(
+                fields=["service", "status"], name="services_se_service_c98c73_idx"
+            ),
         ),
         migrations.AddConstraint(
-            model_name='servicepricingconfig',
-            constraint=models.UniqueConstraint(fields=('service', 'version'), name='unique_pricing_config_version_per_service'),
+            model_name="servicepricingconfig",
+            constraint=models.UniqueConstraint(
+                fields=("service", "version"),
+                name="unique_pricing_config_version_per_service",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='servicepricingconfig',
-            constraint=models.UniqueConstraint(condition=models.Q(('is_active', True)), fields=('service',), name='unique_active_pricing_config_per_service'),
+            model_name="servicepricingconfig",
+            constraint=models.UniqueConstraint(
+                condition=models.Q(("is_active", True)),
+                fields=("service",),
+                name="unique_active_pricing_config_per_service",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='servicepricingfield',
-            constraint=models.UniqueConstraint(fields=('pricing_config', 'key'), name='unique_pricing_field_key_per_config'),
+            model_name="servicepricingfield",
+            constraint=models.UniqueConstraint(
+                fields=("pricing_config", "key"),
+                name="unique_pricing_field_key_per_config",
+            ),
         ),
         migrations.AddIndex(
-            model_name='servicerequestform',
-            index=models.Index(fields=['service', 'status'], name='services_se_service_a238bb_idx'),
+            model_name="servicerequestform",
+            index=models.Index(
+                fields=["service", "status"], name="services_se_service_a238bb_idx"
+            ),
         ),
         migrations.AddConstraint(
-            model_name='servicerequestform',
-            constraint=models.UniqueConstraint(fields=('service', 'version'), name='unique_request_form_version_per_service'),
+            model_name="servicerequestform",
+            constraint=models.UniqueConstraint(
+                fields=("service", "version"),
+                name="unique_request_form_version_per_service",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='servicerequestform',
-            constraint=models.UniqueConstraint(condition=models.Q(('is_active', True)), fields=('service',), name='unique_active_request_form_per_service'),
+            model_name="servicerequestform",
+            constraint=models.UniqueConstraint(
+                condition=models.Q(("is_active", True)),
+                fields=("service",),
+                name="unique_active_request_form_per_service",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='servicerequestfield',
-            constraint=models.UniqueConstraint(fields=('form', 'key'), name='unique_request_field_key_per_form'),
+            model_name="servicerequestfield",
+            constraint=models.UniqueConstraint(
+                fields=("form", "key"), name="unique_request_field_key_per_form"
+            ),
         ),
         migrations.AddIndex(
-            model_name='servicesubservice',
-            index=models.Index(fields=['service', 'status'], name='services_se_service_596e75_idx'),
+            model_name="servicesubservice",
+            index=models.Index(
+                fields=["service", "status"], name="services_se_service_596e75_idx"
+            ),
         ),
         migrations.AddConstraint(
-            model_name='servicesubservice',
-            constraint=models.UniqueConstraint(fields=('service', 'code'), name='unique_subservice_code_per_service'),
+            model_name="servicesubservice",
+            constraint=models.UniqueConstraint(
+                fields=("service", "code"), name="unique_subservice_code_per_service"
+            ),
         ),
         migrations.AddIndex(
-            model_name='serviceworkflow',
-            index=models.Index(fields=['service', 'status'], name='services_se_service_6f251e_idx'),
+            model_name="serviceworkflow",
+            index=models.Index(
+                fields=["service", "status"], name="services_se_service_6f251e_idx"
+            ),
         ),
         migrations.AddConstraint(
-            model_name='serviceworkflow',
-            constraint=models.UniqueConstraint(fields=('service', 'version'), name='unique_workflow_version_per_service'),
+            model_name="serviceworkflow",
+            constraint=models.UniqueConstraint(
+                fields=("service", "version"),
+                name="unique_workflow_version_per_service",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='serviceworkflow',
-            constraint=models.UniqueConstraint(condition=models.Q(('is_active', True)), fields=('service',), name='unique_active_workflow_per_service'),
+            model_name="serviceworkflow",
+            constraint=models.UniqueConstraint(
+                condition=models.Q(("is_active", True)),
+                fields=("service",),
+                name="unique_active_workflow_per_service",
+            ),
         ),
         migrations.AddIndex(
-            model_name='serviceworkflowstage',
-            index=models.Index(fields=['workflow', 'sort_order'], name='services_se_workflo_f95486_idx'),
+            model_name="serviceworkflowstage",
+            index=models.Index(
+                fields=["workflow", "sort_order"], name="services_se_workflo_f95486_idx"
+            ),
         ),
     ]

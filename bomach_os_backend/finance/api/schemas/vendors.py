@@ -156,7 +156,10 @@ class VendorBillOut(Schema):
 
     @staticmethod
     def resolve_is_overdue(obj):
-        return obj.status not in {"paid", "rejected", "void"} and obj.due_date < timezone.localdate()
+        return (
+            obj.status not in {"paid", "rejected", "void"}
+            and obj.due_date < timezone.localdate()
+        )
 
     @staticmethod
     def resolve_status_display(obj):
@@ -164,11 +167,19 @@ class VendorBillOut(Schema):
 
     @staticmethod
     def resolve_approved_by_name(obj):
-        return (obj.approved_by.get_full_name() or obj.approved_by.email) if obj.approved_by else ""
+        return (
+            (obj.approved_by.get_full_name() or obj.approved_by.email)
+            if obj.approved_by
+            else ""
+        )
 
     @staticmethod
     def resolve_rejected_by_name(obj):
-        return (obj.rejected_by.get_full_name() or obj.rejected_by.email) if obj.rejected_by else ""
+        return (
+            (obj.rejected_by.get_full_name() or obj.rejected_by.email)
+            if obj.rejected_by
+            else ""
+        )
 
     @staticmethod
     def resolve_paid_by_name(obj):

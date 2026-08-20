@@ -11,34 +11,137 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('user', '0033_meeting_file_url'),
+        ("user", "0033_meeting_file_url"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Event',
+            name="Event",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='When this record was created')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text='When this record was last updated')),
-                ('event_id', models.CharField(max_length=50, unique=True, verbose_name='Event ID')),
-                ('title', models.CharField(max_length=255, verbose_name='Event Title')),
-                ('event_time_from', models.DateTimeField(default=django.utils.timezone.now, help_text='Start time of the event (UTC)')),
-                ('event_time_to', models.DateTimeField(default=user.models.event.get_default_event_end_time, help_text='End time of the event (UTC)')),
-                ('event_type', models.CharField(choices=[('GENERAL_MEETING', 'General Meeting'), ('TEAM_BUILDING', 'Team Building'), ('EXTERNAL_CONFERENCE', 'External Conference'), ('TRAINING_SESSION', 'Training Session'), ('NETWORKING_EVENT', 'Networking Event'), ('HOLIDAY_PARTY', 'Holiday Party'), ('STRATEGIC_PLANNING', 'Strategic Planning')], default='GENERAL_MEETING', max_length=50, verbose_name='event type')),
-                ('meeting_location', models.CharField(blank=True, help_text='Location of the event (physical address or virtual meeting link)', max_length=500)),
-                ('target_all_branches', models.BooleanField(default=False, help_text='If true, the event is targeted to all branches. If false, specify target branches.')),
-                ('target_all_departments', models.BooleanField(default=False, help_text='If true, the event is targeted to all departments. If false, specify target departments.')),
-                ('target_associates', models.BooleanField(default=False, help_text='If true, the event is targeted to all associates. If false, specify target associates.')),
-                ('target_investors', models.BooleanField(default=False, help_text='If true, the event is targeted to all investors. If false, specify target investors.')),
-                ('target_partners', models.BooleanField(default=False, help_text='If true, the event is targeted to all partners. If false, specify target partners.')),
-                ('reminder_time', models.DateTimeField(blank=True, help_text='Time to send reminders for the event (UTC). If null, no reminders will be sent.', null=True)),
-                ('recurrences', recurrence.fields.RecurrenceField()),
-                ('organizer', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL, verbose_name='Event Organizer')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, help_text="When this record was created"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, help_text="When this record was last updated"
+                    ),
+                ),
+                (
+                    "event_id",
+                    models.CharField(
+                        max_length=50, unique=True, verbose_name="Event ID"
+                    ),
+                ),
+                ("title", models.CharField(max_length=255, verbose_name="Event Title")),
+                (
+                    "event_time_from",
+                    models.DateTimeField(
+                        default=django.utils.timezone.now,
+                        help_text="Start time of the event (UTC)",
+                    ),
+                ),
+                (
+                    "event_time_to",
+                    models.DateTimeField(
+                        default=user.models.event.get_default_event_end_time,
+                        help_text="End time of the event (UTC)",
+                    ),
+                ),
+                (
+                    "event_type",
+                    models.CharField(
+                        choices=[
+                            ("GENERAL_MEETING", "General Meeting"),
+                            ("TEAM_BUILDING", "Team Building"),
+                            ("EXTERNAL_CONFERENCE", "External Conference"),
+                            ("TRAINING_SESSION", "Training Session"),
+                            ("NETWORKING_EVENT", "Networking Event"),
+                            ("HOLIDAY_PARTY", "Holiday Party"),
+                            ("STRATEGIC_PLANNING", "Strategic Planning"),
+                        ],
+                        default="GENERAL_MEETING",
+                        max_length=50,
+                        verbose_name="event type",
+                    ),
+                ),
+                (
+                    "meeting_location",
+                    models.CharField(
+                        blank=True,
+                        help_text="Location of the event (physical address or virtual meeting link)",
+                        max_length=500,
+                    ),
+                ),
+                (
+                    "target_all_branches",
+                    models.BooleanField(
+                        default=False,
+                        help_text="If true, the event is targeted to all branches. If false, specify target branches.",
+                    ),
+                ),
+                (
+                    "target_all_departments",
+                    models.BooleanField(
+                        default=False,
+                        help_text="If true, the event is targeted to all departments. If false, specify target departments.",
+                    ),
+                ),
+                (
+                    "target_associates",
+                    models.BooleanField(
+                        default=False,
+                        help_text="If true, the event is targeted to all associates. If false, specify target associates.",
+                    ),
+                ),
+                (
+                    "target_investors",
+                    models.BooleanField(
+                        default=False,
+                        help_text="If true, the event is targeted to all investors. If false, specify target investors.",
+                    ),
+                ),
+                (
+                    "target_partners",
+                    models.BooleanField(
+                        default=False,
+                        help_text="If true, the event is targeted to all partners. If false, specify target partners.",
+                    ),
+                ),
+                (
+                    "reminder_time",
+                    models.DateTimeField(
+                        blank=True,
+                        help_text="Time to send reminders for the event (UTC). If null, no reminders will be sent.",
+                        null=True,
+                    ),
+                ),
+                ("recurrences", recurrence.fields.RecurrenceField()),
+                (
+                    "organizer",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="Event Organizer",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-created_at'],
-                'abstract': False,
+                "ordering": ["-created_at"],
+                "abstract": False,
             },
         ),
     ]
