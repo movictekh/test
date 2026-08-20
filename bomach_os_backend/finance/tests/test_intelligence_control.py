@@ -293,4 +293,4 @@ class FinanceIntelligenceControlPass34Tests(RoleAPITestMixin, TestCase):
         self.assertEqual(response.status_code, 400)
 
     def test_finance_audit_permission_family_is_registered(self):
-        self.assertEqual(PERMISSIONS_MAP["finance_audit"], ["view"])
+        self.assertEqual(PERMISSIONS_MAP["finance_audit"], ["view", "export"])

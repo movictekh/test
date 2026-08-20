@@ -354,6 +354,7 @@ def void_vendor_bill(vendor_bill, voided_by):
             raise ValidationError("This vendor bill is already void.")
 
         vendor_bill.status = VendorBill.STATUS.VOID
+        vendor_bill._finance_audit_actor = voided_by
         vendor_bill.save(update_fields=["status", "net_amount", "updated_at"])
         FinanceWalletEntry.objects.filter(
             vendor_bill=vendor_bill,
@@ -569,6 +570,7 @@ def cancel_petty_cash_advance(advance, cancelled_by):
                 "Only petty cash advances that have not been issued can be cancelled."
             )
         advance.status = PettyCashAdvance.STATUS.CANCELLED
+        advance._finance_audit_actor = cancelled_by
         advance.save(update_fields=["status", "updated_at"])
         return advance
 

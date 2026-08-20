@@ -1,7 +1,7 @@
 # Finance Intelligence & Control — Deferred Scope
 
 This document records Intelligence & Control features intentionally deferred
-after IC-1 through IC-4. They are deferred because a prerequisite, policy
+after IC-1 through IC-6. They are deferred because a prerequisite, policy
 decision or separate workflow is still required. They are not accidental
 omissions.
 
@@ -38,20 +38,18 @@ execution runner, delivery history and failure handling.
 A future `FinanceReportSchedule` table is justified only when that scheduling
 and delivery workflow is implemented.
 
-## Report exports
+## PDF and cross-module native exports
 
-CSV/PDF export remains deferred to the later reporting/export batch. The
-financial calculations and canonical report-source catalog are established
-first.
+Deferred.
 
-## Permanent Finance audit history
+IC-6 adds CSV export for reports owned by the Intelligence layer: Profit & Loss,
+Balance Sheet, Revenue, Expenses, Payables Ageing, Audit & Exceptions and
+permanent Finance Audit.
 
-Deferred to IC-5.
-
-The permanent history should reuse the existing `user.AuditLog` infrastructure
-rather than create a duplicate Finance audit table. IC-4 introduces the shared
-`finance_audit:view` permission family but does not yet instrument Finance state
-changes into the permanent audit history.
+PDF rendering remains deferred. Native CSV wrappers for Receivables, Project
+Profitability, Payroll, Statutory and Wallet reporting are also deferred rather
+than duplicating their existing canonical query engines. They can be added when
+those modules expose a shared export contract.
 
 ## Exception workflow state
 

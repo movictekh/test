@@ -2,6 +2,7 @@ from datetime import date
 from typing import Optional
 
 from django.core.exceptions import ValidationError
+from django.http import HttpResponse
 from ninja import Query, Router
 from ninja.errors import HttpError
 
@@ -12,6 +13,7 @@ from finance.api.schemas.reports import (
     ProfitAndLossOut,
     ReportCatalogOut,
 )
+from finance.service.exporting import export_financial_report_csv
 from finance.service.reporting import (
     balance_sheet,
     expense_report,
@@ -145,3 +147,39 @@ def payables_ageing_endpoint(
         vendor_id=vendor_id,
         search=search,
     )
+
+
+def _csv_response(filename, content):
+    response = HttpResponse(content, content_type="text/csv; charset=utf-8")
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
+
+
+@router.get("/reports/export")
+@require_permission("financial_reports", "export")
+def export_financial_report_endpoint(
+    request,
+    report_key: str,
+    date_from: Optional[date] = Query(None),
+    date_to: Optional[date] = Query(None),
+    as_of: Optional[date] = Query(None),
+    currency: Optional[str] = Query(None),
+    branch_id: Optional[int] = Query(None),
+    vendor_id: Optional[int] = Query(None),
+    search: Optional[str] = Query(None),
+):
+    try:
+        filename, content = export_financial_report_csv(
+            report_key,
+            date_from=date_from,
+            date_to=date_to,
+            as_of=as_of,
+            currency=currency,
+            branch_ids=_report_scope(request, branch_id),
+            branch_id=branch_id,
+            vendor_id=vendor_id,
+            search=search,
+        )
+        return _csv_response(filename, content)
+    except (ValidationError, ValueError) as exc:
+        _report_error(exc)

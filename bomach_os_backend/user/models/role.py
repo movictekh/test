@@ -293,8 +293,8 @@ PERMISSIONS_MAP = {
     "journals": ["create", "view", "list", "update", "post", "reverse"],
     "general_ledger": ["view", "list"],
     "finance_settings": ["view", "update"],
-    "financial_reports": ["view"],
-    "finance_audit": ["view"],
+    "financial_reports": ["view", "export"],
+    "finance_audit": ["view", "export"],
     "bank_reconciliation": [
         "create",
         "view",

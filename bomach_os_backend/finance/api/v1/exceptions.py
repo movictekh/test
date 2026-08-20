@@ -1,5 +1,6 @@
 from typing import List, Optional
 
+from django.http import HttpResponse
 from ninja import Query, Router
 from ninja.errors import HttpError
 
@@ -7,6 +8,7 @@ from finance.api.schemas.exceptions import (
     FinanceExceptionOut,
     FinanceExceptionSummaryOut,
 )
+from finance.service.exporting import export_exceptions_csv
 from finance.service.intelligence import finance_exception_summary, finance_exceptions
 from user.models.branch import Branch
 from user.utils.perm import require_permission
@@ -74,3 +76,27 @@ def finance_exceptions_summary(
         severity=severity,
         category=category,
     )
+
+
+def _csv_response(filename, content):
+    response = HttpResponse(content, content_type="text/csv; charset=utf-8")
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
+
+
+@router.get("/exceptions/export")
+@require_permission("finance_audit", "export")
+def export_finance_exceptions(
+    request,
+    severity: Optional[str] = Query(None),
+    category: Optional[str] = Query(None),
+    branch_id: Optional[int] = Query(None),
+):
+    _validate_filters(severity, category)
+    filename, content = export_exceptions_csv(
+        branch_ids=_exception_scope(request, branch_id),
+        branch_id=branch_id,
+        severity=severity,
+        category=category,
+    )
+    return _csv_response(filename, content)

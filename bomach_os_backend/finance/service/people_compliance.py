@@ -907,7 +907,7 @@ def pay_statutory_obligation(
         return obligation
 
 
-def void_statutory_obligation(obligation):
+def void_statutory_obligation(obligation, voided_by=None):
     with transaction.atomic():
         obligation = StatutoryObligation.objects.select_for_update().get(
             id=obligation.id
@@ -917,6 +917,7 @@ def void_statutory_obligation(obligation):
         if obligation.status == StatutoryObligation.STATUS.VOID:
             raise ValidationError("This statutory obligation is already void.")
         obligation.status = StatutoryObligation.STATUS.VOID
+        obligation._finance_audit_actor = voided_by
         obligation.save(update_fields=["status", "updated_at"])
         return obligation
 

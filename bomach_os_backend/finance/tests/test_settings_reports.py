@@ -348,7 +348,7 @@ class FinanceSettingsReportsTests(RoleAPITestMixin, TestCase):
 
     def test_permissions_and_public_api_are_registered(self):
         self.assertEqual(PERMISSIONS_MAP["finance_settings"], ["view", "update"])
-        self.assertEqual(PERMISSIONS_MAP["financial_reports"], ["view"])
+        self.assertEqual(PERMISSIONS_MAP["financial_reports"], ["view", "export"])
 
         schema = api.get_openapi_schema()
         paths = schema.get("paths", {})

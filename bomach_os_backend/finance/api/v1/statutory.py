@@ -364,7 +364,7 @@ def pay(request, obligation_id: int, payload: StatutoryPayIn):
 def void(request, obligation_id: int):
     o = _get(request, obligation_id)
     try:
-        void_statutory_obligation(o)
+        void_statutory_obligation(o, request.user)
         return 200, _out(_qs().get(id=o.id))
     except Exception as e:
         return 400, handle_payment_exception(e)

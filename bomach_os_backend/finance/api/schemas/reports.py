@@ -58,6 +58,8 @@ class ReportCatalogItemOut(Schema):
     method: Optional[str] = None
     required_resource: Optional[str] = None
     required_action: Optional[str] = None
+    export_endpoint: Optional[str] = None
+    export_format: Optional[str] = None
     note: str = ""
 
 

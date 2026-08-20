@@ -306,6 +306,8 @@ def report_catalog():
                 "method": "GET",
                 "required_resource": "financial_reports",
                 "required_action": "view",
+                "export_endpoint": "/api/v1/finance/reports/export?report_key=profit_and_loss",
+                "export_format": "csv",
             },
             {
                 "key": "balance_sheet",
@@ -316,6 +318,8 @@ def report_catalog():
                 "method": "GET",
                 "required_resource": "financial_reports",
                 "required_action": "view",
+                "export_endpoint": "/api/v1/finance/reports/export?report_key=balance_sheet",
+                "export_format": "csv",
             },
             {
                 "key": "revenue",
@@ -326,6 +330,8 @@ def report_catalog():
                 "method": "GET",
                 "required_resource": "financial_reports",
                 "required_action": "view",
+                "export_endpoint": "/api/v1/finance/reports/export?report_key=revenue",
+                "export_format": "csv",
             },
             {
                 "key": "expenses",
@@ -336,6 +342,8 @@ def report_catalog():
                 "method": "GET",
                 "required_resource": "financial_reports",
                 "required_action": "view",
+                "export_endpoint": "/api/v1/finance/reports/export?report_key=expenses",
+                "export_format": "csv",
             },
             {
                 "key": "trial_balance",
@@ -377,6 +385,8 @@ def report_catalog():
                 "method": "GET",
                 "required_resource": "financial_reports",
                 "required_action": "view",
+                "export_endpoint": "/api/v1/finance/reports/export?report_key=payables_ageing",
+                "export_format": "csv",
             },
             {
                 "key": "project_profitability",
@@ -419,6 +429,19 @@ def report_catalog():
                 "required_resource": "payments",
                 "required_action": "list",
                 "note": "wallet_id is required.",
+            },
+            {
+                "key": "audit_exceptions",
+                "name": "Audit & Exception Report",
+                "description": "Current deterministic Finance exceptions requiring review.",
+                "availability": "available",
+                "endpoint": "/api/v1/finance/exceptions",
+                "method": "GET",
+                "required_resource": "finance_audit",
+                "required_action": "view",
+                "export_endpoint": "/api/v1/finance/exceptions/export",
+                "export_format": "csv",
+                "note": "Permanent Finance audit history is available separately under /api/v1/finance/audit.",
             },
             {
                 "key": "cash_flow_statement",

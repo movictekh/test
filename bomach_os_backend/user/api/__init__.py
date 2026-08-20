@@ -79,6 +79,7 @@ from services.api.v1 import (
 )
 from finance.api.v1 import (
     accounting as finance_accounting,
+    audit as finance_audit,
     exceptions as finance_exceptions,
     reports as finance_reports,
     settings as finance_settings,
@@ -236,6 +237,7 @@ api.add_router("/finance", finance_accounting.router)
 api.add_router("/finance", finance_settings.router)
 api.add_router("/finance", finance_reports.router)
 api.add_router("/finance", finance_exceptions.router)
+api.add_router("/finance", finance_audit.router)
 # Bank Reconciliation API exposure is intentionally deferred.
 # The models, services, migrations, permissions, and tests remain in place.
 # We will come back to this API when the external bank-transaction ingestion
