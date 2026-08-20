@@ -143,19 +143,11 @@ class FinanceExpenseOut(Schema):
 
     @staticmethod
     def resolve_approved_by_name(obj):
-        return (
-            (obj.approved_by.get_full_name() or obj.approved_by.email)
-            if obj.approved_by
-            else ""
-        )
+        return (obj.approved_by.get_full_name() or obj.approved_by.email) if obj.approved_by else ""
 
     @staticmethod
     def resolve_rejected_by_name(obj):
-        return (
-            (obj.rejected_by.get_full_name() or obj.rejected_by.email)
-            if obj.rejected_by
-            else ""
-        )
+        return (obj.rejected_by.get_full_name() or obj.rejected_by.email) if obj.rejected_by else ""
 
     @staticmethod
     def resolve_paid_by_name(obj):

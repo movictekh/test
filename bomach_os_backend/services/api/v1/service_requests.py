@@ -61,32 +61,17 @@ from user.api.schemas.client_service import (
 )
 from user.models.client import Client as CustomerClient
 from user.models.client_service import PaymentSubmission
-from finance.service import (
-    handle_payment_exception,
-    review_payment_submission as review_submission_payment,
-)
+from finance.service import handle_payment_exception, review_payment_submission as review_submission_payment
 from user.models.employee import Employee
 from user.utils.perm import require_permission, scope_queryset
+
 
 router = Router(tags=["Service Requests"])
 
 CLIENT_ACTIVITY_TYPES = {"document_received", "email", "whatsapp", "internal_note"}
 CLIENT_VISIBLE_QUOTE_STATUSES = {"sent", "accepted", "rejected"}
-CLIENT_VISIBLE_INVOICE_STATUSES = {
-    "sent",
-    "viewed",
-    "partially_paid",
-    "paid",
-    "overdue",
-}
-CLIENT_VISIBLE_ORDER_STATUSES = {
-    "pending_mobilisation",
-    "active",
-    "quality_review",
-    "awaiting_client",
-    "completed",
-    "on_hold",
-}
+CLIENT_VISIBLE_INVOICE_STATUSES = {"sent", "viewed", "partially_paid", "paid", "overdue"}
+CLIENT_VISIBLE_ORDER_STATUSES = {"pending_mobilisation", "active", "quality_review", "awaiting_client", "completed", "on_hold"}
 
 
 def _validation_detail(exc):
@@ -172,16 +157,12 @@ def _client_order_queryset():
     ).prefetch_related(
         Prefetch(
             "milestones",
-            queryset=ServiceOrderMilestone.objects.filter(client_visible=True).order_by(
-                "sort_order", "id"
-            ),
+            queryset=ServiceOrderMilestone.objects.filter(client_visible=True).order_by("sort_order", "id"),
             to_attr="client_visible_milestones",
         ),
         Prefetch(
             "activities",
-            queryset=ServiceOrderActivity.objects.filter(
-                visibility="internal_client"
-            ).order_by("-created_at"),
+            queryset=ServiceOrderActivity.objects.filter(visibility="internal_client").order_by("-created_at"),
             to_attr="client_visible_activities",
         ),
     )
@@ -284,28 +265,21 @@ def _serialize_request(obj, include_detail=False):
         "updated_at": obj.updated_at,
     }
     if include_detail:
-        row.update(
-            {
-                "service_lead_id": obj.service_lead_id,
-                "crm_lead_id": obj.crm_lead_id,
-                "request_form_id": obj.request_form_id,
-                "request_form_version": obj.request_form_version,
-                "pricing_config_id": obj.pricing_config_id,
-                "pricing_config_version": obj.pricing_config_version,
-                "workflow_id": obj.workflow_id,
-                "workflow_version": obj.workflow_version,
-                "answers_snapshot": obj.answers_snapshot,
-                "form_snapshot": obj.form_snapshot,
-                "answers": [_serialize_answer(answer) for answer in obj.answers.all()],
-                "attachments": [
-                    _serialize_attachment(attachment)
-                    for attachment in obj.attachments.all()
-                ],
-                "activities": [
-                    _serialize_activity(activity) for activity in obj.activities.all()
-                ],
-            }
-        )
+        row.update({
+            "service_lead_id": obj.service_lead_id,
+            "crm_lead_id": obj.crm_lead_id,
+            "request_form_id": obj.request_form_id,
+            "request_form_version": obj.request_form_version,
+            "pricing_config_id": obj.pricing_config_id,
+            "pricing_config_version": obj.pricing_config_version,
+            "workflow_id": obj.workflow_id,
+            "workflow_version": obj.workflow_version,
+            "answers_snapshot": obj.answers_snapshot,
+            "form_snapshot": obj.form_snapshot,
+            "answers": [_serialize_answer(answer) for answer in obj.answers.all()],
+            "attachments": [_serialize_attachment(attachment) for attachment in obj.attachments.all()],
+            "activities": [_serialize_activity(activity) for activity in obj.activities.all()],
+        })
     return row
 
 
@@ -354,17 +328,8 @@ def _create_answer_rows(service_request):
     ServiceRequestAnswer.objects.bulk_create(rows)
 
 
-def _log_activity(
-    service_request,
-    activity_type,
-    note,
-    created_by=None,
-    outcome="not_applicable",
-    next_action="",
-):
-    _ensure_choice(
-        activity_type, ServiceRequestActivity.ACTIVITY_TYPE_CHOICES, "activity_type"
-    )
+def _log_activity(service_request, activity_type, note, created_by=None, outcome="not_applicable", next_action=""):
+    _ensure_choice(activity_type, ServiceRequestActivity.ACTIVITY_TYPE_CHOICES, "activity_type")
     _ensure_choice(outcome, ServiceRequestActivity.OUTCOME_CHOICES, "outcome")
     activity = ServiceRequestActivity.objects.create(
         request=service_request,
@@ -407,7 +372,8 @@ def _invoice_queryset():
 
 def _latest_rejected_quote(service_request):
     return (
-        service_request.quotes.filter(status="rejected")
+        service_request.quotes
+        .filter(status="rejected")
         .order_by("-version", "-created_at", "-id")
         .first()
     )
@@ -421,29 +387,16 @@ def _ensure_no_active_quote(service_request):
 def _quote_payload_data(payload, service_request):
     data = payload.dict(exclude_unset=True)
     if not data.get("required_approver_role_id"):
-        raise ValidationError(
-            {"required_approver_role_id": "Required approver role is required."}
-        )
+        raise ValidationError({"required_approver_role_id": "Required approver role is required."})
     service_fee = data.get("service_fee")
     amount = data.get("amount")
     if service_fee is None:
-        data["service_fee"] = (
-            amount if amount is not None else service_request.estimated_value
-        )
+        data["service_fee"] = amount if amount is not None else service_request.estimated_value
     data["amount"] = Decimal("0.00")
-    data["description"] = (
-        data.get("description")
-        or service_request.scope_summary
-        or service_request.service.name
-    )
+    data["description"] = data.get("description") or service_request.scope_summary or service_request.service.name
     data["scope_summary"] = data.get("scope_summary") or service_request.scope_summary
-    data["terms"] = (
-        data.get("terms")
-        or "Work begins after the required mobilisation payment and approved documents are received."
-    )
-    data["valid_until"] = data.get("valid_until") or (
-        timezone.localdate() + timedelta(days=14)
-    )
+    data["terms"] = data.get("terms") or "Work begins after the required mobilisation payment and approved documents are received."
+    data["valid_until"] = data.get("valid_until") or (timezone.localdate() + timedelta(days=14))
     data["status"] = "awaiting_approval"
     return data
 
@@ -459,27 +412,13 @@ def _get_staff_object_or_404(request, request_id):
     obj = get_object_or_404(_request_queryset(), id=request_id)
     branch_ids = getattr(request, "_perm_branch_ids", [])
     if branch_ids and obj.branch_id not in branch_ids:
-        raise HttpError(
-            403, "You do not have permission to access this service request."
-        )
+        raise HttpError(403, "You do not have permission to access this service request.")
     return obj
 
 
-def _apply_filters(
-    qs,
-    status=None,
-    priority=None,
-    service_id=None,
-    branch_id=None,
-    owner_id=None,
-    client_id=None,
-    source=None,
-    date_from=None,
-    date_to=None,
-    due_from=None,
-    due_to=None,
-    search=None,
-):
+def _apply_filters(qs, status=None, priority=None, service_id=None, branch_id=None,
+                   owner_id=None, client_id=None, source=None, date_from=None,
+                   date_to=None, due_from=None, due_to=None, search=None):
     if status:
         qs = qs.filter(status=status)
     if priority:
@@ -518,9 +457,7 @@ def _apply_filters(
     return qs
 
 
-def _create_service_request(
-    payload, client, created_by, submitted_by=None, staff=False
-):
+def _create_service_request(payload, client, created_by, submitted_by=None, staff=False):
     data = payload.dict()
     answers = data.pop("answers")
     relation_ids = {
@@ -535,9 +472,7 @@ def _create_service_request(
     service = get_object_or_404(Service, id=service_id)
     subservice = None
     if relation_ids["subservice_id"]:
-        subservice = get_object_or_404(
-            ServiceSubService, id=relation_ids["subservice_id"], service=service
-        )
+        subservice = get_object_or_404(ServiceSubService, id=relation_ids["subservice_id"], service=service)
 
     with transaction.atomic():
         obj = ServiceRequest.objects.create(
@@ -547,11 +482,7 @@ def _create_service_request(
             answers_snapshot=answers,
             created_by=created_by,
             submitted_by=submitted_by,
-            **{
-                key: value
-                for key, value in relation_ids.items()
-                if key != "subservice_id"
-            },
+            **{key: value for key, value in relation_ids.items() if key != "subservice_id"},
             **data,
         )
         _create_answer_rows(obj)
@@ -589,10 +520,7 @@ def get_service_request_choices(request):
     }
 
 
-@router.get(
-    "/services/{service_id}/intake-form",
-    response={200: Dict[str, Any], 404: MessageSchema},
-)
+@router.get("/services/{service_id}/intake-form", response={200: Dict[str, Any], 404: MessageSchema})
 def get_service_intake_form(request, service_id: int):
     service = get_object_or_404(
         Service.objects.select_related("active_request_form").prefetch_related(
@@ -664,48 +592,25 @@ def list_admin_service_requests(
     search: Optional[str] = Query(None),
 ):
     qs = scope_queryset(request, _request_queryset(), branch_field="branch_id")
-    qs = _apply_filters(
-        qs,
-        status,
-        priority,
-        service_id,
-        branch_id,
-        owner_id,
-        client_id,
-        source,
-        date_from,
-        date_to,
-        due_from,
-        due_to,
-        search,
-    )
+    qs = _apply_filters(qs, status, priority, service_id, branch_id, owner_id, client_id, source, date_from, date_to, due_from, due_to, search)
     return [_serialize_request(item) for item in qs.order_by("-created_at")]
 
 
-@router.post(
-    "/admin",
-    response={201: ServiceRequestDetailOut, 400: MessageSchema, 403: MessageSchema},
-)
+@router.post("/admin", response={201: ServiceRequestDetailOut, 400: MessageSchema, 403: MessageSchema})
 @require_permission("service_requests", "create")
 def create_admin_service_request(request, payload: StaffServiceRequestCreateSchema):
     try:
         client = get_object_or_404(CustomerClient, id=payload.client_id)
-        obj = _create_service_request(
-            payload, client=client, created_by=request.user, staff=True
-        )
+        obj = _create_service_request(payload, client=client, created_by=request.user, staff=True)
         return 201, _serialize_request(obj, include_detail=True)
     except (ValidationError, IntegrityError) as e:
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.get(
-    "/admin/payment-submissions", response=List[PaymentSubmissionResponseSchema]
-)
+@router.get("/admin/payment-submissions", response=List[PaymentSubmissionResponseSchema])
 @require_permission("payments", "list")
 def list_pending_submissions(request):
-    return PaymentSubmission.objects.filter(
-        status=PaymentSubmission.STATUS.PENDING
-    ).select_related("invoice")
+    return PaymentSubmission.objects.filter(status=PaymentSubmission.STATUS.PENDING).select_related("invoice")
 
 
 @router.post("/admin/payment-submissions/{submission_id}/review")
@@ -725,23 +630,16 @@ def review_submission(request, submission_id: int, data: ReviewPaymentSchema):
         return handle_payment_exception(exc)
 
 
-@router.get(
-    "/admin/{request_id}", response={200: ServiceRequestDetailOut, 404: MessageSchema}
-)
+@router.get("/admin/{request_id}", response={200: ServiceRequestDetailOut, 404: MessageSchema})
 @require_permission("service_requests", "view")
 def get_admin_service_request(request, request_id: int):
     obj = _get_staff_object_or_404(request, request_id)
     return 200, _serialize_request(obj, include_detail=True)
 
 
-@router.patch(
-    "/admin/{request_id}",
-    response={200: ServiceRequestDetailOut, 400: MessageSchema, 404: MessageSchema},
-)
+@router.patch("/admin/{request_id}", response={200: ServiceRequestDetailOut, 400: MessageSchema, 404: MessageSchema})
 @require_permission("service_requests", "update")
-def update_admin_service_request(
-    request, request_id: int, payload: ServiceRequestUpdateSchema
-):
+def update_admin_service_request(request, request_id: int, payload: ServiceRequestUpdateSchema):
     try:
         obj = _get_staff_object_or_404(request, request_id)
         data = payload.dict(exclude_unset=True)
@@ -758,9 +656,7 @@ def update_admin_service_request(
         for attr, value in data.items():
             setattr(obj, attr, value)
         obj.save()
-        activity_type = (
-            "status_change" if old_status != obj.status else "control_update"
-        )
+        activity_type = "status_change" if old_status != obj.status else "control_update"
         _log_activity(
             obj,
             activity_type,
@@ -773,24 +669,13 @@ def update_admin_service_request(
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.post(
-    "/admin/{request_id}/activities",
-    response={201: ServiceRequestActivityOut, 400: MessageSchema, 404: MessageSchema},
-)
+@router.post("/admin/{request_id}/activities", response={201: ServiceRequestActivityOut, 400: MessageSchema, 404: MessageSchema})
 @require_permission("service_requests", "update")
-def create_admin_activity(
-    request, request_id: int, payload: ServiceRequestActivityCreateSchema
-):
+def create_admin_activity(request, request_id: int, payload: ServiceRequestActivityCreateSchema):
     try:
         obj = _get_staff_object_or_404(request, request_id)
-        _ensure_choice(
-            payload.activity_type,
-            ServiceRequestActivity.ACTIVITY_TYPE_CHOICES,
-            "activity_type",
-        )
-        _ensure_choice(
-            payload.outcome, ServiceRequestActivity.OUTCOME_CHOICES, "outcome"
-        )
+        _ensure_choice(payload.activity_type, ServiceRequestActivity.ACTIVITY_TYPE_CHOICES, "activity_type")
+        _ensure_choice(payload.outcome, ServiceRequestActivity.OUTCOME_CHOICES, "outcome")
         activity = ServiceRequestActivity.objects.create(
             request=obj,
             activity_type=payload.activity_type,
@@ -805,14 +690,9 @@ def create_admin_activity(
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.post(
-    "/admin/{request_id}/attachments",
-    response={201: ServiceRequestAttachmentOut, 400: MessageSchema, 404: MessageSchema},
-)
+@router.post("/admin/{request_id}/attachments", response={201: ServiceRequestAttachmentOut, 400: MessageSchema, 404: MessageSchema})
 @require_permission("service_requests", "update")
-def create_admin_attachment(
-    request, request_id: int, payload: ServiceRequestAttachmentCreateSchema
-):
+def create_admin_attachment(request, request_id: int, payload: ServiceRequestAttachmentCreateSchema):
     try:
         obj = _get_staff_object_or_404(request, request_id)
         attachment = ServiceRequestAttachment(
@@ -827,14 +707,9 @@ def create_admin_attachment(
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.post(
-    "/admin/{request_id}/quote",
-    response={201: ServiceRequestDetailOut, 400: MessageSchema, 404: MessageSchema},
-)
+@router.post("/admin/{request_id}/quote", response={201: ServiceRequestDetailOut, 400: MessageSchema, 404: MessageSchema})
 @require_permission("quotes", "create")
-def create_or_link_request_quote(
-    request, request_id: int, payload: ServiceRequestQuoteCreateSchema
-):
+def create_or_link_request_quote(request, request_id: int, payload: ServiceRequestQuoteCreateSchema):
     try:
         obj = _get_staff_object_or_404(request, request_id)
         with transaction.atomic():
@@ -874,18 +749,13 @@ def list_client_invoices(request):
     return Invoice.objects.filter(client=client).prefetch_related("service_requests")
 
 
-@router.post(
-    "/payments/submit",
-    response={201: PaymentSubmissionResponseSchema, 400: MessageSchema},
-)
+@router.post("/payments/submit", response={201: PaymentSubmissionResponseSchema, 400: MessageSchema})
 def submit_payment(request, data: PaymentSubmissionCreateSchema):
     client = _get_client_profile(request.user)
     invoice = get_object_or_404(Invoice, id=data.invoice_id, client=client)
     if data.amount > invoice.balance:
         raise HttpError(400, "Amount exceeds outstanding balance")
-    if PaymentSubmission.objects.filter(
-        invoice=invoice, client=client, status=PaymentSubmission.STATUS.PENDING
-    ).exists():
+    if PaymentSubmission.objects.filter(invoice=invoice, client=client, status=PaymentSubmission.STATUS.PENDING).exists():
         raise HttpError(400, "You already have a pending submission for this invoice")
     submission = PaymentSubmission.objects.create(
         invoice=invoice,
@@ -900,9 +770,7 @@ def submit_payment(request, data: PaymentSubmissionCreateSchema):
 @router.get("/payments/{invoice_id}", response=List[PaymentSubmissionResponseSchema])
 def list_invoice_submissions(request, invoice_id: int):
     client = _get_client_profile(request.user)
-    return PaymentSubmission.objects.filter(
-        invoice_id=invoice_id, client=client
-    ).select_related("invoice")
+    return PaymentSubmission.objects.filter(invoice_id=invoice_id, client=client).select_related("invoice")
 
 
 @router.get("/invoices", response=List[InvoiceOut])
@@ -913,9 +781,7 @@ def list_my_invoices(
     service_request_id: Optional[int] = Query(None),
 ):
     client = _get_client_profile(request.user)
-    qs = _invoice_queryset().filter(
-        client=client, status__in=CLIENT_VISIBLE_INVOICE_STATUSES
-    )
+    qs = _invoice_queryset().filter(client=client, status__in=CLIENT_VISIBLE_INVOICE_STATUSES)
     if status:
         qs = qs.filter(status=status)
     if service_request_id:
@@ -935,17 +801,8 @@ def get_my_invoice(request, invoice_id: int):
     return 200, invoice
 
 
-@router.post(
-    "/invoices/{invoice_id}/payment-submissions",
-    response={
-        201: PaymentSubmissionResponseSchema,
-        400: MessageSchema,
-        404: MessageSchema,
-    },
-)
-def submit_invoice_payment(
-    request, invoice_id: int, payload: PaymentSubmissionCreateSchema
-):
+@router.post("/invoices/{invoice_id}/payment-submissions", response={201: PaymentSubmissionResponseSchema, 400: MessageSchema, 404: MessageSchema})
+def submit_invoice_payment(request, invoice_id: int, payload: PaymentSubmissionCreateSchema):
     try:
         client = _get_client_profile(request.user)
         invoice = get_object_or_404(
@@ -958,12 +815,8 @@ def submit_invoice_payment(
             return 400, {"detail": "Payload invoice_id must match the invoice path."}
         if payload.amount > invoice.balance:
             return 400, {"detail": "Amount exceeds outstanding balance."}
-        if PaymentSubmission.objects.filter(
-            invoice=invoice, client=client, status=PaymentSubmission.STATUS.PENDING
-        ).exists():
-            return 400, {
-                "detail": "You already have a pending submission for this invoice."
-            }
+        if PaymentSubmission.objects.filter(invoice=invoice, client=client, status=PaymentSubmission.STATUS.PENDING).exists():
+            return 400, {"detail": "You already have a pending submission for this invoice."}
         submission = PaymentSubmission.objects.create(
             invoice=invoice,
             client=client,
@@ -991,9 +844,7 @@ def list_my_quotes(
     service_request_id: Optional[int] = Query(None),
 ):
     client = _get_client_profile(request.user)
-    qs = _quote_queryset().filter(
-        client=client, status__in=CLIENT_VISIBLE_QUOTE_STATUSES
-    )
+    qs = _quote_queryset().filter(client=client, status__in=CLIENT_VISIBLE_QUOTE_STATUSES)
     if status:
         qs = qs.filter(status=status)
     if service_request_id:
@@ -1013,10 +864,7 @@ def get_my_quote(request, quote_id: int):
     return 200, quote
 
 
-@router.post(
-    "/quotes/{quote_id}/accept",
-    response={200: QuoteOut, 400: MessageSchema, 404: MessageSchema},
-)
+@router.post("/quotes/{quote_id}/accept", response={200: QuoteOut, 400: MessageSchema, 404: MessageSchema})
 def accept_my_quote(request, quote_id: int):
     try:
         client = _get_client_profile(request.user)
@@ -1033,9 +881,7 @@ def accept_my_quote(request, quote_id: int):
             quote.client_responded_at = timezone.now()
             quote.save(update_fields=["status", "client_responded_at", "updated_at"])
             if quote.service_request:
-                quote.service_request.next_action = (
-                    "Create invoice for accepted quotation"
-                )
+                quote.service_request.next_action = "Create invoice for accepted quotation"
                 quote.service_request.save(update_fields=["next_action", "updated_at"])
                 _log_activity(
                     quote.service_request,
@@ -1049,10 +895,7 @@ def accept_my_quote(request, quote_id: int):
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.post(
-    "/quotes/{quote_id}/reject",
-    response={200: QuoteOut, 400: MessageSchema, 404: MessageSchema},
-)
+@router.post("/quotes/{quote_id}/reject", response={200: QuoteOut, 400: MessageSchema, 404: MessageSchema})
 def reject_my_quote(request, quote_id: int, payload: QuoteClientActionIn):
     try:
         client = _get_client_profile(request.user)
@@ -1068,20 +911,11 @@ def reject_my_quote(request, quote_id: int, payload: QuoteClientActionIn):
             quote.status = "rejected"
             quote.client_rejection_reason = payload.reason or ""
             quote.client_responded_at = timezone.now()
-            quote.save(
-                update_fields=[
-                    "status",
-                    "client_rejection_reason",
-                    "client_responded_at",
-                    "updated_at",
-                ]
-            )
+            quote.save(update_fields=["status", "client_rejection_reason", "client_responded_at", "updated_at"])
             if quote.service_request:
                 quote.service_request.status = "under_review"
                 quote.service_request.next_action = "Prepare revised quotation"
-                quote.service_request.save(
-                    update_fields=["status", "next_action", "updated_at"]
-                )
+                quote.service_request.save(update_fields=["status", "next_action", "updated_at"])
                 _log_activity(
                     quote.service_request,
                     "quote_rejected",
@@ -1105,9 +939,7 @@ def list_my_requests(
 ):
     client = _get_client_profile(request.user)
     qs = _request_queryset().filter(client=client)
-    qs = _apply_filters(
-        qs, status=status, priority=priority, service_id=service_id, search=search
-    )
+    qs = _apply_filters(qs, status=status, priority=priority, service_id=service_id, search=search)
     return [_serialize_request(item) for item in qs.order_by("-created_at")]
 
 
@@ -1115,9 +947,7 @@ def list_my_requests(
 def create_my_request(request, payload: ServiceRequestCreateSchema):
     try:
         client = _get_client_profile(request.user)
-        obj = _create_service_request(
-            payload, client=client, created_by=request.user, submitted_by=request.user
-        )
+        obj = _create_service_request(payload, client=client, created_by=request.user, submitted_by=request.user)
         return 201, _serialize_request(obj, include_detail=True)
     except (ValidationError, IntegrityError) as e:
         return 400, {"detail": _validation_detail(e)}
@@ -1131,9 +961,7 @@ def list_my_orders(
     service_request_id: Optional[int] = Query(None),
 ):
     client = _get_client_profile(request.user)
-    qs = _client_order_queryset().filter(
-        client=client, order_status__in=CLIENT_VISIBLE_ORDER_STATUSES
-    )
+    qs = _client_order_queryset().filter(client=client, order_status__in=CLIENT_VISIBLE_ORDER_STATUSES)
     if order_status:
         qs = qs.filter(order_status=order_status)
     if service_request_id:
@@ -1162,12 +990,7 @@ def list_my_order_tasks(
     milestone_id: Optional[int] = Query(None),
 ):
     client = _get_client_profile(request.user)
-    get_object_or_404(
-        _client_order_queryset(),
-        id=order_id,
-        client=client,
-        order_status__in=CLIENT_VISIBLE_ORDER_STATUSES,
-    )
+    get_object_or_404(_client_order_queryset(), id=order_id, client=client, order_status__in=CLIENT_VISIBLE_ORDER_STATUSES)
     tasks = _client_task_queryset().filter(order_id=order_id)
     if status:
         tasks = tasks.filter(status=status)
@@ -1185,12 +1008,7 @@ def list_my_order_deliverables(
     deliverable_type: Optional[str] = Query(None),
 ):
     client = _get_client_profile(request.user)
-    get_object_or_404(
-        _client_order_queryset(),
-        id=order_id,
-        client=client,
-        order_status__in=CLIENT_VISIBLE_ORDER_STATUSES,
-    )
+    get_object_or_404(_client_order_queryset(), id=order_id, client=client, order_status__in=CLIENT_VISIBLE_ORDER_STATUSES)
     deliverables = _client_deliverable_queryset().filter(order_id=order_id)
     if status:
         deliverables = deliverables.filter(status=status)
@@ -1199,40 +1017,20 @@ def list_my_order_deliverables(
     return deliverables.order_by("-created_at")
 
 
-@router.get(
-    "/orders/{order_id}/deliverables/{deliverable_id}",
-    response={200: ServiceDeliverableOut, 404: MessageSchema},
-)
+@router.get("/orders/{order_id}/deliverables/{deliverable_id}", response={200: ServiceDeliverableOut, 404: MessageSchema})
 def get_my_order_deliverable(request, order_id: int, deliverable_id: int):
     client = _get_client_profile(request.user)
-    get_object_or_404(
-        _client_order_queryset(),
-        id=order_id,
-        client=client,
-        order_status__in=CLIENT_VISIBLE_ORDER_STATUSES,
-    )
-    deliverable = get_object_or_404(
-        _client_deliverable_queryset(), id=deliverable_id, order_id=order_id
-    )
+    get_object_or_404(_client_order_queryset(), id=order_id, client=client, order_status__in=CLIENT_VISIBLE_ORDER_STATUSES)
+    deliverable = get_object_or_404(_client_deliverable_queryset(), id=deliverable_id, order_id=order_id)
     return 200, deliverable
 
 
-@router.post(
-    "/orders/{order_id}/deliverables/{deliverable_id}/approve",
-    response={200: ServiceDeliverableOut, 400: MessageSchema, 404: MessageSchema},
-)
+@router.post("/orders/{order_id}/deliverables/{deliverable_id}/approve", response={200: ServiceDeliverableOut, 400: MessageSchema, 404: MessageSchema})
 def approve_my_order_deliverable(request, order_id: int, deliverable_id: int):
     try:
         client = _get_client_profile(request.user)
-        order = get_object_or_404(
-            _client_order_queryset(),
-            id=order_id,
-            client=client,
-            order_status__in=CLIENT_VISIBLE_ORDER_STATUSES,
-        )
-        deliverable = get_object_or_404(
-            _client_deliverable_queryset(), id=deliverable_id, order=order
-        )
+        order = get_object_or_404(_client_order_queryset(), id=order_id, client=client, order_status__in=CLIENT_VISIBLE_ORDER_STATUSES)
+        deliverable = get_object_or_404(_client_deliverable_queryset(), id=deliverable_id, order=order)
         if deliverable.approval_mode != "client":
             return 400, {"detail": "This deliverable does not require client approval."}
         if deliverable.status != "under_review":
@@ -1256,24 +1054,12 @@ def approve_my_order_deliverable(request, order_id: int, deliverable_id: int):
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.post(
-    "/orders/{order_id}/deliverables/{deliverable_id}/reject",
-    response={200: ServiceDeliverableOut, 400: MessageSchema, 404: MessageSchema},
-)
-def reject_my_order_deliverable(
-    request, order_id: int, deliverable_id: int, payload: ServiceDeliverableActionIn
-):
+@router.post("/orders/{order_id}/deliverables/{deliverable_id}/reject", response={200: ServiceDeliverableOut, 400: MessageSchema, 404: MessageSchema})
+def reject_my_order_deliverable(request, order_id: int, deliverable_id: int, payload: ServiceDeliverableActionIn):
     try:
         client = _get_client_profile(request.user)
-        order = get_object_or_404(
-            _client_order_queryset(),
-            id=order_id,
-            client=client,
-            order_status__in=CLIENT_VISIBLE_ORDER_STATUSES,
-        )
-        deliverable = get_object_or_404(
-            _client_deliverable_queryset(), id=deliverable_id, order=order
-        )
+        order = get_object_or_404(_client_order_queryset(), id=order_id, client=client, order_status__in=CLIENT_VISIBLE_ORDER_STATUSES)
+        deliverable = get_object_or_404(_client_deliverable_queryset(), id=deliverable_id, order=order)
         if deliverable.approval_mode != "client":
             return 400, {"detail": "This deliverable does not require client approval."}
         if deliverable.status != "under_review":
@@ -1295,32 +1081,21 @@ def reject_my_order_deliverable(
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.get(
-    "/{request_id}", response={200: ServiceRequestDetailOut, 404: MessageSchema}
-)
+@router.get("/{request_id}", response={200: ServiceRequestDetailOut, 404: MessageSchema})
 def get_my_request(request, request_id: int):
     client = _get_client_profile(request.user)
     obj = get_object_or_404(_request_queryset(), id=request_id, client=client)
     return 200, _serialize_request(obj, include_detail=True)
 
 
-@router.post(
-    "/{request_id}/activities",
-    response={201: ServiceRequestActivityOut, 400: MessageSchema, 404: MessageSchema},
-)
-def create_my_activity(
-    request, request_id: int, payload: ServiceRequestActivityCreateSchema
-):
+@router.post("/{request_id}/activities", response={201: ServiceRequestActivityOut, 400: MessageSchema, 404: MessageSchema})
+def create_my_activity(request, request_id: int, payload: ServiceRequestActivityCreateSchema):
     try:
         if payload.activity_type not in CLIENT_ACTIVITY_TYPES:
-            return 400, {
-                "detail": "This activity type is not available from the client portal."
-            }
+            return 400, {"detail": "This activity type is not available from the client portal."}
         client = _get_client_profile(request.user)
         obj = get_object_or_404(ServiceRequest, id=request_id, client=client)
-        _ensure_choice(
-            payload.outcome, ServiceRequestActivity.OUTCOME_CHOICES, "outcome"
-        )
+        _ensure_choice(payload.outcome, ServiceRequestActivity.OUTCOME_CHOICES, "outcome")
         activity = ServiceRequestActivity.objects.create(
             request=obj,
             activity_type=payload.activity_type,
@@ -1335,19 +1110,12 @@ def create_my_activity(
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.post(
-    "/{request_id}/attachments",
-    response={201: ServiceRequestAttachmentOut, 400: MessageSchema, 404: MessageSchema},
-)
-def create_my_attachment(
-    request, request_id: int, payload: ServiceRequestAttachmentCreateSchema
-):
+@router.post("/{request_id}/attachments", response={201: ServiceRequestAttachmentOut, 400: MessageSchema, 404: MessageSchema})
+def create_my_attachment(request, request_id: int, payload: ServiceRequestAttachmentCreateSchema):
     try:
         client = _get_client_profile(request.user)
         obj = get_object_or_404(ServiceRequest, id=request_id, client=client)
-        attachment = ServiceRequestAttachment(
-            request=obj, uploaded_by=request.user, **payload.dict()
-        )
+        attachment = ServiceRequestAttachment(request=obj, uploaded_by=request.user, **payload.dict())
         attachment.full_clean()
         attachment.save()
         return 201, _serialize_attachment(attachment)

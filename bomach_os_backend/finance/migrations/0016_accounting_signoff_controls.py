@@ -1,30 +1,13 @@
 from django.db import migrations, models
 from django.db.models import Count
 
+
 EXPECTED_FIXED_ASSET_LEDGERS = [
     ("1610", "Fixed Asset Cost", "asset", "debit", "1600", True, True, None),
     ("1690", "Accumulated Depreciation", "asset", "credit", "1600", True, True, None),
-    (
-        "4200",
-        "Asset Disposal Gain",
-        "revenue",
-        "credit",
-        "4000",
-        True,
-        True,
-        "asset_disposal_gain",
-    ),
+    ("4200", "Asset Disposal Gain", "revenue", "credit", "4000", True, True, "asset_disposal_gain"),
     ("6300", "Depreciation Expense", "expense", "debit", "6000", True, True, None),
-    (
-        "6400",
-        "Asset Disposal Loss",
-        "expense",
-        "debit",
-        "6000",
-        True,
-        True,
-        "asset_disposal_loss",
-    ),
+    ("6400", "Asset Disposal Loss", "expense", "debit", "6000", True, True, "asset_disposal_loss"),
 ]
 
 
@@ -47,26 +30,13 @@ def validate_signoff_state(apps, schema_editor):
             "Cannot add one-draft-per-bank reconciliation control: " + details
         )
 
-    for (
-        code,
-        name,
-        account_type,
-        normal_balance,
-        parent_code,
-        postable,
-        active,
-        role,
-    ) in EXPECTED_FIXED_ASSET_LEDGERS:
+    for code, name, account_type, normal_balance, parent_code, postable, active, role in EXPECTED_FIXED_ASSET_LEDGERS:
         account = LedgerAccount.objects.filter(code=code).first()
         if not account:
             raise RuntimeError(
                 f"Expected canonical fixed-asset ledger {code} from migration 0015, but it is missing."
             )
-        parent = (
-            LedgerAccount.objects.filter(pk=account.parent_id).first()
-            if account.parent_id
-            else None
-        )
+        parent = LedgerAccount.objects.filter(pk=account.parent_id).first() if account.parent_id else None
         actual_parent_code = parent.code if parent else None
         expected = {
             "name": name,

@@ -2,8 +2,8 @@ from ninja import Schema
 from typing import Optional, Dict, Any, List
 from datetime import datetime
 
-# ── Profile ────────────────────────────────────────────────────────────
 
+# ── Profile ────────────────────────────────────────────────────────────
 
 class CompanyProfileSchema(Schema):
     id: int
@@ -26,7 +26,6 @@ class CompanyProfileUpdateSchema(Schema):
 
 # ── Branding ───────────────────────────────────────────────────────────
 
-
 class CompanyBrandingSchema(Schema):
     id: int
     company_logo: Optional[str] = None
@@ -46,7 +45,6 @@ class CompanyBrandingUpdateSchema(Schema):
 
 # ── Preferences ────────────────────────────────────────────────────────
 
-
 class CompanyPreferencesSchema(Schema):
     id: int
     default_currency: str
@@ -65,7 +63,6 @@ class CompanyPreferencesUpdateSchema(Schema):
 
 
 # ── Choices ────────────────────────────────────────────────────────────
-
 
 class ChoiceSchema(Schema):
     value: str

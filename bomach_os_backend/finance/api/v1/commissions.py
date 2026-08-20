@@ -29,6 +29,7 @@ from user.models.branch import Branch
 from user.models.employee import Employee
 from user.utils.perm import require_permission
 
+
 router = Router(tags=["Finance Commissions And Bonuses"])
 
 
@@ -90,7 +91,10 @@ def _apply_rule_scope(request, rules):
     branch_ids = getattr(request, "_perm_branch_ids", [])
     if getattr(request, "_perm_scope", "branches") == "company" or not branch_ids:
         return rules
-    return rules.filter(Q(branch_id__in=branch_ids) | Q(branch__isnull=True))
+    return rules.filter(
+        Q(branch_id__in=branch_ids)
+        | Q(branch__isnull=True)
+    )
 
 
 def _get_scoped_employee(request, employee_id):
@@ -120,7 +124,6 @@ def _get_scoped_payment(request, payment_id):
         branch = _payment_branch(payment)
         if not branch or branch.id not in branch_ids:
             from ninja.errors import HttpError
-
             raise HttpError(404, "Payment not found.")
 
     return payment
@@ -135,7 +138,11 @@ def _get_scoped_rule(request, rule_id, active_only=False):
 
 def _award_out(award):
     employee = award.employee
-    payroll_run = award.payroll_line.payroll_run if award.payroll_line_id else None
+    payroll_run = (
+        award.payroll_line.payroll_run
+        if award.payroll_line_id
+        else None
+    )
     return {
         "id": award.id,
         "award_number": award.award_number,
@@ -148,10 +155,16 @@ def _award_out(award):
         "service_id": award.service_id,
         "service_name": award.service.name if award.service else "",
         "payment_id": award.payment_id,
-        "payment_reference": (award.payment.payment_reference if award.payment else ""),
+        "payment_reference": (
+            award.payment.payment_reference
+            if award.payment
+            else ""
+        ),
         "commission_rule_id": award.commission_rule_id,
         "commission_rule_number": (
-            award.commission_rule.rule_number if award.commission_rule else ""
+            award.commission_rule.rule_number
+            if award.commission_rule
+            else ""
         ),
         "revenue_source": award.revenue_source,
         "verified_revenue": award.verified_revenue,
@@ -275,10 +288,7 @@ def update_commission_rule(
             if branch_id:
                 branches = Branch.objects.filter(id=branch_id)
                 branch_ids = getattr(request, "_perm_branch_ids", [])
-                if (
-                    getattr(request, "_perm_scope", "branches") != "company"
-                    and branch_ids
-                ):
+                if getattr(request, "_perm_scope", "branches") != "company" and branch_ids:
                     branches = branches.filter(id__in=branch_ids)
                 rule.branch = get_object_or_404(branches)
             else:
@@ -389,9 +399,7 @@ def calculate_commission(request, payload: CommissionCalculateIn):
 )
 @require_permission("commissions", "view")
 def get_incentive(request, award_id: int):
-    award = get_object_or_404(
-        _apply_award_scope(request, _award_queryset()), id=award_id
-    )
+    award = get_object_or_404(_apply_award_scope(request, _award_queryset()), id=award_id)
     return 200, _award_out(award)
 
 
@@ -423,9 +431,7 @@ def create_bonus(request, payload: BonusIn):
 )
 @require_permission("commissions", "approve")
 def approve_incentive(request, award_id: int):
-    award = get_object_or_404(
-        _apply_award_scope(request, _award_queryset()), id=award_id
-    )
+    award = get_object_or_404(_apply_award_scope(request, _award_queryset()), id=award_id)
     try:
         approve_incentive_award(award, request.user)
         return 200, _award_out(_award_queryset().get(id=award.id))
@@ -443,9 +449,7 @@ def reject_incentive(
     award_id: int,
     payload: IncentiveRejectIn,
 ):
-    award = get_object_or_404(
-        _apply_award_scope(request, _award_queryset()), id=award_id
-    )
+    award = get_object_or_404(_apply_award_scope(request, _award_queryset()), id=award_id)
     try:
         reject_incentive_award(award, request.user, payload.reason)
         return 200, _award_out(_award_queryset().get(id=award.id))

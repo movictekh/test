@@ -48,9 +48,7 @@ class RoleTaskTemplateAPITests(RoleAPITestMixin, TestCase):
         data = response.json()
         self.assertEqual(data["count"], 1)
         self.assertEqual(len(data["items"]), 1)
-        self.assertEqual(
-            data["items"][0]["estimated_minutes"], payload["estimated_minutes"]
-        )
+        self.assertEqual(data["items"][0]["estimated_minutes"], payload["estimated_minutes"])
 
         response = self.client.get(
             f"/api/v1/roles/{target_role.id}/task-templates?default_priority=high&search=site&is_active=true",
@@ -176,9 +174,7 @@ class RoleDailyRoutineAPITests(RoleAPITestMixin, TestCase):
         data = response.json()
         self.assertEqual(data["count"], 1)
         self.assertEqual(len(data["items"]), 1)
-        self.assertEqual(
-            data["items"][0]["estimated_minutes"], payload["estimated_minutes"]
-        )
+        self.assertEqual(data["items"][0]["estimated_minutes"], payload["estimated_minutes"])
 
         response = self.client.get(
             f"/api/v1/roles/{target_role.id}/daily-routine?search=dashboard&is_active=true",

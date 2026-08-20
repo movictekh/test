@@ -6,7 +6,6 @@ from datetime import datetime
 
 class ApprovalQueueItemSchema(Schema):
     """A normalized approval item pulled from a domain model into the unified queue."""
-
     id: str
     source: str
     source_display: str
@@ -24,7 +23,6 @@ class ApprovalQueueItemSchema(Schema):
 
 class ApprovalQueueStatsSchema(Schema):
     """Summary statistics for the approval queue (mirrors the approvals KPI cards)."""
-
     pending_count: int
     high_value_count: int
     oldest_waiting_days: int

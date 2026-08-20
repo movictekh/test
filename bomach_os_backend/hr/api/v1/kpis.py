@@ -27,7 +27,6 @@ router = Router(tags=["KPIs"])
 # KPI Metrics endpoints
 # =====================
 
-
 @router.post("/metrics/", response={201: KPIMetricSchema, 400: MessageSchema})
 @require_permission("kpis", "create")
 def create_metric(request, payload: KPIMetricCreateSchema):
@@ -35,7 +34,7 @@ def create_metric(request, payload: KPIMetricCreateSchema):
         metric = KPIMetric.objects.create(**payload.dict())
         return 201, metric
     except ValidationError as e:
-        return 400, {"detail": e.messages[0] if e.messages else str(e)}
+        return 400, {'detail': e.messages[0] if e.messages else str(e)}
 
 
 @router.get("/metrics/", response=List[KPIMetricSchema])
@@ -61,7 +60,7 @@ def update_metric(request, metric_id: int, payload: KPIMetricUpdateSchema):
         metric.save()
         return 200, metric
     except ValidationError as e:
-        return 400, {"detail": e.messages[0] if e.messages else str(e)}
+        return 400, {'detail': e.messages[0] if e.messages else str(e)}
 
 
 @router.delete("/metrics/{metric_id}", response={200: MessageSchema})
@@ -75,7 +74,6 @@ def delete_metric(request, metric_id: int):
 # ========================
 # KPI Templates endpoints
 # ========================
-
 
 @router.post("/templates/", response={201: KPITemplateSchema, 400: MessageSchema})
 @require_permission("kpis", "create")
@@ -97,19 +95,19 @@ def create_template(request, payload: KPITemplateCreateSchema):
                 target_value=m.target_value,
             )
 
-        template = KPITemplate.objects.prefetch_related("template_metrics__metric").get(
-            id=template.id
-        )
+        template = KPITemplate.objects.prefetch_related(
+            'template_metrics__metric'
+        ).get(id=template.id)
         return 201, template
     except ValidationError as e:
-        return 400, {"detail": e.messages[0] if e.messages else str(e)}
+        return 400, {'detail': e.messages[0] if e.messages else str(e)}
 
 
 @router.get("/templates/", response=List[KPITemplateListSchema])
 @paginate(LimitOffsetPagination, page_size=20)
 @require_permission("kpis", "list")
 def list_templates(request, department_id: int = None, level_id: int = None):
-    qs = KPITemplate.objects.annotate(metric_count=Count("template_metrics"))
+    qs = KPITemplate.objects.annotate(metric_count=Count('template_metrics'))
     if department_id:
         qs = qs.filter(department_id=department_id)
     if level_id:
@@ -121,14 +119,12 @@ def list_templates(request, department_id: int = None, level_id: int = None):
 @require_permission("kpis", "view")
 def get_template(request, template_id: int):
     return get_object_or_404(
-        KPITemplate.objects.prefetch_related("template_metrics__metric"),
+        KPITemplate.objects.prefetch_related('template_metrics__metric'),
         id=template_id,
     )
 
 
-@router.put(
-    "/templates/{template_id}", response={200: KPITemplateSchema, 400: MessageSchema}
-)
+@router.put("/templates/{template_id}", response={200: KPITemplateSchema, 400: MessageSchema})
 @require_permission("kpis", "update")
 def update_template(request, template_id: int, payload: KPITemplateUpdateSchema):
     try:
@@ -136,12 +132,12 @@ def update_template(request, template_id: int, payload: KPITemplateUpdateSchema)
         for attr, value in payload.dict(exclude_unset=True).items():
             setattr(template, attr, value)
         template.save()
-        template = KPITemplate.objects.prefetch_related("template_metrics__metric").get(
-            id=template.id
-        )
+        template = KPITemplate.objects.prefetch_related(
+            'template_metrics__metric'
+        ).get(id=template.id)
         return 200, template
     except ValidationError as e:
-        return 400, {"detail": e.messages[0] if e.messages else str(e)}
+        return 400, {'detail': e.messages[0] if e.messages else str(e)}
 
 
 @router.delete("/templates/{template_id}", response={200: MessageSchema})
@@ -156,15 +152,12 @@ def delete_template(request, template_id: int):
 # Template Metrics CRUD endpoints
 # ================================
 
-
 @router.post(
     "/templates/{template_id}/metrics",
     response={201: KPITemplateMetricSchema, 400: MessageSchema},
 )
 @require_permission("kpis", "update")
-def add_metric_to_template(
-    request, template_id: int, payload: KPITemplateMetricAddSchema
-):
+def add_metric_to_template(request, template_id: int, payload: KPITemplateMetricAddSchema):
     try:
         template = get_object_or_404(KPITemplate, id=template_id)
         metric = get_object_or_404(KPIMetric, id=payload.metric_id)
@@ -178,10 +171,10 @@ def add_metric_to_template(
             weight=payload.weight,
             target_value=payload.target_value,
         )
-        tm = KPITemplateMetric.objects.select_related("metric").get(id=tm.id)
+        tm = KPITemplateMetric.objects.select_related('metric').get(id=tm.id)
         return 201, tm
     except ValidationError as e:
-        return 400, {"detail": e.messages[0] if e.messages else str(e)}
+        return 400, {'detail': e.messages[0] if e.messages else str(e)}
 
 
 @router.put(
@@ -194,7 +187,7 @@ def update_template_metric(
 ):
     try:
         tm = get_object_or_404(
-            KPITemplateMetric.objects.select_related("metric"),
+            KPITemplateMetric.objects.select_related('metric'),
             template_id=template_id,
             metric_id=metric_id,
         )
@@ -203,7 +196,7 @@ def update_template_metric(
         tm.save()
         return 200, tm
     except ValidationError as e:
-        return 400, {"detail": e.messages[0] if e.messages else str(e)}
+        return 400, {'detail': e.messages[0] if e.messages else str(e)}
 
 
 @router.delete(

@@ -22,12 +22,10 @@ from services.api.schema.crm_schemas import (
     LeadUpdateSchema,
 )
 from services.api.schema.others import MessageSchema
-from services.funnel_events import (
-    record_initial_funnel_event,
-    record_status_funnel_event,
-)
+from services.funnel_events import record_initial_funnel_event, record_status_funnel_event
 from services.models.crm import Lead, LeadActivity
 from user.utils.perm import require_permission, scope_queryset
+
 
 router = Router(tags=["Marketing Leads"])
 
@@ -157,9 +155,7 @@ def _pipeline_card(lead):
         "source": lead.source,
         "source_label": lead.get_source_display(),
         "referral_partner_id": lead.referral_partner_id,
-        "referral_partner_name": (
-            lead.referral_partner.name if lead.referral_partner else None
-        ),
+        "referral_partner_name": lead.referral_partner.name if lead.referral_partner else None,
         "status": lead.status,
         "status_label": lead.get_status_display(),
         "estimated_value": lead.estimated_value,
@@ -167,9 +163,7 @@ def _pipeline_card(lead):
         "sla_status": lead.sla_status,
         "is_sla_breached": lead.is_sla_breached,
         "is_stale": lead.is_stale,
-        "owner": (
-            lead.assigned_to.user.get_full_name() if lead.assigned_to else "Unassigned"
-        ),
+        "owner": lead.assigned_to.user.get_full_name() if lead.assigned_to else "Unassigned",
         "next_action": lead.next_action,
         "next_follow_up_at": lead.next_follow_up_at,
         "created_at": lead.created_at,
@@ -190,9 +184,7 @@ def _activity_timeline_item(activity):
         "to_status": activity.to_status,
         "next_action": activity.next_action,
         "next_follow_up_at": activity.next_follow_up_at,
-        "created_by": (
-            activity.created_by.get_full_name() if activity.created_by else None
-        ),
+        "created_by": activity.created_by.get_full_name() if activity.created_by else None,
         "created_at": activity.created_at,
     }
 
@@ -220,10 +212,7 @@ def _apply_activity_effects(lead, payload_data):
             lead.first_response_at = lead.first_contact_at or timezone.now()
             update_fields.append("first_response_at")
 
-    if (
-        to_status in ["contacted", "qualified", "proposal_sent", "negotiation"]
-        or is_contact_activity
-    ):
+    if to_status in ["contacted", "qualified", "proposal_sent", "negotiation"] or is_contact_activity:
         lead.last_contact_at = timezone.now()
         update_fields.append("last_contact_at")
 
@@ -247,9 +236,7 @@ def get_lead_summary(request):
     return {
         "total": leads.count(),
         "active": active.count(),
-        "new_uncontacted": leads.filter(
-            status="new", first_contact_at__isnull=True
-        ).count(),
+        "new_uncontacted": leads.filter(status="new", first_contact_at__isnull=True).count(),
         "sla_breaches": leads.filter(
             status="new",
             first_contact_at__isnull=True,
@@ -316,15 +303,13 @@ def create_lead(request, payload: LeadCreateSchema):
         lead.refresh_sla_status()
         lead.refresh_score()
         lead.full_clean()
-        lead.save(
-            update_fields=[
-                "first_response_due_at",
-                "sla_status",
-                "score",
-                "score_breakdown",
-                "updated_at",
-            ]
-        )
+        lead.save(update_fields=[
+            "first_response_due_at",
+            "sla_status",
+            "score",
+            "score_breakdown",
+            "updated_at",
+        ])
         record_initial_funnel_event(lead, actor=request.user)
         if lead.status not in ["new", "contacted"]:
             record_status_funnel_event(
@@ -364,15 +349,7 @@ def get_pipeline(
         date_from=date_from,
         date_to=date_to,
     )
-    stage_order = [
-        "new",
-        "contacted",
-        "qualified",
-        "proposal_sent",
-        "negotiation",
-        "won",
-        "lost",
-    ]
+    stage_order = ["new", "contacted", "qualified", "proposal_sent", "negotiation", "won", "lost"]
     stage_labels = dict(Lead.STATUS_CHOICES)
 
     columns = []
@@ -380,19 +357,15 @@ def get_pipeline(
         stage_leads = leads.filter(status=status)
         cards = [
             _pipeline_card(lead)
-            for lead in stage_leads.order_by(
-                "-score", "next_follow_up_at", "-created_at"
-            )
+            for lead in stage_leads.order_by("-score", "next_follow_up_at", "-created_at")
         ]
-        columns.append(
-            {
-                "status": status,
-                "label": stage_labels.get(status, status),
-                "count": stage_leads.count(),
-                "total_estimated_value": _lead_value_sum(stage_leads),
-                "cards": cards,
-            }
-        )
+        columns.append({
+            "status": status,
+            "label": stage_labels.get(status, status),
+            "count": stage_leads.count(),
+            "total_estimated_value": _lead_value_sum(stage_leads),
+            "cards": cards,
+        })
 
     total_leads = leads.count()
     won_count = leads.filter(status="won").count()
@@ -442,15 +415,11 @@ def get_pipeline_lead_detail(request, lead_id: int):
             "campaign_id": lead.campaign_id,
             "campaign_name": lead.campaign.name if lead.campaign else None,
             "referral_partner_id": lead.referral_partner_id,
-            "referral_partner_name": (
-                lead.referral_partner.name if lead.referral_partner else None
-            ),
+            "referral_partner_name": lead.referral_partner.name if lead.referral_partner else None,
             "branch_id": lead.branch_id,
             "branch_name": lead.branch.branch_name if lead.branch else None,
             "assigned_to_id": lead.assigned_to_id,
-            "assigned_to_name": (
-                lead.assigned_to.user.get_full_name() if lead.assigned_to else None
-            ),
+            "assigned_to_name": lead.assigned_to.user.get_full_name() if lead.assigned_to else None,
             "budget_range": lead.budget_range,
             "estimated_value": lead.estimated_value,
             "notes": lead.notes,
@@ -507,10 +476,7 @@ def list_lead_activities(
     return activities.order_by("-sequence")
 
 
-@router.post(
-    "/{lead_id}/activities",
-    response={201: LeadActivityOutSchema, 400: MessageSchema, 404: MessageSchema},
-)
+@router.post("/{lead_id}/activities", response={201: LeadActivityOutSchema, 400: MessageSchema, 404: MessageSchema})
 @require_permission("leads", "create")
 def create_lead_activity(request, lead_id: int, payload: LeadActivityCreateSchema):
     try:
@@ -552,10 +518,7 @@ def get_lead_activity(request, lead_id: int, activity_id: int):
     return get_object_or_404(_activity_queryset(lead), id=activity_id)
 
 
-@router.patch(
-    "/{lead_id}/activities/{activity_id}",
-    response={200: LeadActivityOutSchema, 400: MessageSchema, 404: MessageSchema},
-)
+@router.patch("/{lead_id}/activities/{activity_id}", response={200: LeadActivityOutSchema, 400: MessageSchema, 404: MessageSchema})
 @require_permission("leads", "update")
 def update_lead_activity(
     request,
@@ -581,10 +544,7 @@ def update_lead_activity(
         return 400, {"detail": str(e)}
 
 
-@router.delete(
-    "/{lead_id}/activities/{activity_id}",
-    response={200: MessageSchema, 404: MessageSchema},
-)
+@router.delete("/{lead_id}/activities/{activity_id}", response={200: MessageSchema, 404: MessageSchema})
 @require_permission("leads", "delete")
 def delete_lead_activity(request, lead_id: int, activity_id: int):
     lead = get_object_or_404(_lead_queryset(request), id=lead_id)
@@ -599,26 +559,19 @@ def get_lead(request, lead_id: int):
     return get_object_or_404(_lead_queryset(request), id=lead_id)
 
 
-@router.patch(
-    "/{lead_id}", response={200: LeadOutSchema, 400: MessageSchema, 404: MessageSchema}
-)
+@router.patch("/{lead_id}", response={200: LeadOutSchema, 400: MessageSchema, 404: MessageSchema})
 @require_permission("leads", "update")
 def update_lead(request, lead_id: int, payload: LeadUpdateSchema):
     try:
         lead = get_object_or_404(_lead_queryset(request), id=lead_id)
-        return 200, _apply_lead_payload(
-            lead, payload.dict(exclude_unset=True), actor=request.user
-        )
+        return 200, _apply_lead_payload(lead, payload.dict(exclude_unset=True), actor=request.user)
     except ValidationError as e:
         return 400, {"detail": _validation_detail(e)}
     except Exception as e:
         return 400, {"detail": str(e)}
 
 
-@router.patch(
-    "/{lead_id}/assign",
-    response={200: LeadOutSchema, 400: MessageSchema, 404: MessageSchema},
-)
+@router.patch("/{lead_id}/assign", response={200: LeadOutSchema, 400: MessageSchema, 404: MessageSchema})
 @require_permission("leads", "update")
 def assign_lead(request, lead_id: int, payload: LeadAssignSchema):
     try:
@@ -633,10 +586,7 @@ def assign_lead(request, lead_id: int, payload: LeadAssignSchema):
         return 400, {"detail": str(e)}
 
 
-@router.patch(
-    "/{lead_id}/status",
-    response={200: LeadOutSchema, 400: MessageSchema, 404: MessageSchema},
-)
+@router.patch("/{lead_id}/status", response={200: LeadOutSchema, 400: MessageSchema, 404: MessageSchema})
 @require_permission("leads", "update")
 def update_lead_status(request, lead_id: int, payload: LeadStatusSchema):
     try:

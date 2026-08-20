@@ -23,9 +23,9 @@ def create_disciplinary_case(request, payload: DisciplinaryCaseCreateSchema):
         case = DisciplinaryCase.objects.create(**data)
         return 201, case
     except ValidationError as e:
-        return 400, {"detail": e.messages[0]}
+        return 400, {'detail': e.messages[0]}
     except Exception as e:
-        return 400, {"detail": str(e)}
+        return 400, {'detail': str(e)}
 
 
 @router.get("/", response=List[DisciplinaryCaseSchema])
@@ -44,13 +44,9 @@ def list_disciplinary_cases(
         qs = qs.filter(action_type=action_type)
     if violation_category:
         qs = qs.filter(violation_category=violation_category)
-    qs = scope_queryset(
-        request,
-        qs,
-        owner_field="employee__user",
-        branch_field="employee__branch",
-        department_field="employee__department",
-    )
+    qs = scope_queryset(request, qs, owner_field="employee__user",
+                        branch_field="employee__branch",
+                        department_field="employee__department")
     return qs
 
 
@@ -74,7 +70,7 @@ def update_disciplinary_case(
         case.save()
         return 200, case
     except ValidationError as e:
-        return 400, {"detail": e.messages[0]}
+        return 400, {'detail': e.messages[0]}
 
 
 @router.delete("/{case_id}", response={200: MessageSchema, 400: MessageSchema})
@@ -85,4 +81,4 @@ def delete_disciplinary_case(request, case_id: int):
         case.delete()
         return 200, {"detail": "Deleted successfully"}
     except ValidationError as e:
-        return 400, {"detail": e.messages[0]}
+        return 400, {'detail': e.messages[0]}

@@ -6,13 +6,13 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("services", "0004_alter_budget_options_and_more"),
-        ("user", "0047_alter_branch_branch_role_alter_review_review_date"),
+        ('services', '0004_alter_budget_options_and_more'),
+        ('user', '0047_alter_branch_branch_role_alter_review_review_date'),
     ]
 
     operations = [
         migrations.AlterUniqueTogether(
-            name="budget",
-            unique_together={("branch", "department", "fiscal_period")},
+            name='budget',
+            unique_together={('branch', 'department', 'fiscal_period')},
         ),
     ]

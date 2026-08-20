@@ -54,19 +54,13 @@ class BoardResolutionSchema(Schema):
     @staticmethod
     def resolve_created_by_name(obj):
         if obj.created_by:
-            return (
-                f"{obj.created_by.first_name} {obj.created_by.last_name}".strip()
-                or obj.created_by.email
-            )
+            return f"{obj.created_by.first_name} {obj.created_by.last_name}".strip() or obj.created_by.email
         return None
 
     @staticmethod
     def resolve_approved_by_name(obj):
         if obj.approved_by:
-            return (
-                f"{obj.approved_by.first_name} {obj.approved_by.last_name}".strip()
-                or obj.approved_by.email
-            )
+            return f"{obj.approved_by.first_name} {obj.approved_by.last_name}".strip() or obj.approved_by.email
         return None
 
 

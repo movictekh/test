@@ -8,76 +8,26 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("user", "0085_roleresource"),
+        ('user', '0085_roleresource'),
     ]
 
     operations = [
         migrations.CreateModel(
-            name="RoleSuccessPlaybookItem",
+            name='RoleSuccessPlaybookItem',
             fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                (
-                    "created_at",
-                    models.DateTimeField(
-                        auto_now_add=True, help_text="When this record was created"
-                    ),
-                ),
-                (
-                    "updated_at",
-                    models.DateTimeField(
-                        auto_now=True, help_text="When this record was last updated"
-                    ),
-                ),
-                ("title", models.CharField(max_length=255)),
-                ("description", models.TextField(blank=True, default="")),
-                (
-                    "kind",
-                    models.CharField(
-                        choices=[
-                            ("best_practice", "Best Practice"),
-                            ("common_mistake", "Common Mistake"),
-                            ("winning_strategy", "Winning Strategy"),
-                            ("lesson_learned", "Lesson Learned"),
-                        ],
-                        max_length=30,
-                    ),
-                ),
-                (
-                    "sequence",
-                    models.PositiveIntegerField(
-                        default=1,
-                        validators=[django.core.validators.MinValueValidator(1)],
-                    ),
-                ),
-                ("is_active", models.BooleanField(default=True)),
-                (
-                    "role",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        related_name="success_playbook_items",
-                        to="user.role",
-                    ),
-                ),
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('created_at', models.DateTimeField(auto_now_add=True, help_text='When this record was created')),
+                ('updated_at', models.DateTimeField(auto_now=True, help_text='When this record was last updated')),
+                ('title', models.CharField(max_length=255)),
+                ('description', models.TextField(blank=True, default='')),
+                ('kind', models.CharField(choices=[('best_practice', 'Best Practice'), ('common_mistake', 'Common Mistake'), ('winning_strategy', 'Winning Strategy'), ('lesson_learned', 'Lesson Learned')], max_length=30)),
+                ('sequence', models.PositiveIntegerField(default=1, validators=[django.core.validators.MinValueValidator(1)])),
+                ('is_active', models.BooleanField(default=True)),
+                ('role', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='success_playbook_items', to='user.role')),
             ],
             options={
-                "ordering": ["sequence", "id"],
-                "indexes": [
-                    models.Index(
-                        fields=["role", "sequence"],
-                        name="user_rolesu_role_id_a70f19_idx",
-                    ),
-                    models.Index(
-                        fields=["role", "kind"], name="user_rolesu_role_id_1b5e5a_idx"
-                    ),
-                ],
+                'ordering': ['sequence', 'id'],
+                'indexes': [models.Index(fields=['role', 'sequence'], name='user_rolesu_role_id_a70f19_idx'), models.Index(fields=['role', 'kind'], name='user_rolesu_role_id_1b5e5a_idx')],
             },
         ),
     ]

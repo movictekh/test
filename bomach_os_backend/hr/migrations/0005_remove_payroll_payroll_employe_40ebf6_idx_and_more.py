@@ -6,37 +6,37 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("hr", "0004_alter_payroll_unique_together_and_more"),
-        ("user", "0047_alter_branch_branch_role_alter_review_review_date"),
+        ('hr', '0004_alter_payroll_unique_together_and_more'),
+        ('user', '0047_alter_branch_branch_role_alter_review_review_date'),
     ]
 
     operations = [
         migrations.RemoveIndex(
-            model_name="payroll",
-            name="payroll_employe_40ebf6_idx",
+            model_name='payroll',
+            name='payroll_employe_40ebf6_idx',
         ),
         migrations.AlterUniqueTogether(
-            name="payroll",
+            name='payroll',
             unique_together=set(),
         ),
         migrations.AddField(
-            model_name="payroll",
-            name="period_month",
+            model_name='payroll',
+            name='period_month',
             field=models.PositiveSmallIntegerField(db_index=True, default=1),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name="payroll",
-            name="period_year",
+            model_name='payroll',
+            name='period_year',
             field=models.PositiveSmallIntegerField(db_index=True, default=2025),
             preserve_default=False,
         ),
         migrations.AlterUniqueTogether(
-            name="payroll",
-            unique_together={("employee", "period_month", "period_year")},
+            name='payroll',
+            unique_together={('employee', 'period_month', 'period_year')},
         ),
         migrations.AddIndex(
-            model_name="payroll",
-            index=models.Index(fields=["employee"], name="payroll_employe_21225c_idx"),
+            model_name='payroll',
+            index=models.Index(fields=['employee'], name='payroll_employe_21225c_idx'),
         ),
     ]

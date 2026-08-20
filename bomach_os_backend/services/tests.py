@@ -11,14 +11,7 @@ from django.utils import timezone
 from finance.models import FinanceAccount
 from services.funnel_events import backfill_lead_funnel_events
 from services.models.content import Content, ContentCalendarItem, MediaLibraryAsset
-from services.models.crm import (
-    DailyActionInstance,
-    Lead,
-    LeadActivity,
-    RevenueKeyResult,
-    RevenueObjective,
-    TurnaroundPlan,
-)
+from services.models.crm import DailyActionInstance, Lead, LeadActivity, RevenueKeyResult, RevenueObjective, TurnaroundPlan
 from services.models.crm import LeadFunnelEvent
 from services.models.crm import SalesPlaybook, SalesPlaybookObjection
 from services.models.marketing_campaign import (
@@ -66,20 +59,14 @@ from user.models.employee import Employee
 from user.models.meeting import Meeting
 from user.models.partner import Partner
 from user.models.role import Role
-from user.models.role_targets import (
-    EmployeeTarget,
-    EmployeeTargetReport,
-    RoleTargetTemplate,
-)
+from user.models.role_targets import EmployeeTarget, EmployeeTargetReport, RoleTargetTemplate
 from user.models.user import User
 from user.services.jwt_service import JWTService
 
 
 class ServiceCatalogueModelTests(TestCase):
     def setUp(self):
-        self.role = Role.objects.create(
-            name="Service Owner", permissions={"services": ["create", "view", "list"]}
-        )
+        self.role = Role.objects.create(name="Service Owner", permissions={"services": ["create", "view", "list"]})
         self.user = User.objects.create_user(
             email="catalogue.owner@example.com",
             username="catalogueowner",
@@ -322,13 +309,8 @@ class CommercialServiceRequestModelTests(TestCase):
             first_name="Ada",
             last_name="Okoro",
         )
-        self.customer = CustomerClient.objects.create(
-            user=self.client_user, phone="+2348012345678"
-        )
-        self.role = Role.objects.create(
-            name="Commercial Owner",
-            permissions={"service_requests": ["create", "view"]},
-        )
+        self.customer = CustomerClient.objects.create(user=self.client_user, phone="+2348012345678")
+        self.role = Role.objects.create(name="Commercial Owner", permissions={"service_requests": ["create", "view"]})
         self.category = ServiceCategory.objects.create(
             name=ServiceCategory.CategoryChoices.SURVEYING,
             description="Surveying services",
@@ -408,10 +390,7 @@ class CommercialServiceRequestModelTests(TestCase):
                 key="tags",
                 label="Tags",
                 field_type="multiselect",
-                options=[
-                    {"value": "urgent", "label": "Urgent"},
-                    {"value": "title", "label": "Title"},
-                ],
+                options=[{"value": "urgent", "label": "Urgent"}, {"value": "title", "label": "Title"}],
                 sort_order=6,
             ),
             "consent": ServiceRequestField.objects.create(
@@ -530,9 +509,7 @@ class CommercialServiceRequestModelTests(TestCase):
             self.make_request(answers_snapshot=self.valid_answers(package="enterprise"))
 
         with self.assertRaises(ValidationError):
-            self.make_request(
-                answers_snapshot=self.valid_answers(tags=["urgent", "unknown"])
-            )
+            self.make_request(answers_snapshot=self.valid_answers(tags=["urgent", "unknown"]))
 
     def test_basic_type_validation(self):
         invalid_cases = [
@@ -545,9 +522,7 @@ class CommercialServiceRequestModelTests(TestCase):
         for answer_override in invalid_cases:
             with self.subTest(answer_override=answer_override):
                 with self.assertRaises(ValidationError):
-                    self.make_request(
-                        answers_snapshot=self.valid_answers(**answer_override)
-                    )
+                    self.make_request(answers_snapshot=self.valid_answers(**answer_override))
 
     def test_form_snapshot_is_preserved_after_form_changes(self):
         request = self.make_request()
@@ -560,10 +535,7 @@ class CommercialServiceRequestModelTests(TestCase):
         request.refresh_from_db()
 
         self.assertEqual(request.form_snapshot["fields"][0]["label"], original_label)
-        self.assertEqual(
-            request.answers_snapshot["site-location"],
-            {"address": "Independence Layout, Enugu"},
-        )
+        self.assertEqual(request.answers_snapshot["site-location"], {"address": "Independence Layout, Enugu"})
 
     def test_optional_source_links_can_be_attached(self):
         branch = self.make_branch()
@@ -631,9 +603,7 @@ class CommercialServiceRequestModelTests(TestCase):
 
         self.assertEqual(request.answers.get(), answer)
         self.assertEqual(request.attachments.get(), attachment)
-        self.assertEqual(
-            list(request.activities.all()), [second_activity, first_activity]
-        )
+        self.assertEqual(list(request.activities.all()), [second_activity, first_activity])
 
     def test_status_and_priority_choice_validation(self):
         with self.assertRaises(ValidationError):
@@ -704,20 +674,8 @@ class ServiceCatalogueAPITests(TestCase):
                 "services": ["create", "view", "list", "update", "delete"],
                 "service_subservices": ["create", "view", "list", "update", "delete"],
                 "service_request_forms": ["create", "view", "list", "update", "delete"],
-                "service_pricing_configs": [
-                    "create",
-                    "view",
-                    "list",
-                    "update",
-                    "delete",
-                ],
-                "service_branch_activations": [
-                    "create",
-                    "view",
-                    "list",
-                    "update",
-                    "delete",
-                ],
+                "service_pricing_configs": ["create", "view", "list", "update", "delete"],
+                "service_branch_activations": ["create", "view", "list", "update", "delete"],
                 "service_workflows": ["create", "view", "list", "update", "delete"],
             },
         )
@@ -789,11 +747,7 @@ class ServiceCatalogueAPITests(TestCase):
             f"/api/v1/services/{service_id}/subservices",
             {
                 "subservices": [
-                    {
-                        "code": "FOUNDATION",
-                        "name": "Foundation to Roofing",
-                        "sort_order": 1,
-                    },
+                    {"code": "FOUNDATION", "name": "Foundation to Roofing", "sort_order": 1},
                     {"code": "RENOVATION", "name": "Renovation", "sort_order": 2},
                 ]
             },
@@ -809,20 +763,8 @@ class ServiceCatalogueAPITests(TestCase):
                 "status": "draft",
                 "is_active": True,
                 "fields": [
-                    {
-                        "key": "client-name",
-                        "label": "Client name",
-                        "field_type": "text",
-                        "required": True,
-                        "sort_order": 1,
-                    },
-                    {
-                        "key": "project-location",
-                        "label": "Project location",
-                        "field_type": "location",
-                        "required": True,
-                        "sort_order": 2,
-                    },
+                    {"key": "client-name", "label": "Client name", "field_type": "text", "required": True, "sort_order": 1},
+                    {"key": "project-location", "label": "Project location", "field_type": "location", "required": True, "sort_order": 2},
                 ],
             },
         )
@@ -843,20 +785,8 @@ class ServiceCatalogueAPITests(TestCase):
                 "status": "draft",
                 "is_active": True,
                 "fields": [
-                    {
-                        "key": "floor-area",
-                        "label": "Floor area",
-                        "field_type": "number",
-                        "required": True,
-                        "sort_order": 1,
-                    },
-                    {
-                        "key": "construction-rate",
-                        "label": "Construction rate",
-                        "field_type": "money",
-                        "required": True,
-                        "sort_order": 2,
-                    },
+                    {"key": "floor-area", "label": "Floor area", "field_type": "number", "required": True, "sort_order": 1},
+                    {"key": "construction-rate", "label": "Construction rate", "field_type": "money", "required": True, "sort_order": 2},
                 ],
             },
         )
@@ -872,17 +802,8 @@ class ServiceCatalogueAPITests(TestCase):
                 "status": "draft",
                 "is_active": True,
                 "stages": [
-                    {
-                        "name": "Request Review",
-                        "owner_role_id": self.role.id,
-                        "sort_order": 1,
-                    },
-                    {
-                        "name": "Site Assessment",
-                        "owner_role_id": self.role.id,
-                        "requires_evidence": True,
-                        "sort_order": 2,
-                    },
+                    {"name": "Request Review", "owner_role_id": self.role.id, "sort_order": 1},
+                    {"name": "Site Assessment", "owner_role_id": self.role.id, "requires_evidence": True, "sort_order": 2},
                 ],
             },
         )
@@ -919,14 +840,10 @@ class ServiceCatalogueAPITests(TestCase):
         self.assertEqual(publish_response.status_code, 200)
         self.assertEqual(publish_response.json()["status"], "active")
         self.assertEqual(publish_response.json()["active_request_form_id"], form_id)
-        self.assertEqual(
-            publish_response.json()["active_pricing_config_id"], pricing_config_id
-        )
+        self.assertEqual(publish_response.json()["active_pricing_config_id"], pricing_config_id)
         self.assertEqual(publish_response.json()["active_workflow_id"], workflow_id)
 
-        detail_response = self.client.get(
-            f"/api/v1/services/catalogue/{service_id}", **self.headers
-        )
+        detail_response = self.client.get(f"/api/v1/services/catalogue/{service_id}", **self.headers)
         self.assertEqual(detail_response.status_code, 200)
         detail = detail_response.json()
         self.assertEqual(len(detail["subservices"]), 2)
@@ -936,9 +853,7 @@ class ServiceCatalogueAPITests(TestCase):
         self.assertEqual(len(detail["branch_activations"]), 1)
 
     def test_request_field_types_endpoint_uses_backend_registry(self):
-        response = self.client.get(
-            "/api/v1/services/request-field-types", **self.headers
-        )
+        response = self.client.get("/api/v1/services/request-field-types", **self.headers)
         self.assertEqual(response.status_code, 200)
         values = {item["value"] for item in response.json()}
         self.assertIn("text", values)
@@ -961,11 +876,7 @@ class ServiceCatalogueAPITests(TestCase):
             {
                 "name": "Inspection Intake",
                 "fields": [
-                    {
-                        "key": "site-address",
-                        "label": "Site address",
-                        "field_type": "text",
-                    },
+                    {"key": "site-address", "label": "Site address", "field_type": "text"},
                 ],
             },
         )
@@ -974,11 +885,7 @@ class ServiceCatalogueAPITests(TestCase):
             f"/api/v1/services/{service.id}/request-forms/{form_response.json()['id']}",
             {
                 "fields": [
-                    {
-                        "key": "site-address",
-                        "label": "Site address",
-                        "field_type": "text",
-                    },
+                    {"key": "site-address", "label": "Site address", "field_type": "text"},
                     {"key": "site-address", "label": "Duplicate", "field_type": "text"},
                 ],
             },
@@ -1015,19 +922,8 @@ class ServiceCatalogueAPITests(TestCase):
                 "status": "draft",
                 "is_active": True,
                 "stages": [
-                    {
-                        "name": "Request Review",
-                        "owner_role_id": self.role.id,
-                        "sla_days": 1,
-                        "sort_order": 1,
-                    },
-                    {
-                        "name": "Execution",
-                        "owner_role_id": self.role.id,
-                        "sla_days": 3,
-                        "requires_evidence": True,
-                        "sort_order": 2,
-                    },
+                    {"name": "Request Review", "owner_role_id": self.role.id, "sla_days": 1, "sort_order": 1},
+                    {"name": "Execution", "owner_role_id": self.role.id, "sla_days": 3, "requires_evidence": True, "sort_order": 2},
                 ],
             },
         )
@@ -1038,19 +934,13 @@ class ServiceCatalogueAPITests(TestCase):
         service.refresh_from_db()
         self.assertEqual(service.active_workflow_id, workflow_id)
 
-        list_response = self.client.get(
-            f"/api/v1/services/{service.id}/workflows", **self.headers
-        )
+        list_response = self.client.get(f"/api/v1/services/{service.id}/workflows", **self.headers)
         self.assertEqual(list_response.status_code, 200)
         self.assertEqual(list_response.json()[0]["id"], workflow_id)
 
-        detail_response = self.client.get(
-            f"/api/v1/services/{service.id}/workflows/{workflow_id}", **self.headers
-        )
+        detail_response = self.client.get(f"/api/v1/services/{service.id}/workflows/{workflow_id}", **self.headers)
         self.assertEqual(detail_response.status_code, 200)
-        self.assertEqual(
-            detail_response.json()["stages"][0]["owner_role_name"], self.role.name
-        )
+        self.assertEqual(detail_response.json()["stages"][0]["owner_role_name"], self.role.name)
 
         metadata_update = self.put_json(
             f"/api/v1/services/{service.id}/workflows/{workflow_id}",
@@ -1064,17 +954,8 @@ class ServiceCatalogueAPITests(TestCase):
             f"/api/v1/services/{service.id}/workflows/{workflow_id}/stages",
             {
                 "stages": [
-                    {
-                        "name": "Scope Review",
-                        "owner_role_id": self.role.id,
-                        "sla_days": 2,
-                        "sort_order": 1,
-                    },
-                    {
-                        "name": "Client Acceptance",
-                        "client_visible": True,
-                        "sort_order": 2,
-                    },
+                    {"name": "Scope Review", "owner_role_id": self.role.id, "sla_days": 2, "sort_order": 1},
+                    {"name": "Client Acceptance", "client_visible": True, "sort_order": 2},
                 ]
             },
         )
@@ -1148,9 +1029,7 @@ class ServiceCatalogueAPITests(TestCase):
         self.assertIsNone(service.active_workflow_id)
 
     def test_new_service_catalogue_permissions_are_enforced(self):
-        restricted_role = Role.objects.create(
-            name="Service Only", permissions={"services": ["list"]}
-        )
+        restricted_role = Role.objects.create(name="Service Only", permissions={"services": ["list"]})
         restricted_user = User.objects.create_user(
             email="restricted.catalogue@example.com",
             username="restrictedcatalogue",
@@ -1166,14 +1045,10 @@ class ServiceCatalogueAPITests(TestCase):
             "HTTP_AUTHORIZATION": f"Bearer {JWTService.create_tokens(restricted_user.id)['access']}"
         }
 
-        response = self.client.get(
-            "/api/v1/services/request-field-types", **restricted_headers
-        )
+        response = self.client.get("/api/v1/services/request-field-types", **restricted_headers)
         self.assertEqual(response.status_code, 403)
 
-        workflow_response = self.client.get(
-            "/api/v1/services/1/workflows", **restricted_headers
-        )
+        workflow_response = self.client.get("/api/v1/services/1/workflows", **restricted_headers)
         self.assertEqual(workflow_response.status_code, 403)
 
 
@@ -1405,9 +1280,7 @@ class ServiceRequestAPITests(TestCase):
             priority="high",
             owner_id=self.staff_employee.id,
         )
-        response = self.post_json(
-            "/api/v1/service-requests/admin", payload, headers=self.staff_headers
-        )
+        response = self.post_json("/api/v1/service-requests/admin", payload, headers=self.staff_headers)
         self.assertEqual(response.status_code, 201)
         return response.json()
 
@@ -1462,10 +1335,7 @@ class ServiceRequestAPITests(TestCase):
         order.seed_milestones()
 
         milestones = list(order.milestones.order_by("sort_order", "id"))
-        self.assertEqual(
-            [item.name for item in milestones],
-            ["Request Review", "Field Survey", "Quality Review"],
-        )
+        self.assertEqual([item.name for item in milestones], ["Request Review", "Field Survey", "Quality Review"])
         self.assertEqual(milestones[0].status, "active")
         self.assertEqual(milestones[1].status, "pending")
         self.assertEqual(ServiceOrderActivity.objects.count(), 0)
@@ -1550,15 +1420,11 @@ class ServiceRequestAPITests(TestCase):
         self.assertEqual(task["status"], "to_do")
         self.assertEqual(task["assignee_ids"], [self.staff_employee.id])
 
-        list_tasks = self.client.get(
-            f"/api/v1/orders/{order.id}/tasks", **self.staff_headers
-        )
+        list_tasks = self.client.get(f"/api/v1/orders/{order.id}/tasks", **self.staff_headers)
         self.assertEqual(list_tasks.status_code, 200)
         self.assertEqual(list_tasks.json()["count"], 1)
 
-        get_task = self.client.get(
-            f"/api/v1/orders/{order.id}/tasks/{task_id}", **self.staff_headers
-        )
+        get_task = self.client.get(f"/api/v1/orders/{order.id}/tasks/{task_id}", **self.staff_headers)
         self.assertEqual(get_task.status_code, 200)
         self.assertEqual(get_task.json()["title"], "Prepare field schedule")
 
@@ -1624,28 +1490,19 @@ class ServiceRequestAPITests(TestCase):
         client_deliverable = client_deliverable_response.json()
         self.assertEqual(client_deliverable["status"], "under_review")
 
-        staff_deliverables = self.client.get(
-            f"/api/v1/orders/{order.id}/deliverables", **self.staff_headers
-        )
+        staff_deliverables = self.client.get(f"/api/v1/orders/{order.id}/deliverables", **self.staff_headers)
         self.assertEqual(staff_deliverables.status_code, 200)
         self.assertEqual(staff_deliverables.json()["count"], 2)
 
-        client_tasks = self.client.get(
-            f"/api/v1/service-requests/orders/{order.id}/tasks", **self.client_headers
-        )
+        client_tasks = self.client.get(f"/api/v1/service-requests/orders/{order.id}/tasks", **self.client_headers)
         self.assertEqual(client_tasks.status_code, 200)
         self.assertEqual(client_tasks.json()["count"], 1)
         self.assertNotIn("instructions", client_tasks.json()["items"][0])
 
-        client_deliverables = self.client.get(
-            f"/api/v1/service-requests/orders/{order.id}/deliverables",
-            **self.client_headers,
-        )
+        client_deliverables = self.client.get(f"/api/v1/service-requests/orders/{order.id}/deliverables", **self.client_headers)
         self.assertEqual(client_deliverables.status_code, 200)
         self.assertEqual(client_deliverables.json()["count"], 1)
-        self.assertEqual(
-            client_deliverables.json()["items"][0]["id"], client_deliverable["id"]
-        )
+        self.assertEqual(client_deliverables.json()["items"][0]["id"], client_deliverable["id"])
 
         hidden_deliverable = self.client.get(
             f"/api/v1/service-requests/orders/{order.id}/deliverables/{internal_deliverable['id']}",
@@ -1690,18 +1547,14 @@ class ServiceRequestAPITests(TestCase):
         )
         self.assertEqual(edit_rejected.status_code, 400)
 
-        order_detail = self.client.get(
-            f"/api/v1/orders/{order.id}", **self.staff_headers
-        )
+        order_detail = self.client.get(f"/api/v1/orders/{order.id}", **self.staff_headers)
         self.assertEqual(order_detail.status_code, 200)
         self.assertEqual(order_detail.json()["task_counts"]["review"], 1)
         self.assertEqual(order_detail.json()["deliverable_counts"]["approved"], 2)
         self.assertEqual(order_detail.json()["deliverable_counts"]["rejected"], 1)
 
     def test_metadata_endpoints_return_choices_and_active_intake_form(self):
-        choices_response = self.client.get(
-            "/api/v1/service-requests/choices", **self.client_headers
-        )
+        choices_response = self.client.get("/api/v1/service-requests/choices", **self.client_headers)
         self.assertEqual(choices_response.status_code, 200)
         self.assertIn("statuses", choices_response.json())
         self.assertIn("field_types", choices_response.json())
@@ -1724,25 +1577,16 @@ class ServiceRequestAPITests(TestCase):
         self.assertEqual(len(created["answers"]), 4)
         self.assertEqual(len(created["activities"]), 1)
 
-        list_response = self.client.get(
-            "/api/v1/service-requests/", **self.client_headers
-        )
+        list_response = self.client.get("/api/v1/service-requests/", **self.client_headers)
         self.assertEqual(list_response.status_code, 200)
         self.assertEqual(list_response.json()["count"], 1)
-        self.assertEqual(
-            list_response.json()["items"][0]["request_number"],
-            created["request_number"],
-        )
+        self.assertEqual(list_response.json()["items"][0]["request_number"], created["request_number"])
 
-        detail_response = self.client.get(
-            f"/api/v1/service-requests/{created['id']}", **self.client_headers
-        )
+        detail_response = self.client.get(f"/api/v1/service-requests/{created['id']}", **self.client_headers)
         self.assertEqual(detail_response.status_code, 200)
         self.assertEqual(detail_response.json()["answers_snapshot"]["plot-size"], "500")
 
-        summary_response = self.client.get(
-            "/api/v1/service-requests/summary", **self.client_headers
-        )
+        summary_response = self.client.get("/api/v1/service-requests/summary", **self.client_headers)
         self.assertEqual(summary_response.status_code, 200)
         self.assertEqual(summary_response.json()["new"], 1)
         self.assertEqual(summary_response.json()["total"], 1)
@@ -1767,9 +1611,7 @@ class ServiceRequestAPITests(TestCase):
             priority="high",
             owner_id=self.staff_employee.id,
         )
-        response = self.post_json(
-            "/api/v1/service-requests/admin", payload, headers=self.staff_headers
-        )
+        response = self.post_json("/api/v1/service-requests/admin", payload, headers=self.staff_headers)
         self.assertEqual(response.status_code, 201)
         request_id = response.json()["id"]
         self.assertEqual(response.json()["owner_id"], self.staff_employee.id)
@@ -1787,17 +1629,11 @@ class ServiceRequestAPITests(TestCase):
         )
         self.assertEqual(patch_response.status_code, 200)
         self.assertEqual(patch_response.json()["status"], "under_review")
-        self.assertEqual(
-            patch_response.json()["activities"][0]["activity_type"], "status_change"
-        )
+        self.assertEqual(patch_response.json()["activities"][0]["activity_type"], "status_change")
 
         activity_response = self.post_json(
             f"/api/v1/service-requests/admin/{request_id}/activities",
-            {
-                "activity_type": "phone_call",
-                "outcome": "successful",
-                "note": "Client reached.",
-            },
+            {"activity_type": "phone_call", "outcome": "successful", "note": "Client reached."},
             headers=self.staff_headers,
         )
         self.assertEqual(activity_response.status_code, 201)
@@ -1827,16 +1663,10 @@ class ServiceRequestAPITests(TestCase):
         self.assertEqual(quote_response.status_code, 201)
         self.assertEqual(quote_response.json()["status"], "under_review")
         self.assertTrue(quote_response.json()["quote_number"].startswith("QTE-"))
-        quote_detail = self.client.get(
-            f"/api/v1/quotes/{quote_response.json()['quote_id']}", **self.staff_headers
-        )
+        quote_detail = self.client.get(f"/api/v1/quotes/{quote_response.json()['quote_id']}", **self.staff_headers)
         self.assertEqual(quote_detail.status_code, 200)
-        self.assertEqual(
-            quote_detail.json()["required_approver_role_id"], self.staff_role.id
-        )
-        self.assertEqual(
-            quote_detail.json()["required_approver_role_name"], self.staff_role.name
-        )
+        self.assertEqual(quote_detail.json()["required_approver_role_id"], self.staff_role.id)
+        self.assertEqual(quote_detail.json()["required_approver_role_name"], self.staff_role.name)
 
     def test_service_request_quote_requires_approver_role(self):
         service_request = self.create_admin_request()
@@ -1854,9 +1684,7 @@ class ServiceRequestAPITests(TestCase):
         quoted_request = self.create_request_quote(service_request["id"])
         quote_id = quoted_request["quote_id"]
 
-        hidden_response = self.client.get(
-            "/api/v1/service-requests/quotes", **self.client_headers
-        )
+        hidden_response = self.client.get("/api/v1/service-requests/quotes", **self.client_headers)
         self.assertEqual(hidden_response.status_code, 200)
         self.assertEqual(hidden_response.json()["count"], 0)
 
@@ -1871,9 +1699,7 @@ class ServiceRequestAPITests(TestCase):
         self.assertEqual(approve_response.json()["deposit_amount"], "217687.50")
         send_mail_mock.assert_called_once()
 
-        visible_response = self.client.get(
-            "/api/v1/service-requests/quotes", **self.client_headers
-        )
+        visible_response = self.client.get("/api/v1/service-requests/quotes", **self.client_headers)
         self.assertEqual(visible_response.status_code, 200)
         self.assertEqual(visible_response.json()["count"], 1)
         self.assertEqual(visible_response.json()["items"][0]["id"], quote_id)
@@ -1886,26 +1712,16 @@ class ServiceRequestAPITests(TestCase):
         self.assertEqual(accept_response.status_code, 200)
         self.assertEqual(accept_response.json()["status"], "accepted")
 
-        follow_up = self.client.get(
-            f"/api/v1/service-requests/admin/{service_request['id']}",
-            **self.staff_headers,
-        )
+        follow_up = self.client.get(f"/api/v1/service-requests/admin/{service_request['id']}", **self.staff_headers)
         self.assertEqual(follow_up.status_code, 200)
-        self.assertEqual(
-            follow_up.json()["next_action"], "Create invoice for accepted quotation"
-        )
-        self.assertEqual(
-            follow_up.json()["activities"][0]["activity_type"], "quote_accepted"
-        )
+        self.assertEqual(follow_up.json()["next_action"], "Create invoice for accepted quotation")
+        self.assertEqual(follow_up.json()["activities"][0]["activity_type"], "quote_accepted")
 
     def test_quote_approval_requires_permission(self):
         service_request = self.create_admin_request()
         no_approval_role = Role.objects.create(
             name="Quote Creator Without Approval",
-            permissions={
-                "quotes": ["create", "view", "list"],
-                "service_requests": ["list", "view"],
-            },
+            permissions={"quotes": ["create", "view", "list"], "service_requests": ["list", "view"]},
         )
         quoted_request = self.create_request_quote(
             service_request["id"],
@@ -1924,13 +1740,9 @@ class ServiceRequestAPITests(TestCase):
             role=no_approval_role,
             is_active=True,
         )
-        no_approval_headers = {
-            "HTTP_AUTHORIZATION": f"Bearer {JWTService.create_tokens(no_approval_user.id)['access']}"
-        }
+        no_approval_headers = {"HTTP_AUTHORIZATION": f"Bearer {JWTService.create_tokens(no_approval_user.id)['access']}"}
 
-        response = self.post_json(
-            f"/api/v1/quotes/{quote_id}/approve", {}, headers=no_approval_headers
-        )
+        response = self.post_json(f"/api/v1/quotes/{quote_id}/approve", {}, headers=no_approval_headers)
         self.assertEqual(response.status_code, 403)
 
     def test_quote_approval_requires_matching_role(self):
@@ -1953,27 +1765,19 @@ class ServiceRequestAPITests(TestCase):
             role=other_role,
             is_active=True,
         )
-        other_headers = {
-            "HTTP_AUTHORIZATION": f"Bearer {JWTService.create_tokens(other_user.id)['access']}"
-        }
+        other_headers = {"HTTP_AUTHORIZATION": f"Bearer {JWTService.create_tokens(other_user.id)['access']}"}
 
-        response = self.post_json(
-            f"/api/v1/quotes/{quote_id}/approve", {}, headers=other_headers
-        )
+        response = self.post_json(f"/api/v1/quotes/{quote_id}/approve", {}, headers=other_headers)
         self.assertEqual(response.status_code, 403)
         self.assertIn("different role", response.json()["detail"])
 
     @patch("services.api.v1.quotes.send_mail")
-    def test_rejected_quote_is_immutable_and_replacement_links_revision(
-        self, send_mail_mock
-    ):
+    def test_rejected_quote_is_immutable_and_replacement_links_revision(self, send_mail_mock):
         service_request = self.create_admin_request()
         quoted_request = self.create_request_quote(service_request["id"])
         quote_id = quoted_request["quote_id"]
 
-        approve_response = self.post_json(
-            f"/api/v1/quotes/{quote_id}/approve", {}, headers=self.staff_headers
-        )
+        approve_response = self.post_json(f"/api/v1/quotes/{quote_id}/approve", {}, headers=self.staff_headers)
         self.assertEqual(approve_response.status_code, 200)
 
         reject_response = self.post_json(
@@ -1983,9 +1787,7 @@ class ServiceRequestAPITests(TestCase):
         )
         self.assertEqual(reject_response.status_code, 200)
         self.assertEqual(reject_response.json()["status"], "rejected")
-        self.assertEqual(
-            reject_response.json()["client_rejection_reason"], "Please revise scope."
-        )
+        self.assertEqual(reject_response.json()["client_rejection_reason"], "Please revise scope.")
 
         edit_rejected = self.patch_json(
             f"/api/v1/quotes/{quote_id}",
@@ -1994,22 +1796,16 @@ class ServiceRequestAPITests(TestCase):
         )
         self.assertEqual(edit_rejected.status_code, 400)
 
-        replacement = self.create_request_quote(
-            service_request["id"], service_fee="700000.00"
-        )
+        replacement = self.create_request_quote(service_request["id"], service_fee="700000.00")
         replacement_quote_id = replacement["quote_id"]
-        replacement_detail = self.client.get(
-            f"/api/v1/quotes/{replacement_quote_id}", **self.staff_headers
-        )
+        replacement_detail = self.client.get(f"/api/v1/quotes/{replacement_quote_id}", **self.staff_headers)
         self.assertEqual(replacement_detail.status_code, 200)
         self.assertEqual(replacement_detail.json()["previous_quote_id"], quote_id)
         self.assertEqual(replacement_detail.json()["version"], 2)
 
     @patch("services.api.v1.invoices.send_mail")
     @patch("services.api.v1.quotes.send_mail")
-    def test_invoice_and_payment_flow_from_accepted_quote(
-        self, quote_send_mail_mock, invoice_send_mail_mock
-    ):
+    def test_invoice_and_payment_flow_from_accepted_quote(self, quote_send_mail_mock, invoice_send_mail_mock):
         service_request = self.create_admin_request()
         quoted_request = self.create_request_quote(service_request["id"])
         quote_id = quoted_request["quote_id"]
@@ -2021,9 +1817,7 @@ class ServiceRequestAPITests(TestCase):
         )
         self.assertEqual(draft_invoice_response.status_code, 400)
 
-        approve_response = self.post_json(
-            f"/api/v1/quotes/{quote_id}/approve", {}, headers=self.staff_headers
-        )
+        approve_response = self.post_json(f"/api/v1/quotes/{quote_id}/approve", {}, headers=self.staff_headers)
         self.assertEqual(approve_response.status_code, 200)
         accept_response = self.post_json(
             f"/api/v1/service-requests/quotes/{quote_id}/accept",
@@ -2056,9 +1850,7 @@ class ServiceRequestAPITests(TestCase):
         )
         self.assertEqual(duplicate_response.status_code, 400)
 
-        hidden_invoices = self.client.get(
-            "/api/v1/service-requests/invoices", **self.client_headers
-        )
+        hidden_invoices = self.client.get("/api/v1/service-requests/invoices", **self.client_headers)
         self.assertEqual(hidden_invoices.status_code, 200)
         self.assertEqual(hidden_invoices.json()["count"], 0)
 
@@ -2071,9 +1863,7 @@ class ServiceRequestAPITests(TestCase):
         self.assertEqual(send_response.json()["status"], "sent")
         invoice_send_mail_mock.assert_called_once()
 
-        visible_invoices = self.client.get(
-            "/api/v1/service-requests/invoices", **self.client_headers
-        )
+        visible_invoices = self.client.get("/api/v1/service-requests/invoices", **self.client_headers)
         self.assertEqual(visible_invoices.status_code, 200)
         self.assertEqual(visible_invoices.json()["count"], 1)
         self.assertEqual(visible_invoices.json()["items"][0]["id"], invoice_id)
@@ -2101,9 +1891,7 @@ class ServiceRequestAPITests(TestCase):
         self.assertEqual(submission_response.status_code, 201)
         submission_id = submission_response.json()["id"]
 
-        pending_response = self.client.get(
-            "/api/v1/invoices/payment-submissions", **self.staff_headers
-        )
+        pending_response = self.client.get("/api/v1/invoices/payment-submissions", **self.staff_headers)
         self.assertEqual(pending_response.status_code, 200)
         self.assertEqual(pending_response.json()["count"], 1)
         finance_account = FinanceAccount.objects.create(
@@ -2128,9 +1916,7 @@ class ServiceRequestAPITests(TestCase):
         self.assertEqual(review_response.status_code, 200)
         self.assertEqual(review_response.json()["status"], "Confirmed")
 
-        invoice_detail = self.client.get(
-            f"/api/v1/invoices/{invoice_id}", **self.staff_headers
-        )
+        invoice_detail = self.client.get(f"/api/v1/invoices/{invoice_id}", **self.staff_headers)
         self.assertEqual(invoice_detail.status_code, 200)
         self.assertEqual(invoice_detail.json()["amount_paid"], "217687.50")
         self.assertEqual(invoice_detail.json()["status"], "partially_paid")
@@ -2171,24 +1957,17 @@ class ServiceRequestAPITests(TestCase):
         self.assertEqual(complete_response.json()["order_status"], "active")
         self.assertEqual(complete_response.json()["progress"], 33)
 
-        client_orders = self.client.get(
-            "/api/v1/service-requests/orders", **self.client_headers
-        )
+        client_orders = self.client.get("/api/v1/service-requests/orders", **self.client_headers)
         self.assertEqual(client_orders.status_code, 200)
         self.assertEqual(client_orders.json()["count"], 1)
         self.assertEqual(client_orders.json()["items"][0]["id"], order_id)
         self.assertEqual(len(client_orders.json()["items"][0]["milestones"]), 2)
 
-        client_order_detail = self.client.get(
-            f"/api/v1/service-requests/orders/{order_id}", **self.client_headers
-        )
+        client_order_detail = self.client.get(f"/api/v1/service-requests/orders/{order_id}", **self.client_headers)
         self.assertEqual(client_order_detail.status_code, 200)
         self.assertEqual(client_order_detail.json()["invoice_id"], invoice_id)
 
-        follow_up = self.client.get(
-            f"/api/v1/service-requests/admin/{service_request['id']}",
-            **self.staff_headers,
-        )
+        follow_up = self.client.get(f"/api/v1/service-requests/admin/{service_request['id']}", **self.staff_headers)
         self.assertEqual(follow_up.status_code, 200)
         self.assertEqual(follow_up.json()["status"], "converted")
         self.assertIn(order["order_number"], follow_up.json()["next_action"])
@@ -2254,25 +2033,17 @@ class ServiceRequestAPITests(TestCase):
             branch=self.branch,
             is_active=True,
         )
-        scoped_headers = {
-            "HTTP_AUTHORIZATION": f"Bearer {JWTService.create_tokens(scoped_user.id)['access']}"
-        }
+        scoped_headers = {"HTTP_AUTHORIZATION": f"Bearer {JWTService.create_tokens(scoped_user.id)['access']}"}
 
-        list_response = self.client.get(
-            "/api/v1/service-requests/admin", **scoped_headers
-        )
+        list_response = self.client.get("/api/v1/service-requests/admin", **scoped_headers)
         self.assertEqual(list_response.status_code, 200)
         self.assertEqual(list_response.json()["count"], 1)
         self.assertEqual(list_response.json()["items"][0]["branch_id"], self.branch.id)
 
-        detail_response = self.client.get(
-            f"/api/v1/service-requests/admin/{other_request.id}", **scoped_headers
-        )
+        detail_response = self.client.get(f"/api/v1/service-requests/admin/{other_request.id}", **scoped_headers)
         self.assertEqual(detail_response.status_code, 403)
 
-        no_permission_role = Role.objects.create(
-            name="No Service Request Access", permissions={"services": ["list"]}
-        )
+        no_permission_role = Role.objects.create(name="No Service Request Access", permissions={"services": ["list"]})
         no_permission_user = User.objects.create_user(
             email="no.service.request.permission@example.com",
             username="noservicerequestpermission",
@@ -2284,14 +2055,9 @@ class ServiceRequestAPITests(TestCase):
             role=no_permission_role,
             is_active=True,
         )
-        denied_headers = {
-            "HTTP_AUTHORIZATION": f"Bearer {JWTService.create_tokens(no_permission_user.id)['access']}"
-        }
-        denied_response = self.client.get(
-            "/api/v1/service-requests/admin", **denied_headers
-        )
+        denied_headers = {"HTTP_AUTHORIZATION": f"Bearer {JWTService.create_tokens(no_permission_user.id)['access']}"}
+        denied_response = self.client.get("/api/v1/service-requests/admin", **denied_headers)
         self.assertEqual(denied_response.status_code, 403)
-
 
 class LeadModelTests(TestCase):
     def test_priority_sla_and_stale_properties(self):
@@ -2378,14 +2144,7 @@ class MarketingLeadAPITests(TestCase):
                 "marketing_campaigns": ["create", "view", "list", "update", "delete"],
                 "marketing_dashboard": ["view"],
                 "content": ["create", "view", "list", "update", "delete"],
-                "revenue_execution": [
-                    "create",
-                    "view",
-                    "list",
-                    "update",
-                    "delete",
-                    "complete",
-                ],
+                "revenue_execution": ["create", "view", "list", "update", "delete", "complete"],
                 "service_leads": ["list"],
                 "meetings": ["create", "view", "list", "update", "delete"],
             },
@@ -2495,9 +2254,7 @@ class MarketingLeadAPITests(TestCase):
         payload.update(overrides)
         return self.post_json("/api/v1/revenue-execution/turnaround/plans", payload)
 
-    def create_revenue_target(
-        self, target_value="10000000.00", progress_value="2500000.00"
-    ):
+    def create_revenue_target(self, target_value="10000000.00", progress_value="2500000.00"):
         today = timezone.localdate()
         template = RoleTargetTemplate.objects.create(
             role=self.role,
@@ -2581,9 +2338,7 @@ class MarketingLeadAPITests(TestCase):
         self.assertEqual(status_response.json()["status"], "contacted")
         self.assertIsNotNone(status_response.json()["last_contact_at"])
 
-        service_leads_response = self.client.get(
-            "/api/v1/service-leads", **self.headers
-        )
+        service_leads_response = self.client.get("/api/v1/service-leads", **self.headers)
         self.assertEqual(service_leads_response.status_code, 200)
 
         delete_response = self.client.delete(f"/api/v1/leads/{lead_id}", **self.headers)
@@ -2617,9 +2372,7 @@ class MarketingLeadAPITests(TestCase):
         self.assertEqual(second_activity_response.status_code, 201)
         self.assertEqual(second_activity_response.json()["sequence"], 2)
 
-        other_lead_response = self.create_lead(
-            full_name="Ada Nwoji", phone="07031230000"
-        )
+        other_lead_response = self.create_lead(full_name="Ada Nwoji", phone="07031230000")
         other_activity_response = self.create_activity(other_lead_response.json()["id"])
         self.assertEqual(other_activity_response.status_code, 201)
         self.assertEqual(other_activity_response.json()["sequence"], 1)
@@ -2773,24 +2526,14 @@ class MarketingLeadAPITests(TestCase):
         self.assertEqual(data["summary"]["conversion_rate"], 25.0)
         self.assertEqual(
             [column["status"] for column in data["columns"]],
-            [
-                "new",
-                "contacted",
-                "qualified",
-                "proposal_sent",
-                "negotiation",
-                "won",
-                "lost",
-            ],
+            ["new", "contacted", "qualified", "proposal_sent", "negotiation", "won", "lost"],
         )
         columns = {column["status"]: column for column in data["columns"]}
         self.assertEqual(columns["contacted"]["count"], 0)
         self.assertEqual(columns["new"]["count"], 1)
         self.assertEqual(columns["new"]["cards"][0]["id"], new_id)
         self.assertTrue(columns["new"]["cards"][0]["is_sla_breached"])
-        self.assertEqual(
-            columns["proposal_sent"]["total_estimated_value"], "10000000.00"
-        )
+        self.assertEqual(columns["proposal_sent"]["total_estimated_value"], "10000000.00")
 
         division_response = self.client.get(
             f"/api/v1/leads/pipeline?branch_id={branch.id}&division=real_estate",
@@ -2805,9 +2548,7 @@ class MarketingLeadAPITests(TestCase):
         )
         self.assertEqual(owner_response.status_code, 200)
         self.assertEqual(owner_response.json()["summary"]["total_leads"], 1)
-        self.assertEqual(
-            owner_response.json()["columns"][3]["cards"][0]["id"], proposal_id
-        )
+        self.assertEqual(owner_response.json()["columns"][3]["cards"][0]["id"], proposal_id)
 
         detail_response = self.client.get(
             f"/api/v1/leads/pipeline/{proposal_id}",
@@ -2930,9 +2671,7 @@ class MarketingLeadAPITests(TestCase):
         )
         self.assertEqual(update_response.status_code, 201)
         self.assertIsNotNone(update_response.json()["created_risk"])
-        self.assertEqual(
-            CampaignRisk.objects.filter(campaign_id=campaign_id).count(), 1
-        )
+        self.assertEqual(CampaignRisk.objects.filter(campaign_id=campaign_id).count(), 1)
 
         expense_response = self.post_json(
             f"/api/v1/marketing-campaigns/{campaign_id}/expenses",
@@ -2944,9 +2683,7 @@ class MarketingLeadAPITests(TestCase):
             },
         )
         self.assertEqual(expense_response.status_code, 201)
-        self.assertEqual(
-            CampaignExpense.objects.filter(campaign_id=campaign_id).count(), 1
-        )
+        self.assertEqual(CampaignExpense.objects.filter(campaign_id=campaign_id).count(), 1)
 
         asset_response = self.post_json(
             f"/api/v1/marketing-campaigns/{campaign_id}/assets",
@@ -3000,10 +2737,7 @@ class MarketingLeadAPITests(TestCase):
         self.assertEqual(workspace["assets"]["summary"]["total"], 1)
         self.assertEqual(workspace["risks"]["summary"]["open"], 1)
         self.assertEqual(len(workspace["decisions"]), 1)
-        self.assertEqual(
-            workspace["post_analysis"]["conclusion"],
-            "Campaign generated qualified demand.",
-        )
+        self.assertEqual(workspace["post_analysis"]["conclusion"], "Campaign generated qualified demand.")
 
     def test_campaign_request_conversion_and_export(self):
         request_response = self.post_json(
@@ -3036,9 +2770,7 @@ class MarketingLeadAPITests(TestCase):
         )
         self.assertEqual(convert_response.status_code, 201)
         self.assertEqual(convert_response.json()["request"]["status"], "converted")
-        self.assertEqual(
-            convert_response.json()["campaign"]["name"], "ESUT Campus Activation"
-        )
+        self.assertEqual(convert_response.json()["campaign"]["name"], "ESUT Campus Activation")
 
         export_response = self.client.get(
             "/api/v1/marketing-campaigns/panel/export",
@@ -3047,9 +2779,7 @@ class MarketingLeadAPITests(TestCase):
         self.assertEqual(export_response.status_code, 200)
         self.assertIn("Campaign,Status,Channel", export_response.content.decode())
 
-    def test_marketing_meetings_integrate_with_base_meetings_and_campaign_workspace(
-        self,
-    ):
+    def test_marketing_meetings_integrate_with_base_meetings_and_campaign_workspace(self):
         campaign_response = self.create_campaign(name="Fortress Optimization Campaign")
         self.assertEqual(campaign_response.status_code, 201)
         campaign_id = campaign_response.json()["id"]
@@ -3119,26 +2849,15 @@ class MarketingLeadAPITests(TestCase):
         self.assertEqual(panel["kpis"]["decisions_recorded"], 1)
         self.assertEqual(panel["meetings"][0]["id"], meeting_id)
 
-        detail_response = self.client.get(
-            f"/api/v1/marketing/meetings/{meeting_id}", **self.headers
-        )
+        detail_response = self.client.get(f"/api/v1/marketing/meetings/{meeting_id}", **self.headers)
         self.assertEqual(detail_response.status_code, 200)
         detail = detail_response.json()
-        self.assertEqual(
-            detail["actions"][0]["title"], "Send new testimonial creative brief"
-        )
-        self.assertEqual(
-            detail["decisions"][0]["decision"],
-            "Shift 20 percent of spend to the testimonial creative.",
-        )
+        self.assertEqual(detail["actions"][0]["title"], "Send new testimonial creative brief")
+        self.assertEqual(detail["decisions"][0]["decision"], "Shift 20 percent of spend to the testimonial creative.")
 
         update_response = self.patch_json(
             f"/api/v1/marketing/meetings/{meeting_id}",
-            {
-                "status": "completed",
-                "notes": "Budget shift approved.",
-                "expected_outcome": "Decision recorded.",
-            },
+            {"status": "completed", "notes": "Budget shift approved.", "expected_outcome": "Decision recorded."},
         )
         self.assertEqual(update_response.status_code, 200)
         self.assertEqual(update_response.json()["status"], "completed")
@@ -3188,14 +2907,12 @@ class MarketingLeadAPITests(TestCase):
         }
         denied_create_response = self.client.post(
             "/api/v1/marketing/meetings",
-            data=json.dumps(
-                {
-                    "title": "Denied meeting",
-                    "agenda": "Should fail.",
-                    "meeting_date": timezone.localdate().isoformat(),
-                    "meeting_time": "09:00",
-                }
-            ),
+            data=json.dumps({
+                "title": "Denied meeting",
+                "agenda": "Should fail.",
+                "meeting_date": timezone.localdate().isoformat(),
+                "meeting_time": "09:00",
+            }),
             content_type="application/json",
             **marketing_only_headers,
         )
@@ -3219,14 +2936,10 @@ class MarketingLeadAPITests(TestCase):
         meetings_only_headers = {
             "HTTP_AUTHORIZATION": f"Bearer {JWTService.create_tokens(meetings_only_user.id)['access']}"
         }
-        denied_list_response = self.client.get(
-            "/api/v1/marketing/meetings", **meetings_only_headers
-        )
+        denied_list_response = self.client.get("/api/v1/marketing/meetings", **meetings_only_headers)
         self.assertEqual(denied_list_response.status_code, 403)
 
-    def test_traditional_media_register_dashboard_filters_patch_export_and_permissions(
-        self,
-    ):
+    def test_traditional_media_register_dashboard_filters_patch_export_and_permissions(self):
         branch = Branch.objects.create(
             branch_name="Traditional Media Branch",
             branch_id="TM-001",
@@ -3314,9 +3027,7 @@ class MarketingLeadAPITests(TestCase):
         self.assertEqual(dashboard["kpis"]["active_placements"], 1)
         self.assertEqual(dashboard["kpis"]["expiring_soon"], 1)
         self.assertEqual(dashboard["kpis"]["expired"], 1)
-        self.assertEqual(
-            Decimal(str(dashboard["kpis"]["total_spend"])), Decimal("350000.00")
-        )
+        self.assertEqual(Decimal(str(dashboard["kpis"]["total_spend"])), Decimal("350000.00"))
         self.assertFalse(dashboard["metadata"]["renew_action_supported"])
 
         list_response = self.client.get(
@@ -3327,10 +3038,7 @@ class MarketingLeadAPITests(TestCase):
         listing = list_response.json()
         self.assertEqual(len(listing["placements"]), 1)
         self.assertEqual(listing["placements"][0]["id"], placement_id)
-        self.assertIn(
-            "PATCH /marketing/traditional-media/placements/{id}",
-            listing["data_notes"][1],
-        )
+        self.assertIn("PATCH /marketing/traditional-media/placements/{id}", listing["data_notes"][1])
 
         detail_response = self.client.get(
             f"/api/v1/marketing/traditional-media/placements/{placement_id}",
@@ -3349,9 +3057,7 @@ class MarketingLeadAPITests(TestCase):
         self.assertEqual(patch_response.status_code, 200)
         self.assertEqual(patch_response.json()["expiry_state"], "active")
         self.assertEqual(patch_response.json()["days_remaining"], 30)
-        self.assertEqual(
-            patch_response.json()["proof_url"], "https://example.com/final-proof.jpg"
-        )
+        self.assertEqual(patch_response.json()["proof_url"], "https://example.com/final-proof.jpg")
 
         renew_response = self.client.post(
             f"/api/v1/marketing/traditional-media/placements/{placement_id}/renew",
@@ -3406,9 +3112,7 @@ class MarketingLeadAPITests(TestCase):
         )
         self.employee.branch = branch
         self.employee.save(update_fields=["branch", "updated_at"])
-        target = self.create_revenue_target(
-            target_value="10000000.00", progress_value="2500000.00"
-        )
+        target = self.create_revenue_target(target_value="10000000.00", progress_value="2500000.00")
 
         campaign_response = self.create_campaign(
             name="Analytics Launch Campaign",
@@ -3508,40 +3212,21 @@ class MarketingLeadAPITests(TestCase):
         analytics = response.json()
 
         self.assertEqual(analytics["overview"]["leads_this_period"], 3)
-        self.assertEqual(
-            Decimal(str(analytics["overview"]["revenue_closed"])), Decimal("4000000.00")
-        )
-        self.assertEqual(
-            Decimal(str(analytics["overview"]["avg_deal_value"])), Decimal("4000000.00")
-        )
+        self.assertEqual(Decimal(str(analytics["overview"]["revenue_closed"])), Decimal("4000000.00"))
+        self.assertEqual(Decimal(str(analytics["overview"]["avg_deal_value"])), Decimal("4000000.00"))
         self.assertEqual(analytics["overview"]["client_score_status"], "unavailable")
-        self.assertTrue(
-            any(
-                row["source"] == "facebook_ad"
-                for row in analytics["lead_analytics"]["source_breakdown"]
-            )
-        )
+        self.assertTrue(any(row["source"] == "facebook_ad" for row in analytics["lead_analytics"]["source_breakdown"]))
         self.assertEqual(analytics["lead_analytics"]["new_leads"], 1)
         self.assertEqual(analytics["lead_analytics"]["sla_overdue"], 1)
         self.assertEqual(analytics["content_analytics"]["planned"], 2)
         self.assertEqual(analytics["content_analytics"]["published"], 1)
         self.assertEqual(analytics["content_analytics"]["compliance_pct"], 50.0)
-        self.assertEqual(
-            analytics["content_analytics"]["top_platform"]["platform"], "instagram"
-        )
+        self.assertEqual(analytics["content_analytics"]["top_platform"]["platform"], "instagram")
         self.assertEqual(analytics["campaign_summary"]["total_campaigns"], 1)
         self.assertEqual(analytics["campaign_summary"]["attributed_leads"], 2)
-        self.assertEqual(
-            Decimal(str(analytics["campaign_summary"]["won_revenue"])),
-            Decimal("4000000.00"),
-        )
-        self.assertEqual(
-            Decimal(str(analytics["revenue"]["target"])),
-            Decimal(str(target.target_value)),
-        )
-        self.assertEqual(
-            analytics["team_scorecard"][0]["employee_id"], self.employee.id
-        )
+        self.assertEqual(Decimal(str(analytics["campaign_summary"]["won_revenue"])), Decimal("4000000.00"))
+        self.assertEqual(Decimal(str(analytics["revenue"]["target"])), Decimal(str(target.target_value)))
+        self.assertEqual(analytics["team_scorecard"][0]["employee_id"], self.employee.id)
         self.assertTrue(analytics["data_notes"])
 
         campaign_filtered = self.client.get(
@@ -3607,10 +3292,7 @@ class MarketingLeadAPITests(TestCase):
             status_code = 200
             text = ""
 
-        with patch(
-            "services.api.v1.marketing.send_marketing_email",
-            return_value=FakeEmailResponse(),
-        ) as send_mock:
+        with patch("services.api.v1.marketing.send_marketing_email", return_value=FakeEmailResponse()) as send_mock:
             send_response = self.post_json(
                 "/api/v1/marketing/email/send",
                 {
@@ -3632,26 +3314,18 @@ class MarketingLeadAPITests(TestCase):
         self.assertEqual(campaign["sent_count"], 2)
         self.assertEqual(campaign["failed_count"], 0)
         self.assertEqual(EmailMarketingCampaign.objects.count(), 1)
-        self.assertEqual(
-            EmailMarketingRecipient.objects.filter(status="sent").count(), 2
-        )
+        self.assertEqual(EmailMarketingRecipient.objects.filter(status="sent").count(), 2)
 
-        list_response = self.client.get(
-            "/api/v1/marketing/email/campaigns?search=Inspection", **self.headers
-        )
+        list_response = self.client.get("/api/v1/marketing/email/campaigns?search=Inspection", **self.headers)
         self.assertEqual(list_response.status_code, 200)
         self.assertEqual(list_response.json()["count"], 1)
         campaign_id = list_response.json()["campaigns"][0]["id"]
 
-        detail_response = self.client.get(
-            f"/api/v1/marketing/email/campaigns/{campaign_id}", **self.headers
-        )
+        detail_response = self.client.get(f"/api/v1/marketing/email/campaigns/{campaign_id}", **self.headers)
         self.assertEqual(detail_response.status_code, 200)
         self.assertEqual(len(detail_response.json()["recipients"]), 2)
 
-        audience_response = self.client.get(
-            "/api/v1/marketing/email/audiences", **self.headers
-        )
+        audience_response = self.client.get("/api/v1/marketing/email/audiences", **self.headers)
         self.assertEqual(audience_response.status_code, 200)
         self.assertEqual(
             [audience["key"] for audience in audience_response.json()["audiences"]],
@@ -3682,14 +3356,10 @@ class MarketingLeadAPITests(TestCase):
         restricted_headers = {
             "HTTP_AUTHORIZATION": f"Bearer {JWTService.create_tokens(restricted_user.id)['access']}"
         }
-        restricted_response = self.client.get(
-            "/api/v1/marketing/email/campaigns", **restricted_headers
-        )
+        restricted_response = self.client.get("/api/v1/marketing/email/campaigns", **restricted_headers)
         self.assertEqual(restricted_response.status_code, 403)
 
-    def test_partner_operations_invite_portal_leads_reports_commissions_and_permissions(
-        self,
-    ):
+    def test_partner_operations_invite_portal_leads_reports_commissions_and_permissions(self):
         class FakeEmailResponse:
             status_code = 200
             text = "ok"
@@ -3699,10 +3369,7 @@ class MarketingLeadAPITests(TestCase):
         self.assertEqual(campaign_response.status_code, 201)
         campaign_id = campaign_response.json()["id"]
 
-        with patch(
-            "services.api.v1.marketing.send_marketing_email",
-            return_value=FakeEmailResponse(),
-        ) as send_mock:
+        with patch("services.api.v1.marketing.send_marketing_email", return_value=FakeEmailResponse()) as send_mock:
             with self.captureOnCommitCallbacks(execute=True):
                 invite_response = self.post_json(
                     "/api/v1/marketing/partners/invitations",
@@ -3791,16 +3458,11 @@ class MarketingLeadAPITests(TestCase):
         lead_id = portal_lead_response.json()["id"]
         Lead.objects.filter(id=lead_id).update(status="won")
 
-        lead_detail_response = self.client.get(
-            f"/api/v1/leads/{lead_id}", **self.headers
-        )
+        lead_detail_response = self.client.get(f"/api/v1/leads/{lead_id}", **self.headers)
         self.assertEqual(lead_detail_response.status_code, 200)
         self.assertEqual(lead_detail_response.json()["source"], "referral")
         self.assertEqual(lead_detail_response.json()["referral_partner_id"], partner_id)
-        self.assertEqual(
-            lead_detail_response.json()["referral_partner_name"],
-            "Adaora External Realty",
-        )
+        self.assertEqual(lead_detail_response.json()["referral_partner_name"], "Adaora External Realty")
 
         commission_response = self.post_json(
             "/api/v1/marketing/partners/commissions",
@@ -3814,9 +3476,7 @@ class MarketingLeadAPITests(TestCase):
         self.assertEqual(commission_response.status_code, 201)
         commission = commission_response.json()
         commission_id = commission["id"]
-        self.assertEqual(
-            Decimal(str(commission["commission_due"])), Decimal("120000.00")
-        )
+        self.assertEqual(Decimal(str(commission["commission_due"])), Decimal("120000.00"))
 
         early_payment_response = self.patch_json(
             f"/api/v1/marketing/partners/commissions/{commission_id}/mark-paid",
@@ -3847,13 +3507,8 @@ class MarketingLeadAPITests(TestCase):
         self.assertEqual(dashboard["kpis"]["active_partners"], 1)
         self.assertEqual(dashboard["kpis"]["referred_leads"], 1)
         self.assertEqual(dashboard["kpis"]["closed_referred_leads"], 1)
-        self.assertEqual(
-            Decimal(str(dashboard["kpis"]["closed_referred_revenue"])),
-            Decimal("4000000.00"),
-        )
-        self.assertEqual(
-            Decimal(str(dashboard["kpis"]["commission_paid"])), Decimal("120000.00")
-        )
+        self.assertEqual(Decimal(str(dashboard["kpis"]["closed_referred_revenue"])), Decimal("4000000.00"))
+        self.assertEqual(Decimal(str(dashboard["kpis"]["commission_paid"])), Decimal("120000.00"))
 
         directory_response = self.client.get(
             "/api/v1/marketing/partners/directory?search=Adaora",
@@ -3915,13 +3570,9 @@ class MarketingLeadAPITests(TestCase):
             "HTTP_AUTHORIZATION": f"Bearer {JWTService.create_tokens(restricted_user.id)['access']}"
         }
 
-        panel_response = self.client.get(
-            "/api/v1/marketing-campaigns/panel", **restricted_headers
-        )
+        panel_response = self.client.get("/api/v1/marketing-campaigns/panel", **restricted_headers)
         self.assertEqual(panel_response.status_code, 403)
-        analytics_response = self.client.get(
-            "/api/v1/marketing/analytics", **restricted_headers
-        )
+        analytics_response = self.client.get("/api/v1/marketing/analytics", **restricted_headers)
         self.assertEqual(analytics_response.status_code, 403)
         task_response = self.client.post(
             f"/api/v1/marketing-campaigns/{campaign_response.json()['id']}/tasks",
@@ -3973,9 +3624,7 @@ class MarketingLeadAPITests(TestCase):
         self.assertEqual(brief["title"], "Bethel City estate walkthrough")
         self.assertEqual(brief["campaign_id"], campaign_id)
         self.assertIsNotNone(brief["campaign_asset_id"])
-        self.assertEqual(
-            CampaignAsset.objects.filter(campaign_id=campaign_id).count(), 1
-        )
+        self.assertEqual(CampaignAsset.objects.filter(campaign_id=campaign_id).count(), 1)
 
         calendar_response = self.client.get(
             f"/api/v1/content/calendar?week_start={week_start.isoformat()}&division=real_estate",
@@ -4064,10 +3713,7 @@ class MarketingLeadAPITests(TestCase):
         rows = response.json()["rows"]
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0]["source"], "content")
-        self.assertEqual(
-            rows[0]["content_id"],
-            Content.objects.get(title="Standalone scheduled post").id,
-        )
+        self.assertEqual(rows[0]["content_id"], Content.objects.get(title="Standalone scheduled post").id)
 
     def test_content_calendar_requires_content_permissions(self):
         restricted_role = Role.objects.create(
@@ -4089,9 +3735,7 @@ class MarketingLeadAPITests(TestCase):
             "HTTP_AUTHORIZATION": f"Bearer {JWTService.create_tokens(restricted_user.id)['access']}"
         }
 
-        read_response = self.client.get(
-            "/api/v1/content/calendar", **restricted_headers
-        )
+        read_response = self.client.get("/api/v1/content/calendar", **restricted_headers)
         self.assertEqual(read_response.status_code, 403)
         write_response = self.client.post(
             "/api/v1/content/calendar/briefs",
@@ -4181,9 +3825,7 @@ class MarketingLeadAPITests(TestCase):
         )
         self.assertEqual(patch_response.status_code, 200)
         self.assertEqual(patch_response.json()["status"], "archived")
-        self.assertEqual(
-            MediaLibraryAsset.objects.get(id=asset_id).tags, "archived,drone"
-        )
+        self.assertEqual(MediaLibraryAsset.objects.get(id=asset_id).tags, "archived,drone")
 
         workspace_response = self.client.get(
             f"/api/v1/marketing-campaigns/{campaign_id}/workspace",
@@ -4222,18 +3864,11 @@ class MarketingLeadAPITests(TestCase):
             "HTTP_AUTHORIZATION": f"Bearer {JWTService.create_tokens(restricted_user.id)['access']}"
         }
 
-        read_response = self.client.get(
-            "/api/v1/content/media-library", **restricted_headers
-        )
+        read_response = self.client.get("/api/v1/content/media-library", **restricted_headers)
         self.assertEqual(read_response.status_code, 403)
         write_response = self.client.post(
             "/api/v1/content/media-library/assets",
-            data=json.dumps(
-                {
-                    "title": "No access",
-                    "file_url": "https://cdn.example.com/no-access.jpg",
-                }
-            ),
+            data=json.dumps({"title": "No access", "file_url": "https://cdn.example.com/no-access.jpg"}),
             content_type="application/json",
             **restricted_headers,
         )
@@ -4244,9 +3879,7 @@ class MarketingLeadAPITests(TestCase):
         self.assertEqual(lead_response.status_code, 201)
         lead_id = lead_response.json()["id"]
 
-        initial_event = LeadFunnelEvent.objects.get(
-            lead_id=lead_id, event_type="initial"
-        )
+        initial_event = LeadFunnelEvent.objects.get(lead_id=lead_id, event_type="initial")
         self.assertEqual(initial_event.to_stage, "discovery")
         self.assertFalse(initial_event.metadata["backfilled"])
 
@@ -4306,9 +3939,7 @@ class MarketingLeadAPITests(TestCase):
         self.assertEqual(len(rebuild_response.json()["actions"]), 1)
         self.assertEqual(rebuild_response.json()["actions"][0]["status"], "completed")
 
-        summary_response = self.client.get(
-            "/api/v1/revenue-execution/summary", **self.headers
-        )
+        summary_response = self.client.get("/api/v1/revenue-execution/summary", **self.headers)
         self.assertEqual(summary_response.status_code, 200)
         self.assertEqual(summary_response.json()["completion_pct"], 100)
         self.assertEqual(summary_response.json()["completed_actions"], 1)
@@ -4321,9 +3952,7 @@ class MarketingLeadAPITests(TestCase):
         self.assertEqual(monthly_response.status_code, 200)
         self.assertEqual(monthly_response.json()["fully_completed_days"], 1)
 
-        reopen_response = self.post_json(
-            f"/api/v1/revenue-execution/actions/{action_id}/reopen", {}
-        )
+        reopen_response = self.post_json(f"/api/v1/revenue-execution/actions/{action_id}/reopen", {})
         self.assertEqual(reopen_response.status_code, 200)
         self.assertEqual(reopen_response.json()["status"], "open")
 
@@ -4380,9 +4009,7 @@ class MarketingLeadAPITests(TestCase):
         self.assertTrue(scorecard_response.json())
 
     def test_command_center_returns_revenue_execution_sections(self):
-        self.create_revenue_target(
-            target_value="10000000.00", progress_value="2500000.00"
-        )
+        self.create_revenue_target(target_value="10000000.00", progress_value="2500000.00")
         won_response = self.create_lead(
             full_name="Won Customer",
             phone="08030000001",
@@ -4402,13 +4029,9 @@ class MarketingLeadAPITests(TestCase):
         )
         self.assertEqual(active_response.status_code, 201)
         self.assertEqual(self.create_daily_template().status_code, 201)
-        self.assertEqual(
-            self.post_json("/api/v1/revenue-execution/days/open", {}).status_code, 200
-        )
+        self.assertEqual(self.post_json("/api/v1/revenue-execution/days/open", {}).status_code, 200)
 
-        response = self.client.get(
-            "/api/v1/revenue-execution/command-center", **self.headers
-        )
+        response = self.client.get("/api/v1/revenue-execution/command-center", **self.headers)
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertIn("hero", data)
@@ -4420,16 +4043,13 @@ class MarketingLeadAPITests(TestCase):
         self.assertEqual(data["hero"]["ninety_day_target"], "10000000.00")
         self.assertEqual(data["hero"]["executive_review"], "Every Friday · 4 PM")
         self.assertEqual(len(data["kpi_cards"]), 5)
-        self.assertEqual(
-            [card["label"] for card in data["kpi_cards"]],
-            [
-                "Revenue closed",
-                "Weighted forecast",
-                "Qualified pipeline",
-                "Follow-up compliance",
-                "Daily execution",
-            ],
-        )
+        self.assertEqual([card["label"] for card in data["kpi_cards"]], [
+            "Revenue closed",
+            "Weighted forecast",
+            "Qualified pipeline",
+            "Follow-up compliance",
+            "Daily execution",
+        ])
         self.assertEqual(len(data["diagnosis"]), 6)
         self.assertEqual(len(data["funnel"]), 6)
         self.assertEqual(len(data["management_rhythm"]), 4)
@@ -4497,10 +4117,7 @@ class MarketingLeadAPITests(TestCase):
             {"real_estate": None, "engineering": None},
         )
         self.assertEqual(
-            {
-                control["key"]: control["supported"]
-                for control in data["quality_controls"]
-            },
+            {control["key"]: control["supported"] for control in data["quality_controls"]},
             {
                 "value_present": True,
                 "next_action_scheduled": True,
@@ -4533,10 +4150,7 @@ class MarketingLeadAPITests(TestCase):
         self.assertEqual(export_response.status_code, 200)
         self.assertEqual(export_response["Content-Type"], "text/csv")
         csv_text = export_response.content.decode()
-        self.assertIn(
-            '"Division","Opportunities","Pipeline","Weighted forecast","Target gap"',
-            csv_text,
-        )
+        self.assertIn('"Division","Opportunities","Pipeline","Weighted forecast","Target gap"', csv_text)
         self.assertIn('"Real Estate"', csv_text)
 
     def test_lead_control_filters_auto_assign_and_repair_next_actions(self):
@@ -4567,19 +4181,13 @@ class MarketingLeadAPITests(TestCase):
         self.assertEqual(breach_response.json()["count"], 1)
         self.assertEqual(breach_response.json()["rows"][0]["id"], lead_id)
         self.assertEqual(breach_response.json()["filter"], "breach")
-        self.assertEqual(
-            [card["label"] for card in breach_response.json()["kpi_cards"]],
-            [
-                "New & uncontacted",
-                "SLA breaches",
-                "Hot leads",
-                "Stale opportunities",
-            ],
-        )
-        self.assertEqual(
-            [rule["points"] for rule in breach_response.json()["scoring_model"]],
-            [40, 30, 20, 10],
-        )
+        self.assertEqual([card["label"] for card in breach_response.json()["kpi_cards"]], [
+            "New & uncontacted",
+            "SLA breaches",
+            "Hot leads",
+            "Stale opportunities",
+        ])
+        self.assertEqual([rule["points"] for rule in breach_response.json()["scoring_model"]], [40, 30, 20, 10])
         self.assertEqual(len(breach_response.json()["qualification_checklist"]), 6)
         row = breach_response.json()["rows"][0]
         self.assertIn("lead", row)
@@ -4596,17 +4204,13 @@ class MarketingLeadAPITests(TestCase):
         self.assertEqual(alias_response.status_code, 200)
         self.assertEqual(alias_response.json()["filter"], "breach")
 
-        assign_response = self.post_json(
-            "/api/v1/revenue-execution/lead-control/auto-assign", {}
-        )
+        assign_response = self.post_json("/api/v1/revenue-execution/lead-control/auto-assign", {})
         self.assertEqual(assign_response.status_code, 200)
         self.assertEqual(assign_response.json()["assigned_count"], 1)
         lead = Lead.objects.get(id=lead_id)
         self.assertEqual(lead.assigned_to_id, self.employee.id)
 
-        repair_response = self.post_json(
-            "/api/v1/revenue-execution/lead-control/repair-next-actions", {}
-        )
+        repair_response = self.post_json("/api/v1/revenue-execution/lead-control/repair-next-actions", {})
         self.assertEqual(repair_response.status_code, 200)
         self.assertEqual(repair_response.json()["repaired_count"], 1)
         lead.refresh_from_db()
@@ -4639,17 +4243,13 @@ class MarketingLeadAPITests(TestCase):
             "exit_criteria": "Need, budget and next appointment are recorded.",
             "status": "active",
         }
-        company_response = self.post_json(
-            "/api/v1/revenue-execution/playbooks", company_payload
-        )
+        company_response = self.post_json("/api/v1/revenue-execution/playbooks", company_payload)
         self.assertEqual(company_response.status_code, 201)
         company_playbook = company_response.json()
         self.assertEqual(company_playbook["questions"], company_payload["questions"])
         self.assertEqual(SalesPlaybook.objects.count(), 1)
 
-        duplicate_response = self.post_json(
-            "/api/v1/revenue-execution/playbooks", company_payload
-        )
+        duplicate_response = self.post_json("/api/v1/revenue-execution/playbooks", company_payload)
         self.assertEqual(duplicate_response.status_code, 400)
         self.assertIn("active playbook", duplicate_response.json()["detail"])
 
@@ -4659,9 +4259,7 @@ class MarketingLeadAPITests(TestCase):
             "branch_id": branch.id,
             "opening_script": "Branch-specific opening script.",
         }
-        branch_response = self.post_json(
-            "/api/v1/revenue-execution/playbooks", branch_payload
-        )
+        branch_response = self.post_json("/api/v1/revenue-execution/playbooks", branch_payload)
         self.assertEqual(branch_response.status_code, 201)
         branch_playbook = branch_response.json()
 
@@ -4683,9 +4281,7 @@ class MarketingLeadAPITests(TestCase):
         )
         self.assertEqual(list_response.status_code, 200)
         self.assertEqual(list_response.json()["count"], 1)
-        self.assertEqual(
-            list_response.json()["playbooks"][0]["id"], branch_playbook["id"]
-        )
+        self.assertEqual(list_response.json()["playbooks"][0]["id"], branch_playbook["id"])
 
         current_response = self.client.get(
             f"/api/v1/revenue-execution/playbooks/current?division=real_estate&stage=discovery&persona=individual_buyer&branch_id={branch.id}",
@@ -4715,9 +4311,7 @@ class MarketingLeadAPITests(TestCase):
             {"primary_cta": "Book a live-video inspection.", "sort_order": 3},
         )
         self.assertEqual(patch_response.status_code, 200)
-        self.assertEqual(
-            patch_response.json()["primary_cta"], "Book a live-video inspection."
-        )
+        self.assertEqual(patch_response.json()["primary_cta"], "Book a live-video inspection.")
         self.assertEqual(patch_response.json()["sort_order"], 3)
 
         missing_response = self.client.get(
@@ -4731,9 +4325,7 @@ class MarketingLeadAPITests(TestCase):
             {"response": "Updated objection response."},
         )
         self.assertEqual(objection_update_response.status_code, 200)
-        self.assertEqual(
-            objection_update_response.json()["response"], "Updated objection response."
-        )
+        self.assertEqual(objection_update_response.json()["response"], "Updated objection response.")
 
         objection_delete_response = self.client.delete(
             f"/api/v1/revenue-execution/playbooks/objections/{objection_id}",
@@ -4760,20 +4352,14 @@ class MarketingLeadAPITests(TestCase):
         restricted_headers = {
             "HTTP_AUTHORIZATION": f"Bearer {JWTService.create_tokens(restricted_user.id)['access']}"
         }
-        restricted_response = self.client.get(
-            "/api/v1/revenue-execution/playbooks", **restricted_headers
-        )
+        restricted_response = self.client.get("/api/v1/revenue-execution/playbooks", **restricted_headers)
         self.assertEqual(restricted_response.status_code, 403)
 
     def test_funnel_audit_uses_event_cohorts_for_conversion_and_leaks(self):
-        discovery_only = self.create_lead(
-            full_name="Discovery Only", phone="08030000004"
-        )
+        discovery_only = self.create_lead(full_name="Discovery Only", phone="08030000004")
         evaluation = self.create_lead(full_name="Evaluation Lead", phone="08030000005")
         intent = self.create_lead(full_name="Intent Lead", phone="08030000006")
-        purchase = self.create_lead(
-            full_name="Purchase Lead", phone="08030000007", estimated_value="5000000.00"
-        )
+        purchase = self.create_lead(full_name="Purchase Lead", phone="08030000007", estimated_value="5000000.00")
         self.assertEqual(discovery_only.status_code, 201)
         self.assertEqual(evaluation.status_code, 201)
         self.assertEqual(intent.status_code, 201)
@@ -4782,52 +4368,17 @@ class MarketingLeadAPITests(TestCase):
         evaluation_id = evaluation.json()["id"]
         intent_id = intent.json()["id"]
         purchase_id = purchase.json()["id"]
-        self.assertEqual(
-            self.patch_json(
-                f"/api/v1/leads/{evaluation_id}/status", {"status": "qualified"}
-            ).status_code,
-            200,
-        )
-        self.assertEqual(
-            self.patch_json(
-                f"/api/v1/leads/{intent_id}/status", {"status": "qualified"}
-            ).status_code,
-            200,
-        )
-        self.assertEqual(
-            self.patch_json(
-                f"/api/v1/leads/{intent_id}/status", {"status": "proposal_sent"}
-            ).status_code,
-            200,
-        )
-        self.assertEqual(
-            self.patch_json(
-                f"/api/v1/leads/{purchase_id}/status", {"status": "qualified"}
-            ).status_code,
-            200,
-        )
-        self.assertEqual(
-            self.patch_json(
-                f"/api/v1/leads/{purchase_id}/status", {"status": "proposal_sent"}
-            ).status_code,
-            200,
-        )
-        self.assertEqual(
-            self.patch_json(
-                f"/api/v1/leads/{purchase_id}/status", {"status": "won"}
-            ).status_code,
-            200,
-        )
+        self.assertEqual(self.patch_json(f"/api/v1/leads/{evaluation_id}/status", {"status": "qualified"}).status_code, 200)
+        self.assertEqual(self.patch_json(f"/api/v1/leads/{intent_id}/status", {"status": "qualified"}).status_code, 200)
+        self.assertEqual(self.patch_json(f"/api/v1/leads/{intent_id}/status", {"status": "proposal_sent"}).status_code, 200)
+        self.assertEqual(self.patch_json(f"/api/v1/leads/{purchase_id}/status", {"status": "qualified"}).status_code, 200)
+        self.assertEqual(self.patch_json(f"/api/v1/leads/{purchase_id}/status", {"status": "proposal_sent"}).status_code, 200)
+        self.assertEqual(self.patch_json(f"/api/v1/leads/{purchase_id}/status", {"status": "won"}).status_code, 200)
 
-        response = self.client.get(
-            "/api/v1/revenue-execution/funnel-audit", **self.headers
-        )
+        response = self.client.get("/api/v1/revenue-execution/funnel-audit", **self.headers)
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(
-            [stage["stage"] for stage in data["funnel"]],
-            ["discovery", "evaluation", "intent", "purchase", "loyalty"],
-        )
+        self.assertEqual([stage["stage"] for stage in data["funnel"]], ["discovery", "evaluation", "intent", "purchase", "loyalty"])
         self.assertEqual(data["funnel"][0]["entered"], 4)
         self.assertEqual(data["funnel"][1]["entered"], 3)
         self.assertEqual(data["funnel"][2]["entered"], 2)
@@ -4870,9 +4421,7 @@ class MarketingLeadAPITests(TestCase):
             ).exists()
         )
 
-        response = self.client.get(
-            "/api/v1/revenue-execution/funnel-audit", **self.headers
-        )
+        response = self.client.get("/api/v1/revenue-execution/funnel-audit", **self.headers)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["data_quality"]["confidence"], "partial")
 
@@ -4885,9 +4434,7 @@ class MarketingLeadAPITests(TestCase):
             "period_end": today.isoformat(),
             "owner_id": self.employee.id,
         }
-        objective_response = self.post_json(
-            "/api/v1/revenue-execution/okrs", objective_payload
-        )
+        objective_response = self.post_json("/api/v1/revenue-execution/okrs", objective_payload)
         self.assertEqual(objective_response.status_code, 201)
         objective_id = objective_response.json()["id"]
 
@@ -4905,9 +4452,7 @@ class MarketingLeadAPITests(TestCase):
         self.assertEqual(manual_response.status_code, 201)
         self.assertEqual(manual_response.json()["progress_percentage"], "55.00")
 
-        target = self.create_revenue_target(
-            target_value="100.00", progress_value="50.00"
-        )
+        target = self.create_revenue_target(target_value="100.00", progress_value="50.00")
         linked_response = self.post_json(
             f"/api/v1/revenue-execution/okrs/{objective_id}/key-results",
             {
@@ -4921,24 +4466,18 @@ class MarketingLeadAPITests(TestCase):
         self.assertEqual(linked_response.json()["effective_actual_value"], "50.00")
         self.assertEqual(linked_response.json()["progress_percentage"], "50.00")
 
-        list_response = self.client.get(
-            "/api/v1/revenue-execution/okrs", **self.headers
-        )
+        list_response = self.client.get("/api/v1/revenue-execution/okrs", **self.headers)
         self.assertEqual(list_response.status_code, 200)
         self.assertEqual(list_response.json()["objectives"][0]["id"], objective_id)
         self.assertIn("label", list_response.json()["objectives"][0])
         self.assertIn("key_results", list_response.json()["objectives"][0])
-        self.assertIn(
-            "percent", list_response.json()["objectives"][0]["key_results"][0]
-        )
+        self.assertIn("percent", list_response.json()["objectives"][0]["key_results"][0])
         self.assertIn("color", list_response.json()["objectives"][0]["key_results"][0])
         self.assertEqual(RevenueObjective.objects.count(), 1)
         self.assertEqual(RevenueKeyResult.objects.count(), 2)
 
     def test_targets_summary_uses_existing_role_targets_and_reports(self):
-        target = self.create_revenue_target(
-            target_value="100.00", progress_value="40.00"
-        )
+        target = self.create_revenue_target(target_value="100.00", progress_value="40.00")
         response = self.client.get(
             "/api/v1/revenue-execution/targets/summary?period=monthly",
             **self.headers,
@@ -4967,10 +4506,7 @@ class MarketingLeadAPITests(TestCase):
         )
         self.assertEqual(detail_response.status_code, 200)
         detail = detail_response.json()
-        self.assertEqual(
-            [phase["phase"] for phase in detail["roadmap"]],
-            ["stabilise", "standardise", "scale"],
-        )
+        self.assertEqual([phase["phase"] for phase in detail["roadmap"]], ["stabilise", "standardise", "scale"])
         self.assertEqual(sum(len(phase["actions"]) for phase in detail["roadmap"]), 13)
         self.assertEqual(len(detail["performance_contracts"]), 6)
         self.assertEqual(len(detail["governance_rules"]), 6)

@@ -33,26 +33,24 @@ shareholder_api = Router(tags=["Shareholders / Board"])
 def get_shareholder_summary(request):
     qs = Shareholder.objects.all()
     active_qs = qs.filter(is_active=True)
-    total_pct = active_qs.aggregate(total=Sum("share_percentage"))["total"] or Decimal(
-        "0.00"
-    )
+    total_pct = active_qs.aggregate(total=Sum('share_percentage'))['total'] or Decimal('0.00')
 
     composition = [
         {
-            "title": value,
-            "title_display": label,
-            "count": qs.filter(title=value).count(),
+            'title': value,
+            'title_display': label,
+            'count': qs.filter(title=value).count(),
         }
         for value, label in Shareholder.TITLE_CHOICES
         if qs.filter(title=value).exists()
     ]
 
     return 200, {
-        "total_shareholders": qs.count(),
-        "active_shareholders": active_qs.count(),
-        "total_share_percentage": total_pct,
-        "unallocated_percentage": max(Decimal("0.00"), Decimal("100.00") - total_pct),
-        "board_composition": composition,
+        'total_shareholders': qs.count(),
+        'active_shareholders': active_qs.count(),
+        'total_share_percentage': total_pct,
+        'unallocated_percentage': max(Decimal('0.00'), Decimal('100.00') - total_pct),
+        'board_composition': composition,
     }
 
 
@@ -66,7 +64,7 @@ def list_shareholders(
     title: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
 ):
-    qs = Shareholder.objects.select_related("user").all()
+    qs = Shareholder.objects.select_related('user').all()
 
     if is_active is not None:
         qs = qs.filter(is_active=is_active)
@@ -79,22 +77,20 @@ def list_shareholders(
 
     if search:
         qs = qs.filter(
-            Q(user__first_name__icontains=search)
-            | Q(user__last_name__icontains=search)
-            | Q(user__email__icontains=search)
-            | Q(shareholder_id__icontains=search)
+            Q(user__first_name__icontains=search) |
+            Q(user__last_name__icontains=search) |
+            Q(user__email__icontains=search) |
+            Q(shareholder_id__icontains=search)
         )
 
     return qs
 
 
-@shareholder_api.get(
-    "/{shareholder_id}", response={200: ShareholderSchema, 404: MessageSchema}
-)
+@shareholder_api.get("/{shareholder_id}", response={200: ShareholderSchema, 404: MessageSchema})
 @require_permission("shareholders", "view")
 def get_shareholder(request, shareholder_id: int):
     try:
-        s = Shareholder.objects.select_related("user").get(id=shareholder_id)
+        s = Shareholder.objects.select_related('user').get(id=shareholder_id)
         return 200, s
     except Shareholder.DoesNotExist:
         return 404, {"detail": "Shareholder not found"}
@@ -128,7 +124,7 @@ def create_shareholder(request, payload: ShareholderCreateSchema):
             employee = Employee.objects.create(
                 employee_id=f"MEM-{uuid.uuid4().hex[:12].upper()}",
                 user=user,
-                employment_type="full-time",
+                employment_type='full-time',
                 is_active=payload.is_active,
             )
 
@@ -164,26 +160,14 @@ def create_shareholder(request, payload: ShareholderCreateSchema):
         return 400, {"detail": str(e)}
 
 
-@shareholder_api.put(
-    "/{shareholder_id}",
-    response={200: ShareholderSchema, 400: MessageSchema, 404: MessageSchema},
-)
+@shareholder_api.put("/{shareholder_id}", response={200: ShareholderSchema, 400: MessageSchema, 404: MessageSchema})
 @require_permission("shareholders", "update")
 def update_shareholder(request, shareholder_id: int, payload: ShareholderUpdateSchema):
     try:
-        s = Shareholder.objects.select_related("user").get(id=shareholder_id)
+        s = Shareholder.objects.select_related('user').get(id=shareholder_id)
         data = payload.dict(exclude_unset=True)
 
-        user_fields = {
-            "first_name",
-            "last_name",
-            "gender",
-            "marital_status",
-            "phone_number",
-            "date_of_birth",
-            "address",
-            "profile_picture",
-        }
+        user_fields = {'first_name', 'last_name', 'gender', 'marital_status', 'phone_number', 'date_of_birth', 'address', 'profile_picture'}
         user_updates = {k: v for k, v in data.items() if k in user_fields}
         shareholder_updates = {k: v for k, v in data.items() if k not in user_fields}
 

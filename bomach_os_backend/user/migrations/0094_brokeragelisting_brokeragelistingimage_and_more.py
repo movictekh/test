@@ -10,285 +10,95 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("user", "0093_employeetargetreport"),
+        ('user', '0093_employeetargetreport'),
     ]
 
     operations = [
         migrations.CreateModel(
-            name="BrokerageListing",
+            name='BrokerageListing',
             fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                (
-                    "created_at",
-                    models.DateTimeField(
-                        auto_now_add=True, help_text="When this record was created"
-                    ),
-                ),
-                (
-                    "updated_at",
-                    models.DateTimeField(
-                        auto_now=True, help_text="When this record was last updated"
-                    ),
-                ),
-                ("title", models.CharField(max_length=255, verbose_name="Title")),
-                (
-                    "description",
-                    models.TextField(
-                        blank=True, default="", verbose_name="Description"
-                    ),
-                ),
-                ("location", models.CharField(max_length=500, verbose_name="Location")),
-                (
-                    "price",
-                    models.DecimalField(
-                        decimal_places=2,
-                        max_digits=15,
-                        validators=[
-                            django.core.validators.MinValueValidator(Decimal("0.01"))
-                        ],
-                        verbose_name="Price",
-                    ),
-                ),
-                (
-                    "property_type",
-                    models.CharField(
-                        choices=[
-                            ("residential", "Residential"),
-                            ("commercial", "Commercial"),
-                            ("land", "Land"),
-                        ],
-                        max_length=50,
-                        verbose_name="Property Type",
-                    ),
-                ),
-                (
-                    "owner_name",
-                    models.CharField(
-                        max_length=255, verbose_name="Owner / Mandate Giver"
-                    ),
-                ),
-                (
-                    "owner_phone",
-                    models.CharField(
-                        blank=True,
-                        default="",
-                        max_length=50,
-                        verbose_name="Owner Phone",
-                    ),
-                ),
-                (
-                    "owner_email",
-                    models.EmailField(
-                        blank=True,
-                        default="",
-                        max_length=254,
-                        verbose_name="Owner Email",
-                    ),
-                ),
-                (
-                    "commission_rate",
-                    models.DecimalField(
-                        decimal_places=2,
-                        default=Decimal("5.00"),
-                        help_text="Commission percentage, e.g. 5.00",
-                        max_digits=5,
-                        validators=[
-                            django.core.validators.MinValueValidator(Decimal("0")),
-                            django.core.validators.MaxValueValidator(Decimal("100")),
-                        ],
-                        verbose_name="Commission Rate (%)",
-                    ),
-                ),
-                (
-                    "verification_status",
-                    models.CharField(
-                        choices=[
-                            ("pending", "Pending Verification"),
-                            ("verified", "Verified"),
-                            ("inspection_due", "Inspection Due"),
-                        ],
-                        default="pending",
-                        max_length=20,
-                        verbose_name="Verification Status",
-                    ),
-                ),
-                (
-                    "status",
-                    models.CharField(
-                        choices=[
-                            ("available", "Available"),
-                            ("sold", "Sold"),
-                            ("off_market", "Off Market"),
-                        ],
-                        default="available",
-                        max_length=20,
-                        verbose_name="Status",
-                    ),
-                ),
-                (
-                    "tags",
-                    models.JSONField(blank=True, default=list, verbose_name="Tags"),
-                ),
-                (
-                    "is_active",
-                    models.BooleanField(default=True, verbose_name="Is Active"),
-                ),
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('created_at', models.DateTimeField(auto_now_add=True, help_text='When this record was created')),
+                ('updated_at', models.DateTimeField(auto_now=True, help_text='When this record was last updated')),
+                ('title', models.CharField(max_length=255, verbose_name='Title')),
+                ('description', models.TextField(blank=True, default='', verbose_name='Description')),
+                ('location', models.CharField(max_length=500, verbose_name='Location')),
+                ('price', models.DecimalField(decimal_places=2, max_digits=15, validators=[django.core.validators.MinValueValidator(Decimal('0.01'))], verbose_name='Price')),
+                ('property_type', models.CharField(choices=[('residential', 'Residential'), ('commercial', 'Commercial'), ('land', 'Land')], max_length=50, verbose_name='Property Type')),
+                ('owner_name', models.CharField(max_length=255, verbose_name='Owner / Mandate Giver')),
+                ('owner_phone', models.CharField(blank=True, default='', max_length=50, verbose_name='Owner Phone')),
+                ('owner_email', models.EmailField(blank=True, default='', max_length=254, verbose_name='Owner Email')),
+                ('commission_rate', models.DecimalField(decimal_places=2, default=Decimal('5.00'), help_text='Commission percentage, e.g. 5.00', max_digits=5, validators=[django.core.validators.MinValueValidator(Decimal('0')), django.core.validators.MaxValueValidator(Decimal('100'))], verbose_name='Commission Rate (%)')),
+                ('verification_status', models.CharField(choices=[('pending', 'Pending Verification'), ('verified', 'Verified'), ('inspection_due', 'Inspection Due')], default='pending', max_length=20, verbose_name='Verification Status')),
+                ('status', models.CharField(choices=[('available', 'Available'), ('sold', 'Sold'), ('off_market', 'Off Market')], default='available', max_length=20, verbose_name='Status')),
+                ('tags', models.JSONField(blank=True, default=list, verbose_name='Tags')),
+                ('is_active', models.BooleanField(default=True, verbose_name='Is Active')),
             ],
             options={
-                "verbose_name": "Brokerage Listing",
-                "verbose_name_plural": "Brokerage Listings",
-                "ordering": ["-created_at"],
+                'verbose_name': 'Brokerage Listing',
+                'verbose_name_plural': 'Brokerage Listings',
+                'ordering': ['-created_at'],
             },
         ),
         migrations.CreateModel(
-            name="BrokerageListingImage",
+            name='BrokerageListingImage',
             fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                (
-                    "created_at",
-                    models.DateTimeField(
-                        auto_now_add=True, help_text="When this record was created"
-                    ),
-                ),
-                (
-                    "updated_at",
-                    models.DateTimeField(
-                        auto_now=True, help_text="When this record was last updated"
-                    ),
-                ),
-                (
-                    "image",
-                    models.FileField(
-                        help_text="PNG, JPG up to 10MB",
-                        upload_to="brokerage/images/",
-                        validators=[
-                            django.core.validators.FileExtensionValidator(
-                                allowed_extensions=["png", "jpg", "jpeg"]
-                            )
-                        ],
-                        verbose_name="Image",
-                    ),
-                ),
-                (
-                    "caption",
-                    models.CharField(
-                        blank=True, default="", max_length=255, verbose_name="Caption"
-                    ),
-                ),
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('created_at', models.DateTimeField(auto_now_add=True, help_text='When this record was created')),
+                ('updated_at', models.DateTimeField(auto_now=True, help_text='When this record was last updated')),
+                ('image', models.FileField(help_text='PNG, JPG up to 10MB', upload_to='brokerage/images/', validators=[django.core.validators.FileExtensionValidator(allowed_extensions=['png', 'jpg', 'jpeg'])], verbose_name='Image')),
+                ('caption', models.CharField(blank=True, default='', max_length=255, verbose_name='Caption')),
             ],
             options={
-                "verbose_name": "Brokerage Listing Image",
-                "verbose_name_plural": "Brokerage Listing Images",
-                "ordering": ["created_at"],
+                'verbose_name': 'Brokerage Listing Image',
+                'verbose_name_plural': 'Brokerage Listing Images',
+                'ordering': ['created_at'],
             },
         ),
         migrations.AddField(
-            model_name="property",
-            name="client_name",
-            field=models.CharField(
-                blank=True,
-                default="",
-                help_text="Free-form name of the client or reservation holder for this property.",
-                max_length=255,
-                verbose_name="Client / Reservation Holder",
-            ),
+            model_name='property',
+            name='client_name',
+            field=models.CharField(blank=True, default='', help_text='Free-form name of the client or reservation holder for this property.', max_length=255, verbose_name='Client / Reservation Holder'),
         ),
         migrations.AddField(
-            model_name="property",
-            name="plot_number",
-            field=models.PositiveIntegerField(
-                blank=True,
-                help_text="Sequential plot number within the estate, e.g. 1, 2, 3...",
-                null=True,
-                verbose_name="Plot Number",
-            ),
+            model_name='property',
+            name='plot_number',
+            field=models.PositiveIntegerField(blank=True, help_text='Sequential plot number within the estate, e.g. 1, 2, 3...', null=True, verbose_name='Plot Number'),
         ),
         migrations.AlterField(
-            model_name="property",
-            name="status",
-            field=models.CharField(
-                choices=[
-                    ("not-for-sale", "Not for Sale"),
-                    ("available", "Available"),
-                    ("reserved", "Reserved"),
-                    ("sold", "Sold"),
-                    ("hold", "Hold"),
-                ],
-                default="available",
-                max_length=20,
-                verbose_name="Status",
-            ),
+            model_name='property',
+            name='status',
+            field=models.CharField(choices=[('not-for-sale', 'Not for Sale'), ('available', 'Available'), ('reserved', 'Reserved'), ('sold', 'Sold'), ('hold', 'Hold')], default='available', max_length=20, verbose_name='Status'),
         ),
         migrations.AddIndex(
-            model_name="property",
-            index=models.Index(
-                fields=["estate", "plot_number"], name="user_proper_estate__4c5dfd_idx"
-            ),
+            model_name='property',
+            index=models.Index(fields=['estate', 'plot_number'], name='user_proper_estate__4c5dfd_idx'),
         ),
         migrations.AddField(
-            model_name="brokeragelisting",
-            name="assigned_agent",
-            field=models.ForeignKey(
-                blank=True,
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                related_name="brokerage_listings",
-                to=settings.AUTH_USER_MODEL,
-                verbose_name="Assigned Agent",
-            ),
+            model_name='brokeragelisting',
+            name='assigned_agent',
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='brokerage_listings', to=settings.AUTH_USER_MODEL, verbose_name='Assigned Agent'),
         ),
         migrations.AddField(
-            model_name="brokeragelisting",
-            name="estate",
-            field=models.ForeignKey(
-                blank=True,
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                related_name="brokerage_listings",
-                to="user.estate",
-                verbose_name="Estate",
-            ),
+            model_name='brokeragelisting',
+            name='estate',
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='brokerage_listings', to='user.estate', verbose_name='Estate'),
         ),
         migrations.AddField(
-            model_name="brokeragelistingimage",
-            name="listing",
-            field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE,
-                related_name="images",
-                to="user.brokeragelisting",
-                verbose_name="Listing",
-            ),
+            model_name='brokeragelistingimage',
+            name='listing',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='images', to='user.brokeragelisting', verbose_name='Listing'),
         ),
         migrations.AddIndex(
-            model_name="brokeragelisting",
-            index=models.Index(fields=["status"], name="user_broker_status_9bda35_idx"),
+            model_name='brokeragelisting',
+            index=models.Index(fields=['status'], name='user_broker_status_9bda35_idx'),
         ),
         migrations.AddIndex(
-            model_name="brokeragelisting",
-            index=models.Index(
-                fields=["verification_status"], name="user_broker_verific_45ec94_idx"
-            ),
+            model_name='brokeragelisting',
+            index=models.Index(fields=['verification_status'], name='user_broker_verific_45ec94_idx'),
         ),
         migrations.AddIndex(
-            model_name="brokeragelisting",
-            index=models.Index(
-                fields=["property_type"], name="user_broker_propert_1d2b9f_idx"
-            ),
+            model_name='brokeragelisting',
+            index=models.Index(fields=['property_type'], name='user_broker_propert_1d2b9f_idx'),
         ),
     ]

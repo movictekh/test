@@ -19,7 +19,7 @@ from user.utils.perm import require_permission, scope_queryset, check_obj_permis
 
 logger = logging.getLogger(__name__)
 
-router = Router(tags=["Employee Evaluations"])
+router = Router(tags=['Employee Evaluations'])
 
 
 def _enrich_evaluation(evaluation):
@@ -41,17 +41,15 @@ def _enrich_evaluation(evaluation):
     try:
         employee = get_auth_client().get_employee_info(evaluation.employee_id)
         if employee:
-            evaluation.employee_name = employee.get("full_name")
-            evaluation.employee_level = employee.get("position")
+            evaluation.employee_name = employee.get('full_name')
+            evaluation.employee_level = employee.get('position')
     except Exception as e:
-        logger.warning(
-            f"Failed to fetch employee details for {evaluation.employee_id}: {e}"
-        )
+        logger.warning(f"Failed to fetch employee details for {evaluation.employee_id}: {e}")
 
     return evaluation
 
 
-@router.post("/", response={201: EvaluationResponseSchema, 400: MessageSchema})
+@router.post('/', response={201: EvaluationResponseSchema, 400: MessageSchema})
 @require_permission("employee_evaluations", "create")
 def create_evaluation(request, payload: EvaluationCreateSchema):
     """Create an evaluation — auto-links or generates the scorecard."""
@@ -84,15 +82,13 @@ def create_evaluation(request, payload: EvaluationCreateSchema):
 
         return 201, _enrich_evaluation(evaluation)
     except ValidationError as e:
-        msg = e.messages[0] if hasattr(e, "messages") else str(e)
-        return 400, {"detail": msg}
+        msg = e.messages[0] if hasattr(e, 'messages') else str(e)
+        return 400, {'detail': msg}
     except Exception as e:
-        return 400, {"detail": str(e)}
+        return 400, {'detail': str(e)}
 
 
-@router.get(
-    "/{evaluation_id}", response={200: EvaluationResponseSchema, 404: MessageSchema}
-)
+@router.get('/{evaluation_id}', response={200: EvaluationResponseSchema, 404: MessageSchema})
 @require_permission("employee_evaluations", "view", owner_lookup="employee__user")
 def get_evaluation(request, evaluation_id: int):
     """Get a single evaluation with scorecard metrics and employee info."""
@@ -101,7 +97,7 @@ def get_evaluation(request, evaluation_id: int):
     return 200, _enrich_evaluation(evaluation)
 
 
-@router.get("/employee/{employee_id}", response={200: List[EvaluationListItemSchema]})
+@router.get('/employee/{employee_id}', response={200: List[EvaluationListItemSchema]})
 @require_permission("employee_evaluations", "list", owner_lookup="employee__user")
 def list_employee_evaluations(
     request,
@@ -125,9 +121,7 @@ def list_employee_evaluations(
     return 200, evaluations
 
 
-@router.put(
-    "/{evaluation_id}", response={200: EvaluationResponseSchema, 400: MessageSchema}
-)
+@router.put('/{evaluation_id}', response={200: EvaluationResponseSchema, 400: MessageSchema})
 @require_permission("employee_evaluations", "update")
 def update_evaluation(request, evaluation_id: int, payload: EvaluationUpdateSchema):
     """Update manager comments and recommendation flags."""
@@ -138,5 +132,5 @@ def update_evaluation(request, evaluation_id: int, payload: EvaluationUpdateSche
         evaluation.save(skip_validation=True)
         return 200, _enrich_evaluation(evaluation)
     except ValidationError as e:
-        msg = e.messages[0] if hasattr(e, "messages") else str(e)
-        return 400, {"detail": msg}
+        msg = e.messages[0] if hasattr(e, 'messages') else str(e)
+        return 400, {'detail': msg}

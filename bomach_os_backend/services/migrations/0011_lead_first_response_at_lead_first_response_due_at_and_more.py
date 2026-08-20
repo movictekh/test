@@ -9,317 +9,131 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("services", "0010_leadactivity"),
-        ("user", "0093_employeetargetreport"),
+        ('services', '0010_leadactivity'),
+        ('user', '0093_employeetargetreport'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddField(
-            model_name="lead",
-            name="first_response_at",
+            model_name='lead',
+            name='first_response_at',
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name="lead",
-            name="first_response_due_at",
+            model_name='lead',
+            name='first_response_due_at',
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name="lead",
-            name="score_breakdown",
+            model_name='lead',
+            name='score_breakdown',
             field=models.JSONField(blank=True, default=dict),
         ),
         migrations.AddField(
-            model_name="lead",
-            name="sla_status",
-            field=models.CharField(
-                choices=[
-                    ("safe", "Safe"),
-                    ("due_now", "Due Now"),
-                    ("breached", "Breached"),
-                    ("completed", "Completed"),
-                ],
-                default="safe",
-                max_length=20,
-            ),
+            model_name='lead',
+            name='sla_status',
+            field=models.CharField(choices=[('safe', 'Safe'), ('due_now', 'Due Now'), ('breached', 'Breached'), ('completed', 'Completed')], default='safe', max_length=20),
         ),
         migrations.CreateModel(
-            name="DailyActionTemplate",
+            name='DailyActionTemplate',
             fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                (
-                    "created_at",
-                    models.DateTimeField(
-                        auto_now_add=True, help_text="When this record was created"
-                    ),
-                ),
-                (
-                    "updated_at",
-                    models.DateTimeField(
-                        auto_now=True, help_text="When this record was last updated"
-                    ),
-                ),
-                ("title", models.CharField(max_length=255)),
-                ("description", models.TextField(blank=True)),
-                (
-                    "severity",
-                    models.CharField(
-                        choices=[
-                            ("critical", "Critical"),
-                            ("warning", "Warning"),
-                            ("success", "Success"),
-                        ],
-                        default="warning",
-                        max_length=20,
-                    ),
-                ),
-                ("is_active", models.BooleanField(default=True)),
-                ("sort_order", models.PositiveIntegerField(default=0)),
-                (
-                    "branch",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="daily_action_templates",
-                        to="user.branch",
-                    ),
-                ),
-                (
-                    "created_by",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="created_daily_action_templates",
-                        to=settings.AUTH_USER_MODEL,
-                    ),
-                ),
-                (
-                    "default_owner",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="default_daily_action_templates",
-                        to="user.employee",
-                    ),
-                ),
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('created_at', models.DateTimeField(auto_now_add=True, help_text='When this record was created')),
+                ('updated_at', models.DateTimeField(auto_now=True, help_text='When this record was last updated')),
+                ('title', models.CharField(max_length=255)),
+                ('description', models.TextField(blank=True)),
+                ('severity', models.CharField(choices=[('critical', 'Critical'), ('warning', 'Warning'), ('success', 'Success')], default='warning', max_length=20)),
+                ('is_active', models.BooleanField(default=True)),
+                ('sort_order', models.PositiveIntegerField(default=0)),
+                ('branch', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='daily_action_templates', to='user.branch')),
+                ('created_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='created_daily_action_templates', to=settings.AUTH_USER_MODEL)),
+                ('default_owner', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='default_daily_action_templates', to='user.employee')),
             ],
             options={
-                "ordering": ["sort_order", "title"],
+                'ordering': ['sort_order', 'title'],
             },
         ),
         migrations.CreateModel(
-            name="DailyExecutionDay",
+            name='DailyExecutionDay',
             fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                (
-                    "created_at",
-                    models.DateTimeField(
-                        auto_now_add=True, help_text="When this record was created"
-                    ),
-                ),
-                (
-                    "updated_at",
-                    models.DateTimeField(
-                        auto_now=True, help_text="When this record was last updated"
-                    ),
-                ),
-                ("date", models.DateField()),
-                ("opened_at", models.DateTimeField(default=django.utils.timezone.now)),
-                (
-                    "branch",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="daily_execution_days",
-                        to="user.branch",
-                    ),
-                ),
-                (
-                    "opened_by",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="opened_daily_execution_days",
-                        to=settings.AUTH_USER_MODEL,
-                    ),
-                ),
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('created_at', models.DateTimeField(auto_now_add=True, help_text='When this record was created')),
+                ('updated_at', models.DateTimeField(auto_now=True, help_text='When this record was last updated')),
+                ('date', models.DateField()),
+                ('opened_at', models.DateTimeField(default=django.utils.timezone.now)),
+                ('branch', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='daily_execution_days', to='user.branch')),
+                ('opened_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='opened_daily_execution_days', to=settings.AUTH_USER_MODEL)),
             ],
             options={
-                "ordering": ["-date"],
+                'ordering': ['-date'],
             },
         ),
         migrations.CreateModel(
-            name="DailyActionInstance",
+            name='DailyActionInstance',
             fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                (
-                    "created_at",
-                    models.DateTimeField(
-                        auto_now_add=True, help_text="When this record was created"
-                    ),
-                ),
-                (
-                    "updated_at",
-                    models.DateTimeField(
-                        auto_now=True, help_text="When this record was last updated"
-                    ),
-                ),
-                ("title", models.CharField(max_length=255)),
-                ("description", models.TextField(blank=True)),
-                (
-                    "severity",
-                    models.CharField(
-                        choices=[
-                            ("critical", "Critical"),
-                            ("warning", "Warning"),
-                            ("success", "Success"),
-                        ],
-                        default="warning",
-                        max_length=20,
-                    ),
-                ),
-                (
-                    "status",
-                    models.CharField(
-                        choices=[("open", "Open"), ("completed", "Completed")],
-                        default="open",
-                        max_length=20,
-                    ),
-                ),
-                ("due_at", models.DateTimeField(blank=True, null=True)),
-                ("completed_at", models.DateTimeField(blank=True, null=True)),
-                ("completion_note", models.TextField(blank=True)),
-                ("sort_order", models.PositiveIntegerField(default=0)),
-                (
-                    "completed_by",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="completed_daily_action_instances",
-                        to=settings.AUTH_USER_MODEL,
-                    ),
-                ),
-                (
-                    "owner",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="daily_action_instances",
-                        to="user.employee",
-                    ),
-                ),
-                (
-                    "template",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="instances",
-                        to="services.dailyactiontemplate",
-                    ),
-                ),
-                (
-                    "day",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        related_name="actions",
-                        to="services.dailyexecutionday",
-                    ),
-                ),
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('created_at', models.DateTimeField(auto_now_add=True, help_text='When this record was created')),
+                ('updated_at', models.DateTimeField(auto_now=True, help_text='When this record was last updated')),
+                ('title', models.CharField(max_length=255)),
+                ('description', models.TextField(blank=True)),
+                ('severity', models.CharField(choices=[('critical', 'Critical'), ('warning', 'Warning'), ('success', 'Success')], default='warning', max_length=20)),
+                ('status', models.CharField(choices=[('open', 'Open'), ('completed', 'Completed')], default='open', max_length=20)),
+                ('due_at', models.DateTimeField(blank=True, null=True)),
+                ('completed_at', models.DateTimeField(blank=True, null=True)),
+                ('completion_note', models.TextField(blank=True)),
+                ('sort_order', models.PositiveIntegerField(default=0)),
+                ('completed_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='completed_daily_action_instances', to=settings.AUTH_USER_MODEL)),
+                ('owner', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='daily_action_instances', to='user.employee')),
+                ('template', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='instances', to='services.dailyactiontemplate')),
+                ('day', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='actions', to='services.dailyexecutionday')),
             ],
             options={
-                "ordering": ["sort_order", "created_at"],
+                'ordering': ['sort_order', 'created_at'],
             },
         ),
         migrations.AddIndex(
-            model_name="dailyactiontemplate",
-            index=models.Index(
-                fields=["is_active", "sort_order"],
-                name="services_da_is_acti_e07e40_idx",
-            ),
+            model_name='dailyactiontemplate',
+            index=models.Index(fields=['is_active', 'sort_order'], name='services_da_is_acti_e07e40_idx'),
         ),
         migrations.AddIndex(
-            model_name="dailyactiontemplate",
-            index=models.Index(
-                fields=["branch"], name="services_da_branch__70b960_idx"
-            ),
+            model_name='dailyactiontemplate',
+            index=models.Index(fields=['branch'], name='services_da_branch__70b960_idx'),
         ),
         migrations.AddIndex(
-            model_name="dailyactiontemplate",
-            index=models.Index(
-                fields=["default_owner"], name="services_da_default_06124d_idx"
-            ),
+            model_name='dailyactiontemplate',
+            index=models.Index(fields=['default_owner'], name='services_da_default_06124d_idx'),
         ),
         migrations.AddIndex(
-            model_name="dailyexecutionday",
-            index=models.Index(fields=["date"], name="services_da_date_bff4fa_idx"),
+            model_name='dailyexecutionday',
+            index=models.Index(fields=['date'], name='services_da_date_bff4fa_idx'),
         ),
         migrations.AddIndex(
-            model_name="dailyexecutionday",
-            index=models.Index(
-                fields=["branch", "date"], name="services_da_branch__b3118a_idx"
-            ),
+            model_name='dailyexecutionday',
+            index=models.Index(fields=['branch', 'date'], name='services_da_branch__b3118a_idx'),
         ),
         migrations.AlterUniqueTogether(
-            name="dailyexecutionday",
-            unique_together={("date", "branch")},
+            name='dailyexecutionday',
+            unique_together={('date', 'branch')},
         ),
         migrations.AddIndex(
-            model_name="dailyactioninstance",
-            index=models.Index(
-                fields=["day", "status"], name="services_da_day_id_160eec_idx"
-            ),
+            model_name='dailyactioninstance',
+            index=models.Index(fields=['day', 'status'], name='services_da_day_id_160eec_idx'),
         ),
         migrations.AddIndex(
-            model_name="dailyactioninstance",
-            index=models.Index(fields=["owner"], name="services_da_owner_i_c60620_idx"),
+            model_name='dailyactioninstance',
+            index=models.Index(fields=['owner'], name='services_da_owner_i_c60620_idx'),
         ),
         migrations.AddIndex(
-            model_name="dailyactioninstance",
-            index=models.Index(
-                fields=["template"], name="services_da_templat_080ce7_idx"
-            ),
+            model_name='dailyactioninstance',
+            index=models.Index(fields=['template'], name='services_da_templat_080ce7_idx'),
         ),
         migrations.AddIndex(
-            model_name="dailyactioninstance",
-            index=models.Index(
-                fields=["completed_at"], name="services_da_complet_aa284c_idx"
-            ),
+            model_name='dailyactioninstance',
+            index=models.Index(fields=['completed_at'], name='services_da_complet_aa284c_idx'),
         ),
         migrations.AlterUniqueTogether(
-            name="dailyactioninstance",
-            unique_together={("day", "template")},
+            name='dailyactioninstance',
+            unique_together={('day', 'template')},
         ),
     ]

@@ -6,19 +6,17 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("hr", "0003_remove_payroll_payroll_employe_87d660_idx_and_more"),
-        ("user", "0047_alter_branch_branch_role_alter_review_review_date"),
+        ('hr', '0003_remove_payroll_payroll_employe_87d660_idx_and_more'),
+        ('user', '0047_alter_branch_branch_role_alter_review_review_date'),
     ]
 
     operations = [
         migrations.AlterUniqueTogether(
-            name="payroll",
-            unique_together={("employee", "period_date")},
+            name='payroll',
+            unique_together={('employee', 'period_date')},
         ),
         migrations.AddIndex(
-            model_name="payroll",
-            index=models.Index(
-                fields=["employee", "period_date"], name="payroll_employe_40ebf6_idx"
-            ),
+            model_name='payroll',
+            index=models.Index(fields=['employee', 'period_date'], name='payroll_employe_40ebf6_idx'),
         ),
     ]

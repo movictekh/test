@@ -10,138 +10,88 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("finance", "0003_financeaccount_opening_balance_and_more"),
-        ("services", "0035_payment_finance_account_and_proof"),
-        ("user", "0096_paymentsubmission_finance_metadata"),
+        ('finance', '0003_financeaccount_opening_balance_and_more'),
+        ('services', '0035_payment_finance_account_and_proof'),
+        ('user', '0096_paymentsubmission_finance_metadata'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddField(
-            model_name="expense",
-            name="beneficiary",
-            field=models.CharField(blank=True, default="", max_length=120),
+            model_name='expense',
+            name='beneficiary',
+            field=models.CharField(blank=True, default='', max_length=120),
         ),
         migrations.AddField(
-            model_name="expense",
-            name="billable",
+            model_name='expense',
+            name='billable',
             field=models.BooleanField(default=False),
         ),
         migrations.AddField(
-            model_name="expense",
-            name="branch",
-            field=models.ForeignKey(
-                blank=True,
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                related_name="expenses",
-                to="user.branch",
-            ),
+            model_name='expense',
+            name='branch',
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='expenses', to='user.branch'),
         ),
         migrations.AddField(
-            model_name="expense",
-            name="client_visible",
+            model_name='expense',
+            name='client_visible',
             field=models.BooleanField(default=False),
         ),
         migrations.AddField(
-            model_name="expense",
-            name="cost_type",
-            field=models.CharField(
-                choices=[
-                    ("direct_cost", "Direct Cost"),
-                    ("operating_expense", "Operating Expense"),
-                    ("overhead_allocation", "Overhead Allocation"),
-                    ("capital_expenditure", "Capital Expenditure"),
-                ],
-                default="operating_expense",
-                max_length=30,
-            ),
+            model_name='expense',
+            name='cost_type',
+            field=models.CharField(choices=[('direct_cost', 'Direct Cost'), ('operating_expense', 'Operating Expense'), ('overhead_allocation', 'Overhead Allocation'), ('capital_expenditure', 'Capital Expenditure')], default='operating_expense', max_length=30),
         ),
         migrations.AddField(
-            model_name="expense",
-            name="expense_number",
-            field=models.CharField(
-                blank=True, editable=False, max_length=50, null=True, unique=True
-            ),
+            model_name='expense',
+            name='expense_number',
+            field=models.CharField(blank=True, editable=False, max_length=50, null=True, unique=True),
         ),
         migrations.AddField(
-            model_name="expense",
-            name="finance_account",
-            field=models.ForeignKey(
-                blank=True,
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                related_name="expenses",
-                to="finance.financeaccount",
-            ),
+            model_name='expense',
+            name='finance_account',
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='expenses', to='finance.financeaccount'),
         ),
         migrations.AddField(
-            model_name="expense",
-            name="paid_at",
+            model_name='expense',
+            name='paid_at',
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name="expense",
-            name="project_name",
-            field=models.CharField(blank=True, default="", max_length=255),
+            model_name='expense',
+            name='project_name',
+            field=models.CharField(blank=True, default='', max_length=255),
         ),
         migrations.AddField(
-            model_name="expense",
-            name="service_order",
-            field=models.ForeignKey(
-                blank=True,
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                related_name="expenses",
-                to="services.serviceorder",
-            ),
+            model_name='expense',
+            name='service_order',
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='expenses', to='services.serviceorder'),
         ),
         migrations.AddField(
-            model_name="expense",
-            name="stage",
-            field=models.CharField(blank=True, default="", max_length=120),
+            model_name='expense',
+            name='stage',
+            field=models.CharField(blank=True, default='', max_length=120),
         ),
         migrations.AlterField(
-            model_name="expense",
-            name="amount",
-            field=models.DecimalField(
-                decimal_places=2,
-                max_digits=15,
-                validators=[django.core.validators.MinValueValidator(Decimal("0.01"))],
-            ),
+            model_name='expense',
+            name='amount',
+            field=models.DecimalField(decimal_places=2, max_digits=15, validators=[django.core.validators.MinValueValidator(Decimal('0.01'))]),
         ),
         migrations.AlterField(
-            model_name="expense",
-            name="status",
-            field=models.CharField(
-                choices=[
-                    ("pending", "Pending"),
-                    ("approved", "Approved"),
-                    ("rejected", "Rejected"),
-                    ("paid", "Paid"),
-                ],
-                default="pending",
-                max_length=20,
-            ),
+            model_name='expense',
+            name='status',
+            field=models.CharField(choices=[('pending', 'Pending'), ('approved', 'Approved'), ('rejected', 'Rejected'), ('paid', 'Paid')], default='pending', max_length=20),
         ),
         migrations.AddIndex(
-            model_name="expense",
-            index=models.Index(
-                fields=["service_order", "status"],
-                name="services_ex_service_07d317_idx",
-            ),
+            model_name='expense',
+            index=models.Index(fields=['service_order', 'status'], name='services_ex_service_07d317_idx'),
         ),
         migrations.AddIndex(
-            model_name="expense",
-            index=models.Index(
-                fields=["finance_account", "status"],
-                name="services_ex_finance_8ba849_idx",
-            ),
+            model_name='expense',
+            index=models.Index(fields=['finance_account', 'status'], name='services_ex_finance_8ba849_idx'),
         ),
         migrations.AddIndex(
-            model_name="expense",
-            index=models.Index(
-                fields=["branch", "date"], name="services_ex_branch__26188e_idx"
-            ),
+            model_name='expense',
+            index=models.Index(fields=['branch', 'date'], name='services_ex_branch__26188e_idx'),
         ),
     ]

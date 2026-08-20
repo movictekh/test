@@ -5,12 +5,7 @@ from django.db.models import Q
 from django.core.exceptions import ValidationError
 
 from operations.models import Worksite, Project
-from ..schema.schemas import (
-    WorksiteCreateSchema,
-    WorksiteUpdateSchema,
-    WorksiteOutSchema,
-    MessageSchema,
-)
+from ..schema.schemas import WorksiteCreateSchema, WorksiteUpdateSchema, WorksiteOutSchema, MessageSchema
 from ninja.pagination import paginate, LimitOffsetPagination
 from user.utils.perm import require_permission
 
@@ -35,7 +30,8 @@ def list_worksites(
         worksites = worksites.filter(status=status)
     if search:
         worksites = worksites.filter(
-            Q(name__icontains=search) | Q(location__icontains=search)
+            Q(name__icontains=search) |
+            Q(location__icontains=search)
         )
 
     return list(worksites)
@@ -55,11 +51,11 @@ def create_worksite(request, payload: WorksiteCreateSchema):
     """Create a new worksite"""
     try:
         worksite_data = payload.dict()
-        project = get_object_or_404(Project, id=worksite_data.pop("project_id"))
+        project = get_object_or_404(Project, id=worksite_data.pop('project_id'))
         worksite = Worksite.objects.create(project=project, **worksite_data)
         return worksite
     except ValidationError as e:
-        return 400, {"detail": e.messages[0]}
+        return 400, {'detail': e.messages[0]}
 
 
 @router.put("/{worksite_id}", response={200: WorksiteOutSchema, 400: MessageSchema})
@@ -70,8 +66,8 @@ def update_worksite(request, worksite_id: int, payload: WorksiteUpdateSchema):
         worksite = get_object_or_404(Worksite, id=worksite_id)
 
         update_data = payload.dict(exclude_unset=True)
-        if "project_id" in update_data:
-            project = get_object_or_404(Project, id=update_data.pop("project_id"))
+        if 'project_id' in update_data:
+            project = get_object_or_404(Project, id=update_data.pop('project_id'))
             worksite.project = project
 
         for attr, value in update_data.items():
@@ -80,7 +76,7 @@ def update_worksite(request, worksite_id: int, payload: WorksiteUpdateSchema):
         worksite.save()
         return worksite
     except ValidationError as e:
-        return 400, {"detail": e.messages[0]}
+        return 400, {'detail': e.messages[0]}
 
 
 @router.delete("/{worksite_id}")

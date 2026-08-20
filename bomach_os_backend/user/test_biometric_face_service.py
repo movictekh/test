@@ -57,7 +57,9 @@ class BiometricFaceServiceAPITests(TestCase):
     def enable_face(self, embedding=None):
         self.employee.user.face_embedding = embedding or self.embedding
         self.employee.user.biometric_enabled = True
-        self.employee.user.save(update_fields=["face_embedding", "biometric_enabled"])
+        self.employee.user.save(
+            update_fields=["face_embedding", "biometric_enabled"]
+        )
 
     @patch(
         "user.api.v1.biometric.face_recognition_service.extract_embedding",
@@ -194,9 +196,13 @@ class BiometricFaceServiceAPITests(TestCase):
         )
 
         self.assertEqual(response.status_code, 403)
-        self.assertFalse(Attendance.objects.filter(employee=self.employee).exists())
+        self.assertFalse(
+            Attendance.objects.filter(employee=self.employee).exists()
+        )
 
-    @patch("user.api.v1.biometric.face_recognition_service.extract_embedding")
+    @patch(
+        "user.api.v1.biometric.face_recognition_service.extract_embedding"
+    )
     def test_fingerprint_setup_does_not_call_face_service(self, extract):
         fingerprint = base64.b64encode(b"fingerprint").decode("ascii")
 

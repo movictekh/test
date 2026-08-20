@@ -300,11 +300,7 @@ class DailyExecutionDayOutSchema(Schema):
 
     @staticmethod
     def resolve_actions(obj):
-        return list(
-            obj.actions.select_related(
-                "owner", "owner__user", "completed_by", "template"
-            )
-        )
+        return list(obj.actions.select_related('owner', 'owner__user', 'completed_by', 'template'))
 
 
 class OpenDailyExecutionDaySchema(Schema):
@@ -598,11 +594,7 @@ class RevenueObjectiveOutSchema(Schema):
 
     @staticmethod
     def resolve_key_results(obj):
-        return list(
-            obj.key_results.select_related(
-                "linked_employee_target", "linked_kpi_record"
-            )
-        )
+        return list(obj.key_results.select_related("linked_employee_target", "linked_kpi_record"))
 
 
 class SalesPlaybookObjectionCreateSchema(Schema):
@@ -705,13 +697,12 @@ class SalesPlaybookOutSchema(Schema):
 class SalesPlaybookDetailSchema(SalesPlaybookOutSchema):
     objections: List[SalesPlaybookObjectionOutSchema]
 
-
 class FunnelStageSchema(Schema):
     id: int
     name: str
     display_name: str
     order: int
-
+    
     @staticmethod
     def resolve_display_name(obj):
         return obj.get_name_display()
@@ -758,19 +749,19 @@ class FunnelLeadListSchema(Schema):
     source: str
     branch_name: Optional[str]
     value: Decimal
-
+    
     @staticmethod
     def resolve_lead_name(obj):
         return f"{obj.first_name} {obj.last_name}"
-
+    
     @staticmethod
     def resolve_stage(obj):
         return obj.stage.name if obj.stage else None
-
+    
     @staticmethod
     def resolve_assigned_role(obj):
         return obj.assigned_role.user.get_full_name() if obj.assigned_role else None
-
+    
     @staticmethod
     def resolve_branch_name(obj):
         return obj.branch.branch_name if obj.branch else None
@@ -819,11 +810,11 @@ class InquiryListSchema(Schema):
     channel: str
     notes: str
     created_at: datetime
-
+    
     @staticmethod
     def resolve_assigned_agent(obj):
         return obj.assigned_agent.user.get_full_name() if obj.assigned_agent else None
-
+    
     @staticmethod
     def resolve_branch_name(obj):
         return obj.branch.branch_name if obj.branch else None
@@ -847,11 +838,11 @@ class FollowUpSchema(Schema):
     status: str
     schedule_type: str
     notes: str
-
+    
     @staticmethod
     def resolve_agent(obj):
         return obj.agent.user.get_full_name() if obj.agent else None
-
+    
     @staticmethod
     def resolve_inquiry_lead_name(obj):
         return obj.inquiry.lead_name
@@ -925,23 +916,23 @@ class DealListSchema(Schema):
     notes: str
     created_at: datetime
     updated_at: datetime
-
+    
     @staticmethod
     def resolve_agent(obj):
         return obj.agent.user.get_full_name() if obj.agent else None
-
+    
     @staticmethod
     def resolve_branch_name(obj):
         return obj.branch.branch_name if obj.branch else None
-
+    
     @staticmethod
     def resolve_stage_name(obj):
         return obj.stage.name if obj.stage else None
-
+    
     @staticmethod
     def resolve_stage_slug(obj):
         return obj.stage.slug if obj.stage else None
-
+    
     @staticmethod
     def resolve_stage_color(obj):
         return obj.stage.color if obj.stage else None
@@ -977,7 +968,7 @@ class CreateDealSchema(Schema):
     property_id: Optional[int] = None
     branch_id: Optional[int] = None
     agent_id: Optional[int] = None
-    value: Decimal = Decimal("0")
+    value: Decimal = Decimal('0')
     email: Optional[str] = ""
     phone: Optional[str] = ""
     probability: Optional[int] = 0

@@ -6,16 +6,16 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("hr", "0012_remove_employee_level"),
-        ("user", "0076_user_two_factor_enabled"),
+        ('hr', '0012_remove_employee_level'),
+        ('user', '0076_user_two_factor_enabled'),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name="employee",
-            name="level",
+            model_name='employee',
+            name='level',
         ),
         migrations.DeleteModel(
-            name="EmployeeLevel",
+            name='EmployeeLevel',
         ),
     ]

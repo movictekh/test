@@ -4,28 +4,16 @@ from django.db import transaction
 from services.models.service import ServiceOrder, ServiceOrderActivity
 
 
-def create_order_from_invoice(
-    invoice,
-    created_by,
-    assigned_to_id=None,
-    due_date=None,
-    description="",
-    stage="",
-    next_action="Confirm team and mobilisation",
-):
+def create_order_from_invoice(invoice, created_by, assigned_to_id=None, due_date=None, description="", stage="", next_action="Confirm team and mobilisation"):
     if not invoice.activation_threshold_met_at:
-        raise ValidationError(
-            "Payment threshold must be met before creating a service order."
-        )
+        raise ValidationError("Payment threshold must be met before creating a service order.")
     if ServiceOrder.objects.filter(invoice=invoice).exists() or invoice.order_id:
         raise ValidationError("This invoice already has a service order.")
 
     with transaction.atomic():
         invoice = invoice.__class__.objects.select_for_update().get(id=invoice.id)
         if not invoice.activation_threshold_met_at:
-            raise ValidationError(
-                "Payment threshold must be met before creating a service order."
-            )
+            raise ValidationError("Payment threshold must be met before creating a service order.")
         if ServiceOrder.objects.filter(invoice=invoice).exists() or invoice.order_id:
             raise ValidationError("This invoice already has a service order.")
 
@@ -62,9 +50,7 @@ def create_order_from_invoice(
         if invoice.service_request:
             invoice.service_request.status = "converted"
             invoice.service_request.next_action = f"Track {order.order_number}"
-            invoice.service_request.save(
-                update_fields=["status", "next_action", "updated_at"]
-            )
+            invoice.service_request.save(update_fields=["status", "next_action", "updated_at"])
 
     return order
 

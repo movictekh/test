@@ -9,7 +9,7 @@ class NotificationOut(Schema):
     message: str
     notification_type: str
     is_read: bool
-    link: str = ""
+    link: str = ''
     metadata: dict = {}
     created_at: datetime
 

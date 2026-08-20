@@ -86,9 +86,7 @@ class RoleCareerPathAPITests(RoleAPITestMixin, TestCase):
         )
         self.assertEqual(delete_response.status_code, 200)
 
-    def test_employee_can_list_own_career_paths_and_tree_handles_branching_and_cycles(
-        self,
-    ):
+    def test_employee_can_list_own_career_paths_and_tree_handles_branching_and_cycles(self):
         employee_role = self.create_role(
             "Junior FO",
             {"role_career_paths": ["list_own"]},
@@ -164,18 +162,9 @@ class RoleCareerPathAPITests(RoleAPITestMixin, TestCase):
         first_branch = tree["paths"][0]
         self.assertEqual(first_branch["to_role"]["name"], "Field Officer")
         self.assertEqual(first_branch["children"][0]["to_role"]["name"], "Senior FO")
-        self.assertEqual(
-            first_branch["children"][0]["children"][0]["to_role"]["name"], "FO Manager"
-        )
-        self.assertTrue(
-            first_branch["children"][0]["children"][0]["children"][0]["cycle_detected"]
-        )
-        self.assertEqual(
-            first_branch["children"][0]["children"][0]["children"][0]["to_role"][
-                "name"
-            ],
-            "Junior FO",
-        )
+        self.assertEqual(first_branch["children"][0]["children"][0]["to_role"]["name"], "FO Manager")
+        self.assertTrue(first_branch["children"][0]["children"][0]["children"][0]["cycle_detected"])
+        self.assertEqual(first_branch["children"][0]["children"][0]["children"][0]["to_role"]["name"], "Junior FO")
 
         second_branch = tree["paths"][1]
         self.assertEqual(second_branch["to_role"]["name"], "QA Officer")

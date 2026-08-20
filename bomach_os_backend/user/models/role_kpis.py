@@ -32,9 +32,7 @@ class RoleKPIMetric(BaseModel):
         on_delete=models.CASCADE,
         related_name="role_assignments",
     )
-    tracking_mode = models.CharField(
-        max_length=20, choices=KPITrackingModeChoices.choices
-    )
+    tracking_mode = models.CharField(max_length=20, choices=KPITrackingModeChoices.choices)
     target_value = models.DecimalField(
         max_digits=12,
         decimal_places=2,
@@ -100,9 +98,7 @@ class EmployeeKPIRecord(BaseModel):
     )
     metric_name = models.CharField(max_length=200)
     metric_unit = models.CharField(max_length=20)
-    tracking_mode = models.CharField(
-        max_length=20, choices=KPITrackingModeChoices.choices
-    )
+    tracking_mode = models.CharField(max_length=20, choices=KPITrackingModeChoices.choices)
     target_value = models.DecimalField(
         max_digits=12,
         decimal_places=2,
@@ -155,17 +151,13 @@ class EmployeeKPIRecord(BaseModel):
 
     def clean(self):
         if self.period_end < self.period_start:
-            raise ValidationError(
-                {"period_end": "Period end must be on or after period start."}
-            )
+            raise ValidationError({"period_end": "Period end must be on or after period start."})
 
     def __str__(self):
         return f"{self.employee.employee_id}: {self.metric_name} ({self.period_start} - {self.period_end})"
 
 
-def generate_employee_kpi_records_for_role_kpis(
-    role, role_kpis, employees, period_start, period_end
-):
+def generate_employee_kpi_records_for_role_kpis(role, role_kpis, employees, period_start, period_end):
     existing_pairs = set(
         EmployeeKPIRecord.objects.filter(
             employee__in=employees,
@@ -209,7 +201,8 @@ def generate_employee_kpi_records_for_role_kpis(
 
     created_ids = [record.id for record in created_records]
     created_queryset = (
-        EmployeeKPIRecord.objects.filter(id__in=created_ids)
+        EmployeeKPIRecord.objects
+        .filter(id__in=created_ids)
         .select_related("employee__user", "metric", "role_kpi_metric", "entered_by")
         .order_by("-period_start", "sequence", "id")
     )

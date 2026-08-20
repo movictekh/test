@@ -6,24 +6,12 @@ from services.models.service import ServiceOrder
 
 class Document(models.Model):
     user = models.ForeignKey(
-        "user.User",
+        'user.User',
         on_delete=models.CASCADE,
-        related_name="svc_documents",
+        related_name='svc_documents',
     )
-    order = models.ForeignKey(
-        ServiceOrder,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="documents",
-    )
-    property = models.ForeignKey(
-        Property,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="documents",
-    )
+    order = models.ForeignKey(ServiceOrder, on_delete=models.SET_NULL, null=True, blank=True, related_name='documents')
+    property = models.ForeignKey(Property, on_delete=models.SET_NULL, null=True, blank=True, related_name='documents')
 
     title = models.CharField(max_length=255)
     file_url = models.URLField()
@@ -34,13 +22,13 @@ class Document(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ["-created_at"]
-        verbose_name = "Document"
-        verbose_name_plural = "Documents"
+        ordering = ['-created_at']
+        verbose_name = 'Document'
+        verbose_name_plural = 'Documents'
         indexes = [
-            models.Index(fields=["user", "-created_at"]),
-            models.Index(fields=["order"]),
-            models.Index(fields=["property"]),
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['order']),
+            models.Index(fields=['property']),
         ]
 
     def __str__(self):

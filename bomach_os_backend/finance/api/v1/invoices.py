@@ -15,6 +15,7 @@ from finance.api.schemas import (
 from services.models.payment import Invoice
 from user.utils.perm import require_permission
 
+
 router = Router(tags=["Finance Invoices"])
 
 
@@ -62,14 +63,13 @@ def _apply_filters(
         normalized_status = status.strip().lower()
         if normalized_status == "overdue":
             today = timezone.localdate()
-            invoices = invoices.filter(due_date__lt=today).exclude(
-                status__in=["paid", "cancelled"]
-            )
+            invoices = invoices.filter(due_date__lt=today).exclude(status__in=["paid", "cancelled"])
         else:
             invoices = invoices.filter(status=normalized_status)
     if branch_id:
         invoices = invoices.filter(
-            Q(service_request__branch_id=branch_id) | Q(order__branch_id=branch_id)
+            Q(service_request__branch_id=branch_id)
+            | Q(order__branch_id=branch_id)
         )
     if client_id:
         invoices = invoices.filter(client_id=client_id)
@@ -87,9 +87,7 @@ def _apply_filters(
         invoices = invoices.filter(due_date__lte=due_to)
     if overdue_only:
         today = timezone.localdate()
-        invoices = invoices.filter(due_date__lt=today).exclude(
-            status__in=["paid", "cancelled"]
-        )
+        invoices = invoices.filter(due_date__lt=today).exclude(status__in=["paid", "cancelled"])
     if search:
         q = search.strip()
         invoices = invoices.filter(

@@ -163,9 +163,7 @@ class RoleReportingLineAPITests(RoleAPITestMixin, TestCase):
         self.assertEqual(len(tree["direct_reports"]), 2)
         self.assertEqual(tree["direct_reports"][0]["role"]["name"], "Field Officer")
         self.assertEqual(tree["direct_reports"][1]["role"]["name"], "Sales Rep")
-        self.assertEqual(
-            tree["direct_reports"][0]["children"][0]["role"]["name"], "Junior Sales Rep"
-        )
+        self.assertEqual(tree["direct_reports"][0]["children"][0]["role"]["name"], "Junior Sales Rep")
 
     def test_rejects_invalid_direct_reporting_structures(self):
         admin_role = self.create_role(

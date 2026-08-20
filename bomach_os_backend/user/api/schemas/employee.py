@@ -136,13 +136,11 @@ class DepartmentOutSchema(Schema):
     name: str
     description: Optional[str] = None
 
-
 class DepartmentUnitOutSchema(Schema):
     id: int
     name: str
     description: Optional[str] = None
     department_id: int
-
 
 class DepartmentInSchema(Schema):
     name: str
@@ -153,7 +151,6 @@ class DepartmentUnitInSchema(Schema):
     name: str
     description: Optional[str] = None
     department_id: int
-
 
 class EmployeeOutSchema(Schema):
     # User fields
@@ -398,12 +395,8 @@ class ReviewOutSchema(Schema):
     @staticmethod
     def resolve_overall_rating(obj, context):
         ratings = [
-            obj.job_knowledge,
-            obj.communication,
-            obj.problem_solving,
-            obj.teamwork,
-            obj.initiative,
-            obj.quality_of_work,
+            obj.job_knowledge, obj.communication, obj.problem_solving,
+            obj.teamwork, obj.initiative, obj.quality_of_work,
         ]
         valid = [r for r in ratings if r is not None]
         if not valid:

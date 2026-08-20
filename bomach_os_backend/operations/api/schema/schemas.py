@@ -4,10 +4,8 @@ from datetime import date, datetime
 from decimal import Decimal
 from pydantic import Field, validator
 
-
 class MessageSchema(Schema):
     """Schema for success/error messages"""
-
     detail: str
 
 
@@ -43,9 +41,9 @@ class ProjectCreateSchema(Schema):
     client_id: int
     employee_ids: List[int] = []
     location: Optional[str] = None
-    priority: str = "medium"
+    priority: str = 'medium'
     summary: Optional[str] = None
-    status: str = "planning"
+    status: str = 'planning'
     budget: Decimal = Field(ge=0)
     progress: int = Field(default=0, ge=0, le=100)
     start_date: Optional[date] = None
@@ -93,7 +91,7 @@ class ProjectOutSchema(Schema):
 
     @staticmethod
     def resolve_employee_ids(obj):
-        return list(obj.employees.values_list("id", flat=True))
+        return list(obj.employees.values_list('id', flat=True))
 
     class Config:
         from_attributes = True
@@ -104,8 +102,8 @@ class MilestoneCreateSchema(Schema):
     project_id: int
     name: str
     description: Optional[str] = None
-    priority: str = "medium"
-    status: str = "pending"
+    priority: str = 'medium'
+    status: str = 'pending'
     budget: Optional[Decimal] = Field(default=None, ge=0)
     progress: int = Field(default=0, ge=0, le=100)
     start_date: Optional[date] = None
@@ -147,8 +145,8 @@ class TaskCreateSchema(Schema):
     milestone_id: Optional[int] = None
     name: str
     description: Optional[str] = None
-    status: str = "pending"
-    priority: str = "medium"
+    status: str = 'pending'
+    priority: str = 'medium'
     assigned_to: List[int] = []
     due_date: Optional[date] = None
     estimated_hours: Optional[Decimal] = Field(default=None, ge=0)
@@ -184,7 +182,7 @@ class TaskOutSchema(Schema):
 
     @staticmethod
     def resolve_assigned_to(obj):
-        return list(obj.assigned_to.values_list("id", flat=True))
+        return list(obj.assigned_to.values_list('id', flat=True))
 
     class Config:
         from_attributes = True
@@ -195,7 +193,7 @@ class WorksiteCreateSchema(Schema):
     project_id: int
     name: str
     location: str
-    status: str = "setup"
+    status: str = 'setup'
     description: Optional[str] = None
 
 
@@ -227,7 +225,7 @@ class ContractCreateSchema(Schema):
     name: str
     contract_number: str
     contract_type: str
-    status: str = "pending"
+    status: str = 'pending'
     value: Decimal = Field(ge=0)
     start_date: date
     end_date: date
@@ -266,7 +264,7 @@ class TimelineCreateSchema(Schema):
     project_id: int
     name: str
     description: Optional[str] = None
-    status: str = "pending"
+    status: str = 'pending'
     start_date: date
     end_date: date
 

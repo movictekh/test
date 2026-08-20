@@ -92,32 +92,17 @@ class EmployeeTarget(BaseModel):
         ]
         constraints = [
             models.UniqueConstraint(
-                fields=[
-                    "employee",
-                    "role_target_template",
-                    "period_start",
-                    "period_end",
-                ],
+                fields=["employee", "role_target_template", "period_start", "period_end"],
                 name="uniq_employee_role_template_period",
             )
         ]
 
     def clean(self):
         if self.period_end < self.period_start:
-            raise ValidationError(
-                {"period_end": "Period end must be on or after period start."}
-            )
+            raise ValidationError({"period_end": "Period end must be on or after period start."})
 
-        if (
-            self.role_target_template
-            and self.role
-            and self.role_target_template.role_id != self.role_id
-        ):
-            raise ValidationError(
-                {
-                    "role_target_template": "Target template does not belong to the selected role."
-                }
-            )
+        if self.role_target_template and self.role and self.role_target_template.role_id != self.role_id:
+            raise ValidationError({"role_target_template": "Target template does not belong to the selected role."})
 
     def __str__(self):
         return f"{self.employee.employee_id}: {self.title} ({self.period_start} - {self.period_end})"
@@ -133,16 +118,12 @@ class EmployeeTarget(BaseModel):
         return value.quantize(Decimal("0.01"))
 
     def get_remaining_value(self):
-        return max(
-            self.target_value - self.get_approved_progress_value(), Decimal("0.00")
-        )
+        return max(self.target_value - self.get_approved_progress_value(), Decimal("0.00"))
 
     def get_progress_percentage(self):
         if self.target_value == 0:
             return Decimal("100.00")
-        percentage = (self.get_approved_progress_value() / self.target_value) * Decimal(
-            "100"
-        )
+        percentage = (self.get_approved_progress_value() / self.target_value) * Decimal("100")
         return min(percentage, Decimal("100.00")).quantize(Decimal("0.01"))
 
     def get_is_completed(self):
@@ -199,28 +180,21 @@ class EmployeeTargetReport(BaseModel):
         if not self.summary or not self.summary.strip():
             raise ValidationError({"summary": "Summary is required."})
 
-        if (
-            self.employee_target_id
-            and self.progress_value > self.employee_target.target_value
-        ):
-            raise ValidationError(
-                {"progress_value": "Progress value cannot exceed the target value."}
-            )
+        if self.employee_target_id and self.progress_value > self.employee_target.target_value:
+            raise ValidationError({
+                "progress_value": "Progress value cannot exceed the target value."
+            })
 
         if self.status == self.Status.SUBMITTED:
             if self.reviewed_by_id or self.reviewed_at or self.rejection_reason:
-                raise ValidationError(
-                    "Submitted reports cannot contain review details."
-                )
+                raise ValidationError("Submitted reports cannot contain review details.")
         elif not self.reviewed_by_id or not self.reviewed_at:
             raise ValidationError("Decided reports must include reviewer details.")
 
         if self.status == self.Status.REJECTED and not self.rejection_reason.strip():
             raise ValidationError({"rejection_reason": "Rejection reason is required."})
         if self.status == self.Status.APPROVED and self.rejection_reason:
-            raise ValidationError(
-                {"rejection_reason": "Approved reports cannot have a rejection reason."}
-            )
+            raise ValidationError({"rejection_reason": "Approved reports cannot have a rejection reason."})
 
     def __str__(self):
         return f"{self.employee_target}: {self.progress_value} ({self.status})"
@@ -240,9 +214,7 @@ def with_target_progress(queryset):
     )
 
 
-def generate_employee_targets_for_templates(
-    role, templates, employees, period_start, period_end
-):
+def generate_employee_targets_for_templates(role, templates, employees, period_start, period_end):
     existing_pairs = set(
         EmployeeTarget.objects.filter(
             employee__in=employees,
@@ -283,9 +255,12 @@ def generate_employee_targets_for_templates(
         return [], skipped_count
 
     created_ids = [target.id for target in created_targets]
-    created_queryset = with_target_progress(
-        EmployeeTarget.objects.filter(id__in=created_ids).select_related(
-            "employee__user", "role_target_template"
+    created_queryset = (
+        with_target_progress(
+            EmployeeTarget.objects
+            .filter(id__in=created_ids)
+            .select_related("employee__user", "role_target_template")
         )
-    ).order_by("-period_start", "sequence", "id")
+        .order_by("-period_start", "sequence", "id")
+    )
     return list(created_queryset), skipped_count

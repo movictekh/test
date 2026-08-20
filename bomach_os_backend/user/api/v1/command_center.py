@@ -7,13 +7,8 @@ from django.utils import timezone
 from ninja import Router
 
 from user.api.schemas.command_center import (
-    ActivityFeedItem,
-    PendingApprovalsSummary,
-    ApprovalDomainSummary,
-    FinancialSummary,
-    PipelineSummary,
-    PipelineStage,
-    ActionItem,
+    ActivityFeedItem, PendingApprovalsSummary, ApprovalDomainSummary,
+    FinancialSummary, PipelineSummary, PipelineStage, ActionItem,
 )
 from user.utils.perm import require_permission
 
@@ -38,43 +33,37 @@ def get_activity_feed(request):
     items = []
 
     # Recent orders
-    for order in ServiceOrder.objects.order_by("-created_at")[:10]:
-        items.append(
-            ActivityFeedItem(
-                id=order.id,
-                type="order",
-                title=f"Order {order.order_number}",
-                description=f"Status: {order.get_order_status_display()}",
-                timestamp=order.created_at,
-                link=f"/orders/{order.id}",
-            )
-        )
+    for order in ServiceOrder.objects.order_by('-created_at')[:10]:
+        items.append(ActivityFeedItem(
+            id=order.id,
+            type='order',
+            title=f"Order {order.order_number}",
+            description=f"Status: {order.get_order_status_display()}",
+            timestamp=order.created_at,
+            link=f"/orders/{order.id}",
+        ))
 
     # Recent approval requests
-    for req in ApprovalRequest.objects.order_by("-created_at")[:10]:
-        items.append(
-            ActivityFeedItem(
-                id=req.id,
-                type="approval",
-                title=req.title,
-                description=f"Status: {req.get_status_display()}",
-                timestamp=req.created_at,
-                link=f"/approvals/requests/{req.id}",
-            )
-        )
+    for req in ApprovalRequest.objects.order_by('-created_at')[:10]:
+        items.append(ActivityFeedItem(
+            id=req.id,
+            type='approval',
+            title=req.title,
+            description=f"Status: {req.get_status_display()}",
+            timestamp=req.created_at,
+            link=f"/approvals/requests/{req.id}",
+        ))
 
     # Recent invoices
-    for inv in Invoice.objects.order_by("-created_at")[:10]:
-        items.append(
-            ActivityFeedItem(
-                id=inv.id,
-                type="invoice",
-                title=f"Invoice {inv.invoice_number}",
-                description=f"Amount: {inv.total_amount} ({inv.get_status_display()})",
-                timestamp=inv.created_at,
-                link=f"/invoices/{inv.id}",
-            )
-        )
+    for inv in Invoice.objects.order_by('-created_at')[:10]:
+        items.append(ActivityFeedItem(
+            id=inv.id,
+            type='invoice',
+            title=f"Invoice {inv.invoice_number}",
+            description=f"Amount: {inv.total_amount} ({inv.get_status_display()})",
+            timestamp=inv.created_at,
+            link=f"/invoices/{inv.id}",
+        ))
 
     # Sort by timestamp descending, take top 20
     items.sort(key=lambda x: x.timestamp, reverse=True)
@@ -92,62 +81,40 @@ def get_pending_approvals(request):
     items = []
 
     # Pending expenses
-    expense_count = Expense.objects.filter(status="pending").count()
+    expense_count = Expense.objects.filter(status='pending').count()
     if expense_count:
-        oldest = Expense.objects.filter(status="pending").order_by("created_at").first()
-        items.append(
-            ApprovalDomainSummary(
-                domain="expenses",
-                count=expense_count,
-                oldest_days=_days_since(oldest.created_at),
-            )
-        )
+        oldest = Expense.objects.filter(status='pending').order_by('created_at').first()
+        items.append(ApprovalDomainSummary(
+            domain='expenses', count=expense_count,
+            oldest_days=_days_since(oldest.created_at),
+        ))
 
     # Pending leave requests
-    leave_count = LeaveRequest.objects.filter(status="pending").count()
+    leave_count = LeaveRequest.objects.filter(status='pending').count()
     if leave_count:
-        oldest = (
-            LeaveRequest.objects.filter(status="pending").order_by("created_at").first()
-        )
-        items.append(
-            ApprovalDomainSummary(
-                domain="leave_requests",
-                count=leave_count,
-                oldest_days=_days_since(oldest.created_at),
-            )
-        )
+        oldest = LeaveRequest.objects.filter(status='pending').order_by('created_at').first()
+        items.append(ApprovalDomainSummary(
+            domain='leave_requests', count=leave_count,
+            oldest_days=_days_since(oldest.created_at),
+        ))
 
     # Quotes awaiting approval
-    quote_count = Quote.objects.filter(status="awaiting_approval").count()
+    quote_count = Quote.objects.filter(status='awaiting_approval').count()
     if quote_count:
-        oldest = (
-            Quote.objects.filter(status="awaiting_approval")
-            .order_by("created_at")
-            .first()
-        )
-        items.append(
-            ApprovalDomainSummary(
-                domain="quotes",
-                count=quote_count,
-                oldest_days=_days_since(oldest.created_at),
-            )
-        )
+        oldest = Quote.objects.filter(status='awaiting_approval').order_by('created_at').first()
+        items.append(ApprovalDomainSummary(
+            domain='quotes', count=quote_count,
+            oldest_days=_days_since(oldest.created_at),
+        ))
 
     # Orders pending
-    order_count = ServiceOrder.objects.filter(order_status="pending").count()
+    order_count = ServiceOrder.objects.filter(order_status='pending').count()
     if order_count:
-        oldest = (
-            ServiceOrder.objects.filter(order_status="pending")
-            .order_by("created_at")
-            .first()
-        )
-        items.append(
-            ApprovalDomainSummary(
-                domain="orders",
-                count=order_count,
-                oldest_days=_days_since(oldest.created_at),
-            )
-        )
+        oldest = ServiceOrder.objects.filter(order_status='pending').order_by('created_at').first()
+        items.append(ApprovalDomainSummary(
+            domain='orders', count=order_count,
+            oldest_days=_days_since(oldest.created_at),
+        ))
 
     total = sum(i.count for i in items)
     return PendingApprovalsSummary(items=items, total_pending=total)
@@ -161,27 +128,19 @@ def get_financials(request):
     from services.models.expenses import Expense
 
     revenue = Invoice.objects.filter(
-        status__in=["paid", "partially_paid"],
-    ).aggregate(
-        total=Coalesce(Sum("amount_paid"), Decimal("0"))
-    )["total"]
+        status__in=['paid', 'partially_paid'],
+    ).aggregate(total=Coalesce(Sum('amount_paid'), Decimal('0')))['total']
 
     expenses = Expense.objects.filter(
-        status="approved",
-    ).aggregate(
-        total=Coalesce(Sum("amount"), Decimal("0"))
-    )["total"]
+        status='approved',
+    ).aggregate(total=Coalesce(Sum('amount'), Decimal('0')))['total']
 
     outstanding = Invoice.objects.filter(
-        status__in=["sent", "viewed", "overdue"],
-    ).aggregate(
-        total=Coalesce(
-            Sum(F("total_amount") - F("amount_paid")),
-            Decimal("0"),
-        )
-    )[
-        "total"
-    ]
+        status__in=['sent', 'viewed', 'overdue'],
+    ).aggregate(total=Coalesce(
+        Sum(F('total_amount') - F('amount_paid')),
+        Decimal('0'),
+    ))['total']
 
     margin_pct = 0.0
     if revenue > 0:
@@ -202,11 +161,11 @@ def get_pipeline(request):
     from services.models.service import ServiceOrder, Quote
 
     status_map = {
-        "pending": "Pending",
-        "accepted": "Accepted",
-        "in_progress": "In Progress",
-        "completed": "Completed",
-        "cancelled": "Cancelled",
+        'pending': 'Pending',
+        'accepted': 'Accepted',
+        'in_progress': 'In Progress',
+        'completed': 'Completed',
+        'cancelled': 'Cancelled',
     }
 
     stages = []
@@ -214,16 +173,12 @@ def get_pipeline(request):
         count = ServiceOrder.objects.filter(order_status=status).count()
         value = ServiceOrder.objects.filter(
             order_status=status,
-        ).aggregate(
-            total=Coalesce(Sum("amount"), Decimal("0"))
-        )["total"]
+        ).aggregate(total=Coalesce(Sum('amount'), Decimal('0')))['total']
         stages.append(PipelineStage(name=label, count=count, value=value))
 
     total_quotes = Quote.objects.count()
     converted = Quote.objects.filter(orders__isnull=False).distinct().count()
-    conversion_rate = (
-        round((converted / total_quotes * 100), 2) if total_quotes else 0.0
-    )
+    conversion_rate = round((converted / total_quotes * 100), 2) if total_quotes else 0.0
 
     return PipelineSummary(stages=stages, conversion_rate=conversion_rate)
 
@@ -239,38 +194,32 @@ def get_action_items(request):
 
     # My pending approval requests
     for req in ApprovalRequest.objects.filter(
-        status="pending",
-    ).order_by(
-        "-created_at"
-    )[:10]:
-        items.append(
-            ActionItem(
-                id=req.id,
-                type="approval",
-                title=req.title,
-                description=req.description or "",
-                link=f"/approvals/requests/{req.id}",
-                priority="high",
-            )
-        )
+        status='pending',
+    ).order_by('-created_at')[:10]:
+        items.append(ActionItem(
+            id=req.id,
+            type='approval',
+            title=req.title,
+            description=req.description or '',
+            link=f"/approvals/requests/{req.id}",
+            priority='high',
+        ))
 
     # Active orders assigned to me
-    if hasattr(request.user, "employee_profile"):
+    if hasattr(request.user, 'employee_profile'):
         emp = request.user.employee_profile
         for order in ServiceOrder.objects.filter(
             assigned_to=emp,
-            order_status="in_progress",
-        ).order_by("-created_at")[:10]:
-            items.append(
-                ActionItem(
-                    id=order.id,
-                    type="order",
-                    title=f"Order {order.order_number}",
-                    description=order.description[:100],
-                    due_date=getattr(order, "due_date", None),
-                    link=f"/orders/{order.id}",
-                    priority="normal",
-                )
-            )
+            order_status='in_progress',
+        ).order_by('-created_at')[:10]:
+            items.append(ActionItem(
+                id=order.id,
+                type='order',
+                title=f"Order {order.order_number}",
+                description=order.description[:100],
+                due_date=getattr(order, 'due_date', None),
+                link=f"/orders/{order.id}",
+                priority='normal',
+            ))
 
     return items

@@ -11,9 +11,7 @@ from user.services.jwt_service import JWTService
 
 
 class RoleAPITestMixin:
-    def create_user_with_employee(
-        self, email: str, username: str, employee_id: str, role: Role = None
-    ) -> Employee:
+    def create_user_with_employee(self, email: str, username: str, employee_id: str, role: Role = None) -> Employee:
         user = User.objects.create_user(
             email=email,
             username=username,
@@ -35,9 +33,7 @@ class RoleAPITestMixin:
 
 
 class TrainingProgramFactoryMixin:
-    def create_training_program(
-        self, name: str, provider: str = "Internal Academy"
-    ) -> TrainingProgram:
+    def create_training_program(self, name: str, provider: str = "Internal Academy") -> TrainingProgram:
         return TrainingProgram.objects.create(
             program_name=name,
             provider=provider,
@@ -55,9 +51,7 @@ class SOPFactoryMixin:
         department, _ = Department.objects.get_or_create(name="operations")
         return department
 
-    def create_sop(
-        self, title: str, priority: str = "High", is_up_to_date: bool = True
-    ) -> SOP:
+    def create_sop(self, title: str, priority: str = "High", is_up_to_date: bool = True) -> SOP:
         return SOP.objects.create(
             title=title,
             description=f"{title} procedure",
@@ -70,6 +64,4 @@ class SOPFactoryMixin:
 
 class KPIMetricFactoryMixin:
     def create_metric(self, name: str, unit: str = "count") -> KPIMetric:
-        return KPIMetric.objects.create(
-            name=name, description=f"{name} metric", unit=unit
-        )
+        return KPIMetric.objects.create(name=name, description=f"{name} metric", unit=unit)

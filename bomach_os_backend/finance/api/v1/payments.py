@@ -19,18 +19,21 @@ from services.models.payment import Invoice, Payment
 from user.models.client_service import PaymentSubmission
 from user.utils.perm import require_permission
 
+
 router = Router(tags=["Finance Payments"])
 
 
 def _branch_filter(branch_ids):
-    return Q(invoice__service_request__branch_id__in=branch_ids) | Q(
-        invoice__order__branch_id__in=branch_ids
+    return (
+        Q(invoice__service_request__branch_id__in=branch_ids)
+        | Q(invoice__order__branch_id__in=branch_ids)
     )
 
 
 def _invoice_branch_filter(branch_ids):
-    return Q(service_request__branch_id__in=branch_ids) | Q(
-        order__branch_id__in=branch_ids
+    return (
+        Q(service_request__branch_id__in=branch_ids)
+        | Q(order__branch_id__in=branch_ids)
     )
 
 
@@ -138,22 +141,14 @@ def list_payment_submissions(
     return submissions.distinct().order_by("-created_at")
 
 
-@router.get(
-    "/payments/submissions/{submission_id}",
-    response={200: FinancePaymentSubmissionOut, 404: MessageSchema},
-)
+@router.get("/payments/submissions/{submission_id}", response={200: FinancePaymentSubmissionOut, 404: MessageSchema})
 @require_permission("payments", "view")
 def get_payment_submission(request, submission_id: int):
-    submission = get_object_or_404(
-        _apply_branch_scope(request, _submission_queryset()), id=submission_id
-    )
+    submission = get_object_or_404(_apply_branch_scope(request, _submission_queryset()), id=submission_id)
     return 200, submission
 
 
-@router.post(
-    "/payments/submissions",
-    response={201: FinancePaymentSubmissionOut, 400: MessageSchema, 404: MessageSchema},
-)
+@router.post("/payments/submissions", response={201: FinancePaymentSubmissionOut, 400: MessageSchema, 404: MessageSchema})
 @require_permission("payments", "create")
 def create_staff_payment_submission(request, payload: FinancePaymentSubmissionIn):
     try:
@@ -172,9 +167,7 @@ def create_staff_payment_submission(request, payload: FinancePaymentSubmissionIn
             client=invoice.client,
             status=PaymentSubmission.STATUS.PENDING,
         ).exists():
-            return 400, {
-                "detail": "There is already a pending submission for this invoice and client."
-            }
+            return 400, {"detail": "There is already a pending submission for this invoice and client."}
         submission = PaymentSubmission.objects.create(
             invoice=invoice,
             client=invoice.client,
@@ -193,18 +186,11 @@ def create_staff_payment_submission(request, payload: FinancePaymentSubmissionIn
         return 400, handle_payment_exception(exc)
 
 
-@router.post(
-    "/payments/submissions/{submission_id}/review",
-    response={200: FinancePaymentSubmissionOut, 400: MessageSchema, 404: MessageSchema},
-)
+@router.post("/payments/submissions/{submission_id}/review", response={200: FinancePaymentSubmissionOut, 400: MessageSchema, 404: MessageSchema})
 @require_permission("payments", "create")
-def review_finance_payment_submission(
-    request, submission_id: int, payload: FinancePaymentSubmissionReviewIn
-):
+def review_finance_payment_submission(request, submission_id: int, payload: FinancePaymentSubmissionReviewIn):
     try:
-        submission = get_object_or_404(
-            _apply_branch_scope(request, _submission_queryset()), id=submission_id
-        )
+        submission = get_object_or_404(_apply_branch_scope(request, _submission_queryset()), id=submission_id)
         if payload.finance_account_id:
             _get_scoped_active_account(request, payload.finance_account_id)
         reviewed = review_payment_submission(
@@ -262,13 +248,8 @@ def list_confirmed_payments(
     return payments.distinct().order_by("-payment_date", "-created_at")
 
 
-@router.get(
-    "/payments/confirmed/{payment_id}",
-    response={200: ConfirmedFinancePaymentOut, 404: MessageSchema},
-)
+@router.get("/payments/confirmed/{payment_id}", response={200: ConfirmedFinancePaymentOut, 404: MessageSchema})
 @require_permission("payments", "view")
 def get_confirmed_payment(request, payment_id: int):
-    payment = get_object_or_404(
-        _apply_branch_scope(request, _payment_queryset()), id=payment_id
-    )
+    payment = get_object_or_404(_apply_branch_scope(request, _payment_queryset()), id=payment_id)
     return 200, payment

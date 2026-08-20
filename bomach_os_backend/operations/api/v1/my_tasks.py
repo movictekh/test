@@ -16,16 +16,13 @@ VALID_STATUSES = {s[0] for s in Task.STATUS_CHOICES}
 @router.get("", response=List[TaskOutSchema])
 @paginate(LimitOffsetPagination, page_size=10)
 @require_permission("tasks", "list", owner_lookup="assigned_to")
-def list_my_tasks(
-    request,
-    status: str = None,
-):
+def list_my_tasks(request, status: str = None, ):
     """List tasks assigned to the logged-in employee, with optional status filter."""
     employee = request._perm_employee
     tasks = Task.objects.filter(assigned_to=employee)
 
     if status:
-        tasks = tasks.filter(status=status).order_by("due_date", "-priority")
+        tasks = tasks.filter(status=status).order_by('due_date', '-priority')
 
     return list(tasks)
 
@@ -54,9 +51,7 @@ def update_my_task_status(request, task_id: int, payload: TaskStatusUpdateSchema
         raise HttpError(403, "You do not have permission to update this task.")
 
     if payload.status not in VALID_STATUSES:
-        return 400, {
-            "detail": f"Invalid status. Must be one of: {', '.join(VALID_STATUSES)}"
-        }
+        return 400, {"detail": f"Invalid status. Must be one of: {', '.join(VALID_STATUSES)}"}
 
     task.status = payload.status
     task.save()

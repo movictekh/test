@@ -7,30 +7,22 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("services", "0011_lead_first_response_at_lead_first_response_due_at_and_more"),
-        ("user", "0093_employeetargetreport"),
+        ('services', '0011_lead_first_response_at_lead_first_response_due_at_and_more'),
+        ('user', '0093_employeetargetreport'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AlterUniqueTogether(
-            name="dailyexecutionday",
+            name='dailyexecutionday',
             unique_together=set(),
         ),
         migrations.AddConstraint(
-            model_name="dailyexecutionday",
-            constraint=models.UniqueConstraint(
-                condition=models.Q(("branch__isnull", True)),
-                fields=("date",),
-                name="unique_company_daily_execution_day",
-            ),
+            model_name='dailyexecutionday',
+            constraint=models.UniqueConstraint(condition=models.Q(('branch__isnull', True)), fields=('date',), name='unique_company_daily_execution_day'),
         ),
         migrations.AddConstraint(
-            model_name="dailyexecutionday",
-            constraint=models.UniqueConstraint(
-                condition=models.Q(("branch__isnull", False)),
-                fields=("date", "branch"),
-                name="unique_branch_daily_execution_day",
-            ),
+            model_name='dailyexecutionday',
+            constraint=models.UniqueConstraint(condition=models.Q(('branch__isnull', False)), fields=('date', 'branch'), name='unique_branch_daily_execution_day'),
         ),
     ]

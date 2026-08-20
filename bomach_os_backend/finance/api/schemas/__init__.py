@@ -43,11 +43,7 @@ from finance.api.schemas.expenses import (
     FinanceExpenseRejectIn,
     FinanceExpenseUpdate,
 )
-from finance.api.schemas.invoices import (
-    FinanceInvoiceOut,
-    FinanceInvoiceSummaryOut,
-    finance_invoice_status,
-)
+from finance.api.schemas.invoices import FinanceInvoiceOut, FinanceInvoiceSummaryOut, finance_invoice_status
 from finance.api.schemas.payroll import (
     PayrollCancelIn,
     PayrollLineItemOut,

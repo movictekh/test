@@ -8,17 +8,11 @@ from ninja import Query, Router
 from ninja.pagination import LimitOffsetPagination, paginate
 
 from finance.api.schemas import CashbookRowOut, CashbookSummaryOut
-from finance.models import (
-    FinanceAccount,
-    PayrollRun,
-    PettyCashAdvance,
-    PettyCashRetirementLine,
-    StatutoryObligation,
-    VendorBill,
-)
+from finance.models import FinanceAccount, PayrollRun, PettyCashAdvance, PettyCashRetirementLine, StatutoryObligation, VendorBill
 from services.models.expenses import Expense
 from services.models.payment import Payment
 from user.utils.perm import require_permission
+
 
 router = Router(tags=["Finance Cashbook"])
 
@@ -142,10 +136,7 @@ def _account_scope(request, finance_account_id=None, branch_id=None):
 def _opening_balance(request, finance_account_id=None, branch_id=None, start_date=None):
     accounts = _account_scope(request, finance_account_id, branch_id)
     if start_date:
-        accounts = accounts.filter(
-            Q(opening_balance_date__lte=start_date)
-            | Q(opening_balance_date__isnull=True)
-        )
+        accounts = accounts.filter(Q(opening_balance_date__lte=start_date) | Q(opening_balance_date__isnull=True))
     return _money(accounts.aggregate(total=Sum("opening_balance"))["total"])
 
 
@@ -204,6 +195,7 @@ def _vendor_bill_queryset(request):
     return bills
 
 
+
 def _payroll_queryset(request):
     payroll_runs = PayrollRun.objects.select_related(
         "branch",
@@ -217,19 +209,14 @@ def _payroll_queryset(request):
     branch_ids = getattr(request, "_perm_branch_ids", [])
     if getattr(request, "_perm_scope", "branches") != "company" and branch_ids:
         payroll_runs = payroll_runs.filter(
-            Q(branch_id__in=branch_ids) | Q(finance_account__branch_id__in=branch_ids)
+            Q(branch_id__in=branch_ids)
+            | Q(finance_account__branch_id__in=branch_ids)
         )
     return payroll_runs
 
 
 def _statutory_queryset(request):
-    qs = StatutoryObligation.objects.select_related(
-        "branch", "finance_account", "finance_account__branch"
-    ).filter(
-        status=StatutoryObligation.STATUS.PAID,
-        paid_at__isnull=False,
-        finance_account__isnull=False,
-    )
+    qs = StatutoryObligation.objects.select_related("branch", "finance_account", "finance_account__branch").filter(status=StatutoryObligation.STATUS.PAID, paid_at__isnull=False, finance_account__isnull=False)
     branch_ids = getattr(request, "_perm_branch_ids", [])
     if getattr(request, "_perm_scope", "branches") != "company" and branch_ids:
         qs = qs.filter(branch_id__in=branch_ids)
@@ -319,7 +306,8 @@ def _build_cashbook_rows(
     if date_to:
         payments = payments.filter(payment_date__lte=date_to)
         expenses = expenses.filter(
-            Q(paid_at__date__lte=date_to) | Q(paid_at__isnull=True, date__lte=date_to)
+            Q(paid_at__date__lte=date_to)
+            | Q(paid_at__isnull=True, date__lte=date_to)
         )
         vendor_bills = vendor_bills.filter(paid_at__date__lte=date_to)
         payroll_runs = payroll_runs.filter(paid_at__date__lte=date_to)
@@ -331,15 +319,9 @@ def _build_cashbook_rows(
         expenses = expenses.filter(finance_account_id=finance_account_id)
         vendor_bills = vendor_bills.filter(finance_account_id=finance_account_id)
         payroll_runs = payroll_runs.filter(finance_account_id=finance_account_id)
-        statutory_obligations = statutory_obligations.filter(
-            finance_account_id=finance_account_id
-        )
-        petty_cash_advances = petty_cash_advances.filter(
-            finance_account_id=finance_account_id
-        )
-        petty_cash_returns = petty_cash_returns.filter(
-            advance__finance_account_id=finance_account_id
-        )
+        statutory_obligations = statutory_obligations.filter(finance_account_id=finance_account_id)
+        petty_cash_advances = petty_cash_advances.filter(finance_account_id=finance_account_id)
+        petty_cash_returns = petty_cash_returns.filter(advance__finance_account_id=finance_account_id)
     if branch_id:
         payments = payments.filter(
             Q(invoice__service_request__branch_id=branch_id)
@@ -357,7 +339,8 @@ def _build_cashbook_rows(
             | Q(finance_account__branch_id=branch_id)
         )
         payroll_runs = payroll_runs.filter(
-            Q(branch_id=branch_id) | Q(finance_account__branch_id=branch_id)
+            Q(branch_id=branch_id)
+            | Q(finance_account__branch_id=branch_id)
         )
         statutory_obligations = statutory_obligations.filter(branch_id=branch_id)
         petty_cash_advances = petty_cash_advances.filter(
@@ -377,26 +360,16 @@ def _build_cashbook_rows(
         vendor_bills = vendor_bills.filter(service_order_id=service_order_id)
         payroll_runs = payroll_runs.none()
         statutory_obligations = statutory_obligations.none()
-        petty_cash_advances = petty_cash_advances.filter(
-            service_order_id=service_order_id
-        )
-        petty_cash_returns = petty_cash_returns.filter(
-            Q(service_order_id=service_order_id)
-            | Q(advance__service_order_id=service_order_id)
-        )
+        petty_cash_advances = petty_cash_advances.filter(service_order_id=service_order_id)
+        petty_cash_returns = petty_cash_returns.filter(Q(service_order_id=service_order_id) | Q(advance__service_order_id=service_order_id))
     if client_id:
         payments = payments.filter(invoice__client_id=client_id)
         expenses = expenses.filter(service_order__client_id=client_id)
         vendor_bills = vendor_bills.filter(service_order__client_id=client_id)
         payroll_runs = payroll_runs.none()
         statutory_obligations = statutory_obligations.none()
-        petty_cash_advances = petty_cash_advances.filter(
-            service_order__client_id=client_id
-        )
-        petty_cash_returns = petty_cash_returns.filter(
-            Q(service_order__client_id=client_id)
-            | Q(advance__service_order__client_id=client_id)
-        )
+        petty_cash_advances = petty_cash_advances.filter(service_order__client_id=client_id)
+        petty_cash_returns = petty_cash_returns.filter(Q(service_order__client_id=client_id) | Q(advance__service_order__client_id=client_id))
     if source == "client_payment":
         statutory_obligations = statutory_obligations.none()
         expenses = expenses.none()
@@ -519,17 +492,12 @@ def _build_cashbook_rows(
         branch = _payment_branch(invoice, account)
         rows.append(
             {
-                "sort_key": (
-                    payment.payment_date,
-                    payment.created_at,
-                    f"payment-{payment.id}",
-                ),
+                "sort_key": (payment.payment_date, payment.created_at, f"payment-{payment.id}"),
                 "date": payment.payment_date,
                 "reference": payment.payment_reference,
                 "source": "client_payment",
                 "source_display": SOURCE_LABELS["client_payment"],
-                "description": payment.notes
-                or f"{_client_name(invoice.client)} payment",
+                "description": payment.notes or f"{_client_name(invoice.client)} payment",
                 "service": invoice.service.name,
                 "project": order.description if order else "",
                 "service_order_id": order.id if order else None,
@@ -558,19 +526,13 @@ def _build_cashbook_rows(
         client = order.client if order else None
         rows.append(
             {
-                "sort_key": (
-                    paid_date,
-                    expense.paid_at or expense.created_at,
-                    f"expense-{expense.id}",
-                ),
+                "sort_key": (paid_date, expense.paid_at or expense.created_at, f"expense-{expense.id}"),
                 "date": paid_date,
                 "reference": expense.expense_number,
                 "source": row_source,
                 "source_display": SOURCE_LABELS[row_source],
                 "description": expense.description,
-                "service": (
-                    order.service.name if order else expense.get_category_display()
-                ),
+                "service": order.service.name if order else expense.get_category_display(),
                 "project": expense.project_name or (order.description if order else ""),
                 "service_order_id": order.id if order else None,
                 "service_order_number": order.order_number if order else "",
@@ -595,11 +557,7 @@ def _build_cashbook_rows(
         paid_date = bill.paid_at.date() if bill.paid_at else bill.bill_date
         rows.append(
             {
-                "sort_key": (
-                    paid_date,
-                    bill.paid_at or bill.created_at,
-                    f"vendor-bill-{bill.id}",
-                ),
+                "sort_key": (paid_date, bill.paid_at or bill.created_at, f"vendor-bill-{bill.id}"),
                 "date": paid_date,
                 "reference": bill.payment_reference or bill.bill_number,
                 "source": "vendor_bill",
@@ -659,56 +617,39 @@ def _build_cashbook_rows(
             }
         )
 
+
     for obligation in statutory_obligations:
         account = obligation.finance_account
         paid_date = obligation.paid_at.date()
-        rows.append(
-            {
-                "sort_key": (
-                    paid_date,
-                    obligation.paid_at,
-                    f"statutory-{obligation.id}",
-                ),
-                "date": paid_date,
-                "reference": obligation.payment_reference
-                or obligation.obligation_number,
-                "source": "statutory",
-                "source_display": SOURCE_LABELS["statutory"],
-                "description": f"{obligation.get_obligation_type_display()} — {obligation.period_label}",
-                "service": "Tax & Statutory",
-                "project": obligation.basis,
-                "service_order_id": None,
-                "service_order_number": "",
-                "client_id": None,
-                "client_name": "",
-                "finance_account_id": account.id if account else None,
-                "finance_account_name": account.display_name if account else "",
-                "branch_id": obligation.branch_id,
-                "branch_name": (
-                    obligation.branch.branch_name if obligation.branch else ""
-                ),
-                "money_in": Decimal("0.00"),
-                "money_out": _money(obligation.amount),
-                "running_balance": Decimal("0.00"),
-                "status": "posted",
-            }
-        )
+        rows.append({
+            "sort_key": (paid_date, obligation.paid_at, f"statutory-{obligation.id}"),
+            "date": paid_date,
+            "reference": obligation.payment_reference or obligation.obligation_number,
+            "source": "statutory",
+            "source_display": SOURCE_LABELS["statutory"],
+            "description": f"{obligation.get_obligation_type_display()} — {obligation.period_label}",
+            "service": "Tax & Statutory",
+            "project": obligation.basis,
+            "service_order_id": None, "service_order_number": "",
+            "client_id": None, "client_name": "",
+            "finance_account_id": account.id if account else None,
+            "finance_account_name": account.display_name if account else "",
+            "branch_id": obligation.branch_id,
+            "branch_name": obligation.branch.branch_name if obligation.branch else "",
+            "money_in": Decimal("0.00"), "money_out": _money(obligation.amount),
+            "running_balance": Decimal("0.00"), "status": "posted",
+        })
+
 
     for advance in petty_cash_advances:
         order = advance.service_order
         account = advance.finance_account
         branch = _petty_cash_branch(advance)
         client = order.client if order else None
-        issued_date = (
-            advance.issued_at.date() if advance.issued_at else advance.created_at.date()
-        )
+        issued_date = advance.issued_at.date() if advance.issued_at else advance.created_at.date()
         rows.append(
             {
-                "sort_key": (
-                    issued_date,
-                    advance.issued_at or advance.created_at,
-                    f"petty-cash-advance-{advance.id}",
-                ),
+                "sort_key": (issued_date, advance.issued_at or advance.created_at, f"petty-cash-advance-{advance.id}"),
                 "date": issued_date,
                 "reference": advance.advance_number,
                 "source": "petty_cash_advance",
@@ -740,11 +681,7 @@ def _build_cashbook_rows(
         returned_date = line.created_at.date()
         rows.append(
             {
-                "sort_key": (
-                    returned_date,
-                    line.created_at,
-                    f"petty-cash-return-{line.id}",
-                ),
+                "sort_key": (returned_date, line.created_at, f"petty-cash-return-{line.id}"),
                 "date": returned_date,
                 "reference": advance.advance_number,
                 "source": "petty_cash_return",
@@ -889,10 +826,6 @@ def cashbook_summary(
         "closing_balance": _money(closing_balance),
         "posted_count": len(rows),
         "pending_count": 0,
-        "inflow_by_source": {
-            key: _money(value) for key, value in inflow_by_source.items()
-        },
-        "outflow_by_source": {
-            key: _money(value) for key, value in outflow_by_source.items()
-        },
+        "inflow_by_source": {key: _money(value) for key, value in inflow_by_source.items()},
+        "outflow_by_source": {key: _money(value) for key, value in outflow_by_source.items()},
     }

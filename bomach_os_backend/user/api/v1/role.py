@@ -80,23 +80,19 @@ from user.models import (
     RoleTaskTemplate,
     Unit,
 )
-from user.models.role_kpis import (
-    KPITrackingModeChoices,
-    generate_employee_kpi_records_for_role_kpis,
-)
+from user.models.role_kpis import KPITrackingModeChoices, generate_employee_kpi_records_for_role_kpis
 from user.models.role_targets import generate_employee_targets_for_templates
 from user.models.employee import Employee
 from user.models.role import Role, PERMISSIONS_MAP, get_permission_helper
 from hr.models import KPIMetric, TrainingProgram
 from user.utils.perm import check_obj_permission, require_permission
 
+
 role_api = Router(tags=["Roles"])
 
 
 def _next_sequence(model, parent_id: int, parent_field: str = "role_id") -> int:
-    current_max = model.objects.filter(**{parent_field: parent_id}).aggregate(
-        max_sequence=Max("sequence")
-    )["max_sequence"]
+    current_max = model.objects.filter(**{parent_field: parent_id}).aggregate(max_sequence=Max("sequence"))["max_sequence"]
     return (current_max or 0) + 1
 
 
@@ -213,23 +209,16 @@ def _select_related_reporting_lines(queryset):
 def _assign_reporting_line_scope(line, update_data):
     if "branch_id" in update_data:
         branch_id = update_data.pop("branch_id")
-        line.branch = (
-            get_object_or_404(Branch, id=branch_id) if branch_id is not None else None
-        )
+        line.branch = get_object_or_404(Branch, id=branch_id) if branch_id is not None else None
     if "department_id" in update_data:
         department_id = update_data.pop("department_id")
-        line.department = (
-            get_object_or_404(Department, id=department_id)
-            if department_id is not None
-            else None
-        )
+        line.department = get_object_or_404(Department, id=department_id) if department_id is not None else None
     if "unit_id" in update_data:
         unit_id = update_data.pop("unit_id")
         line.unit = get_object_or_404(Unit, id=unit_id) if unit_id is not None else None
 
 
 # ── Permissions map (for frontend checkbox grid) ────────────────────────────
-
 
 @role_api.get("/permissions-map", response=PermissionsMapSchema)
 def get_permissions_map(request):
@@ -269,7 +258,6 @@ def get_my_role_authority_limits(request):
 
 # ── Role career paths ────────────────────────────────────────────────────────
 
-
 @role_api.get(
     "/me/career-path",
     response={200: List[RoleCareerPathResponseSchema], 404: MessageSchema},
@@ -287,7 +275,8 @@ def list_my_role_career_paths(
         return 404, {"detail": "No role assigned to this employee."}
 
     paths = (
-        RoleCareerPath.objects.filter(from_role=employee.role)
+        RoleCareerPath.objects
+        .filter(from_role=employee.role)
         .select_related("to_role")
         .order_by("sequence", "id")
     )
@@ -297,9 +286,9 @@ def list_my_role_career_paths(
         paths = paths.filter(to_role_id=to_role_id)
     if search:
         paths = paths.filter(
-            Q(to_role__name__icontains=search)
-            | Q(description__icontains=search)
-            | Q(requirements__icontains=search)
+            Q(to_role__name__icontains=search) |
+            Q(description__icontains=search) |
+            Q(requirements__icontains=search)
         )
     return paths
 
@@ -315,7 +304,8 @@ def get_my_role_career_path_tree(request):
         return 404, {"detail": "No role assigned to this employee."}
 
     edges = list(
-        RoleCareerPath.objects.filter(is_active=True)
+        RoleCareerPath.objects
+        .filter(is_active=True)
         .select_related("from_role", "to_role")
         .order_by("sequence", "id")
     )
@@ -344,7 +334,8 @@ def list_role_career_paths(
 ):
     get_object_or_404(Role, id=role_id)
     paths = (
-        RoleCareerPath.objects.filter(from_role_id=role_id)
+        RoleCareerPath.objects
+        .filter(from_role_id=role_id)
         .select_related("to_role")
         .order_by("sequence", "id")
     )
@@ -354,9 +345,9 @@ def list_role_career_paths(
         paths = paths.filter(to_role_id=to_role_id)
     if search:
         paths = paths.filter(
-            Q(to_role__name__icontains=search)
-            | Q(description__icontains=search)
-            | Q(requirements__icontains=search)
+            Q(to_role__name__icontains=search) |
+            Q(description__icontains=search) |
+            Q(requirements__icontains=search)
         )
     return paths
 
@@ -369,7 +360,8 @@ def list_role_career_paths(
 def get_role_career_path_tree(request, role_id: int):
     role = get_object_or_404(Role, id=role_id)
     edges = list(
-        RoleCareerPath.objects.filter(is_active=True)
+        RoleCareerPath.objects
+        .filter(is_active=True)
         .select_related("from_role", "to_role")
         .order_by("sequence", "id")
     )
@@ -385,11 +377,7 @@ def get_role_career_path_tree(request, role_id: int):
 
 @role_api.post(
     "/{role_id}/career-path",
-    response={
-        201: RoleCareerPathResponseSchema,
-        400: MessageSchema,
-        404: MessageSchema,
-    },
+    response={201: RoleCareerPathResponseSchema, 400: MessageSchema, 404: MessageSchema},
 )
 @require_permission("role_career_paths", "create")
 def create_role_career_path(request, role_id: int, payload: RoleCareerPathCreateSchema):
@@ -402,11 +390,7 @@ def create_role_career_path(request, role_id: int, payload: RoleCareerPathCreate
             description=payload.description,
             requirements=payload.requirements,
             estimated_duration_months=payload.estimated_duration_months,
-            sequence=(
-                payload.sequence
-                if payload.sequence is not None
-                else _next_sequence(RoleCareerPath, role_id, "from_role_id")
-            ),
+            sequence=payload.sequence if payload.sequence is not None else _next_sequence(RoleCareerPath, role_id, "from_role_id"),
             is_active=payload.is_active,
         )
         path.full_clean()
@@ -419,16 +403,10 @@ def create_role_career_path(request, role_id: int, payload: RoleCareerPathCreate
 
 @role_api.patch(
     "/{role_id}/career-path/{path_id}",
-    response={
-        200: RoleCareerPathResponseSchema,
-        400: MessageSchema,
-        404: MessageSchema,
-    },
+    response={200: RoleCareerPathResponseSchema, 400: MessageSchema, 404: MessageSchema},
 )
 @require_permission("role_career_paths", "update")
-def update_role_career_path(
-    request, role_id: int, path_id: int, payload: RoleCareerPathUpdateSchema
-):
+def update_role_career_path(request, role_id: int, path_id: int, payload: RoleCareerPathUpdateSchema):
     try:
         path = get_object_or_404(RoleCareerPath, id=path_id, from_role_id=role_id)
         update_data = payload.dict(exclude_unset=True)
@@ -460,7 +438,6 @@ def delete_role_career_path(request, role_id: int, path_id: int):
 
 
 # ── Role reporting structure ────────────────────────────────────────────────
-
 
 @role_api.get(
     "/me/reporting-lines",
@@ -499,7 +476,8 @@ def list_my_role_reporting_lines(
         lines = lines.filter(unit_id=unit_id)
     if search:
         lines = lines.filter(
-            Q(role__name__icontains=search) | Q(reports_to_role__name__icontains=search)
+            Q(role__name__icontains=search) |
+            Q(reports_to_role__name__icontains=search)
         )
     return lines
 
@@ -591,7 +569,8 @@ def list_role_reporting_lines(
         lines = lines.filter(unit_id=unit_id)
     if search:
         lines = lines.filter(
-            Q(role__name__icontains=search) | Q(reports_to_role__name__icontains=search)
+            Q(role__name__icontains=search) |
+            Q(reports_to_role__name__icontains=search)
         )
     return lines
 
@@ -644,16 +623,10 @@ def get_role_reporting_tree(request, role_id: int):
 
 @role_api.post(
     "/{role_id}/reporting-lines",
-    response={
-        201: RoleReportingLineResponseSchema,
-        400: MessageSchema,
-        404: MessageSchema,
-    },
+    response={201: RoleReportingLineResponseSchema, 400: MessageSchema, 404: MessageSchema},
 )
 @require_permission("role_reporting_lines", "create")
-def create_role_reporting_line(
-    request, role_id: int, payload: RoleReportingLineCreateSchema
-):
+def create_role_reporting_line(request, role_id: int, payload: RoleReportingLineCreateSchema):
     try:
         role = get_object_or_404(Role, id=role_id)
         reports_to_role = get_object_or_404(Role, id=payload.reports_to_role_id)
@@ -678,9 +651,7 @@ def create_role_reporting_line(
         )
         line.full_clean()
         line.save()
-        line = _select_related_reporting_lines(RoleReportingLine.objects).get(
-            id=line.id
-        )
+        line = _select_related_reporting_lines(RoleReportingLine.objects).get(id=line.id)
         return 201, line
     except ValidationError as e:
         return 400, {"detail": e.messages[0] if hasattr(e, "messages") else str(e)}
@@ -688,11 +659,7 @@ def create_role_reporting_line(
 
 @role_api.patch(
     "/{role_id}/reporting-lines/{line_id}",
-    response={
-        200: RoleReportingLineResponseSchema,
-        400: MessageSchema,
-        404: MessageSchema,
-    },
+    response={200: RoleReportingLineResponseSchema, 400: MessageSchema, 404: MessageSchema},
 )
 @require_permission("role_reporting_lines", "update")
 def update_role_reporting_line(
@@ -705,13 +672,8 @@ def update_role_reporting_line(
         line = get_object_or_404(RoleReportingLine, id=line_id, role_id=role_id)
         update_data = payload.dict(exclude_unset=True)
 
-        if (
-            "reports_to_role_id" in update_data
-            and update_data["reports_to_role_id"] is not None
-        ):
-            line.reports_to_role = get_object_or_404(
-                Role, id=update_data.pop("reports_to_role_id")
-            )
+        if "reports_to_role_id" in update_data and update_data["reports_to_role_id"] is not None:
+            line.reports_to_role = get_object_or_404(Role, id=update_data.pop("reports_to_role_id"))
         _assign_reporting_line_scope(line, update_data)
 
         for field, value in update_data.items():
@@ -720,9 +682,7 @@ def update_role_reporting_line(
 
         line.full_clean()
         line.save()
-        line = _select_related_reporting_lines(RoleReportingLine.objects).get(
-            id=line.id
-        )
+        line = _select_related_reporting_lines(RoleReportingLine.objects).get(id=line.id)
         return 200, line
     except ValidationError as e:
         return 400, {"detail": e.messages[0] if hasattr(e, "messages") else str(e)}
@@ -740,7 +700,6 @@ def delete_role_reporting_line(request, role_id: int, line_id: int):
 
 
 # ── Role KPIs ────────────────────────────────────────────────────────────────
-
 
 @role_api.get(
     "/me/kpis",
@@ -761,7 +720,8 @@ def list_my_role_kpis(
         return 404, {"detail": "No role assigned to this employee."}
 
     role_kpis = (
-        RoleKPIMetric.objects.filter(role=employee.role)
+        RoleKPIMetric.objects
+        .filter(role=employee.role)
         .select_related("metric")
         .order_by("sequence", "id")
     )
@@ -775,7 +735,8 @@ def list_my_role_kpis(
         role_kpis = role_kpis.filter(is_active=is_active)
     if search:
         role_kpis = role_kpis.filter(
-            Q(metric__name__icontains=search) | Q(metric__description__icontains=search)
+            Q(metric__name__icontains=search) |
+            Q(metric__description__icontains=search)
         )
     return role_kpis
 
@@ -797,7 +758,8 @@ def list_role_kpis(
 ):
     get_object_or_404(Role, id=role_id)
     role_kpis = (
-        RoleKPIMetric.objects.filter(role_id=role_id)
+        RoleKPIMetric.objects
+        .filter(role_id=role_id)
         .select_related("metric")
         .order_by("sequence", "id")
     )
@@ -811,7 +773,8 @@ def list_role_kpis(
         role_kpis = role_kpis.filter(is_active=is_active)
     if search:
         role_kpis = role_kpis.filter(
-            Q(metric__name__icontains=search) | Q(metric__description__icontains=search)
+            Q(metric__name__icontains=search) |
+            Q(metric__description__icontains=search)
         )
     return role_kpis
 
@@ -832,11 +795,7 @@ def create_role_kpi(request, role_id: int, payload: RoleKPIMetricCreateSchema):
             target_value=payload.target_value,
             weight=payload.weight,
             period=payload.period,
-            sequence=(
-                payload.sequence
-                if payload.sequence is not None
-                else _next_sequence(RoleKPIMetric, role_id)
-            ),
+            sequence=payload.sequence if payload.sequence is not None else _next_sequence(RoleKPIMetric, role_id),
             is_active=payload.is_active,
         )
         role_kpi.full_clean()
@@ -852,17 +811,13 @@ def create_role_kpi(request, role_id: int, payload: RoleKPIMetricCreateSchema):
     response={200: RoleKPIMetricResponseSchema, 400: MessageSchema, 404: MessageSchema},
 )
 @require_permission("role_kpis", "update")
-def update_role_kpi(
-    request, role_id: int, role_kpi_id: int, payload: RoleKPIMetricUpdateSchema
-):
+def update_role_kpi(request, role_id: int, role_kpi_id: int, payload: RoleKPIMetricUpdateSchema):
     try:
         role_kpi = get_object_or_404(RoleKPIMetric, id=role_kpi_id, role_id=role_id)
         update_data = payload.dict(exclude_unset=True)
 
         if "metric_id" in update_data and update_data["metric_id"] is not None:
-            role_kpi.metric = get_object_or_404(
-                KPIMetric, id=update_data.pop("metric_id")
-            )
+            role_kpi.metric = get_object_or_404(KPIMetric, id=update_data.pop("metric_id"))
 
         for field, value in update_data.items():
             if value is not None:
@@ -889,28 +844,21 @@ def delete_role_kpi(request, role_id: int, role_kpi_id: int):
 
 @role_api.post(
     "/{role_id}/kpis/generate",
-    response={
-        200: GenerateKPIRecordsResponseSchema,
-        400: MessageSchema,
-        404: MessageSchema,
-    },
+    response={200: GenerateKPIRecordsResponseSchema, 400: MessageSchema, 404: MessageSchema},
 )
 @require_permission("employee_kpis", "create")
-def generate_role_kpi_records(
-    request, role_id: int, payload: GenerateRoleKPIRecordsSchema
-):
+def generate_role_kpi_records(request, role_id: int, payload: GenerateRoleKPIRecordsSchema):
     if payload.period_end < payload.period_start:
         return 400, {"detail": "Period end must be on or after period start."}
 
     role = get_object_or_404(Role, id=role_id)
     role_kpis = list(
-        RoleKPIMetric.objects.filter(role=role, is_active=True)
+        RoleKPIMetric.objects
+        .filter(role=role, is_active=True)
         .select_related("metric")
         .order_by("sequence", "id")
     )
-    employees = Employee.objects.filter(role=role, is_active=True).select_related(
-        "user"
-    )
+    employees = Employee.objects.filter(role=role, is_active=True).select_related("user")
     if payload.employee_user_ids:
         employees = employees.filter(user_id__in=payload.employee_user_ids)
     employees = list(employees)
@@ -931,7 +879,6 @@ def generate_role_kpi_records(
 
 # ── Role target templates ────────────────────────────────────────────────────
 
-
 @role_api.get(
     "/{role_id}/target-templates",
     response=List[RoleTargetTemplateResponseSchema],
@@ -946,9 +893,7 @@ def list_role_target_templates(
     search: Optional[str] = Query(None),
 ):
     get_object_or_404(Role, id=role_id)
-    templates = RoleTargetTemplate.objects.filter(role_id=role_id).order_by(
-        "sequence", "id"
-    )
+    templates = RoleTargetTemplate.objects.filter(role_id=role_id).order_by("sequence", "id")
 
     if period:
         templates = templates.filter(period=period)
@@ -956,9 +901,9 @@ def list_role_target_templates(
         templates = templates.filter(is_active=is_active)
     if search:
         templates = templates.filter(
-            Q(title__icontains=search)
-            | Q(description__icontains=search)
-            | Q(unit__icontains=search)
+            Q(title__icontains=search) |
+            Q(description__icontains=search) |
+            Q(unit__icontains=search)
         )
 
     return templates
@@ -966,16 +911,10 @@ def list_role_target_templates(
 
 @role_api.post(
     "/{role_id}/target-templates",
-    response={
-        201: RoleTargetTemplateResponseSchema,
-        400: MessageSchema,
-        404: MessageSchema,
-    },
+    response={201: RoleTargetTemplateResponseSchema, 400: MessageSchema, 404: MessageSchema},
 )
 @require_permission("role_target_templates", "create")
-def create_role_target_template(
-    request, role_id: int, payload: RoleTargetTemplateCreateSchema
-):
+def create_role_target_template(request, role_id: int, payload: RoleTargetTemplateCreateSchema):
     try:
         role = get_object_or_404(Role, id=role_id)
         template = RoleTargetTemplate(
@@ -985,11 +924,7 @@ def create_role_target_template(
             target_value=payload.target_value,
             unit=payload.unit,
             period=payload.period,
-            sequence=(
-                payload.sequence
-                if payload.sequence is not None
-                else _next_sequence(RoleTargetTemplate, role_id)
-            ),
+            sequence=payload.sequence if payload.sequence is not None else _next_sequence(RoleTargetTemplate, role_id),
             is_active=payload.is_active,
         )
         template.full_clean()
@@ -1001,20 +936,12 @@ def create_role_target_template(
 
 @role_api.patch(
     "/{role_id}/target-templates/{template_id}",
-    response={
-        200: RoleTargetTemplateResponseSchema,
-        400: MessageSchema,
-        404: MessageSchema,
-    },
+    response={200: RoleTargetTemplateResponseSchema, 400: MessageSchema, 404: MessageSchema},
 )
 @require_permission("role_target_templates", "update")
-def update_role_target_template(
-    request, role_id: int, template_id: int, payload: RoleTargetTemplateUpdateSchema
-):
+def update_role_target_template(request, role_id: int, template_id: int, payload: RoleTargetTemplateUpdateSchema):
     try:
-        template = get_object_or_404(
-            RoleTargetTemplate, id=template_id, role_id=role_id
-        )
+        template = get_object_or_404(RoleTargetTemplate, id=template_id, role_id=role_id)
         for field, value in payload.dict(exclude_unset=True).items():
             if value is not None:
                 setattr(template, field, value)
@@ -1038,11 +965,7 @@ def delete_role_target_template(request, role_id: int, template_id: int):
 
 @role_api.post(
     "/{role_id}/targets/generate",
-    response={
-        200: GenerateTargetsResponseSchema,
-        400: MessageSchema,
-        404: MessageSchema,
-    },
+    response={200: GenerateTargetsResponseSchema, 400: MessageSchema, 404: MessageSchema},
 )
 @require_permission("employee_targets", "create")
 def generate_role_targets(request, role_id: int, payload: GenerateRoleTargetsSchema):
@@ -1051,14 +974,12 @@ def generate_role_targets(request, role_id: int, payload: GenerateRoleTargetsSch
 
     role = get_object_or_404(Role, id=role_id)
     templates = list(
-        RoleTargetTemplate.objects.filter(role=role, is_active=True).order_by(
-            "sequence", "id"
-        )
+        RoleTargetTemplate.objects
+        .filter(role=role, is_active=True)
+        .order_by("sequence", "id")
     )
 
-    employees = Employee.objects.filter(role=role, is_active=True).select_related(
-        "user"
-    )
+    employees = Employee.objects.filter(role=role, is_active=True).select_related("user")
     if payload.employee_user_ids:
         employees = employees.filter(user_id__in=payload.employee_user_ids)
     employees = list(employees)
@@ -1079,7 +1000,6 @@ def generate_role_targets(request, role_id: int, payload: GenerateRoleTargetsSch
 
 # ── Role SOPs ────────────────────────────────────────────────────────────────
 
-
 @role_api.get(
     "/me/sops",
     response={200: List[RoleSOPResponseSchema], 404: MessageSchema},
@@ -1099,7 +1019,8 @@ def list_my_role_sops(
         return 404, {"detail": "No role assigned to this employee."}
 
     role_sops = (
-        RoleSOP.objects.filter(role=employee.role)
+        RoleSOP.objects
+        .filter(role=employee.role)
         .select_related("sop")
         .order_by("-created_at")
     )
@@ -1113,9 +1034,9 @@ def list_my_role_sops(
         role_sops = role_sops.filter(sop__is_up_to_date=is_up_to_date)
     if search:
         role_sops = role_sops.filter(
-            Q(sop__title__icontains=search)
-            | Q(sop__description__icontains=search)
-            | Q(sop__version__icontains=search)
+            Q(sop__title__icontains=search) |
+            Q(sop__description__icontains=search) |
+            Q(sop__version__icontains=search)
         )
     return role_sops
 
@@ -1137,7 +1058,8 @@ def list_role_sops(
 ):
     get_object_or_404(Role, id=role_id)
     role_sops = (
-        RoleSOP.objects.filter(role_id=role_id)
+        RoleSOP.objects
+        .filter(role_id=role_id)
         .select_related("sop")
         .order_by("-created_at")
     )
@@ -1151,9 +1073,9 @@ def list_role_sops(
         role_sops = role_sops.filter(sop__is_up_to_date=is_up_to_date)
     if search:
         role_sops = role_sops.filter(
-            Q(sop__title__icontains=search)
-            | Q(sop__description__icontains=search)
-            | Q(sop__version__icontains=search)
+            Q(sop__title__icontains=search) |
+            Q(sop__description__icontains=search) |
+            Q(sop__version__icontains=search)
         )
     return role_sops
 
@@ -1185,9 +1107,7 @@ def create_role_sop(request, role_id: int, payload: RoleSOPCreateSchema):
     response={200: RoleSOPResponseSchema, 400: MessageSchema, 404: MessageSchema},
 )
 @require_permission("role_sops", "update")
-def update_role_sop(
-    request, role_id: int, role_sop_id: int, payload: RoleSOPUpdateSchema
-):
+def update_role_sop(request, role_id: int, role_sop_id: int, payload: RoleSOPUpdateSchema):
     try:
         role_sop = get_object_or_404(RoleSOP, id=role_sop_id, role_id=role_id)
         update_data = payload.dict(exclude_unset=True)
@@ -1220,7 +1140,6 @@ def delete_role_sop(request, role_id: int, role_sop_id: int):
 
 # ── Role training requirements ───────────────────────────────────────────────
 
-
 @role_api.get(
     "/me/training-requirements",
     response={200: List[RoleTrainingRequirementResponseSchema], 404: MessageSchema},
@@ -1239,7 +1158,8 @@ def list_my_role_training_requirements(
         return 404, {"detail": "No role assigned to this employee."}
 
     requirements = (
-        RoleTrainingRequirement.objects.filter(role=employee.role)
+        RoleTrainingRequirement.objects
+        .filter(role=employee.role)
         .select_related("training_program")
         .order_by("sequence", "id")
     )
@@ -1251,9 +1171,9 @@ def list_my_role_training_requirements(
         requirements = requirements.filter(is_active=is_active)
     if search:
         requirements = requirements.filter(
-            Q(training_program__program_name__icontains=search)
-            | Q(training_program__provider__icontains=search)
-            | Q(training_program__description__icontains=search)
+            Q(training_program__program_name__icontains=search) |
+            Q(training_program__provider__icontains=search) |
+            Q(training_program__description__icontains=search)
         )
     return requirements
 
@@ -1269,7 +1189,8 @@ def list_my_role_training_requirements_grouped(request):
         return 404, {"detail": "No role assigned to this employee."}
 
     requirements = (
-        RoleTrainingRequirement.objects.filter(role=employee.role)
+        RoleTrainingRequirement.objects
+        .filter(role=employee.role)
         .select_related("training_program")
         .order_by("sequence", "id")
     )
@@ -1300,7 +1221,8 @@ def list_role_training_requirements(
 ):
     get_object_or_404(Role, id=role_id)
     requirements = (
-        RoleTrainingRequirement.objects.filter(role_id=role_id)
+        RoleTrainingRequirement.objects
+        .filter(role_id=role_id)
         .select_related("training_program")
         .order_by("sequence", "id")
     )
@@ -1312,30 +1234,22 @@ def list_role_training_requirements(
         requirements = requirements.filter(is_active=is_active)
     if search:
         requirements = requirements.filter(
-            Q(training_program__program_name__icontains=search)
-            | Q(training_program__provider__icontains=search)
-            | Q(training_program__description__icontains=search)
+            Q(training_program__program_name__icontains=search) |
+            Q(training_program__provider__icontains=search) |
+            Q(training_program__description__icontains=search)
         )
     return requirements
 
 
 @role_api.post(
     "/{role_id}/training-requirements",
-    response={
-        201: RoleTrainingRequirementResponseSchema,
-        400: MessageSchema,
-        404: MessageSchema,
-    },
+    response={201: RoleTrainingRequirementResponseSchema, 400: MessageSchema, 404: MessageSchema},
 )
 @require_permission("role_training_requirements", "create")
-def create_role_training_requirement(
-    request, role_id: int, payload: RoleTrainingRequirementCreateSchema
-):
+def create_role_training_requirement(request, role_id: int, payload: RoleTrainingRequirementCreateSchema):
     try:
         role = get_object_or_404(Role, id=role_id)
-        training_program = get_object_or_404(
-            TrainingProgram, id=payload.training_program_id
-        )
+        training_program = get_object_or_404(TrainingProgram, id=payload.training_program_id)
         sequence = (
             payload.sequence
             if payload.sequence is not None
@@ -1350,9 +1264,7 @@ def create_role_training_requirement(
         )
         requirement.full_clean()
         requirement.save()
-        requirement = RoleTrainingRequirement.objects.select_related(
-            "training_program"
-        ).get(id=requirement.id)
+        requirement = RoleTrainingRequirement.objects.select_related("training_program").get(id=requirement.id)
         return 201, requirement
     except ValidationError as e:
         return 400, {"detail": e.messages[0] if hasattr(e, "messages") else str(e)}
@@ -1360,32 +1272,18 @@ def create_role_training_requirement(
 
 @role_api.patch(
     "/{role_id}/training-requirements/{requirement_id}",
-    response={
-        200: RoleTrainingRequirementResponseSchema,
-        400: MessageSchema,
-        404: MessageSchema,
-    },
+    response={200: RoleTrainingRequirementResponseSchema, 400: MessageSchema, 404: MessageSchema},
 )
 @require_permission("role_training_requirements", "update")
 def update_role_training_requirement(
-    request,
-    role_id: int,
-    requirement_id: int,
-    payload: RoleTrainingRequirementUpdateSchema,
+    request, role_id: int, requirement_id: int, payload: RoleTrainingRequirementUpdateSchema
 ):
     try:
-        requirement = get_object_or_404(
-            RoleTrainingRequirement, id=requirement_id, role_id=role_id
-        )
+        requirement = get_object_or_404(RoleTrainingRequirement, id=requirement_id, role_id=role_id)
         update_data = payload.dict(exclude_unset=True)
 
-        if (
-            "training_program_id" in update_data
-            and update_data["training_program_id"] is not None
-        ):
-            requirement.training_program = get_object_or_404(
-                TrainingProgram, id=update_data.pop("training_program_id")
-            )
+        if "training_program_id" in update_data and update_data["training_program_id"] is not None:
+            requirement.training_program = get_object_or_404(TrainingProgram, id=update_data.pop("training_program_id"))
 
         for field, value in update_data.items():
             if value is not None:
@@ -1393,9 +1291,7 @@ def update_role_training_requirement(
 
         requirement.full_clean()
         requirement.save()
-        requirement = RoleTrainingRequirement.objects.select_related(
-            "training_program"
-        ).get(id=requirement.id)
+        requirement = RoleTrainingRequirement.objects.select_related("training_program").get(id=requirement.id)
         return 200, requirement
     except ValidationError as e:
         return 400, {"detail": e.messages[0] if hasattr(e, "messages") else str(e)}
@@ -1407,15 +1303,12 @@ def update_role_training_requirement(
 )
 @require_permission("role_training_requirements", "delete")
 def delete_role_training_requirement(request, role_id: int, requirement_id: int):
-    requirement = get_object_or_404(
-        RoleTrainingRequirement, id=requirement_id, role_id=role_id
-    )
+    requirement = get_object_or_404(RoleTrainingRequirement, id=requirement_id, role_id=role_id)
     requirement.delete()
     return 200, {"detail": "Role training requirement deleted successfully."}
 
 
 # ── Role success playbook ────────────────────────────────────────────────────
-
 
 @role_api.get(
     "/me/success-playbook",
@@ -1433,16 +1326,15 @@ def list_my_role_success_playbook(
     if not employee.role:
         return 404, {"detail": "No role assigned to this employee."}
 
-    items = RoleSuccessPlaybookItem.objects.filter(role=employee.role).order_by(
-        "sequence", "id"
-    )
+    items = RoleSuccessPlaybookItem.objects.filter(role=employee.role).order_by("sequence", "id")
     if kind:
         items = items.filter(kind=kind)
     if is_active is not None:
         items = items.filter(is_active=is_active)
     if search:
         items = items.filter(
-            Q(title__icontains=search) | Q(description__icontains=search)
+            Q(title__icontains=search) |
+            Q(description__icontains=search)
         )
     return items
 
@@ -1457,9 +1349,7 @@ def list_my_role_success_playbook_grouped(request):
     if not employee.role:
         return 404, {"detail": "No role assigned to this employee."}
 
-    items = RoleSuccessPlaybookItem.objects.filter(role=employee.role).order_by(
-        "sequence", "id"
-    )
+    items = RoleSuccessPlaybookItem.objects.filter(role=employee.role).order_by("sequence", "id")
     grouped = {
         "best_practice": [],
         "common_mistake": [],
@@ -1487,32 +1377,25 @@ def list_role_success_playbook(
     search: Optional[str] = Query(None),
 ):
     get_object_or_404(Role, id=role_id)
-    items = RoleSuccessPlaybookItem.objects.filter(role_id=role_id).order_by(
-        "sequence", "id"
-    )
+    items = RoleSuccessPlaybookItem.objects.filter(role_id=role_id).order_by("sequence", "id")
     if kind:
         items = items.filter(kind=kind)
     if is_active is not None:
         items = items.filter(is_active=is_active)
     if search:
         items = items.filter(
-            Q(title__icontains=search) | Q(description__icontains=search)
+            Q(title__icontains=search) |
+            Q(description__icontains=search)
         )
     return items
 
 
 @role_api.post(
     "/{role_id}/success-playbook",
-    response={
-        201: RoleSuccessPlaybookItemResponseSchema,
-        400: MessageSchema,
-        404: MessageSchema,
-    },
+    response={201: RoleSuccessPlaybookItemResponseSchema, 400: MessageSchema, 404: MessageSchema},
 )
 @require_permission("role_success_playbook", "create")
-def create_role_success_playbook_item(
-    request, role_id: int, payload: RoleSuccessPlaybookItemCreateSchema
-):
+def create_role_success_playbook_item(request, role_id: int, payload: RoleSuccessPlaybookItemCreateSchema):
     try:
         role = get_object_or_404(Role, id=role_id)
         sequence = (
@@ -1537,11 +1420,7 @@ def create_role_success_playbook_item(
 
 @role_api.patch(
     "/{role_id}/success-playbook/{item_id}",
-    response={
-        200: RoleSuccessPlaybookItemResponseSchema,
-        400: MessageSchema,
-        404: MessageSchema,
-    },
+    response={200: RoleSuccessPlaybookItemResponseSchema, 400: MessageSchema, 404: MessageSchema},
 )
 @require_permission("role_success_playbook", "update")
 def update_role_success_playbook_item(
@@ -1575,7 +1454,6 @@ def delete_role_success_playbook_item(request, role_id: int, item_id: int):
 
 # ── Role resources ───────────────────────────────────────────────────────────
 
-
 @role_api.get(
     "/me/resources",
     response={200: List[RoleResourceResponseSchema], 404: MessageSchema},
@@ -1592,16 +1470,15 @@ def list_my_role_resources(
     if not employee.role:
         return 404, {"detail": "No role assigned to this employee."}
 
-    resources = RoleResource.objects.filter(role=employee.role).order_by(
-        "sequence", "id"
-    )
+    resources = RoleResource.objects.filter(role=employee.role).order_by("sequence", "id")
     if kind:
         resources = resources.filter(kind=kind)
     if is_active is not None:
         resources = resources.filter(is_active=is_active)
     if search:
         resources = resources.filter(
-            Q(name__icontains=search) | Q(description__icontains=search)
+            Q(name__icontains=search) |
+            Q(description__icontains=search)
         )
     return resources
 
@@ -1616,9 +1493,7 @@ def list_my_role_resources_grouped(request):
     if not employee.role:
         return 404, {"detail": "No role assigned to this employee."}
 
-    resources = RoleResource.objects.filter(role=employee.role).order_by(
-        "sequence", "id"
-    )
+    resources = RoleResource.objects.filter(role=employee.role).order_by("sequence", "id")
     grouped = {
         "physical": [],
         "software": [],
@@ -1653,7 +1528,8 @@ def list_role_resources(
         resources = resources.filter(is_active=is_active)
     if search:
         resources = resources.filter(
-            Q(name__icontains=search) | Q(description__icontains=search)
+            Q(name__icontains=search) |
+            Q(description__icontains=search)
         )
     return resources
 
@@ -1666,11 +1542,7 @@ def list_role_resources(
 def create_role_resource(request, role_id: int, payload: RoleResourceCreateSchema):
     try:
         role = get_object_or_404(Role, id=role_id)
-        sequence = (
-            payload.sequence
-            if payload.sequence is not None
-            else _next_sequence(RoleResource, role.id)
-        )
+        sequence = payload.sequence if payload.sequence is not None else _next_sequence(RoleResource, role.id)
         resource = RoleResource(
             role=role,
             name=payload.name,
@@ -1691,9 +1563,7 @@ def create_role_resource(request, role_id: int, payload: RoleResourceCreateSchem
     response={200: RoleResourceResponseSchema, 400: MessageSchema, 404: MessageSchema},
 )
 @require_permission("role_resources", "update")
-def update_role_resource(
-    request, role_id: int, resource_id: int, payload: RoleResourceUpdateSchema
-):
+def update_role_resource(request, role_id: int, resource_id: int, payload: RoleResourceUpdateSchema):
     try:
         resource = get_object_or_404(RoleResource, id=resource_id, role_id=role_id)
         update_data = payload.dict(exclude_unset=True)
@@ -1722,7 +1592,6 @@ def delete_role_resource(request, role_id: int, resource_id: int):
 
 # ── Role task templates ──────────────────────────────────────────────────────
 
-
 @role_api.get(
     "/me/task-templates",
     response={200: List[RoleTaskTemplateResponseSchema], 404: MessageSchema},
@@ -1739,16 +1608,15 @@ def list_my_role_task_templates(
     if not employee.role:
         return 404, {"detail": "No role assigned to this employee."}
 
-    templates = RoleTaskTemplate.objects.filter(role=employee.role).order_by(
-        "sequence", "id"
-    )
+    templates = RoleTaskTemplate.objects.filter(role=employee.role).order_by("sequence", "id")
     if default_priority:
         templates = templates.filter(default_priority=default_priority)
     if is_active is not None:
         templates = templates.filter(is_active=is_active)
     if search:
         templates = templates.filter(
-            Q(title__icontains=search) | Q(description__icontains=search)
+            Q(title__icontains=search) |
+            Q(description__icontains=search)
         )
     return templates
 
@@ -1767,39 +1635,28 @@ def list_role_task_templates(
     search: Optional[str] = Query(None),
 ):
     get_object_or_404(Role, id=role_id)
-    templates = RoleTaskTemplate.objects.filter(role_id=role_id).order_by(
-        "sequence", "id"
-    )
+    templates = RoleTaskTemplate.objects.filter(role_id=role_id).order_by("sequence", "id")
     if default_priority:
         templates = templates.filter(default_priority=default_priority)
     if is_active is not None:
         templates = templates.filter(is_active=is_active)
     if search:
         templates = templates.filter(
-            Q(title__icontains=search) | Q(description__icontains=search)
+            Q(title__icontains=search) |
+            Q(description__icontains=search)
         )
     return templates
 
 
 @role_api.post(
     "/{role_id}/task-templates",
-    response={
-        201: RoleTaskTemplateResponseSchema,
-        400: MessageSchema,
-        404: MessageSchema,
-    },
+    response={201: RoleTaskTemplateResponseSchema, 400: MessageSchema, 404: MessageSchema},
 )
 @require_permission("role_task_templates", "create")
-def create_role_task_template(
-    request, role_id: int, payload: RoleTaskTemplateCreateSchema
-):
+def create_role_task_template(request, role_id: int, payload: RoleTaskTemplateCreateSchema):
     try:
         role = get_object_or_404(Role, id=role_id)
-        sequence = (
-            payload.sequence
-            if payload.sequence is not None
-            else _next_sequence(RoleTaskTemplate, role.id)
-        )
+        sequence = payload.sequence if payload.sequence is not None else _next_sequence(RoleTaskTemplate, role.id)
         template = RoleTaskTemplate(
             role=role,
             title=payload.title,
@@ -1818,16 +1675,10 @@ def create_role_task_template(
 
 @role_api.patch(
     "/{role_id}/task-templates/{template_id}",
-    response={
-        200: RoleTaskTemplateResponseSchema,
-        400: MessageSchema,
-        404: MessageSchema,
-    },
+    response={200: RoleTaskTemplateResponseSchema, 400: MessageSchema, 404: MessageSchema},
 )
 @require_permission("role_task_templates", "update")
-def update_role_task_template(
-    request, role_id: int, template_id: int, payload: RoleTaskTemplateUpdateSchema
-):
+def update_role_task_template(request, role_id: int, template_id: int, payload: RoleTaskTemplateUpdateSchema):
     try:
         template = get_object_or_404(RoleTaskTemplate, id=template_id, role_id=role_id)
         update_data = payload.dict(exclude_unset=True)
@@ -1856,7 +1707,6 @@ def delete_role_task_template(request, role_id: int, template_id: int):
 
 # ── Role daily routine ───────────────────────────────────────────────────────
 
-
 @role_api.get(
     "/me/daily-routine",
     response={200: List[RoleDailyRoutineItemResponseSchema], 404: MessageSchema},
@@ -1872,14 +1722,13 @@ def list_my_role_daily_routine(
     if not employee.role:
         return 404, {"detail": "No role assigned to this employee."}
 
-    routine_items = RoleDailyRoutineItem.objects.filter(role=employee.role).order_by(
-        "sequence", "id"
-    )
+    routine_items = RoleDailyRoutineItem.objects.filter(role=employee.role).order_by("sequence", "id")
     if is_active is not None:
         routine_items = routine_items.filter(is_active=is_active)
     if search:
         routine_items = routine_items.filter(
-            Q(title__icontains=search) | Q(description__icontains=search)
+            Q(title__icontains=search) |
+            Q(description__icontains=search)
         )
     return routine_items
 
@@ -1897,37 +1746,26 @@ def list_role_daily_routine(
     search: Optional[str] = Query(None),
 ):
     get_object_or_404(Role, id=role_id)
-    routine_items = RoleDailyRoutineItem.objects.filter(role_id=role_id).order_by(
-        "sequence", "id"
-    )
+    routine_items = RoleDailyRoutineItem.objects.filter(role_id=role_id).order_by("sequence", "id")
     if is_active is not None:
         routine_items = routine_items.filter(is_active=is_active)
     if search:
         routine_items = routine_items.filter(
-            Q(title__icontains=search) | Q(description__icontains=search)
+            Q(title__icontains=search) |
+            Q(description__icontains=search)
         )
     return routine_items
 
 
 @role_api.post(
     "/{role_id}/daily-routine",
-    response={
-        201: RoleDailyRoutineItemResponseSchema,
-        400: MessageSchema,
-        404: MessageSchema,
-    },
+    response={201: RoleDailyRoutineItemResponseSchema, 400: MessageSchema, 404: MessageSchema},
 )
 @require_permission("role_daily_routines", "create")
-def create_role_daily_routine_item(
-    request, role_id: int, payload: RoleDailyRoutineItemCreateSchema
-):
+def create_role_daily_routine_item(request, role_id: int, payload: RoleDailyRoutineItemCreateSchema):
     try:
         role = get_object_or_404(Role, id=role_id)
-        sequence = (
-            payload.sequence
-            if payload.sequence is not None
-            else _next_sequence(RoleDailyRoutineItem, role.id)
-        )
+        sequence = payload.sequence if payload.sequence is not None else _next_sequence(RoleDailyRoutineItem, role.id)
         routine_item = RoleDailyRoutineItem(
             role=role,
             title=payload.title,
@@ -1946,23 +1784,14 @@ def create_role_daily_routine_item(
 
 @role_api.patch(
     "/{role_id}/daily-routine/{routine_item_id}",
-    response={
-        200: RoleDailyRoutineItemResponseSchema,
-        400: MessageSchema,
-        404: MessageSchema,
-    },
+    response={200: RoleDailyRoutineItemResponseSchema, 400: MessageSchema, 404: MessageSchema},
 )
 @require_permission("role_daily_routines", "update")
 def update_role_daily_routine_item(
-    request,
-    role_id: int,
-    routine_item_id: int,
-    payload: RoleDailyRoutineItemUpdateSchema,
+    request, role_id: int, routine_item_id: int, payload: RoleDailyRoutineItemUpdateSchema
 ):
     try:
-        routine_item = get_object_or_404(
-            RoleDailyRoutineItem, id=routine_item_id, role_id=role_id
-        )
+        routine_item = get_object_or_404(RoleDailyRoutineItem, id=routine_item_id, role_id=role_id)
         update_data = payload.dict(exclude_unset=True)
 
         for field, value in update_data.items():
@@ -1982,29 +1811,25 @@ def update_role_daily_routine_item(
 )
 @require_permission("role_daily_routines", "delete")
 def delete_role_daily_routine_item(request, role_id: int, routine_item_id: int):
-    routine_item = get_object_or_404(
-        RoleDailyRoutineItem, id=routine_item_id, role_id=role_id
-    )
+    routine_item = get_object_or_404(RoleDailyRoutineItem, id=routine_item_id, role_id=role_id)
     routine_item.delete()
     return 200, {"detail": "Role daily routine item deleted successfully."}
 
 
 # ── Role CRUD ───────────────────────────────────────────────────────────────
 
-
 @role_api.get("", response=List[RoleResponseSchema])
 @paginate(LimitOffsetPagination, page_size=10)
 @require_permission("roles", "list")
 def list_roles(request, search: Optional[str] = Query(None)):
     """List all roles."""
-    roles = Role.objects.prefetch_related("branches").all()
+    roles = Role.objects.prefetch_related('branches').all()
     if search:
         roles = roles.filter(name__icontains=search)
-    return roles.order_by("-created_at")
+    return roles.order_by('-created_at')
 
 
 # ── Role descriptions ────────────────────────────────────────────────────────
-
 
 @role_api.get(
     "/me/description",
@@ -2035,16 +1860,10 @@ def get_role_description(request, role_id: int):
 
 @role_api.post(
     "/{role_id}/description",
-    response={
-        201: RoleDescriptionResponseSchema,
-        400: MessageSchema,
-        404: MessageSchema,
-    },
+    response={201: RoleDescriptionResponseSchema, 400: MessageSchema, 404: MessageSchema},
 )
 @require_permission("role_descriptions", "create")
-def create_role_description(
-    request, role_id: int, payload: RoleDescriptionCreateSchema
-):
+def create_role_description(request, role_id: int, payload: RoleDescriptionCreateSchema):
     try:
         role = get_object_or_404(Role, id=role_id)
         if RoleDescription.objects.filter(role=role).exists():
@@ -2060,45 +1879,33 @@ def create_role_description(
             description.save()
         return 201, description
     except ValidationError as e:
-        return 400, {"detail": e.messages[0] if hasattr(e, "messages") else str(e)}
+        return 400, {"detail": e.messages[0] if hasattr(e, 'messages') else str(e)}
 
 
 @role_api.patch(
     "/{role_id}/description",
-    response={
-        200: RoleDescriptionResponseSchema,
-        400: MessageSchema,
-        404: MessageSchema,
-    },
+    response={200: RoleDescriptionResponseSchema, 400: MessageSchema, 404: MessageSchema},
 )
 @require_permission("role_descriptions", "update")
-def update_role_description(
-    request, role_id: int, payload: RoleDescriptionUpdateSchema
-):
+def update_role_description(request, role_id: int, payload: RoleDescriptionUpdateSchema):
     try:
         description = get_object_or_404(RoleDescription, role_id=role_id)
         update_data = payload.dict(exclude_unset=True)
 
-        if "purpose" in update_data and update_data["purpose"] is not None:
-            description.purpose = update_data["purpose"]
+        if 'purpose' in update_data and update_data['purpose'] is not None:
+            description.purpose = update_data['purpose']
 
-        if (
-            "responsibilities" in update_data
-            and update_data["responsibilities"] is not None
-        ):
-            description.responsibilities = update_data["responsibilities"]
+        if 'responsibilities' in update_data and update_data['responsibilities'] is not None:
+            description.responsibilities = update_data['responsibilities']
 
-        if (
-            "job_description" in update_data
-            and update_data["job_description"] is not None
-        ):
-            description.job_description = update_data["job_description"]
+        if 'job_description' in update_data and update_data['job_description'] is not None:
+            description.job_description = update_data['job_description']
 
         with transaction.atomic():
             description.save()
         return 200, description
     except ValidationError as e:
-        return 400, {"detail": e.messages[0] if hasattr(e, "messages") else str(e)}
+        return 400, {"detail": e.messages[0] if hasattr(e, 'messages') else str(e)}
 
 
 @role_api.delete(
@@ -2117,7 +1924,7 @@ def delete_role_description(request, role_id: int):
 def get_role(request, role_id: int):
     """Get a specific role by ID."""
     try:
-        role = Role.objects.prefetch_related("branches").get(id=role_id)
+        role = Role.objects.prefetch_related('branches').get(id=role_id)
         return 200, role
     except Role.DoesNotExist:
         return 404, {"detail": "Role not found."}
@@ -2142,15 +1949,12 @@ def create_role(request, payload: RoleCreateSchema):
         return 201, role
 
     except ValidationError as e:
-        return 400, {"detail": e.messages[0] if hasattr(e, "messages") else str(e)}
+        return 400, {"detail": e.messages[0] if hasattr(e, 'messages') else str(e)}
     except Exception as e:
         return 400, {"detail": str(e)}
 
 
-@role_api.put(
-    "/{role_id}",
-    response={200: RoleResponseSchema, 400: MessageSchema, 404: MessageSchema},
-)
+@role_api.put("/{role_id}", response={200: RoleResponseSchema, 400: MessageSchema, 404: MessageSchema})
 @require_permission("roles", "update")
 def update_role(request, role_id: int, payload: RoleUpdateSchema):
     """Update a role's name, branch scoping, or permissions."""
@@ -2158,23 +1962,23 @@ def update_role(request, role_id: int, payload: RoleUpdateSchema):
         role = get_object_or_404(Role, id=role_id)
         update_data = payload.dict(exclude_unset=True)
 
-        if "name" in update_data and update_data["name"] is not None:
-            role.name = update_data["name"]
+        if 'name' in update_data and update_data['name'] is not None:
+            role.name = update_data['name']
 
-        if "permissions" in update_data and update_data["permissions"] is not None:
-            role.permissions = update_data["permissions"]
+        if 'permissions' in update_data and update_data['permissions'] is not None:
+            role.permissions = update_data['permissions']
 
         role.full_clean()
         role.save()
 
         # Update branches if provided
-        if "branch_ids" in update_data and update_data["branch_ids"] is not None:
-            role.branches.set(update_data["branch_ids"])
+        if 'branch_ids' in update_data and update_data['branch_ids'] is not None:
+            role.branches.set(update_data['branch_ids'])
 
         return 200, role
 
     except ValidationError as e:
-        return 400, {"detail": e.messages[0] if hasattr(e, "messages") else str(e)}
+        return 400, {"detail": e.messages[0] if hasattr(e, 'messages') else str(e)}
     except Exception as e:
         return 400, {"detail": str(e)}
 
@@ -2189,13 +1993,12 @@ def delete_role(request, role_id: int):
         return 200, {"detail": "Role deleted successfully."}
 
     except ValidationError as e:
-        return 400, {"detail": e.messages[0] if hasattr(e, "messages") else str(e)}
+        return 400, {"detail": e.messages[0] if hasattr(e, 'messages') else str(e)}
     except Exception as e:
         return 400, {"detail": str(e)}
 
 
 # ── Employee role ────────────────────────────────────────────────────────────
-
 
 @role_api.get(
     "/employees/{user_id}",

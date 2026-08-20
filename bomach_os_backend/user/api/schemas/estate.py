@@ -6,16 +6,14 @@ from decimal import Decimal
 
 class CoordinateSchema(Schema):
     """A single lat/lng coordinate point"""
-
     lat: Decimal
     lng: Decimal
 
 
 class EstateCreateSchema(Schema):
     """Schema for creating an estate"""
-
     is_our_estate: bool = True
-
+    
     legal_fee: Optional[Decimal] = None
     development_fee: Optional[Decimal] = None
     receipt_fee: Optional[Decimal] = None
@@ -55,7 +53,7 @@ class EstateCreateSchema(Schema):
     max_price_other_properties: Optional[Decimal] = None
     estate_status: str
     total_area: Optional[Decimal] = None
-    area_unit: str = "sqm"
+    area_unit: str = 'sqm'
 
     # Amenities
     has_roads: bool = False
@@ -72,9 +70,8 @@ class EstateCreateSchema(Schema):
 
 class EstateUpdateSchema(Schema):
     """Schema for updating an estate"""
-
     is_our_estate: Optional[bool] = None
-
+    
     legal_fee: Optional[Decimal] = None
     development_fee: Optional[Decimal] = None
     receipt_fee: Optional[Decimal] = None
@@ -132,7 +129,6 @@ class EstateUpdateSchema(Schema):
 
 class EstateDocumentSchema(Schema):
     """Schema for estate document response"""
-
     id: int
     file: str
     caption: str
@@ -147,7 +143,6 @@ class EstateDocumentSchema(Schema):
 
 class EstateSchema(Schema):
     """Schema for estate response"""
-
     id: int
     is_our_estate: bool
     legal_fee: Optional[Decimal] = None
@@ -279,10 +274,8 @@ class EstateChoicesSchema(Schema):
 
 # ============== Property Schemas ==============
 
-
 class PropertyImageSchema(Schema):
     """Schema for property image response"""
-
     id: int
     image: str
     caption: str
@@ -297,7 +290,6 @@ class PropertyImageSchema(Schema):
 
 class PropertyCreateSchema(Schema):
     """Schema for creating a property"""
-
     is_our_property: bool = True
     estate_id: Optional[int] = None
     property_type: str  # 'plot', 'residential', 'commercial'
@@ -305,13 +297,13 @@ class PropertyCreateSchema(Schema):
     price: Decimal
     boundary: Optional[List[CoordinateSchema]] = None
     description: Optional[str] = None
-    status: str = "available"
+    status: str = 'available'
 
     # Plot-specific
     plot_number: Optional[int] = None
     client_name: Optional[str] = None
     plot_size: Optional[Decimal] = None
-    plot_size_unit: Optional[str] = "acres"
+    plot_size_unit: Optional[str] = 'acres'
 
     # Residential-specific
     building_type_residential: Optional[str] = None
@@ -331,7 +323,6 @@ class PropertyCreateSchema(Schema):
 
 class PropertyUpdateSchema(Schema):
     """Schema for updating a property"""
-
     is_our_property: Optional[bool] = None
     property_type: Optional[str] = None
     property_name: Optional[str] = None
@@ -365,7 +356,6 @@ class PropertyUpdateSchema(Schema):
 
 class PropertySchema(Schema):
     """Schema for property response"""
-
     id: int
     is_our_property: bool
     estate_id: Optional[int] = None
@@ -454,20 +444,19 @@ class PropertyChoicesSchema(Schema):
 
 class StandalonePropertyCreateSchema(Schema):
     """Schema for creating a standalone property (no estate)."""
-
     is_our_property: bool = True
     property_type: str
     property_name: str
     price: Decimal
     boundary: Optional[List[CoordinateSchema]] = None
     description: Optional[str] = None
-    status: str = "available"
+    status: str = 'available'
 
     # Plot-specific
     plot_number: Optional[int] = None
     client_name: Optional[str] = None
     plot_size: Optional[Decimal] = None
-    plot_size_unit: Optional[str] = "acres"
+    plot_size_unit: Optional[str] = 'acres'
 
     # Residential-specific
     building_type_residential: Optional[str] = None
@@ -495,10 +484,8 @@ PlotChoicesSchema = PropertyChoicesSchema
 
 # ============== Estate Stats & Plot Layout ==============
 
-
 class EstateStatsSchema(Schema):
     """Summary statistics for an estate's properties."""
-
     total: int
     sold: int
     reserved: int
@@ -511,7 +498,6 @@ class EstateStatsSchema(Schema):
 
 class PlotLayoutSchema(Schema):
     """Lightweight plot representation for the estate grid view."""
-
     id: int
     plot_number: Optional[int] = None
     property_name: str
@@ -519,19 +505,17 @@ class PlotLayoutSchema(Schema):
     status_display: str
     plot_size: Optional[Decimal] = None
     price: Decimal
-    client_name: str = ""
+    client_name: str = ''
 
 
 class PlotQuickUpdateSchema(Schema):
     """Rapid status/price/client update for a plot (used by the estate grid)."""
-
     status: Optional[str] = None
     price: Optional[Decimal] = None
     client_name: Optional[str] = None
 
 
 # ============== Brokerage Listing Schemas ==============
-
 
 class BrokerageListingImageSchema(Schema):
     id: int
@@ -548,18 +532,17 @@ class BrokerageListingImageSchema(Schema):
 
 class BrokerageListingCreateSchema(Schema):
     """Schema for creating a brokerage listing."""
-
     title: str
-    description: Optional[str] = ""
+    description: Optional[str] = ''
     location: str
     price: Decimal
     property_type: str
     owner_name: str
-    owner_phone: Optional[str] = ""
-    owner_email: Optional[str] = ""
-    commission_rate: Decimal = Decimal("5.00")
-    verification_status: str = "pending"
-    status: str = "available"
+    owner_phone: Optional[str] = ''
+    owner_email: Optional[str] = ''
+    commission_rate: Decimal = Decimal('5.00')
+    verification_status: str = 'pending'
+    status: str = 'available'
     assigned_agent_id: Optional[int] = None
     estate_id: Optional[int] = None
     tags: Optional[List[str]] = None
@@ -569,7 +552,6 @@ class BrokerageListingCreateSchema(Schema):
 
 class BrokerageListingUpdateSchema(Schema):
     """Schema for updating a brokerage listing."""
-
     title: Optional[str] = None
     description: Optional[str] = None
     location: Optional[str] = None
@@ -590,13 +572,11 @@ class BrokerageListingUpdateSchema(Schema):
 
 class BrokerageListingVerifySchema(Schema):
     """Update the verification status of a brokerage listing."""
-
     verification_status: str
 
 
 class BrokerageListingSchema(Schema):
     """Schema for brokerage listing response."""
-
     id: int
     title: str
     description: str
@@ -665,7 +645,6 @@ class BrokerageListingSchema(Schema):
 
 class BrokerageStatsSchema(Schema):
     """Summary statistics for brokerage listings."""
-
     total: int
     verified: int
     pending_verification: int

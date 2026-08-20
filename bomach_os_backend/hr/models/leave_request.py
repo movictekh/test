@@ -8,28 +8,28 @@ class LeaveRequest(BaseModel):
 
     # Leave Type Choices
     LEAVE_TYPE_CHOICES = [
-        ("sick_leave", "Sick Leave"),
-        ("annual_leave", "Annual Leave"),
-        ("casual_leave", "Casual Leave"),
-        ("maternity_leave", "Maternity Leave"),
-        ("paternity_leave", "Paternity Leave"),
-        ("unpaid_leave", "Unpaid Leave"),
-        ("compassionate_leave", "Compassionate Leave"),
+        ('sick_leave', 'Sick Leave'),
+        ('annual_leave', 'Annual Leave'),
+        ('casual_leave', 'Casual Leave'),
+        ('maternity_leave', 'Maternity Leave'),
+        ('paternity_leave', 'Paternity Leave'),
+        ('unpaid_leave', 'Unpaid Leave'),
+        ('compassionate_leave', 'Compassionate Leave'),
     ]
 
     # Status Choices
     STATUS_CHOICES = [
-        ("pending", "Pending"),
-        ("approved", "Approved"),
-        ("rejected", "Rejected"),
-        ("cancelled", "Cancelled"),
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+        ('cancelled', 'Cancelled'),
     ]
 
     # Employee Information
     employee = models.ForeignKey(
-        "user.Employee",
+        'user.Employee',
         on_delete=models.CASCADE,
-        related_name="leave_requests",
+        related_name='leave_requests',
     )
 
     # Leave Details
@@ -40,28 +40,31 @@ class LeaveRequest(BaseModel):
 
     # Status
     status = models.CharField(
-        max_length=20, choices=STATUS_CHOICES, default="pending", db_index=True
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pending',
+        db_index=True
     )
 
     # Approval Information
     approver = models.ForeignKey(
-        "user.Employee",
+        'user.Employee',
         on_delete=models.SET_NULL,
         blank=True,
         null=True,
-        related_name="approved_leave_requests",
+        related_name='approved_leave_requests',
     )
     approval_date = models.DateField(blank=True, null=True)
     rejection_reason = models.TextField(blank=True, null=True)
 
     class Meta:
-        db_table = "leave_requests"
-        ordering = ["-created_at"]
-        verbose_name = "Leave Request"
-        verbose_name_plural = "Leave Requests"
+        db_table = 'leave_requests'
+        ordering = ['-created_at']
+        verbose_name = 'Leave Request'
+        verbose_name_plural = 'Leave Requests'
         indexes = [
-            models.Index(fields=["employee", "status"]),
-            models.Index(fields=["start_date", "end_date"]),
+            models.Index(fields=['employee', 'status']),
+            models.Index(fields=['start_date', 'end_date']),
         ]
 
     def __str__(self):
@@ -79,6 +82,4 @@ class LeaveRequest(BaseModel):
         # Validate date logic
         if self.start_date and self.end_date:
             if self.end_date < self.start_date:
-                raise ValidationError(
-                    {"end_date": "End date cannot be before start date"}
-                )
+                raise ValidationError({'end_date': 'End date cannot be before start date'})
