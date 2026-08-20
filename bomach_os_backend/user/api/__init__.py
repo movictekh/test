@@ -80,6 +80,7 @@ from services.api.v1 import (
 from finance.api.v1 import (
     accounting as finance_accounting,
     audit as finance_audit,
+    command_center as finance_command_center,
     exceptions as finance_exceptions,
     reports as finance_reports,
     settings as finance_settings,
@@ -234,6 +235,7 @@ api.add_router("/stats", svc_stats.router)
 
 # === Finance routers ===
 api.add_router("/finance", finance_accounting.router)
+api.add_router("/finance", finance_command_center.router)
 api.add_router("/finance", finance_settings.router)
 api.add_router("/finance", finance_reports.router)
 api.add_router("/finance", finance_exceptions.router)

@@ -25,7 +25,7 @@ def _create_event(
     event_type="transition",
     occurred_at=None,
     actor=None,
-    metadata=None,
+    metadata=None
 ):
     metadata = metadata or {}
     snapshot = _event_snapshot(lead)
@@ -78,7 +78,7 @@ def record_status_funnel_event(
     actor=None,
     occurred_at=None,
     backfilled=False,
-    metadata=None,
+    metadata=None
 ):
     if not to_status:
         return None

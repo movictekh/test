@@ -40,7 +40,8 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
-
+.vscode/
+.vscode/*
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
@@ -180,6 +181,6 @@ bomach_os_backend/
 # Codex
 .codex
 
-# Local formatting/editor config
-pyproject.toml
-.vscode/
+# Local Postman collection work
+docs/postman/
+scripts/postman/

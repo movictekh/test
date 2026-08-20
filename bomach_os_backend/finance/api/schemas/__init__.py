@@ -36,6 +36,17 @@ from finance.api.schemas.commissions import (
     IncentiveAwardOut,
     IncentiveRejectIn,
 )
+from finance.api.schemas.command_center import (
+    FinanceCommandCenterAlertOut,
+    FinanceCommandCenterAlertSummaryOut,
+    FinanceCommandCenterApprovalItemOut,
+    FinanceCommandCenterFeatureAvailabilityOut,
+    FinanceCommandCenterKPIOut,
+    FinanceCommandCenterMovementOut,
+    FinanceCommandCenterOut,
+    FinanceCommandCenterProfitabilityPreviewOut,
+    FinanceCommandCenterServicePerformanceOut,
+)
 from finance.api.schemas.expenses import (
     FinanceExpenseIn,
     FinanceExpenseOut,
@@ -142,6 +153,15 @@ __all__ = [
     "CashFlowForecastItemOut",
     "CashFlowForecastOut",
     "CashFlowForecastWeekOut",
+    "FinanceCommandCenterAlertOut",
+    "FinanceCommandCenterAlertSummaryOut",
+    "FinanceCommandCenterApprovalItemOut",
+    "FinanceCommandCenterFeatureAvailabilityOut",
+    "FinanceCommandCenterKPIOut",
+    "FinanceCommandCenterMovementOut",
+    "FinanceCommandCenterOut",
+    "FinanceCommandCenterProfitabilityPreviewOut",
+    "FinanceCommandCenterServicePerformanceOut",
     "BonusIn",
     "CommissionCalculateIn",
     "CommissionRuleIn",

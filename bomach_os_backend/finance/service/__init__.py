@@ -68,6 +68,7 @@ from .fixed_assets import (
     post_fixed_asset_depreciation,
     posted_depreciation_total,
 )
+from .command_center import finance_command_center
 
 from .people_compliance import (
     refresh_payroll_line_totals,
@@ -100,6 +101,7 @@ __all__ = [
     "create_bank_reconciliation",
     "delete_bank_reconciliation_match",
     "discard_bank_reconciliation",
+    "finance_command_center",
     "journal_line_remaining",
     "match_bank_statement_line",
     "reconcile_bank_reconciliation",

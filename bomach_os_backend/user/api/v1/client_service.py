@@ -273,7 +273,7 @@ def submit_payment(request, data: PaymentSubmissionCreateSchema):
         client=request.user.client_profile,
         submitted_by=request.user,
         submitted_by_type=PaymentSubmission.SUBMITTED_BY_TYPE.CLIENT,
-        **data.dict(exclude={"invoice_id"}),
+        **data.dict(exclude={"invoice_id"})
     )
     return submission
 

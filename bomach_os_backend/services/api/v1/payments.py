@@ -69,7 +69,7 @@ def create_payment(request, payload: PaymentIn):
                 invoice=invoice,
                 finance_account=account,
                 created_by=request.user,
-                **data,
+                **data
             )
             post_client_payment_journal(payment, request.user)
         return 201, payment
