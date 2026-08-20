@@ -1,8 +1,9 @@
 # Finance Intelligence & Control — Deferred Scope
 
-This document records features intentionally not implemented in IC-1 + IC-2.
-They are deferred because a prerequisite, policy decision or separate workflow
-is still required. They are not accidental omissions.
+This document records Intelligence & Control features intentionally deferred
+after IC-1 through IC-4. They are deferred because a prerequisite, policy
+decision or separate workflow is still required. They are not accidental
+omissions.
 
 ## Formal historical Cash Flow Statement
 
@@ -31,42 +32,42 @@ results.
 
 Deferred.
 
-The HTML prototype includes recurring report delivery, but a real implementation
-requires durable schedules, recipient configuration, an execution runner,
-delivery history and failure handling.
+A real implementation requires durable schedules, recipient configuration, an
+execution runner, delivery history and failure handling.
 
 A future `FinanceReportSchedule` table is justified only when that scheduling
 and delivery workflow is implemented.
 
 ## Report exports
 
-CSV/PDF export is deferred to the later reporting-integration batch. IC-1 + IC-2
-establishes the accounting report calculations and API responses first.
+CSV/PDF export remains deferred to the later reporting/export batch. The
+financial calculations and canonical report-source catalog are established
+first.
 
-## Payables Ageing and existing report integration
+## Permanent Finance audit history
 
-Deferred to the next reporting batch.
+Deferred to IC-5.
 
-That batch can add Payables Ageing and report-friendly integration for existing
-Receivables Ageing, Project Profitability, Payroll, Statutory/Tax and Wallet
-history without duplicating their underlying business models.
+The permanent history should reuse the existing `user.AuditLog` infrastructure
+rather than create a duplicate Finance audit table. IC-4 introduces the shared
+`finance_audit:view` permission family but does not yet instrument Finance state
+changes into the permanent audit history.
 
-## Audit & Exception Centre
+## Exception workflow state
 
-Deferred to its own Intelligence & Control batch.
+IC-4 calculates exceptions dynamically and does not store them.
 
-Initial exceptions should be deterministic, read-only calculations over current
-Finance truth rather than a new `FinanceException` table.
+Assignment, acknowledgement, resolution notes, suppression, ownership and
+exception-history tracking remain deferred. A durable exception model is only
+justified if those workflow requirements become real.
 
-Planned candidates include:
+## Accounting-source integrity exceptions
 
-- old draft manual Journals;
-- large manual Journals above the configured review threshold;
-- overdue Vendor Bills;
-- Fixed Assets overdue for the next required depreciation period.
+Deferred until a deliberate historical cutover boundary is defined.
 
-Permanent Finance history should reuse the existing `user.AuditLog`
-infrastructure rather than create a duplicate Finance audit table.
+Examples include a paid source record with no expected posted accounting
+Journal. Those checks are useful, but legacy records created before General
+Ledger automation must not be mislabelled as current accounting failures.
 
 ## Unmatched bank items
 
@@ -76,15 +77,25 @@ Bank Reconciliation backend code remains preserved, but its public API is
 intentionally not exposed while external bank-transaction ingestion and the
 intended user workflow are still undecided.
 
-The Exception Centre must not reintroduce "unmatched bank deposit" behavior
-through another route before that decision is made.
+The Exception Centre therefore does not create an alternate unmatched-deposit
+workflow.
+
+## Multi-currency Vendor Bills
+
+Deferred.
+
+`VendorBill` currently has no currency field. IC-3 Payables Ageing reports the
+company default currency and returns an explicit currency-basis explanation.
+A future multi-currency payables design must define bill currency, settlement
+currency and exchange-rate behavior before the report can claim mixed-currency
+support.
 
 ## Budget blocking
 
 Deferred until Budget actual and committed calculations are reliable.
 
 A setting such as "block expenses above available budget" must not be exposed
-until the system can correctly calculate the available budget and the affected
+until the system can correctly calculate available budget and the affected
 expense workflow actually enforces the rule.
 
 ## Expense attachment requirement
@@ -117,17 +128,16 @@ Deferred from Finance Settings.
 
 Invoices and Expenses are currently owned by the Services domain and already
 have numbering behavior. Their numbering should only move into configurable
-policy through a deliberate cross-domain decision, not simply because the
-prototype contains prefix fields.
+policy through a deliberate cross-domain decision.
 
 ## Reopening closed accounting
 
 Deferred.
 
-IC-1 introduces a safe monotonic `closed_through_date`: Finance can close more
+IC-1 introduced a safe monotonic `closed_through_date`: Finance can close more
 history, but cannot silently reopen it.
 
 If reopening is later required, it should have explicit permission, audit
 history and a reason/approval workflow. A future `AccountingPeriod` model may be
-appropriate if Bomach needs individual period states, soft/hard close, reopening
-approvals or year-end close workflows.
+appropriate if Bomach needs individual period states, soft/hard close,
+reopening approvals or year-end close workflows.

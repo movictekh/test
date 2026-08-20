@@ -294,6 +294,7 @@ PERMISSIONS_MAP = {
     "general_ledger": ["view", "list"],
     "finance_settings": ["view", "update"],
     "financial_reports": ["view"],
+    "finance_audit": ["view"],
     "bank_reconciliation": [
         "create",
         "view",

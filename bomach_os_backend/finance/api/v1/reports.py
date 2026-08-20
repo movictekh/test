@@ -8,12 +8,16 @@ from ninja.errors import HttpError
 from finance.api.schemas.reports import (
     AccountActivityReportOut,
     BalanceSheetOut,
+    PayablesAgeingOut,
     ProfitAndLossOut,
+    ReportCatalogOut,
 )
 from finance.service.reporting import (
     balance_sheet,
     expense_report,
+    payables_ageing,
     profit_and_loss,
+    report_catalog,
     revenue_report,
 )
 from user.models.branch import Branch
@@ -37,6 +41,12 @@ def _report_scope(request, branch_id):
 
 def _report_error(exc):
     raise HttpError(400, str(exc))
+
+
+@router.get("/reports/catalog", response=ReportCatalogOut)
+@require_permission("financial_reports", "view")
+def report_catalog_endpoint(request):
+    return report_catalog()
 
 
 @router.get("/reports/profit-and-loss", response=ProfitAndLossOut)
@@ -119,3 +129,19 @@ def expense_report_endpoint(
         )
     except ValidationError as exc:
         _report_error(exc)
+
+
+@router.get("/reports/payables-ageing", response=PayablesAgeingOut)
+@require_permission("financial_reports", "view")
+def payables_ageing_endpoint(
+    request,
+    branch_id: Optional[int] = Query(None),
+    vendor_id: Optional[int] = Query(None),
+    search: Optional[str] = Query(None),
+):
+    return payables_ageing(
+        branch_ids=_report_scope(request, branch_id),
+        branch_id=branch_id,
+        vendor_id=vendor_id,
+        search=search,
+    )
