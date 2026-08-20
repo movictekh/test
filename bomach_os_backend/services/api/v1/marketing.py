@@ -17,9 +17,7 @@ from datetime import date, timedelta
 from decimal import Decimal
 
 from services.api.schema.crm_schemas import (
-    MarketingOverviewSchema,
-    BranchPerformanceSchema,
-    ChannelMetricsSchema,
+    MarketingOverviewSchema, BranchPerformanceSchema, ChannelMetricsSchema,
 )
 from services.api.schema.marketing_campaign_schemas import (
     EmailMarketingAudienceRequest,
@@ -65,6 +63,7 @@ from user.models.user import User
 from user.models.role_targets import EmployeeTarget, with_target_progress
 from user.utils.send_email import send_marketing_email
 from user.utils.perm import require_permission, scope_queryset
+
 
 marketing_router = Router(tags=["Marketing Command Center"])
 logger = logging.getLogger(__name__)
@@ -221,11 +220,7 @@ def _serialize_marketing_meeting_action(action):
         "meeting_context_id": action.meeting_context_id,
         "meeting_title": action.meeting_context.meeting.title,
         "campaign_id": action.meeting_context.campaign_id,
-        "campaign_name": (
-            action.meeting_context.campaign.name
-            if action.meeting_context.campaign
-            else ""
-        ),
+        "campaign_name": action.meeting_context.campaign.name if action.meeting_context.campaign else "",
         "title": action.title,
         "description": action.description,
         "owner_id": action.owner_id,
@@ -287,9 +282,7 @@ def _serialize_marketing_meeting_context(context, include_detail=False):
         "recorder": context.recorder,
         "pre_read": context.pre_read,
         "expected_outcome": context.expected_outcome,
-        "open_action_count": context.actions.exclude(
-            status__in=["done", "cancelled"]
-        ).count(),
+        "open_action_count": context.actions.exclude(status__in=["done", "cancelled"]).count(),
         "decision_count": context.campaign_decisions.count(),
         "created_at": meeting.created_at,
         "updated_at": meeting.updated_at,
@@ -298,18 +291,11 @@ def _serialize_marketing_meeting_context(context, include_detail=False):
         row["attendees"] = [_attendee_row(user) for user in meeting.attendees.all()]
         row["actions"] = [
             _serialize_marketing_meeting_action(action)
-            for action in context.actions.select_related(
-                "owner",
-                "owner__user",
-                "meeting_context__meeting",
-                "meeting_context__campaign",
-            ).all()
+            for action in context.actions.select_related("owner", "owner__user", "meeting_context__meeting", "meeting_context__campaign").all()
         ]
         row["decisions"] = [
             _serialize_marketing_meeting_decision(decision)
-            for decision in context.campaign_decisions.select_related(
-                "campaign", "source_meeting_context__meeting"
-            ).all()
+            for decision in context.campaign_decisions.select_related("campaign", "source_meeting_context__meeting").all()
         ]
     return row
 
@@ -368,12 +354,8 @@ def _meeting_payload_data(payload, exclude_unset=False):
     data = payload.dict(exclude_unset=exclude_unset)
     attendee_ids = data.pop("attendee_ids", None)
     campaign_id = data.pop("campaign_id", None)
-    base_data = {
-        key: value for key, value in data.items() if key in MEETING_BASE_FIELDS
-    }
-    context_data = {
-        key: value for key, value in data.items() if key in MEETING_CONTEXT_FIELDS
-    }
+    base_data = {key: value for key, value in data.items() if key in MEETING_BASE_FIELDS}
+    context_data = {key: value for key, value in data.items() if key in MEETING_CONTEXT_FIELDS}
     return base_data, context_data, attendee_ids, campaign_id
 
 
@@ -390,9 +372,7 @@ def _set_meeting_attendees(meeting, attendee_ids):
 def _traditional_media_queryset(request):
     return scope_queryset(
         request,
-        TraditionalMediaPlacement.objects.select_related(
-            "campaign", "branch", "created_by"
-        ),
+        TraditionalMediaPlacement.objects.select_related("campaign", "branch", "created_by"),
         branch_field="branch_id",
     )
 
@@ -516,9 +496,7 @@ def _traditional_media_dashboard(placements):
     window_end = today + timedelta(days=TRADITIONAL_MEDIA_EXPIRY_WINDOW_DAYS)
     open_placements = placements.exclude(status__in=["archived", "cancelled"])
     active_count = open_placements.filter(end_date__gte=today).count()
-    expiring_count = open_placements.filter(
-        end_date__gte=today, end_date__lte=window_end
-    ).count()
+    expiring_count = open_placements.filter(end_date__gte=today, end_date__lte=window_end).count()
     expired_count = open_placements.filter(end_date__lt=today).count()
     non_cancelled = placements.exclude(status="cancelled")
 
@@ -527,10 +505,7 @@ def _traditional_media_dashboard(placements):
             "placement_type": value,
             "label": label,
             "count": placements.filter(placement_type=value).count(),
-            "amount_paid": _decimal_sum(
-                placements.filter(placement_type=value).exclude(status="cancelled"),
-                "amount_paid",
-            ),
+            "amount_paid": _decimal_sum(placements.filter(placement_type=value).exclude(status="cancelled"), "amount_paid"),
         }
         for value, label in TraditionalMediaPlacement.PLACEMENT_TYPE_CHOICES
         if placements.filter(placement_type=value).exists()
@@ -540,20 +515,13 @@ def _traditional_media_dashboard(placements):
             "ownership": value,
             "label": label,
             "count": placements.filter(ownership=value).count(),
-            "amount_paid": _decimal_sum(
-                placements.filter(ownership=value).exclude(status="cancelled"),
-                "amount_paid",
-            ),
+            "amount_paid": _decimal_sum(placements.filter(ownership=value).exclude(status="cancelled"), "amount_paid"),
         }
         for value, label in TraditionalMediaPlacement.OWNERSHIP_CHOICES
         if placements.filter(ownership=value).exists()
     ]
     by_status = [
-        {
-            "status": value,
-            "label": label,
-            "count": placements.filter(status=value).count(),
-        }
+        {"status": value, "label": label, "count": placements.filter(status=value).count()}
         for value, label in TraditionalMediaPlacement.STATUS_CHOICES
         if placements.filter(status=value).exists()
     ]
@@ -612,30 +580,17 @@ def _resolve_traditional_media_relations(data):
     campaign_id = data.pop("campaign_id", None)
     branch_id = data.pop("branch_id", None)
     if campaign_provided:
-        relations["campaign"] = (
-            MarketingCampaign.objects.filter(id=campaign_id).first()
-            if campaign_id
-            else None
-        )
+        relations["campaign"] = MarketingCampaign.objects.filter(id=campaign_id).first() if campaign_id else None
         if campaign_id and not relations["campaign"]:
             raise ValidationError("Campaign not found")
     if branch_provided:
-        relations["branch"] = (
-            Branch.objects.filter(id=branch_id).first() if branch_id else None
-        )
+        relations["branch"] = Branch.objects.filter(id=branch_id).first() if branch_id else None
         if branch_id and not relations["branch"]:
             raise ValidationError("Branch not found")
     return data, relations
 
 
-def _add_email_recipient(
-    recipients_by_email,
-    email,
-    name,
-    source_group,
-    source_object_type="",
-    source_object_id=None,
-):
+def _add_email_recipient(recipients_by_email, email, name, source_group, source_object_type="", source_object_id=None):
     valid_email = _valid_email_or_none(email)
     if not valid_email:
         return False
@@ -660,9 +615,7 @@ def _validate_email_audience_groups(groups):
     groups = groups or []
     invalid = [group for group in groups if group not in EMAIL_AUDIENCE_GROUPS]
     if invalid:
-        raise ValidationError(
-            {"audience_groups": f"Unsupported audience groups: {', '.join(invalid)}"}
-        )
+        raise ValidationError({"audience_groups": f"Unsupported audience groups: {', '.join(invalid)}"})
     return groups
 
 
@@ -685,72 +638,36 @@ def _resolve_email_recipients(request, payload):
         if filters.get("branch_id"):
             leads = leads.filter(branch_id=filters["branch_id"])
         for lead in leads.order_by("full_name", "id"):
-            if not _add_email_recipient(
-                recipients_by_email,
-                lead.email,
-                lead.full_name,
-                "marketing_leads",
-                "services.Lead",
-                lead.id,
-            ):
+            if not _add_email_recipient(recipients_by_email, lead.email, lead.full_name, "marketing_leads", "services.Lead", lead.id):
                 skipped_count += 1
 
     if "clients" in groups:
-        clients = (
-            CustomerClient.objects.select_related("user")
-            .filter(is_active=True)
-            .exclude(user__email="")
-        )
+        clients = CustomerClient.objects.select_related("user").filter(is_active=True).exclude(user__email="")
         for client in clients.order_by("user__first_name", "user__last_name", "id"):
-            if not _add_email_recipient(
-                recipients_by_email,
-                client.user.email,
-                _user_name(client.user),
-                "clients",
-                "user.Client",
-                client.id,
-            ):
+            if not _add_email_recipient(recipients_by_email, client.user.email, _user_name(client.user), "clients", "user.Client", client.id):
                 skipped_count += 1
 
     if "partners" in groups:
         partners = Partner.objects.filter(status="active").exclude(email="")
         for partner in partners.order_by("name", "id"):
-            if not _add_email_recipient(
-                recipients_by_email,
-                partner.email,
-                partner.name,
-                "partners",
-                "user.Partner",
-                partner.id,
-            ):
+            if not _add_email_recipient(recipients_by_email, partner.email, partner.name, "partners", "user.Partner", partner.id):
                 skipped_count += 1
 
     if "employees" in groups:
         employees = scope_queryset(
             request,
-            Employee.objects.select_related("user", "branch")
-            .filter(is_active=True)
-            .exclude(user__email=""),
+            Employee.objects.select_related("user", "branch").filter(is_active=True).exclude(user__email=""),
             branch_field="branch_id",
         )
         if filters.get("branch_id"):
             employees = employees.filter(branch_id=filters["branch_id"])
         for employee in employees.order_by("user__first_name", "user__last_name", "id"):
-            if not _add_email_recipient(
-                recipients_by_email,
-                employee.user.email,
-                _employee_name(employee),
-                "employees",
-                "user.Employee",
-                employee.id,
-            ):
+            if not _add_email_recipient(recipients_by_email, employee.user.email, _employee_name(employee), "employees", "user.Employee", employee.id):
                 skipped_count += 1
 
     if "manual" in groups or payload.manual_recipients:
         for recipient in payload.manual_recipients or []:
-            if not _add_email_recipient(
-                recipients_by_email, recipient.email, recipient.name, "manual", "", None
-            ):
+            if not _add_email_recipient(recipients_by_email, recipient.email, recipient.name, "manual", "", None):
                 skipped_count += 1
 
     return list(recipients_by_email.values()), skipped_count
@@ -759,9 +676,7 @@ def _resolve_email_recipients(request, payload):
 def _lead_queryset(request):
     return scope_queryset(
         request,
-        Lead.objects.select_related(
-            "campaign", "referral_partner", "branch", "assigned_to", "assigned_to__user"
-        ),
+        Lead.objects.select_related("campaign", "referral_partner", "branch", "assigned_to", "assigned_to__user"),
         branch_field="branch_id",
     )
 
@@ -769,9 +684,7 @@ def _lead_queryset(request):
 def _calendar_queryset(request):
     return scope_queryset(
         request,
-        ContentCalendarItem.objects.select_related(
-            "content", "campaign", "branch", "owner", "owner__user"
-        ),
+        ContentCalendarItem.objects.select_related("content", "campaign", "branch", "owner", "owner__user"),
         branch_field="branch_id",
     )
 
@@ -780,9 +693,8 @@ def _target_queryset(request):
     return scope_queryset(
         request,
         with_target_progress(
-            EmployeeTarget.objects.select_related(
-                "employee", "employee__branch", "role"
-            ).filter(is_active=True)
+            EmployeeTarget.objects.select_related("employee", "employee__branch", "role")
+            .filter(is_active=True)
         ),
         branch_field="employee__branch_id",
     )
@@ -799,15 +711,11 @@ def _apply_common_filters(leads, branch_id=None, division=None, campaign_id=None
 
 
 def _period_leads(request, start, end, branch_id=None, division=None, campaign_id=None):
-    leads = _apply_common_filters(
-        _lead_queryset(request), branch_id, division, campaign_id
-    )
+    leads = _apply_common_filters(_lead_queryset(request), branch_id, division, campaign_id)
     return leads.filter(created_at__date__gte=start, created_at__date__lte=end)
 
 
-def _period_calendar_items(
-    request, start, end, branch_id=None, division=None, campaign_id=None
-):
+def _period_calendar_items(request, start, end, branch_id=None, division=None, campaign_id=None):
     items = _calendar_queryset(request).filter(
         Q(due_date__gte=start, due_date__lte=end)
         | Q(scheduled_at__date__gte=start, scheduled_at__date__lte=end)
@@ -823,9 +731,7 @@ def _period_calendar_items(
 
 
 def _target_rows(request, start, end, branch_id=None):
-    targets = _target_queryset(request).filter(
-        period_start__lte=end, period_end__gte=start
-    )
+    targets = _target_queryset(request).filter(period_start__lte=end, period_end__gte=start)
     if branch_id:
         targets = targets.filter(employee__branch_id=branch_id)
 
@@ -833,37 +739,26 @@ def _target_rows(request, start, end, branch_id=None):
     for target in targets.order_by("sequence", "id")[:20]:
         actual = target.get_approved_progress_value()
         target_value = target.target_value or Decimal("0.00")
-        progress_pct = (
-            Decimal("100.00")
-            if target_value == 0
-            else min(
-                (actual / target_value) * Decimal("100"),
-                Decimal("100.00"),
-            ).quantize(Decimal("0.01"))
-        )
-        rows.append(
-            {
-                "id": target.id,
-                "label": target.title,
-                "target": target_value,
-                "actual": actual,
-                "unit": target.unit,
-                "period": target.period,
-                "progress_pct": progress_pct,
-                "status": (
-                    "on_track"
-                    if progress_pct >= 90
-                    else "at_risk" if progress_pct >= 70 else "off_track"
-                ),
-            }
-        )
+        progress_pct = Decimal("100.00") if target_value == 0 else min(
+            (actual / target_value) * Decimal("100"),
+            Decimal("100.00"),
+        ).quantize(Decimal("0.01"))
+        rows.append({
+            "id": target.id,
+            "label": target.title,
+            "target": target_value,
+            "actual": actual,
+            "unit": target.unit,
+            "period": target.period,
+            "progress_pct": progress_pct,
+            "status": "on_track" if progress_pct >= 90 else "at_risk" if progress_pct >= 70 else "off_track",
+        })
     return rows
 
 
 def _revenue_target_totals(target_rows):
     revenue_rows = [
-        row
-        for row in target_rows
+        row for row in target_rows
         if "revenue" in row["label"].lower()
         or "sales" in row["label"].lower()
         or row["unit"].lower() in ["ngn", "naira", "₦"]
@@ -880,14 +775,12 @@ def _lead_breakdown(leads, field, choices):
     for value, label in choices:
         count = leads.filter(**{field: value}).count()
         if count:
-            rows.append(
-                {
-                    field: value,
-                    "label": label,
-                    "count": count,
-                    "percentage": _pct(count, total),
-                }
-            )
+            rows.append({
+                field: value,
+                "label": label,
+                "count": count,
+                "percentage": _pct(count, total),
+            })
     return rows
 
 
@@ -901,14 +794,12 @@ def _weekly_content_output(items, start, end):
             | Q(scheduled_at__date__gte=cursor, scheduled_at__date__lte=week_end)
             | Q(published_at__date__gte=cursor, published_at__date__lte=week_end)
         )
-        weeks.append(
-            {
-                "week_start": cursor,
-                "week_end": week_end,
-                "planned": week_items.count(),
-                "published": week_items.filter(status="published").count(),
-            }
-        )
+        weeks.append({
+            "week_start": cursor,
+            "week_end": week_end,
+            "planned": week_items.count(),
+            "published": week_items.filter(status="published").count(),
+        })
         cursor += timedelta(days=7)
     return weeks
 
@@ -926,15 +817,13 @@ def _content_by_format(items):
             for item in published_items
             if item.content_id and item.content.views is not None
         ]
-        rows.append(
-            {
-                "format": value,
-                "label": label,
-                "planned": planned,
-                "published": published_items.count(),
-                "avg_reach": round(sum(views) / len(views), 1) if views else None,
-            }
-        )
+        rows.append({
+            "format": value,
+            "label": label,
+            "planned": planned,
+            "published": published_items.count(),
+            "avg_reach": round(sum(views) / len(views), 1) if views else None,
+        })
     return rows
 
 
@@ -954,21 +843,15 @@ def _lead_source_rows(leads, campaigns, campaign_id=None):
         estimated_cpl = None
         if campaign_id:
             spend = _decimal_sum(campaigns.filter(id=campaign_id), "budget_spent")
-            estimated_cpl = (
-                (spend / Decimal(lead_count)).quantize(Decimal("0.01"))
-                if lead_count
-                else None
-            )
-        rows.append(
-            {
-                "source": value,
-                "label": label,
-                "leads": lead_count,
-                "contacted_pct": _pct(contacted, lead_count),
-                "converted": won,
-                "estimated_cpl": estimated_cpl,
-            }
-        )
+            estimated_cpl = (spend / Decimal(lead_count)).quantize(Decimal("0.01")) if lead_count else None
+        rows.append({
+            "source": value,
+            "label": label,
+            "leads": lead_count,
+            "contacted_pct": _pct(contacted, lead_count),
+            "converted": won,
+            "estimated_cpl": estimated_cpl,
+        })
     return rows
 
 
@@ -994,31 +877,18 @@ def _team_scorecard(leads, start, end):
             created_at__date__lte=end,
         ).count()
         won = owner_leads.filter(status="won").count()
-        score = (
-            round(
-                (_pct(contacted, total) + min(100, activities * 10) + _pct(won, total))
-                / 3
-            )
-            if total
-            else 0
-        )
-        rows.append(
-            {
-                "employee_id": owner_id,
-                "employee_name": _employee_name(employee),
-                "role": employee.role.name if employee and employee.role else "",
-                "leads": total,
-                "contacted_pct": _pct(contacted, total),
-                "activities": activities,
-                "won": won,
-                "score": score,
-                "status": (
-                    "on_track"
-                    if score >= 80
-                    else "at_risk" if score >= 60 else "off_track"
-                ),
-            }
-        )
+        score = round((_pct(contacted, total) + min(100, activities * 10) + _pct(won, total)) / 3) if total else 0
+        rows.append({
+            "employee_id": owner_id,
+            "employee_name": _employee_name(employee),
+            "role": employee.role.name if employee and employee.role else "",
+            "leads": total,
+            "contacted_pct": _pct(contacted, total),
+            "activities": activities,
+            "won": won,
+            "score": score,
+            "status": "on_track" if score >= 80 else "at_risk" if score >= 60 else "off_track",
+        })
     return sorted(rows, key=lambda row: (-row["score"], row["employee_name"]))
 
 
@@ -1027,79 +897,78 @@ def _team_scorecard(leads, start, end):
 def get_marketing_overview(request):
     today = timezone.now()
     last_month_start = (today - timedelta(days=30)).replace(day=1)
-
-    current_leads = FunnelLead.objects.filter(created_at__gte=last_month_start).count()
-
+    
+    current_leads = FunnelLead.objects.filter(
+        created_at__gte=last_month_start
+    ).count()
+    
     last_month_leads = FunnelLead.objects.filter(
         created_at__gte=last_month_start - timedelta(days=30),
-        created_at__lt=last_month_start,
+        created_at__lt=last_month_start
     ).count()
-
+    
     converted = FunnelLead.objects.filter(
-        status="converted", created_at__gte=last_month_start
+        status='converted',
+        created_at__gte=last_month_start
     ).count()
-
+    
     current_revenue = FunnelLead.objects.filter(
-        status="converted", converted_at__gte=last_month_start
-    ).aggregate(total=Sum("value"))["total"] or Decimal("0")
-
+        status='converted',
+        converted_at__gte=last_month_start
+    ).aggregate(total=Sum('value'))['total'] or Decimal('0')
+    
     conversion_rate = 0.0
     if current_leads > 0:
         conversion_rate = round((converted / current_leads) * 100, 2)
-
+    
     roi = 0.0
-
+    
     bonus_growth = 0.0
     if last_month_leads > 0:
-        bonus_growth = round(
-            ((current_leads - last_month_leads) / last_month_leads) * 100, 2
-        )
-
+        bonus_growth = round(((current_leads - last_month_leads) / last_month_leads) * 100, 2)
+    
     return {
-        "leads_generated": current_leads,
-        "conversion_rate": conversion_rate,
-        "roi": roi,
-        "revenue": current_revenue,
-        "bonus_growth": bonus_growth,
-        "delta_vs_last_month": {
-            "leads": current_leads - last_month_leads,
-            "leads_pct": bonus_growth,
-        },
+        'leads_generated': current_leads,
+        'conversion_rate': conversion_rate,
+        'roi': roi,
+        'revenue': current_revenue,
+        'bonus_growth': bonus_growth,
+        'delta_vs_last_month': {
+            'leads': current_leads - last_month_leads,
+            'leads_pct': bonus_growth,
+        }
     }
 
 
-@marketing_router.get(
-    "/marketing/branches/performance", response=list[BranchPerformanceSchema]
-)
+@marketing_router.get("/marketing/branches/performance", response=list[BranchPerformanceSchema])
 @require_permission("dashboard", "view")
 def get_branch_performance(request):
     branches = Branch.objects.filter(is_active=True)
     result = []
-
+    
     for branch in branches:
         leads = FunnelLead.objects.filter(branch=branch).count()
         revenue = FunnelLead.objects.filter(
-            branch=branch, status="converted"
-        ).aggregate(total=Sum("value"))["total"] or Decimal("0")
-
-        status_val = "green"
+            branch=branch,
+            status='converted'
+        ).aggregate(total=Sum('value'))['total'] or Decimal('0')
+        
+        status_val = 'green'
         if revenue < 100000:
-            status_val = "yellow"
+            status_val = 'yellow'
         if revenue < 50000:
-            status_val = "red"
-
-        result.append(
-            BranchPerformanceSchema(
-                id=branch.id,
-                name=branch.branch_name,
-                leads=leads,
-                revenue=revenue,
-                status=status_val,
-                target=Decimal("100000"),
-                achieved_pct=min(100, round((revenue / Decimal("100000")) * 100, 2)),
-            )
-        )
-
+            status_val = 'red'
+        
+        result.append(BranchPerformanceSchema(
+            id=branch.id,
+            name=branch.branch_name,
+            leads=leads,
+            revenue=revenue,
+            status=status_val,
+            target=Decimal('100000'),
+            achieved_pct=min(100, round((revenue / Decimal('100000')) * 100, 2)),
+        ))
+    
     return result
 
 
@@ -1107,11 +976,11 @@ def get_branch_performance(request):
 @require_permission("dashboard", "view")
 def get_channel_metrics(request):
     return {
-        "content_produced": 0,
-        "content_traffic": 0,
-        "digital_traffic": 0,
-        "digital_spend": Decimal("0"),
-        "csrc_avg_response_time": 0.0,
+        'content_produced': 0,
+        'content_traffic': 0,
+        'digital_traffic': 0,
+        'digital_spend': Decimal('0'),
+        'csrc_avg_response_time': 0.0,
     }
 
 
@@ -1125,42 +994,20 @@ def get_email_audiences(request, branch_id: int = None):
         employee_filters["branch_id"] = branch_id
 
     leads = _lead_queryset(request).exclude(email="").filter(**lead_filters)
-    clients = (
-        CustomerClient.objects.select_related("user")
-        .filter(is_active=True)
-        .exclude(user__email="")
-    )
+    clients = CustomerClient.objects.select_related("user").filter(is_active=True).exclude(user__email="")
     partners = Partner.objects.filter(status="active").exclude(email="")
     employees = scope_queryset(
         request,
-        Employee.objects.select_related("user", "branch")
-        .filter(is_active=True)
-        .exclude(user__email=""),
+        Employee.objects.select_related("user", "branch").filter(is_active=True).exclude(user__email=""),
         branch_field="branch_id",
     ).filter(**employee_filters)
 
     return {
         "audiences": [
-            {
-                "key": "marketing_leads",
-                "label": EMAIL_AUDIENCE_GROUPS["marketing_leads"],
-                "count": leads.count(),
-            },
-            {
-                "key": "clients",
-                "label": EMAIL_AUDIENCE_GROUPS["clients"],
-                "count": clients.count(),
-            },
-            {
-                "key": "partners",
-                "label": EMAIL_AUDIENCE_GROUPS["partners"],
-                "count": partners.count(),
-            },
-            {
-                "key": "employees",
-                "label": EMAIL_AUDIENCE_GROUPS["employees"],
-                "count": employees.count(),
-            },
+            {"key": "marketing_leads", "label": EMAIL_AUDIENCE_GROUPS["marketing_leads"], "count": leads.count()},
+            {"key": "clients", "label": EMAIL_AUDIENCE_GROUPS["clients"], "count": clients.count()},
+            {"key": "partners", "label": EMAIL_AUDIENCE_GROUPS["partners"], "count": partners.count()},
+            {"key": "employees", "label": EMAIL_AUDIENCE_GROUPS["employees"], "count": employees.count()},
             {"key": "manual", "label": EMAIL_AUDIENCE_GROUPS["manual"], "count": 0},
         ],
         "filters": {"branch_id": branch_id},
@@ -1233,10 +1080,7 @@ def send_email_campaign(request, payload: EmailMarketingSendRequest):
                     sent_count += 1
                 else:
                     failed_count += 1
-                    error = (
-                        getattr(response, "text", "")
-                        or "Email provider rejected the message."
-                    )
+                    error = getattr(response, "text", "") or "Email provider rejected the message."
             except Exception as exc:
                 failed_count += 1
                 error = str(exc)
@@ -1255,21 +1099,9 @@ def send_email_campaign(request, payload: EmailMarketingSendRequest):
 
         campaign.sent_count = sent_count
         campaign.failed_count = failed_count
-        campaign.status = (
-            "sent"
-            if sent_count and not failed_count
-            else "failed" if failed_count else "draft"
-        )
+        campaign.status = "sent" if sent_count and not failed_count else "failed" if failed_count else "draft"
         campaign.sent_at = timezone.now()
-        campaign.save(
-            update_fields=[
-                "sent_count",
-                "failed_count",
-                "status",
-                "sent_at",
-                "updated_at",
-            ]
-        )
+        campaign.save(update_fields=["sent_count", "failed_count", "status", "sent_at", "updated_at"])
 
     return 200, {
         "campaign": _email_campaign_row(campaign, include_recipients=True),
@@ -1279,36 +1111,23 @@ def send_email_campaign(request, payload: EmailMarketingSendRequest):
 
 @marketing_router.get("/marketing/email/campaigns")
 @require_permission("marketing_campaigns", "list")
-def list_email_campaigns(
-    request, status: str = None, search: str = None, limit: int = 50
-):
+def list_email_campaigns(request, status: str = None, search: str = None, limit: int = 50):
     campaigns = EmailMarketingCampaign.objects.select_related("created_by").all()
     if status:
         campaigns = campaigns.filter(status=status)
     if search:
-        campaigns = campaigns.filter(
-            Q(subject__icontains=search) | Q(body__icontains=search)
-        )
+        campaigns = campaigns.filter(Q(subject__icontains=search) | Q(body__icontains=search))
     limit = min(max(limit, 1), 200)
     return {
         "count": campaigns.count(),
-        "campaigns": [
-            _email_campaign_row(campaign)
-            for campaign in campaigns.order_by("-created_at")[:limit]
-        ],
+        "campaigns": [_email_campaign_row(campaign) for campaign in campaigns.order_by("-created_at")[:limit]],
     }
 
 
-@marketing_router.get(
-    "/marketing/email/campaigns/{campaign_id}", response={200: dict, 404: dict}
-)
+@marketing_router.get("/marketing/email/campaigns/{campaign_id}", response={200: dict, 404: dict})
 @require_permission("marketing_campaigns", "list")
 def get_email_campaign(request, campaign_id: int):
-    campaign = (
-        EmailMarketingCampaign.objects.prefetch_related("recipients")
-        .filter(id=campaign_id)
-        .first()
-    )
+    campaign = EmailMarketingCampaign.objects.prefetch_related("recipients").filter(id=campaign_id).first()
     if not campaign:
         return 404, {"detail": "Email campaign not found."}
     return 200, _email_campaign_row(campaign, include_recipients=True)
@@ -1357,22 +1176,14 @@ def _partner_invite_url(base_url, token):
     base_url = (base_url or "").strip()
     if not base_url:
         domain = getattr(settings, "DOMAIN", "")
-        base_url = (
-            domain
-            if domain.startswith(("http://", "https://"))
-            else f"https://{domain}"
-        )
+        base_url = domain if domain.startswith(("http://", "https://")) else f"https://{domain}"
         base_url = base_url.rstrip("/") + "/partner-portal"
     separator = "&" if "?" in base_url else "?"
     return f"{base_url}{separator}token={token}"
 
 
 def _partner_row(partner, leads=None):
-    partner_leads = (
-        leads.filter(referral_partner=partner)
-        if leads is not None
-        else Lead.objects.filter(referral_partner=partner)
-    )
+    partner_leads = leads.filter(referral_partner=partner) if leads is not None else Lead.objects.filter(referral_partner=partner)
     won_leads = partner_leads.filter(status="won")
     commissions = partner.marketing_commissions.all()
     tasks = partner.marketing_tasks.all()
@@ -1390,13 +1201,8 @@ def _partner_row(partner, leads=None):
         "referred_leads": partner_leads.count(),
         "closed_leads": won_leads.count(),
         "closed_revenue": _decimal_sum(won_leads, "estimated_value"),
-        "commission_due": _decimal_sum(
-            commissions.filter(status__in=["pending_verification", "approved"]),
-            "commission_due",
-        ),
-        "commission_paid": _decimal_sum(
-            commissions.filter(status="paid"), "commission_due"
-        ),
+        "commission_due": _decimal_sum(commissions.filter(status__in=["pending_verification", "approved"]), "commission_due"),
+        "commission_paid": _decimal_sum(commissions.filter(status="paid"), "commission_due"),
         "active_tasks": tasks.exclude(status__in=["approved", "cancelled"]).count(),
         "pending_reports": reports.filter(status="submitted").count(),
         "latest_report_status": latest_report.status if latest_report else "",
@@ -1427,10 +1233,7 @@ def _partner_task_row(task, include_reports=False):
         "updated_at": task.updated_at,
     }
     if include_reports:
-        row["reports"] = [
-            _partner_report_row(report)
-            for report in task.reports.select_related("reviewed_by").all()
-        ]
+        row["reports"] = [_partner_report_row(report) for report in task.reports.select_related("reviewed_by").all()]
     return row
 
 
@@ -1490,15 +1293,7 @@ def _create_partner_referral_lead(payload_data, partner, actor=None):
     lead.refresh_sla_status()
     lead.refresh_score()
     lead.full_clean()
-    lead.save(
-        update_fields=[
-            "first_response_due_at",
-            "sla_status",
-            "score",
-            "score_breakdown",
-            "updated_at",
-        ]
-    )
+    lead.save(update_fields=["first_response_due_at", "sla_status", "score", "score_breakdown", "updated_at"])
     record_initial_funnel_event(lead, actor=actor)
     return lead
 
@@ -1513,30 +1308,20 @@ def get_partner_operations_dashboard(
     campaign_id: int = None,
 ):
     start, end = _period_bounds(period_start, period_end)
-    leads = _lead_queryset(request).filter(
-        referral_partner__isnull=False,
-        created_at__date__gte=start,
-        created_at__date__lte=end,
-    )
+    leads = _lead_queryset(request).filter(referral_partner__isnull=False, created_at__date__gte=start, created_at__date__lte=end)
     if branch_id:
         leads = leads.filter(branch_id=branch_id)
     if campaign_id:
         leads = leads.filter(campaign_id=campaign_id)
 
-    partners = Partner.objects.prefetch_related(
-        "marketing_tasks", "marketing_reports", "marketing_commissions"
-    ).all()
-    referred_partner_ids = list(
-        leads.values_list("referral_partner_id", flat=True).distinct()
-    )
+    partners = Partner.objects.prefetch_related("marketing_tasks", "marketing_reports", "marketing_commissions").all()
+    referred_partner_ids = list(leads.values_list("referral_partner_id", flat=True).distinct())
     commissions = PartnerCommission.objects.select_related("partner", "lead").filter(
         partner_id__in=referred_partner_ids or partners.values("id"),
         created_at__date__gte=start,
         created_at__date__lte=end,
     )
-    tasks = PartnerTask.objects.select_related("partner", "campaign").filter(
-        partner_id__in=partners.values("id")
-    )
+    tasks = PartnerTask.objects.select_related("partner", "campaign").filter(partner_id__in=partners.values("id"))
     reports = PartnerReport.objects.select_related("task", "partner").filter(
         partner_id__in=partners.values("id"),
         created_at__date__gte=start,
@@ -1556,20 +1341,11 @@ def get_partner_operations_dashboard(
             "referred_leads": leads.count(),
             "closed_referred_leads": won_leads.count(),
             "closed_referred_revenue": _decimal_sum(won_leads, "estimated_value"),
-            "commission_due": _decimal_sum(
-                commissions.filter(status__in=["pending_verification", "approved"]),
-                "commission_due",
-            ),
-            "commission_paid": _decimal_sum(
-                commissions.filter(status="paid"), "commission_due"
-            ),
-            "assigned_tasks": tasks.exclude(
-                status__in=["approved", "cancelled"]
-            ).count(),
+            "commission_due": _decimal_sum(commissions.filter(status__in=["pending_verification", "approved"]), "commission_due"),
+            "commission_paid": _decimal_sum(commissions.filter(status="paid"), "commission_due"),
+            "assigned_tasks": tasks.exclude(status__in=["approved", "cancelled"]).count(),
             "pending_reports": reports.filter(status="submitted").count(),
-            "pending_payment_approvals": commissions.filter(
-                status="pending_verification"
-            ).count(),
+            "pending_payment_approvals": commissions.filter(status="pending_verification").count(),
         },
         "top_partners": sorted(
             [_partner_row(partner, leads=leads) for partner in partners],
@@ -1595,19 +1371,13 @@ def list_partner_operations_directory(
     campaign_id: int = None,
     limit: int = 50,
 ):
-    partners = Partner.objects.prefetch_related(
-        "marketing_tasks", "marketing_reports", "marketing_commissions"
-    ).all()
+    partners = Partner.objects.prefetch_related("marketing_tasks", "marketing_reports", "marketing_commissions").all()
     if status:
         partners = partners.filter(status=status)
     if category:
         partners = partners.filter(category=category)
     if search:
-        partners = partners.filter(
-            Q(name__icontains=search)
-            | Q(email__icontains=search)
-            | Q(phone__icontains=search)
-        )
+        partners = partners.filter(Q(name__icontains=search) | Q(email__icontains=search) | Q(phone__icontains=search))
     leads = _lead_queryset(request).filter(referral_partner__isnull=False)
     if branch_id:
         leads = leads.filter(branch_id=branch_id)
@@ -1622,16 +1392,11 @@ def list_partner_operations_directory(
             "campaign_id": campaign_id,
         },
         "count": partners.count(),
-        "partners": [
-            _partner_row(partner, leads=leads)
-            for partner in partners.order_by("name", "id")[: max(min(limit, 100), 1)]
-        ],
+        "partners": [_partner_row(partner, leads=leads) for partner in partners.order_by("name", "id")[: max(min(limit, 100), 1)]],
     }
 
 
-@marketing_router.post(
-    "/marketing/partners/invitations", response={201: dict, 400: dict}
-)
+@marketing_router.post("/marketing/partners/invitations", response={201: dict, 400: dict})
 @require_permission("marketing_campaigns", "create")
 def invite_marketing_partner(request, payload: PartnerInvitationIn):
     valid_email = _valid_email_or_none(payload.email)
@@ -1689,9 +1454,7 @@ def invite_marketing_partner(request, payload: PartnerInvitationIn):
                     ),
                 )
             except Exception:
-                logger.exception(
-                    "Failed to send partner portal invitation to %s", valid_email
-                )
+                logger.exception("Failed to send partner portal invitation to %s", valid_email)
 
         transaction.on_commit(send_invite)
         return 201, {
@@ -1715,19 +1478,8 @@ def invite_marketing_partner(request, payload: PartnerInvitationIn):
 
 @marketing_router.get("/marketing/partners/tasks")
 @require_permission("marketing_campaigns", "list")
-def list_partner_tasks(
-    request,
-    partner_id: int = None,
-    status: str = None,
-    partner_type: str = None,
-    campaign_id: int = None,
-    limit: int = 50,
-):
-    tasks = (
-        PartnerTask.objects.select_related("partner", "campaign")
-        .prefetch_related("reports")
-        .all()
-    )
+def list_partner_tasks(request, partner_id: int = None, status: str = None, partner_type: str = None, campaign_id: int = None, limit: int = 50):
+    tasks = PartnerTask.objects.select_related("partner", "campaign").prefetch_related("reports").all()
     if partner_id:
         tasks = tasks.filter(partner_id=partner_id)
     if status:
@@ -1738,12 +1490,7 @@ def list_partner_tasks(
         tasks = tasks.filter(campaign_id=campaign_id)
     return {
         "count": tasks.count(),
-        "tasks": [
-            _partner_task_row(task)
-            for task in tasks.order_by("status", "due_date", "-created_at")[
-                : max(min(limit, 100), 1)
-            ]
-        ],
+        "tasks": [_partner_task_row(task) for task in tasks.order_by("status", "due_date", "-created_at")[: max(min(limit, 100), 1)]],
     }
 
 
@@ -1756,25 +1503,17 @@ def create_partner_task(request, payload: PartnerTaskIn):
         task = PartnerTask(**data)
         task.full_clean()
         task.save()
-        return 201, _partner_task_row(
-            PartnerTask.objects.select_related("partner", "campaign").get(id=task.id)
-        )
+        return 201, _partner_task_row(PartnerTask.objects.select_related("partner", "campaign").get(id=task.id))
     except ValidationError as e:
         return 400, {"detail": _validation_detail(e)}
     except Exception as e:
         return 400, {"detail": str(e)}
 
 
-@marketing_router.patch(
-    "/marketing/partners/tasks/{task_id}", response={200: dict, 400: dict, 404: dict}
-)
+@marketing_router.patch("/marketing/partners/tasks/{task_id}", response={200: dict, 400: dict, 404: dict})
 @require_permission("marketing_campaigns", "update")
 def update_partner_task(request, task_id: int, payload: PartnerTaskUpdate):
-    task = (
-        PartnerTask.objects.select_related("partner", "campaign")
-        .filter(id=task_id)
-        .first()
-    )
+    task = PartnerTask.objects.select_related("partner", "campaign").filter(id=task_id).first()
     if not task:
         return 404, {"detail": "Partner task not found."}
     try:
@@ -1791,16 +1530,8 @@ def update_partner_task(request, task_id: int, payload: PartnerTaskUpdate):
 
 @marketing_router.get("/marketing/partners/reports")
 @require_permission("marketing_campaigns", "list")
-def list_partner_reports(
-    request,
-    partner_id: int = None,
-    task_id: int = None,
-    status: str = None,
-    limit: int = 50,
-):
-    reports = PartnerReport.objects.select_related(
-        "task", "partner", "reviewed_by"
-    ).all()
+def list_partner_reports(request, partner_id: int = None, task_id: int = None, status: str = None, limit: int = 50):
+    reports = PartnerReport.objects.select_related("task", "partner", "reviewed_by").all()
     if partner_id:
         reports = reports.filter(partner_id=partner_id)
     if task_id:
@@ -1809,24 +1540,14 @@ def list_partner_reports(
         reports = reports.filter(status=status)
     return {
         "count": reports.count(),
-        "reports": [
-            _partner_report_row(report)
-            for report in reports.order_by("-created_at")[: max(min(limit, 100), 1)]
-        ],
+        "reports": [_partner_report_row(report) for report in reports.order_by("-created_at")[: max(min(limit, 100), 1)]],
     }
 
 
-@marketing_router.patch(
-    "/marketing/partners/reports/{report_id}/review",
-    response={200: dict, 400: dict, 404: dict},
-)
+@marketing_router.patch("/marketing/partners/reports/{report_id}/review", response={200: dict, 400: dict, 404: dict})
 @require_permission("marketing_campaigns", "update")
 def review_partner_report(request, report_id: int, payload: PartnerReportReviewIn):
-    report = (
-        PartnerReport.objects.select_related("task", "partner")
-        .filter(id=report_id)
-        .first()
-    )
+    report = PartnerReport.objects.select_related("task", "partner").filter(id=report_id).first()
     if not report:
         return 404, {"detail": "Partner report not found."}
     if payload.status not in ["approved", "rejected"]:
@@ -1835,15 +1556,7 @@ def review_partner_report(request, report_id: int, payload: PartnerReportReviewI
     report.review_note = payload.review_note or ""
     report.reviewed_by = request.user
     report.reviewed_at = timezone.now()
-    report.save(
-        update_fields=[
-            "status",
-            "review_note",
-            "reviewed_by",
-            "reviewed_at",
-            "updated_at",
-        ]
-    )
+    report.save(update_fields=["status", "review_note", "reviewed_by", "reviewed_at", "updated_at"])
     report.task.status = "approved" if payload.status == "approved" else "in_progress"
     report.task.save(update_fields=["status", "updated_at"])
     return 200, _partner_report_row(report)
@@ -1851,30 +1564,19 @@ def review_partner_report(request, report_id: int, payload: PartnerReportReviewI
 
 @marketing_router.get("/marketing/partners/commissions")
 @require_permission("marketing_campaigns", "list")
-def list_partner_commissions(
-    request, partner_id: int = None, status: str = None, limit: int = 50
-):
-    commissions = PartnerCommission.objects.select_related(
-        "partner", "lead", "approved_by"
-    ).all()
+def list_partner_commissions(request, partner_id: int = None, status: str = None, limit: int = 50):
+    commissions = PartnerCommission.objects.select_related("partner", "lead", "approved_by").all()
     if partner_id:
         commissions = commissions.filter(partner_id=partner_id)
     if status:
         commissions = commissions.filter(status=status)
     return {
         "count": commissions.count(),
-        "commissions": [
-            _partner_commission_row(commission)
-            for commission in commissions.order_by("status", "-created_at")[
-                : max(min(limit, 100), 1)
-            ]
-        ],
+        "commissions": [_partner_commission_row(commission) for commission in commissions.order_by("status", "-created_at")[: max(min(limit, 100), 1)]],
     }
 
 
-@marketing_router.post(
-    "/marketing/partners/commissions", response={201: dict, 400: dict}
-)
+@marketing_router.post("/marketing/partners/commissions", response={201: dict, 400: dict})
 @require_permission("marketing_campaigns", "create")
 def create_partner_commission(request, payload: PartnerCommissionIn):
     try:
@@ -1884,30 +1586,17 @@ def create_partner_commission(request, payload: PartnerCommissionIn):
             commission.calculate_due()
         commission.full_clean()
         commission.save()
-        return 201, _partner_commission_row(
-            PartnerCommission.objects.select_related(
-                "partner", "lead", "approved_by"
-            ).get(id=commission.id)
-        )
+        return 201, _partner_commission_row(PartnerCommission.objects.select_related("partner", "lead", "approved_by").get(id=commission.id))
     except ValidationError as e:
         return 400, {"detail": _validation_detail(e)}
     except Exception as e:
         return 400, {"detail": str(e)}
 
 
-@marketing_router.patch(
-    "/marketing/partners/commissions/{commission_id}/approve",
-    response={200: dict, 400: dict, 404: dict},
-)
+@marketing_router.patch("/marketing/partners/commissions/{commission_id}/approve", response={200: dict, 400: dict, 404: dict})
 @require_permission("marketing_campaigns", "update")
-def approve_partner_commission(
-    request, commission_id: int, payload: PartnerCommissionUpdate
-):
-    commission = (
-        PartnerCommission.objects.select_related("partner", "lead", "approved_by")
-        .filter(id=commission_id)
-        .first()
-    )
+def approve_partner_commission(request, commission_id: int, payload: PartnerCommissionUpdate):
+    commission = PartnerCommission.objects.select_related("partner", "lead", "approved_by").filter(id=commission_id).first()
     if not commission:
         return 404, {"detail": "Partner commission not found."}
     if commission.status == "paid":
@@ -1917,46 +1606,29 @@ def approve_partner_commission(
     commission.approved_at = timezone.now()
     if payload.note is not None:
         commission.note = payload.note
-    commission.save(
-        update_fields=["status", "approved_by", "approved_at", "note", "updated_at"]
-    )
+    commission.save(update_fields=["status", "approved_by", "approved_at", "note", "updated_at"])
     return 200, _partner_commission_row(commission)
 
 
-@marketing_router.patch(
-    "/marketing/partners/commissions/{commission_id}/mark-paid",
-    response={200: dict, 400: dict, 404: dict},
-)
+@marketing_router.patch("/marketing/partners/commissions/{commission_id}/mark-paid", response={200: dict, 400: dict, 404: dict})
 @require_permission("marketing_campaigns", "update")
-def mark_partner_commission_paid(
-    request, commission_id: int, payload: PartnerCommissionUpdate
-):
-    commission = (
-        PartnerCommission.objects.select_related("partner", "lead", "approved_by")
-        .filter(id=commission_id)
-        .first()
-    )
+def mark_partner_commission_paid(request, commission_id: int, payload: PartnerCommissionUpdate):
+    commission = PartnerCommission.objects.select_related("partner", "lead", "approved_by").filter(id=commission_id).first()
     if not commission:
         return 404, {"detail": "Partner commission not found."}
     if commission.status != "approved":
-        return 400, {
-            "detail": "Commission must be approved before it can be marked paid."
-        }
+        return 400, {"detail": "Commission must be approved before it can be marked paid."}
     commission.status = "paid"
     commission.paid_at = timezone.now()
     if payload.payment_reference is not None:
         commission.payment_reference = payload.payment_reference
     if payload.note is not None:
         commission.note = payload.note
-    commission.save(
-        update_fields=["status", "paid_at", "payment_reference", "note", "updated_at"]
-    )
+    commission.save(update_fields=["status", "paid_at", "payment_reference", "note", "updated_at"])
     return 200, _partner_commission_row(commission)
 
 
-@marketing_router.post(
-    "/marketing/partners/referred-leads", response={201: dict, 400: dict}
-)
+@marketing_router.post("/marketing/partners/referred-leads", response={201: dict, 400: dict})
 @require_permission("marketing_campaigns", "create")
 def create_internal_partner_referred_lead(request, payload: PartnerReferredLeadIn):
     if not payload.partner_id:
@@ -1982,19 +1654,13 @@ def create_internal_partner_referred_lead(request, payload: PartnerReferredLeadI
         return 400, {"detail": str(e)}
 
 
-@marketing_router.get(
-    "/marketing/partner-portal/session", auth=None, response={200: dict, 401: dict}
-)
+@marketing_router.get("/marketing/partner-portal/session", auth=None, response={200: dict, 401: dict})
 def get_partner_portal_session(request):
     invitation, error = _resolve_partner_invitation(request)
     if error:
         return 401, error
     partner = invitation.partner
-    tasks = (
-        PartnerTask.objects.select_related("partner", "campaign")
-        .prefetch_related("reports")
-        .filter(partner=partner)
-    )
+    tasks = PartnerTask.objects.select_related("partner", "campaign").prefetch_related("reports").filter(partner=partner)
     return 200, {
         "partner": _partner_row(partner),
         "invitation": {
@@ -2004,10 +1670,7 @@ def get_partner_portal_session(request):
             "expires_at": invitation.expires_at,
             "accepted_at": invitation.accepted_at,
         },
-        "tasks": [
-            _partner_task_row(task, include_reports=True)
-            for task in tasks.order_by("status", "due_date", "-created_at")
-        ],
+        "tasks": [_partner_task_row(task, include_reports=True) for task in tasks.order_by("status", "due_date", "-created_at")],
         "rules": [
             "Every referred lead must be registered before inspection or negotiation.",
             "Commission is tracked only after Bomach verifies company receipt.",
@@ -2016,20 +1679,14 @@ def get_partner_portal_session(request):
     }
 
 
-@marketing_router.post(
-    "/marketing/partner-portal/leads",
-    auth=None,
-    response={201: dict, 400: dict, 401: dict},
-)
+@marketing_router.post("/marketing/partner-portal/leads", auth=None, response={201: dict, 400: dict, 401: dict})
 def create_partner_portal_lead(request, payload: PartnerReferredLeadIn):
     invitation, error = _resolve_partner_invitation(request)
     if error:
         return 401, error
     try:
         payload_data = payload.dict(exclude={"partner_id"})
-        lead = _create_partner_referral_lead(
-            payload_data, invitation.partner, actor=None
-        )
+        lead = _create_partner_referral_lead(payload_data, invitation.partner, actor=None)
         return 201, {
             "id": lead.id,
             "full_name": lead.full_name,
@@ -2045,20 +1702,12 @@ def create_partner_portal_lead(request, payload: PartnerReferredLeadIn):
         return 400, {"detail": str(e)}
 
 
-@marketing_router.post(
-    "/marketing/partner-portal/reports",
-    auth=None,
-    response={201: dict, 400: dict, 401: dict, 404: dict},
-)
+@marketing_router.post("/marketing/partner-portal/reports", auth=None, response={201: dict, 400: dict, 401: dict, 404: dict})
 def submit_partner_portal_report(request, payload: PartnerReportIn):
     invitation, error = _resolve_partner_invitation(request)
     if error:
         return 401, error
-    task = (
-        PartnerTask.objects.select_related("partner", "campaign")
-        .filter(id=payload.task_id, partner=invitation.partner)
-        .first()
-    )
+    task = PartnerTask.objects.select_related("partner", "campaign").filter(id=payload.task_id, partner=invitation.partner).first()
     if not task:
         return 404, {"detail": "Partner task not found for this portal session."}
     try:
@@ -2213,52 +1862,44 @@ def export_traditional_media_placements(
     )
     buffer = StringIO()
     writer = csv.writer(buffer)
-    writer.writerow(
-        [
-            "ID",
-            "Type",
-            "Placement",
-            "Vendor",
-            "Location",
-            "Ownership",
-            "Amount",
-            "Start",
-            "Expiry",
-            "Days",
-            "Expiry State",
-            "Status",
-            "Proof",
-        ]
-    )
+    writer.writerow([
+        "ID",
+        "Type",
+        "Placement",
+        "Vendor",
+        "Location",
+        "Ownership",
+        "Amount",
+        "Start",
+        "Expiry",
+        "Days",
+        "Expiry State",
+        "Status",
+        "Proof",
+    ])
     for placement in placements[:500]:
         row = _serialize_traditional_media_placement(placement)
-        writer.writerow(
-            [
-                row["placement_code"],
-                row["placement_type_display"],
-                row["name"],
-                row["vendor"],
-                row["location"],
-                row["ownership_display"],
-                row["amount_paid"],
-                row["start_date"],
-                row["end_date"],
-                row["days_remaining"],
-                row["expiry_state"],
-                row["status"],
-                row["proof_url"],
-            ]
-        )
+        writer.writerow([
+            row["placement_code"],
+            row["placement_type_display"],
+            row["name"],
+            row["vendor"],
+            row["location"],
+            row["ownership_display"],
+            row["amount_paid"],
+            row["start_date"],
+            row["end_date"],
+            row["days_remaining"],
+            row["expiry_state"],
+            row["status"],
+            row["proof_url"],
+        ])
     response = HttpResponse(buffer.getvalue(), content_type="text/csv")
-    response["Content-Disposition"] = (
-        'attachment; filename="traditional-media-placements.csv"'
-    )
+    response["Content-Disposition"] = 'attachment; filename="traditional-media-placements.csv"'
     return response
 
 
-@marketing_router.post(
-    "/marketing/traditional-media/placements", response={201: dict, 400: dict}
-)
+@marketing_router.post("/marketing/traditional-media/placements", response={201: dict, 400: dict})
 @require_permission("marketing_campaigns", "create")
 def create_traditional_media_placement(request, payload: TraditionalMediaPlacementIn):
     try:
@@ -2275,10 +1916,7 @@ def create_traditional_media_placement(request, payload: TraditionalMediaPlaceme
         return 400, {"detail": str(exc)}
 
 
-@marketing_router.get(
-    "/marketing/traditional-media/placements/{placement_id}",
-    response={200: dict, 404: dict},
-)
+@marketing_router.get("/marketing/traditional-media/placements/{placement_id}", response={200: dict, 404: dict})
 @require_permission("marketing_campaigns", "view")
 def get_traditional_media_placement(request, placement_id: int):
     placement = _traditional_media_queryset(request).filter(id=placement_id).first()
@@ -2287,21 +1925,14 @@ def get_traditional_media_placement(request, placement_id: int):
     return 200, _serialize_traditional_media_placement(placement, detail=True)
 
 
-@marketing_router.patch(
-    "/marketing/traditional-media/placements/{placement_id}",
-    response={200: dict, 400: dict, 404: dict},
-)
+@marketing_router.patch("/marketing/traditional-media/placements/{placement_id}", response={200: dict, 400: dict, 404: dict})
 @require_permission("marketing_campaigns", "update")
-def update_traditional_media_placement(
-    request, placement_id: int, payload: TraditionalMediaPlacementUpdate
-):
+def update_traditional_media_placement(request, placement_id: int, payload: TraditionalMediaPlacementUpdate):
     try:
         placement = _traditional_media_queryset(request).filter(id=placement_id).first()
         if not placement:
             return 404, {"detail": "Traditional media placement not found"}
-        data, relations = _resolve_traditional_media_relations(
-            payload.dict(exclude_unset=True)
-        )
+        data, relations = _resolve_traditional_media_relations(payload.dict(exclude_unset=True))
         for field, value in {**relations, **data}.items():
             setattr(placement, field, value)
         placement.full_clean()
@@ -2365,13 +1996,9 @@ def list_marketing_meetings(
         },
         "kpis": {
             "total_meetings": contexts.count(),
-            "upcoming_meetings": contexts.filter(
-                meeting__status="scheduled", meeting__meeting_date__gte=today
-            ).count(),
+            "upcoming_meetings": contexts.filter(meeting__status="scheduled", meeting__meeting_date__gte=today).count(),
             "completed_meetings": contexts.filter(meeting__status="completed").count(),
-            "open_action_items": actions.exclude(
-                status__in=["done", "cancelled"]
-            ).count(),
+            "open_action_items": actions.exclude(status__in=["done", "cancelled"]).count(),
             "decisions_recorded": decisions.count(),
         },
         "meetings": [
@@ -2380,9 +2007,7 @@ def list_marketing_meetings(
         ],
         "open_actions": [
             _serialize_marketing_meeting_action(action)
-            for action in actions.exclude(status__in=["done", "cancelled"]).order_by(
-                "due_date", "-created_at"
-            )[:limit]
+            for action in actions.exclude(status__in=["done", "cancelled"]).order_by("due_date", "-created_at")[:limit]
         ],
         "decision_register": [
             _serialize_marketing_meeting_decision(decision)
@@ -2393,7 +2018,8 @@ def list_marketing_meetings(
             for value, label in MarketingMeetingContext.MEETING_TYPE_CHOICES
         ],
         "status_choices": [
-            {"value": value, "label": label} for value, label in Meeting.STATUS_CHOICES
+            {"value": value, "label": label}
+            for value, label in Meeting.STATUS_CHOICES
         ],
     }
 
@@ -2423,42 +2049,38 @@ def export_marketing_meetings(
     )
     buffer = StringIO()
     writer = csv.writer(buffer)
-    writer.writerow(
-        [
-            "Meeting",
-            "Type",
-            "Campaign",
-            "Date",
-            "Time",
-            "Duration",
-            "Status",
-            "Location",
-            "Facilitator",
-            "Recorder",
-            "Attendees",
-            "Open Actions",
-            "Decisions",
-        ]
-    )
+    writer.writerow([
+        "Meeting",
+        "Type",
+        "Campaign",
+        "Date",
+        "Time",
+        "Duration",
+        "Status",
+        "Location",
+        "Facilitator",
+        "Recorder",
+        "Attendees",
+        "Open Actions",
+        "Decisions",
+    ])
     for context in contexts[:500]:
         meeting = context.meeting
-        writer.writerow(
-            [
-                meeting.title,
-                context.meeting_type,
-                context.campaign.name if context.campaign else "",
-                meeting.meeting_date,
-                meeting.meeting_time.strftime("%H:%M"),
-                meeting.duration_minutes,
-                meeting.status,
-                meeting.location,
-                context.facilitator,
-                context.recorder,
-                meeting.attendees.count(),
-                context.actions.exclude(status__in=["done", "cancelled"]).count(),
-                context.campaign_decisions.count(),
-            ]
-        )
+        writer.writerow([
+            meeting.title,
+            context.meeting_type,
+            context.campaign.name if context.campaign else "",
+            meeting.meeting_date,
+            meeting.meeting_time.strftime("%H:%M"),
+            meeting.duration_minutes,
+            meeting.status,
+            meeting.location,
+            context.facilitator,
+            context.recorder,
+            meeting.attendees.count(),
+            context.actions.exclude(status__in=["done", "cancelled"]).count(),
+            context.campaign_decisions.count(),
+        ])
     response = HttpResponse(buffer.getvalue(), content_type="text/csv")
     response["Content-Disposition"] = 'attachment; filename="marketing-meetings.csv"'
     return response
@@ -2468,9 +2090,7 @@ def export_marketing_meetings(
 @require_permission("meetings", "create")
 def create_marketing_meeting(request, payload: MarketingMeetingIn):
     try:
-        base_data, context_data, attendee_ids, campaign_id = _meeting_payload_data(
-            payload
-        )
+        base_data, context_data, attendee_ids, campaign_id = _meeting_payload_data(payload)
         campaign = None
         if campaign_id:
             campaign = MarketingCampaign.objects.filter(id=campaign_id).first()
@@ -2494,26 +2114,17 @@ def create_marketing_meeting(request, payload: MarketingMeetingIn):
         return 400, {"detail": str(exc)}
 
 
-@marketing_router.patch(
-    "/marketing/meetings/actions/{action_id}",
-    response={200: dict, 400: dict, 404: dict},
-)
+@marketing_router.patch("/marketing/meetings/actions/{action_id}", response={200: dict, 400: dict, 404: dict})
 @require_permission("meetings", "update")
-def update_marketing_meeting_action(
-    request, action_id: int, payload: MarketingMeetingActionUpdate
-):
+def update_marketing_meeting_action(request, action_id: int, payload: MarketingMeetingActionUpdate):
     try:
-        action = (
-            MarketingMeetingAction.objects.select_related(
-                "owner",
-                "owner__user",
-                "meeting_context",
-                "meeting_context__meeting",
-                "meeting_context__campaign",
-            )
-            .filter(id=action_id)
-            .first()
-        )
+        action = MarketingMeetingAction.objects.select_related(
+            "owner",
+            "owner__user",
+            "meeting_context",
+            "meeting_context__meeting",
+            "meeting_context__campaign",
+        ).filter(id=action_id).first()
         if not action:
             return 404, {"detail": "Marketing meeting action not found"}
         data = payload.dict(exclude_unset=True)
@@ -2535,48 +2146,29 @@ def update_marketing_meeting_action(
         return 400, {"detail": str(exc)}
 
 
-@marketing_router.get(
-    "/marketing/meetings/{meeting_id}", response={200: dict, 404: dict}
-)
+@marketing_router.get("/marketing/meetings/{meeting_id}", response={200: dict, 404: dict})
 @require_permission("marketing_campaigns", "view")
 def get_marketing_meeting(request, meeting_id: int):
-    context = (
-        MarketingMeetingContext.objects.select_related(
-            "meeting",
-            "meeting__organizer",
-            "campaign",
-        )
-        .prefetch_related("meeting__attendees", "actions", "campaign_decisions")
-        .filter(meeting_id=meeting_id)
-        .first()
-    )
+    context = MarketingMeetingContext.objects.select_related(
+        "meeting",
+        "meeting__organizer",
+        "campaign",
+    ).prefetch_related("meeting__attendees", "actions", "campaign_decisions").filter(meeting_id=meeting_id).first()
     if not context:
         return 404, {"detail": "Marketing meeting not found"}
     return 200, _serialize_marketing_meeting_context(context, include_detail=True)
 
 
-@marketing_router.patch(
-    "/marketing/meetings/{meeting_id}", response={200: dict, 400: dict, 404: dict}
-)
+@marketing_router.patch("/marketing/meetings/{meeting_id}", response={200: dict, 400: dict, 404: dict})
 @require_permission("meetings", "update")
 def update_marketing_meeting(request, meeting_id: int, payload: MarketingMeetingUpdate):
     try:
-        context = (
-            MarketingMeetingContext.objects.select_related("meeting", "campaign")
-            .filter(meeting_id=meeting_id)
-            .first()
-        )
+        context = MarketingMeetingContext.objects.select_related("meeting", "campaign").filter(meeting_id=meeting_id).first()
         if not context:
             return 404, {"detail": "Marketing meeting not found"}
-        base_data, context_data, attendee_ids, campaign_id = _meeting_payload_data(
-            payload, exclude_unset=True
-        )
+        base_data, context_data, attendee_ids, campaign_id = _meeting_payload_data(payload, exclude_unset=True)
         if campaign_id is not None:
-            context.campaign = (
-                MarketingCampaign.objects.filter(id=campaign_id).first()
-                if campaign_id
-                else None
-            )
+            context.campaign = MarketingCampaign.objects.filter(id=campaign_id).first() if campaign_id else None
             if campaign_id and not context.campaign:
                 return 400, {"detail": "Campaign not found"}
         with transaction.atomic():
@@ -2589,15 +2181,11 @@ def update_marketing_meeting(request, meeting_id: int, payload: MarketingMeeting
                 setattr(context, field, value)
             context.full_clean()
             context.save()
-        context = (
-            MarketingMeetingContext.objects.select_related(
-                "meeting",
-                "meeting__organizer",
-                "campaign",
-            )
-            .prefetch_related("meeting__attendees", "actions", "campaign_decisions")
-            .get(id=context.id)
-        )
+        context = MarketingMeetingContext.objects.select_related(
+            "meeting",
+            "meeting__organizer",
+            "campaign",
+        ).prefetch_related("meeting__attendees", "actions", "campaign_decisions").get(id=context.id)
         return 200, _serialize_marketing_meeting_context(context, include_detail=True)
     except ValidationError as exc:
         return 400, {"detail": _validation_detail(exc)}
@@ -2605,20 +2193,11 @@ def update_marketing_meeting(request, meeting_id: int, payload: MarketingMeeting
         return 400, {"detail": str(exc)}
 
 
-@marketing_router.post(
-    "/marketing/meetings/{meeting_id}/actions",
-    response={201: dict, 400: dict, 404: dict},
-)
+@marketing_router.post("/marketing/meetings/{meeting_id}/actions", response={201: dict, 400: dict, 404: dict})
 @require_permission("meetings", "update")
-def create_marketing_meeting_action(
-    request, meeting_id: int, payload: MarketingMeetingActionIn
-):
+def create_marketing_meeting_action(request, meeting_id: int, payload: MarketingMeetingActionIn):
     try:
-        context = (
-            MarketingMeetingContext.objects.select_related("meeting", "campaign")
-            .filter(meeting_id=meeting_id)
-            .first()
-        )
+        context = MarketingMeetingContext.objects.select_related("meeting", "campaign").filter(meeting_id=meeting_id).first()
         if not context:
             return 404, {"detail": "Marketing meeting not found"}
         data = payload.dict()
@@ -2643,20 +2222,11 @@ def create_marketing_meeting_action(
         return 400, {"detail": str(exc)}
 
 
-@marketing_router.post(
-    "/marketing/meetings/{meeting_id}/decisions",
-    response={201: dict, 400: dict, 404: dict},
-)
+@marketing_router.post("/marketing/meetings/{meeting_id}/decisions", response={201: dict, 400: dict, 404: dict})
 @require_permission("marketing_campaigns", "update")
-def create_marketing_meeting_decision(
-    request, meeting_id: int, payload: MarketingMeetingDecisionIn
-):
+def create_marketing_meeting_decision(request, meeting_id: int, payload: MarketingMeetingDecisionIn):
     try:
-        context = (
-            MarketingMeetingContext.objects.select_related("meeting", "campaign")
-            .filter(meeting_id=meeting_id)
-            .first()
-        )
+        context = MarketingMeetingContext.objects.select_related("meeting", "campaign").filter(meeting_id=meeting_id).first()
         if not context:
             return 404, {"detail": "Marketing meeting not found"}
         data = payload.dict()
@@ -2667,9 +2237,7 @@ def create_marketing_meeting_decision(
             if not campaign:
                 return 400, {"detail": "Campaign not found"}
         if not campaign:
-            return 400, {
-                "detail": "A campaign is required to record a campaign decision from a marketing meeting."
-            }
+            return 400, {"detail": "A campaign is required to record a campaign decision from a marketing meeting."}
         data["decision_date"] = data["decision_date"] or timezone.localdate()
         decision = CampaignDecision.objects.create(
             campaign=campaign,
@@ -2701,9 +2269,7 @@ def get_marketing_analytics(
 ):
     start, end = _period_bounds(period_start, period_end)
     leads = _period_leads(request, start, end, branch_id, division, campaign_id)
-    calendar_items = _period_calendar_items(
-        request, start, end, branch_id, division, campaign_id
-    )
+    calendar_items = _period_calendar_items(request, start, end, branch_id, division, campaign_id)
     target_rows = _target_rows(request, start, end, branch_id)
     revenue_targets = _revenue_target_totals(target_rows)
 
@@ -2717,9 +2283,7 @@ def get_marketing_analytics(
         linked_campaign_ids = set(
             leads.exclude(campaign_id=None).values_list("campaign_id", flat=True)
         ) | set(
-            calendar_items.exclude(campaign_id=None).values_list(
-                "campaign_id", flat=True
-            )
+            calendar_items.exclude(campaign_id=None).values_list("campaign_id", flat=True)
         )
         campaigns = campaigns.filter(id__in=linked_campaign_ids)
 
@@ -2732,18 +2296,10 @@ def get_marketing_analytics(
     won_leads = leads.filter(status="won")
     won_count = won_leads.count()
     revenue_closed = _decimal_sum(won_leads, "estimated_value")
-    avg_deal_value = (
-        (revenue_closed / Decimal(won_count)).quantize(Decimal("0.01"))
-        if won_count
-        else Decimal("0.00")
-    )
+    avg_deal_value = (revenue_closed / Decimal(won_count)).quantize(Decimal("0.01")) if won_count else Decimal("0.00")
     sla_overdue = leads.filter(
         Q(sla_status="breached")
-        | Q(
-            first_response_at__isnull=True,
-            first_contact_at__isnull=True,
-            first_response_due_at__lt=timezone.now(),
-        )
+        | Q(first_response_at__isnull=True, first_contact_at__isnull=True, first_response_due_at__lt=timezone.now())
     ).count()
 
     planned_content = calendar_items.count()
@@ -2753,22 +2309,16 @@ def get_marketing_analytics(
             "platform": value,
             "label": label,
             "planned": calendar_items.filter(platform=value).count(),
-            "published": calendar_items.filter(
-                platform=value, status="published"
-            ).count(),
+            "published": calendar_items.filter(platform=value, status="published").count(),
         }
         for value, label in ContentCalendarItem.PLATFORM_CHOICES
         if calendar_items.filter(platform=value).exists()
     ]
-    top_platform = (
-        max(platform_rows, key=lambda row: row["published"]) if platform_rows else None
-    )
+    top_platform = max(platform_rows, key=lambda row: row["published"]) if platform_rows else None
 
     total_spend = _decimal_sum(campaigns, "budget_spent")
     attributed_leads = leads.exclude(campaign_id=None)
-    campaign_won_revenue = _decimal_sum(
-        attributed_leads.filter(status="won"), "estimated_value"
-    )
+    campaign_won_revenue = _decimal_sum(attributed_leads.filter(status="won"), "estimated_value")
 
     revenue_by_division = []
     for value, label in Lead.DIVISION_CHOICES:
@@ -2777,17 +2327,15 @@ def get_marketing_analytics(
         deals = division_leads.filter(status="won").count()
         if not division_leads.exists() and not actual:
             continue
-        revenue_by_division.append(
-            {
-                "division": value,
-                "label": label,
-                "target": None,
-                "actual": actual,
-                "gap": None,
-                "achievement_pct": None,
-                "deals_closed": deals,
-            }
-        )
+        revenue_by_division.append({
+            "division": value,
+            "label": label,
+            "target": None,
+            "actual": actual,
+            "gap": None,
+            "achievement_pct": None,
+            "deals_closed": deals,
+        })
 
     return {
         "period": {
@@ -2807,9 +2355,7 @@ def get_marketing_analytics(
             "client_score": None,
             "client_score_status": "unavailable",
             "leads_by_source": _lead_breakdown(leads, "source", Lead.SOURCE_CHOICES),
-            "leads_by_division": _lead_breakdown(
-                leads, "division", Lead.DIVISION_CHOICES
-            ),
+            "leads_by_division": _lead_breakdown(leads, "division", Lead.DIVISION_CHOICES),
             "weekly_content_output": _weekly_content_output(calendar_items, start, end),
             "target_vs_actual": target_rows,
         },
@@ -2819,9 +2365,7 @@ def get_marketing_analytics(
             "contacted_pct": _pct(contacted_count, total_leads),
             "sla_overdue": sla_overdue,
             "won": won_count,
-            "source_breakdown": _lead_source_rows(
-                leads, campaigns, campaign_id=campaign_id
-            ),
+            "source_breakdown": _lead_source_rows(leads, campaigns, campaign_id=campaign_id),
         },
         "content_analytics": {
             "planned": planned_content,
@@ -2847,15 +2391,8 @@ def get_marketing_analytics(
             "total_spend": total_spend,
             "attributed_leads": attributed_leads.count(),
             "won_revenue": campaign_won_revenue,
-            "estimated_cpl": (
-                (total_spend / Decimal(attributed_leads.count())).quantize(
-                    Decimal("0.01")
-                )
-                if attributed_leads.count()
-                else None
-            ),
-            "stored_impressions": campaigns.aggregate(total=Sum("impressions"))["total"]
-            or 0,
+            "estimated_cpl": (total_spend / Decimal(attributed_leads.count())).quantize(Decimal("0.01")) if attributed_leads.count() else None,
+            "stored_impressions": campaigns.aggregate(total=Sum("impressions"))["total"] or 0,
         },
         "data_notes": [
             "Ad metrics are stored campaign fields, not live Meta, Google, TikTok, or analytics-platform integrations.",

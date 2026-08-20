@@ -12,29 +12,17 @@ from ninja.errors import HttpError
 from ninja.pagination import LimitOffsetPagination, paginate
 
 from services.api.schema.others import MessageSchema
-from services.api.schema.schemas import (
-    InvoiceFromQuoteIn,
-    InvoiceOut,
-    QuoteIn,
-    QuoteOut,
-    QuoteUpdate,
-)
+from services.api.schema.schemas import InvoiceFromQuoteIn, InvoiceOut, QuoteIn, QuoteOut, QuoteUpdate
 from services.models.payment import Invoice, InvoiceItem
 from services.models.service import Quote, ServiceRequest, ServiceRequestActivity
 from user.utils.perm import require_permission, scope_queryset
+
 
 router = Router(tags=["Quotes"])
 
 
 EDITABLE_STATUSES = {"awaiting_approval"}
-ACTIVE_INVOICE_STATUSES = {
-    "draft",
-    "sent",
-    "viewed",
-    "partially_paid",
-    "paid",
-    "overdue",
-}
+ACTIVE_INVOICE_STATUSES = {"draft", "sent", "viewed", "partially_paid", "paid", "overdue"}
 
 
 def _validation_detail(exc):
@@ -64,9 +52,7 @@ def _quote_queryset():
 def _quote_payload_data(payload):
     data = payload.dict(exclude_unset=True)
     if not data.get("required_approver_role_id"):
-        raise ValidationError(
-            {"required_approver_role_id": "Required approver role is required."}
-        )
+        raise ValidationError({"required_approver_role_id": "Required approver role is required."})
     service_fee = data.get("service_fee")
     amount = data.get("amount")
     if service_fee is None:
@@ -88,7 +74,8 @@ def _ensure_required_approver(quote, employee):
 
 def _latest_rejected_quote(service_request):
     return (
-        service_request.quotes.filter(status="rejected")
+        service_request.quotes
+        .filter(status="rejected")
         .order_by("-version", "-created_at", "-id")
         .first()
     )
@@ -99,9 +86,7 @@ def _ensure_no_active_request_quote(service_request):
         raise ValidationError("This service request already has an active quote.")
 
 
-def _log_request_activity(
-    service_request, activity_type, note, created_by=None, next_action=""
-):
+def _log_request_activity(service_request, activity_type, note, created_by=None, next_action=""):
     if not service_request:
         return
     ServiceRequestActivity.objects.create(
@@ -174,9 +159,7 @@ def _create_quote_from_data(data, created_by):
     service_request = None
     previous_quote = None
     if data.get("service_request_id"):
-        service_request = get_object_or_404(
-            ServiceRequest, id=data["service_request_id"]
-        )
+        service_request = get_object_or_404(ServiceRequest, id=data["service_request_id"])
         _ensure_no_active_request_quote(service_request)
         data["client_id"] = service_request.client_id
         data["service_id"] = service_request.service_id
@@ -200,9 +183,7 @@ def _create_quote_from_data(data, created_by):
         service_request.quote = quote
         service_request.status = "under_review"
         service_request.next_action = f"Approve quotation {quote.quote_number}"
-        service_request.save(
-            update_fields=["quote", "status", "next_action", "updated_at"]
-        )
+        service_request.save(update_fields=["quote", "status", "next_action", "updated_at"])
         _log_request_activity(
             service_request,
             "quote_prepared",
@@ -222,9 +203,7 @@ def list_quotes(
     client_id: Optional[int] = Query(None),
     service_request_id: Optional[int] = Query(None),
 ):
-    quotes = scope_queryset(
-        request, _quote_queryset(), branch_field="service_request__branch_id"
-    )
+    quotes = scope_queryset(request, _quote_queryset(), branch_field="service_request__branch_id")
     if status:
         quotes = quotes.filter(status=status)
     if client_id:
@@ -245,17 +224,12 @@ def create_quote(request, payload: QuoteIn):
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.post(
-    "/{quote_id}/approve",
-    response={200: QuoteOut, 400: MessageSchema, 404: MessageSchema},
-)
+@router.post("/{quote_id}/approve", response={200: QuoteOut, 400: MessageSchema, 404: MessageSchema})
 @require_permission("quotes", "approve")
 def approve_quote(request, quote_id: int):
     try:
         with transaction.atomic():
-            quote = get_object_or_404(
-                _quote_queryset().select_for_update(), id=quote_id
-            )
+            quote = get_object_or_404(_quote_queryset().select_for_update(), id=quote_id)
             if quote.status != "awaiting_approval":
                 return 400, {"detail": "Only quotes awaiting approval can be approved."}
             _ensure_required_approver(quote, request._perm_employee)
@@ -266,12 +240,8 @@ def approve_quote(request, quote_id: int):
             quote.save()
             if quote.service_request:
                 quote.service_request.status = "quoted"
-                quote.service_request.next_action = (
-                    "Client to accept or reject quotation"
-                )
-                quote.service_request.save(
-                    update_fields=["status", "next_action", "updated_at"]
-                )
+                quote.service_request.next_action = "Client to accept or reject quotation"
+                quote.service_request.save(update_fields=["status", "next_action", "updated_at"])
                 _log_request_activity(
                     quote.service_request,
                     "quote_sent",
@@ -294,21 +264,14 @@ def approve_quote(request, quote_id: int):
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.post(
-    "/{quote_id}/invoice",
-    response={201: InvoiceOut, 400: MessageSchema, 404: MessageSchema},
-)
+@router.post("/{quote_id}/invoice", response={201: InvoiceOut, 400: MessageSchema, 404: MessageSchema})
 @require_permission("service_invoices", "create")
 def create_invoice_from_quote(request, quote_id: int, payload: InvoiceFromQuoteIn):
     try:
         with transaction.atomic():
-            quote = get_object_or_404(
-                _quote_queryset().select_for_update(), id=quote_id
-            )
+            quote = get_object_or_404(_quote_queryset().select_for_update(), id=quote_id)
             if quote.status != "accepted":
-                return 400, {
-                    "detail": "Invoices can only be created from accepted quotes."
-                }
+                return 400, {"detail": "Invoices can only be created from accepted quotes."}
             if quote.invoices.filter(status__in=ACTIVE_INVOICE_STATUSES).exists():
                 return 400, {"detail": "This quote already has an active invoice."}
 
@@ -335,9 +298,7 @@ def create_invoice_from_quote(request, quote_id: int, payload: InvoiceFromQuoteI
                 unit_price=invoice.subtotal,
             )
             if quote.service_request:
-                quote.service_request.next_action = (
-                    f"Send invoice {invoice.invoice_number}"
-                )
+                quote.service_request.next_action = f"Send invoice {invoice.invoice_number}"
                 quote.service_request.save(update_fields=["next_action", "updated_at"])
         return 201, _invoice_queryset().get(id=invoice.id)
     except (ValidationError, IntegrityError) as e:
@@ -350,9 +311,7 @@ def get_quote(request, quote_id: int):
     return get_object_or_404(_quote_queryset(), id=quote_id)
 
 
-@router.patch(
-    "/{quote_id}", response={200: QuoteOut, 400: MessageSchema, 404: MessageSchema}
-)
+@router.patch("/{quote_id}", response={200: QuoteOut, 400: MessageSchema, 404: MessageSchema})
 @require_permission("quotes", "update")
 def update_quote(request, quote_id: int, payload: QuoteUpdate):
     try:
@@ -367,17 +326,13 @@ def update_quote(request, quote_id: int, payload: QuoteUpdate):
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.put(
-    "/{quote_id}", response={200: QuoteOut, 400: MessageSchema, 404: MessageSchema}
-)
+@router.put("/{quote_id}", response={200: QuoteOut, 400: MessageSchema, 404: MessageSchema})
 @require_permission("quotes", "update")
 def replace_quote(request, quote_id: int, payload: QuoteUpdate):
     return update_quote(request, quote_id, payload)
 
 
-@router.delete(
-    "/{quote_id}", response={200: MessageSchema, 400: MessageSchema, 404: MessageSchema}
-)
+@router.delete("/{quote_id}", response={200: MessageSchema, 400: MessageSchema, 404: MessageSchema})
 @require_permission("quotes", "delete")
 def delete_quote(request, quote_id: int):
     quote = get_object_or_404(Quote, id=quote_id)

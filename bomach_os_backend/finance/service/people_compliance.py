@@ -35,22 +35,18 @@ def _payroll_employee_queryset(payroll_run):
     from user.models.employee import Employee
 
     period_start, period_end = _payroll_period_bounds(payroll_run)
-    employees = (
-        Employee.objects.select_related(
-            "user",
-            "branch",
-            "department",
-        )
-        .filter(
-            is_active=True,
-            employment_status__in=["active", "on-probation", "on-leave"],
-            salary_frequency="monthly",
-            gross_salary__gt=0,
-        )
-        .filter(
-            Q(start_date__isnull=True) | Q(start_date__lte=period_end),
-            Q(offboard_date__isnull=True) | Q(offboard_date__gte=period_start),
-        )
+    employees = Employee.objects.select_related(
+        "user",
+        "branch",
+        "department",
+    ).filter(
+        is_active=True,
+        employment_status__in=["active", "on-probation", "on-leave"],
+        salary_frequency="monthly",
+        gross_salary__gt=0,
+    ).filter(
+        Q(start_date__isnull=True) | Q(start_date__lte=period_end),
+        Q(offboard_date__isnull=True) | Q(offboard_date__gte=period_start),
     )
 
     if payroll_run.branch_id:
@@ -196,9 +192,7 @@ def calculate_payroll_run(payroll_run, calculated_by):
             line.employee_name = employee.get_full_name() or employee.user.email
             line.designation = employee.designation or ""
             line.branch_name = employee.branch.branch_name if employee.branch else ""
-            line.department_name = (
-                employee.department.name if employee.department else ""
-            )
+            line.department_name = employee.department.name if employee.department else ""
             line.salary_frequency = employee.salary_frequency
             line.bank_name = employee.bank_name or ""
             line.account_number = employee.account_number or ""
@@ -212,7 +206,9 @@ def calculate_payroll_run(payroll_run, calculated_by):
 
             # Recalculation refreshes only employee-owned inputs. Manual and future
             # commission/statutory items stay intact for still-eligible employees.
-            line.items.filter(source_type=PayrollLineItem.SOURCE_TYPE.EMPLOYEE).delete()
+            line.items.filter(
+                source_type=PayrollLineItem.SOURCE_TYPE.EMPLOYEE
+            ).delete()
 
             PayrollLineItem.objects.create(
                 payroll_line=line,
@@ -228,9 +224,7 @@ def calculate_payroll_run(payroll_run, calculated_by):
             )
 
             allowance_items = []
-            for index, (name, value) in enumerate(
-                (employee.allowances or {}).items(), start=1
-            ):
+            for index, (name, value) in enumerate((employee.allowances or {}).items(), start=1):
                 amount = _payroll_allowance_amount(name, value)
                 if amount <= 0:
                     continue
@@ -251,17 +245,13 @@ def calculate_payroll_run(payroll_run, calculated_by):
             if allowance_items:
                 PayrollLineItem.objects.bulk_create(allowance_items)
 
-            approved_awards = (
-                IncentiveAward.objects.select_for_update()
-                .filter(
-                    employee=employee,
-                    payout_month=payroll_run.period_month,
-                    payout_year=payroll_run.period_year,
-                    status=IncentiveAward.STATUS.APPROVED,
-                    payroll_line__isnull=True,
-                )
-                .order_by("created_at", "id")
-            )
+            approved_awards = IncentiveAward.objects.select_for_update().filter(
+                employee=employee,
+                payout_month=payroll_run.period_month,
+                payout_year=payroll_run.period_year,
+                status=IncentiveAward.STATUS.APPROVED,
+                payroll_line__isnull=True,
+            ).order_by("created_at", "id")
 
             for index, award in enumerate(approved_awards, start=1):
                 PayrollLineItem.objects.create(
@@ -337,11 +327,9 @@ def calculate_payroll_run(payroll_run, calculated_by):
 
 def replace_manual_payroll_items(payroll_line, items, updated_by):
     with transaction.atomic():
-        payroll_line = (
-            PayrollLine.objects.select_for_update()
-            .select_related("payroll_run")
-            .get(id=payroll_line.id)
-        )
+        payroll_line = PayrollLine.objects.select_for_update().select_related(
+            "payroll_run"
+        ).get(id=payroll_line.id)
         payroll_run = PayrollRun.objects.select_for_update().get(
             id=payroll_line.payroll_run_id
         )
@@ -399,17 +387,11 @@ def submit_payroll_run(payroll_run, submitted_by):
     with transaction.atomic():
         payroll_run = PayrollRun.objects.select_for_update().get(id=payroll_run.id)
         if payroll_run.status != PayrollRun.STATUS.CALCULATED:
-            raise ValidationError(
-                "Only calculated payroll runs can be submitted for approval."
-            )
+            raise ValidationError("Only calculated payroll runs can be submitted for approval.")
         if payroll_run.employee_count <= 0:
-            raise ValidationError(
-                "Payroll must contain at least one employee before submission."
-            )
+            raise ValidationError("Payroll must contain at least one employee before submission.")
         if payroll_run.net_pay <= 0:
-            raise ValidationError(
-                "Payroll net pay must be greater than zero before submission."
-            )
+            raise ValidationError("Payroll net pay must be greater than zero before submission.")
 
         payroll_run.status = PayrollRun.STATUS.AWAITING_APPROVAL
         payroll_run.submitted_by = submitted_by
@@ -429,9 +411,7 @@ def approve_payroll_run(payroll_run, approved_by):
     with transaction.atomic():
         payroll_run = PayrollRun.objects.select_for_update().get(id=payroll_run.id)
         if payroll_run.status != PayrollRun.STATUS.AWAITING_APPROVAL:
-            raise ValidationError(
-                "Only payroll runs awaiting approval can be approved."
-            )
+            raise ValidationError("Only payroll runs awaiting approval can be approved.")
 
         payroll_run.status = PayrollRun.STATUS.APPROVED
         payroll_run.approved_by = approved_by
@@ -461,9 +441,7 @@ def reject_payroll_run(payroll_run, rejected_by, reason):
     with transaction.atomic():
         payroll_run = PayrollRun.objects.select_for_update().get(id=payroll_run.id)
         if payroll_run.status != PayrollRun.STATUS.AWAITING_APPROVAL:
-            raise ValidationError(
-                "Only payroll runs awaiting approval can be rejected."
-            )
+            raise ValidationError("Only payroll runs awaiting approval can be rejected.")
 
         payroll_run.status = PayrollRun.STATUS.REJECTED
         payroll_run.rejected_by = rejected_by
@@ -497,32 +475,21 @@ def pay_payroll_run(
         if payroll_run.status != PayrollRun.STATUS.APPROVED:
             raise ValidationError("Only approved payroll runs can be paid.")
         if not finance_account or not finance_account.is_active:
-            raise ValidationError(
-                "An active Finance account is required to pay payroll."
-            )
+            raise ValidationError("An active Finance account is required to pay payroll.")
 
         if (
             payroll_run.branch_id
             and finance_account.branch_id
             and payroll_run.branch_id != finance_account.branch_id
         ):
-            raise ValidationError(
-                "Payroll account branch must match the payroll run branch."
-            )
+            raise ValidationError("Payroll account branch must match the payroll run branch.")
 
         payment_reference = (payment_reference or "").strip()
-        if (
-            payment_reference
-            and PayrollRun.objects.exclude(id=payroll_run.id)
-            .filter(
-                status=PayrollRun.STATUS.PAID,
-                payment_reference=payment_reference,
-            )
-            .exists()
-        ):
-            raise ValidationError(
-                "This payroll payment reference has already been used."
-            )
+        if payment_reference and PayrollRun.objects.exclude(id=payroll_run.id).filter(
+            status=PayrollRun.STATUS.PAID,
+            payment_reference=payment_reference,
+        ).exists():
+            raise ValidationError("This payroll payment reference has already been used.")
 
         payroll_run.status = PayrollRun.STATUS.PAID
         payroll_run.finance_account = finance_account
@@ -595,6 +562,7 @@ def cancel_payroll_run(payroll_run, cancelled_by, reason):
         return payroll_run
 
 
+
 def create_commission_award(
     *,
     employee,
@@ -610,22 +578,15 @@ def create_commission_award(
 
     invoice = payment.invoice
     if invoice.service_id != commission_rule.service_id:
-        raise ValidationError(
-            "Commission rule service does not match the verified Payment service."
-        )
+        raise ValidationError("Commission rule service does not match the verified Payment service.")
 
     if commission_rule.status != CommissionRule.STATUS.ACTIVE:
         raise ValidationError("Commission rule is not active.")
 
     if payment.payment_date < commission_rule.effective_from:
         raise ValidationError("Payment predates the Commission rule.")
-    if (
-        commission_rule.effective_to
-        and payment.payment_date > commission_rule.effective_to
-    ):
-        raise ValidationError(
-            "Payment is outside the Commission rule effective period."
-        )
+    if commission_rule.effective_to and payment.payment_date > commission_rule.effective_to:
+        raise ValidationError("Payment is outside the Commission rule effective period.")
 
     payment_branch = None
     if invoice.service_request_id and invoice.service_request.branch_id:
@@ -637,13 +598,9 @@ def create_commission_award(
 
     if commission_rule.branch_id:
         if not payment_branch or payment_branch.id != commission_rule.branch_id:
-            raise ValidationError(
-                "Verified Payment branch does not match the Commission rule branch."
-            )
+            raise ValidationError("Verified Payment branch does not match the Commission rule branch.")
         if employee.branch_id and employee.branch_id != commission_rule.branch_id:
-            raise ValidationError(
-                "Commission beneficiary branch does not match the Commission rule branch."
-            )
+            raise ValidationError("Commission beneficiary branch does not match the Commission rule branch.")
 
     if payment.amount < commission_rule.minimum_verified_revenue:
         raise ValidationError("Verified revenue is below the Commission rule minimum.")
@@ -777,276 +734,81 @@ def reject_incentive_award(award, rejected_by, reason):
         return award
 
 
+
 def submit_statutory_obligation(obligation, submitted_by):
     with transaction.atomic():
-        obligation = StatutoryObligation.objects.select_for_update().get(
-            id=obligation.id
-        )
-        if obligation.status not in {
-            StatutoryObligation.STATUS.DRAFT,
-            StatutoryObligation.STATUS.REJECTED,
-        }:
-            raise ValidationError(
-                "Only draft or rejected statutory obligations can be submitted."
-            )
-        obligation.status = StatutoryObligation.STATUS.PENDING_APPROVAL
-        obligation.submitted_by = submitted_by
-        obligation.submitted_at = timezone.now()
-        obligation.rejected_by = None
-        obligation.rejected_at = None
-        obligation.rejection_reason = ""
-        obligation.save(
-            update_fields=[
-                "status",
-                "submitted_by",
-                "submitted_at",
-                "rejected_by",
-                "rejected_at",
-                "rejection_reason",
-                "updated_at",
-            ]
-        )
-        return obligation
+        obligation = StatutoryObligation.objects.select_for_update().get(id=obligation.id)
+        if obligation.status not in {StatutoryObligation.STATUS.DRAFT, StatutoryObligation.STATUS.REJECTED}:
+            raise ValidationError("Only draft or rejected statutory obligations can be submitted.")
+        obligation.status=StatutoryObligation.STATUS.PENDING_APPROVAL; obligation.submitted_by=submitted_by; obligation.submitted_at=timezone.now()
+        obligation.rejected_by=None; obligation.rejected_at=None; obligation.rejection_reason=""
+        obligation.save(update_fields=["status","submitted_by","submitted_at","rejected_by","rejected_at","rejection_reason","updated_at"]); return obligation
 
 
 def approve_statutory_obligation(obligation, approved_by):
     with transaction.atomic():
-        obligation = StatutoryObligation.objects.select_for_update().get(
-            id=obligation.id
-        )
-        if obligation.status != StatutoryObligation.STATUS.PENDING_APPROVAL:
-            raise ValidationError(
-                "Only statutory obligations pending approval can be approved."
-            )
-        obligation.status = StatutoryObligation.STATUS.APPROVED
-        obligation.approved_by = approved_by
-        obligation.approved_at = timezone.now()
-        obligation.save(
-            update_fields=["status", "approved_by", "approved_at", "updated_at"]
-        )
-        return obligation
+        obligation=StatutoryObligation.objects.select_for_update().get(id=obligation.id)
+        if obligation.status != StatutoryObligation.STATUS.PENDING_APPROVAL: raise ValidationError("Only statutory obligations pending approval can be approved.")
+        obligation.status=StatutoryObligation.STATUS.APPROVED; obligation.approved_by=approved_by; obligation.approved_at=timezone.now()
+        obligation.save(update_fields=["status","approved_by","approved_at","updated_at"]); return obligation
 
 
 def reject_statutory_obligation(obligation, rejected_by, reason):
-    reason = (reason or "").strip()
-    if not reason:
-        raise ValidationError("A rejection reason is required.")
+    reason=(reason or "").strip()
+    if not reason: raise ValidationError("A rejection reason is required.")
     with transaction.atomic():
-        obligation = StatutoryObligation.objects.select_for_update().get(
-            id=obligation.id
-        )
-        if obligation.status != StatutoryObligation.STATUS.PENDING_APPROVAL:
-            raise ValidationError(
-                "Only statutory obligations pending approval can be rejected."
-            )
-        obligation.status = StatutoryObligation.STATUS.REJECTED
-        obligation.rejected_by = rejected_by
-        obligation.rejected_at = timezone.now()
-        obligation.rejection_reason = reason
-        obligation.approved_by = None
-        obligation.approved_at = None
-        obligation.save(
-            update_fields=[
-                "status",
-                "rejected_by",
-                "rejected_at",
-                "rejection_reason",
-                "approved_by",
-                "approved_at",
-                "updated_at",
-            ]
-        )
-        return obligation
+        obligation=StatutoryObligation.objects.select_for_update().get(id=obligation.id)
+        if obligation.status != StatutoryObligation.STATUS.PENDING_APPROVAL: raise ValidationError("Only statutory obligations pending approval can be rejected.")
+        obligation.status=StatutoryObligation.STATUS.REJECTED; obligation.rejected_by=rejected_by; obligation.rejected_at=timezone.now(); obligation.rejection_reason=reason
+        obligation.approved_by=None; obligation.approved_at=None
+        obligation.save(update_fields=["status","rejected_by","rejected_at","rejection_reason","approved_by","approved_at","updated_at"]); return obligation
 
 
-def pay_statutory_obligation(
-    obligation, paid_by, finance_account, paid_at=None, payment_reference=""
-):
+def pay_statutory_obligation(obligation, paid_by, finance_account, paid_at=None, payment_reference=""):
     with transaction.atomic():
-        obligation = StatutoryObligation.objects.select_for_update().get(
-            id=obligation.id
-        )
-        if obligation.status != StatutoryObligation.STATUS.APPROVED:
-            raise ValidationError("Only approved statutory obligations can be paid.")
-        if not finance_account or not finance_account.is_active:
-            raise ValidationError("An active Finance account is required.")
-        if (
-            obligation.branch_id
-            and finance_account.branch_id
-            and obligation.branch_id != finance_account.branch_id
-        ):
-            raise ValidationError(
-                "Payment account branch must match obligation branch."
-            )
-        ref = (payment_reference or "").strip()
-        if (
-            ref
-            and StatutoryObligation.objects.exclude(id=obligation.id)
-            .filter(status=StatutoryObligation.STATUS.PAID, payment_reference=ref)
-            .exists()
-        ):
-            raise ValidationError(
-                "This statutory payment reference has already been used."
-            )
-        obligation.status = StatutoryObligation.STATUS.PAID
-        obligation.finance_account = finance_account
-        obligation.paid_by = paid_by
-        obligation.paid_at = paid_at or timezone.now()
-        obligation.payment_reference = ref
-        obligation.save(
-            update_fields=[
-                "status",
-                "finance_account",
-                "paid_by",
-                "paid_at",
-                "payment_reference",
-                "updated_at",
-            ]
-        )
+        obligation=StatutoryObligation.objects.select_for_update().get(id=obligation.id)
+        if obligation.status != StatutoryObligation.STATUS.APPROVED: raise ValidationError("Only approved statutory obligations can be paid.")
+        if not finance_account or not finance_account.is_active: raise ValidationError("An active Finance account is required.")
+        if obligation.branch_id and finance_account.branch_id and obligation.branch_id != finance_account.branch_id: raise ValidationError("Payment account branch must match obligation branch.")
+        ref=(payment_reference or "").strip()
+        if ref and StatutoryObligation.objects.exclude(id=obligation.id).filter(status=StatutoryObligation.STATUS.PAID,payment_reference=ref).exists(): raise ValidationError("This statutory payment reference has already been used.")
+        obligation.status=StatutoryObligation.STATUS.PAID; obligation.finance_account=finance_account; obligation.paid_by=paid_by; obligation.paid_at=paid_at or timezone.now(); obligation.payment_reference=ref
+        obligation.save(update_fields=["status","finance_account","paid_by","paid_at","payment_reference","updated_at"])
         post_statutory_payment_journal(obligation, paid_by)
         return obligation
 
 
 def void_statutory_obligation(obligation):
     with transaction.atomic():
-        obligation = StatutoryObligation.objects.select_for_update().get(
-            id=obligation.id
-        )
-        if obligation.status == StatutoryObligation.STATUS.PAID:
-            raise ValidationError("Paid statutory obligations cannot be voided.")
-        if obligation.status == StatutoryObligation.STATUS.VOID:
-            raise ValidationError("This statutory obligation is already void.")
-        obligation.status = StatutoryObligation.STATUS.VOID
-        obligation.save(update_fields=["status", "updated_at"])
-        return obligation
+        obligation=StatutoryObligation.objects.select_for_update().get(id=obligation.id)
+        if obligation.status == StatutoryObligation.STATUS.PAID: raise ValidationError("Paid statutory obligations cannot be voided.")
+        if obligation.status == StatutoryObligation.STATUS.VOID: raise ValidationError("This statutory obligation is already void.")
+        obligation.status=StatutoryObligation.STATUS.VOID; obligation.save(update_fields=["status","updated_at"]); return obligation
 
 
-def generate_wht_obligation(
-    *,
-    period_start,
-    period_end,
-    due_date,
-    created_by,
-    branch=None,
-    period_label="",
-    notes="",
-):
-    bills = VendorBill.objects.filter(
-        status=VendorBill.STATUS.PAID,
-        paid_at__date__gte=period_start,
-        paid_at__date__lte=period_end,
-        withholding_tax__gt=0,
-    )
-    if branch:
-        bills = bills.filter(
-            Q(branch=branch)
-            | Q(service_order__branch=branch)
-            | Q(finance_account__branch=branch)
-        )
-    unused = [
-        b
-        for b in bills.select_related("vendor", "branch")
-        if not StatutoryObligationItem.objects.filter(vendor_bill=b).exists()
-    ]
-    if not unused:
-        raise ValidationError(
-            "No new paid Vendor Bills with unrecorded withholding tax were found."
-        )
-    basis_amount = sum((b.gross_amount for b in unused), Decimal("0.00")).quantize(
-        Decimal("0.01")
-    )
-    amount = sum((b.withholding_tax for b in unused), Decimal("0.00")).quantize(
-        Decimal("0.01")
-    )
+def generate_wht_obligation(*, period_start, period_end, due_date, created_by, branch=None, period_label="", notes=""):
+    bills=VendorBill.objects.filter(status=VendorBill.STATUS.PAID, paid_at__date__gte=period_start, paid_at__date__lte=period_end, withholding_tax__gt=0)
+    if branch: bills=bills.filter(Q(branch=branch)|Q(service_order__branch=branch)|Q(finance_account__branch=branch))
+    unused=[b for b in bills.select_related("vendor","branch") if not StatutoryObligationItem.objects.filter(vendor_bill=b).exists()]
+    if not unused: raise ValidationError("No new paid Vendor Bills with unrecorded withholding tax were found.")
+    basis_amount=sum((b.gross_amount for b in unused),Decimal("0.00")).quantize(Decimal("0.01")); amount=sum((b.withholding_tax for b in unused),Decimal("0.00")).quantize(Decimal("0.01"))
     with transaction.atomic():
-        o = StatutoryObligation.objects.create(
-            obligation_type="wht",
-            source_type="vendor_bill",
-            branch=branch,
-            period_label=period_label or f"{period_start} to {period_end}",
-            period_start=period_start,
-            period_end=period_end,
-            basis="Paid vendor bills with explicit withholding tax",
-            basis_amount=basis_amount,
-            amount=amount,
-            due_date=due_date,
-            notes=notes or "",
-            created_by=created_by,
-        )
-        for b in unused:
-            StatutoryObligationItem.objects.create(
-                obligation=o,
-                source_type="vendor_bill",
-                source_reference=b.bill_number,
-                description=f"WHT withheld from {b.vendor.name}",
-                basis_amount=b.gross_amount,
-                liability_amount=b.withholding_tax,
-                vendor_bill=b,
-            )
+        o=StatutoryObligation.objects.create(obligation_type="wht",source_type="vendor_bill",branch=branch,period_label=period_label or f"{period_start} to {period_end}",period_start=period_start,period_end=period_end,basis="Paid vendor bills with explicit withholding tax",basis_amount=basis_amount,amount=amount,due_date=due_date,notes=notes or "",created_by=created_by)
+        for b in unused: StatutoryObligationItem.objects.create(obligation=o,source_type="vendor_bill",source_reference=b.bill_number,description=f"WHT withheld from {b.vendor.name}",basis_amount=b.gross_amount,liability_amount=b.withholding_tax,vendor_bill=b)
         return o
 
 
-def generate_payroll_statutory_obligation(
-    *, payroll_run, category, due_date, created_by, notes=""
-):
-    if payroll_run.status not in {PayrollRun.STATUS.APPROVED, PayrollRun.STATUS.PAID}:
-        raise ValidationError(
-            "Payroll must be approved or paid before statutory obligations are generated."
-        )
-    mapping = {
-        PayrollLineItem.CATEGORY.PAYE: ("paye", "Employee payroll PAYE deductions"),
-        PayrollLineItem.CATEGORY.PENSION: (
-            "pension",
-            "Employee payroll pension deductions",
-        ),
-    }
-    if category not in mapping:
-        raise ValidationError(
-            "Only PAYE or Pension can be generated from Payroll in this slice."
-        )
-    typ, basis = mapping[category]
-    items = list(
-        PayrollLineItem.objects.filter(
-            payroll_line__payroll_run=payroll_run,
-            item_type="deduction",
-            category=category,
-        ).select_related("payroll_line")
-    )
-    unused = [
-        i
-        for i in items
-        if not StatutoryObligationItem.objects.filter(payroll_line_item=i).exists()
-    ]
-    if not unused:
-        raise ValidationError(f"No new {typ.upper()} Payroll deductions were found.")
-    amount = sum((i.amount for i in unused), Decimal("0.00")).quantize(Decimal("0.01"))
-    basis_amount = sum(
-        (i.payroll_line.gross_pay for i in unused), Decimal("0.00")
-    ).quantize(Decimal("0.01"))
-    ps, pe = _payroll_period_bounds(payroll_run)
+def generate_payroll_statutory_obligation(*, payroll_run, category, due_date, created_by, notes=""):
+    if payroll_run.status not in {PayrollRun.STATUS.APPROVED, PayrollRun.STATUS.PAID}: raise ValidationError("Payroll must be approved or paid before statutory obligations are generated.")
+    mapping={PayrollLineItem.CATEGORY.PAYE:("paye","Employee payroll PAYE deductions"),PayrollLineItem.CATEGORY.PENSION:("pension","Employee payroll pension deductions")}
+    if category not in mapping: raise ValidationError("Only PAYE or Pension can be generated from Payroll in this slice.")
+    typ,basis=mapping[category]
+    items=list(PayrollLineItem.objects.filter(payroll_line__payroll_run=payroll_run,item_type="deduction",category=category).select_related("payroll_line"))
+    unused=[i for i in items if not StatutoryObligationItem.objects.filter(payroll_line_item=i).exists()]
+    if not unused: raise ValidationError(f"No new {typ.upper()} Payroll deductions were found.")
+    amount=sum((i.amount for i in unused),Decimal("0.00")).quantize(Decimal("0.01")); basis_amount=sum((i.payroll_line.gross_pay for i in unused),Decimal("0.00")).quantize(Decimal("0.01"))
+    ps,pe=_payroll_period_bounds(payroll_run)
     with transaction.atomic():
-        o = StatutoryObligation.objects.create(
-            obligation_type=typ,
-            source_type="payroll",
-            branch=payroll_run.branch,
-            period_label=payroll_run.period_display,
-            period_start=ps,
-            period_end=pe,
-            basis=basis,
-            basis_amount=basis_amount,
-            amount=amount,
-            due_date=due_date,
-            notes=notes or "",
-            created_by=created_by,
-        )
-        for i in unused:
-            StatutoryObligationItem.objects.create(
-                obligation=o,
-                source_type="payroll_line_item",
-                source_reference=f"{payroll_run.run_number}:{i.payroll_line.employee_number}:{category}",
-                description=f"{i.payroll_line.employee_name} {i.name}",
-                basis_amount=i.payroll_line.gross_pay,
-                liability_amount=i.amount,
-                payroll_line_item=i,
-            )
+        o=StatutoryObligation.objects.create(obligation_type=typ,source_type="payroll",branch=payroll_run.branch,period_label=payroll_run.period_display,period_start=ps,period_end=pe,basis=basis,basis_amount=basis_amount,amount=amount,due_date=due_date,notes=notes or "",created_by=created_by)
+        for i in unused: StatutoryObligationItem.objects.create(obligation=o,source_type="payroll_line_item",source_reference=f"{payroll_run.run_number}:{i.payroll_line.employee_number}:{category}",description=f"{i.payroll_line.employee_name} {i.name}",basis_amount=i.payroll_line.gross_pay,liability_amount=i.amount,payroll_line_item=i)
         return o

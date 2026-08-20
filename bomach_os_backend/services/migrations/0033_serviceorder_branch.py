@@ -7,20 +7,14 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("services", "0032_clientfeedback"),
-        ("user", "0094_brokeragelisting_brokeragelistingimage_and_more"),
+        ('services', '0032_clientfeedback'),
+        ('user', '0094_brokeragelisting_brokeragelistingimage_and_more'),
     ]
 
     operations = [
         migrations.AddField(
-            model_name="serviceorder",
-            name="branch",
-            field=models.ForeignKey(
-                blank=True,
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                related_name="service_orders",
-                to="user.branch",
-            ),
+            model_name='serviceorder',
+            name='branch',
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='service_orders', to='user.branch'),
         ),
     ]

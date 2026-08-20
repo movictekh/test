@@ -6,16 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("user", "0075_merge_20260406_1920"),
+        ('user', '0075_merge_20260406_1920'),
     ]
 
     operations = [
         migrations.AddField(
-            model_name="user",
-            name="two_factor_enabled",
-            field=models.BooleanField(
-                default=False,
-                help_text="Whether the user has enabled two-factor authentication for login",
-            ),
+            model_name='user',
+            name='two_factor_enabled',
+            field=models.BooleanField(default=False, help_text='Whether the user has enabled two-factor authentication for login'),
         ),
     ]

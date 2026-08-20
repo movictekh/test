@@ -24,12 +24,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config("SECRET_KEY")
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config("DEBUG", default=False, cast=bool)
+DEBUG = config('DEBUG', default=False, cast=bool)
 
-DOMAIN = config("DOMAIN", default="bomach-os-app.web.app")
+DOMAIN = config('DOMAIN', default="bomach-os-app.web.app")
 
 sentry_sdk.init(
     dsn=config("GLITCHTIP_DSN"),
@@ -46,23 +46,13 @@ sentry_sdk.init(
 # In production, set ALLOWED_HOSTS environment variable with your domains
 # Format: domain1.com,domain2.com,.onrender.com
 
-ALLOWED_HOSTS = [
-    "127.0.0.1",
-    "localhost",
-    "0.0.0.0",
-    "192.168.0.214",
-    "192.168.0.188",
-    ".ngrok-free.app",
-    ".onrender.com",
-    "bomachauthtest.bgbot.app",
-    "services-mocha-xi.vercel.app",
-]
-_ALLOWED_HOSTS = config("ALLOWED_HOSTS", "")
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '0.0.0.0', '192.168.0.214', '192.168.0.188', '.ngrok-free.app', '.onrender.com', 'bomachauthtest.bgbot.app', 'services-mocha-xi.vercel.app']
+_ALLOWED_HOSTS = config('ALLOWED_HOSTS', '')
 ALLOWED_HOSTS.extend(_ALLOWED_HOSTS.split())
 
-ZOHOZEPTOMAIL_KEY = config("ZOHOZEPTOMAIL_KEY", default="")
+ZOHOZEPTOMAIL_KEY = config('ZOHOZEPTOMAIL_KEY', default='')
 
-FRONTEND_PRODUCTION_DOMAIN = config("FRONTEND_PRODUCTION_DOMAIN", default="")
+FRONTEND_PRODUCTION_DOMAIN = config('FRONTEND_PRODUCTION_DOMAIN', default="")
 
 FACE_SERVICE_URL = config(
     "FACE_SERVICE_URL",
@@ -124,7 +114,7 @@ ROOT_URLCONF = "bomach_backend.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "template"],
+        "DIRS": [ BASE_DIR / 'template' ],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -143,7 +133,7 @@ WSGI_APPLICATION = "bomach_backend.wsgi.application"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 # Database configuration controlled by TRY_LOCAL_DB flag
-TRY_LOCAL_DB = config("TRY_LOCAL_DB", default=False, cast=bool)
+TRY_LOCAL_DB = config('TRY_LOCAL_DB', default=False, cast=bool)
 
 if TRY_LOCAL_DB:
     # Use SQLite for local development
@@ -157,14 +147,12 @@ else:
     # Use PostgreSQL from environment variables
     DATABASES = {
         "default": {
-            "ENGINE": config(
-                "DATABASES_DEFAULT_ENGINE", default="django.db.backends.postgresql"
-            ),
-            "NAME": config("DATABASES_DEFAULT_NAME"),
-            "USER": config("DATABASES_DEFAULT_USER"),
-            "PASSWORD": config("DATABASES_DEFAULT_PASSWORD"),
-            "HOST": config("DATABASES_DEFAULT_HOST"),
-            "PORT": config("DATABASES_DEFAULT_PORT", default="5432"),
+            "ENGINE": config('DATABASES_DEFAULT_ENGINE', default='django.db.backends.postgresql'),
+            "NAME": config('DATABASES_DEFAULT_NAME'),
+            "USER": config('DATABASES_DEFAULT_USER'),
+            "PASSWORD": config('DATABASES_DEFAULT_PASSWORD'),
+            "HOST": config('DATABASES_DEFAULT_HOST'),
+            "PORT": config('DATABASES_DEFAULT_PORT', default='5432'),
         }
     }
 
@@ -203,11 +191,11 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-AWS_STORAGE_BUCKET_NAME = config("AWS_STORAGE_BUCKET_NAME", default="").strip()
-AWS_ACCESS_KEY_ID = config("AWS_ACCESS_KEY_ID", default="").strip()
-AWS_SECRET_ACCESS_KEY = config("AWS_SECRET_ACCESS_KEY", default="").strip()
-AWS_S3_REGION_NAME = config("AWS_S3_REGION_NAME", default="").strip()
-AWS_S3_CUSTOM_DOMAIN = config("AWS_S3_CUSTOM_DOMAIN", default="").strip()
+AWS_STORAGE_BUCKET_NAME = config('AWS_STORAGE_BUCKET_NAME', default='').strip()
+AWS_ACCESS_KEY_ID = config('AWS_ACCESS_KEY_ID', default='').strip()
+AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY', default='').strip()
+AWS_S3_REGION_NAME = config('AWS_S3_REGION_NAME', default='').strip()
+AWS_S3_CUSTOM_DOMAIN = config('AWS_S3_CUSTOM_DOMAIN', default='').strip()
 
 USE_S3_MEDIA_STORAGE = bool(AWS_STORAGE_BUCKET_NAME and AWS_S3_REGION_NAME)
 
@@ -240,7 +228,9 @@ STORAGES = {
 
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_DIRS = [BASE_DIR / "static"]
+STATICFILES_DIRS = [
+    BASE_DIR / 'static'
+]
 
 # WhiteNoise configuration for serving static files in production
 # STORAGES = {
@@ -253,7 +243,7 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 # }
 
 # Media files
-MEDIA_URL = "/media/"
+MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / "mediafiles"
 
 
@@ -266,9 +256,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 AUTH_USER_MODEL = "user.User"
 
 # Email Configuration
-EMAIL_BACKEND = (
-    "django.core.mail.backends.console.EmailBackend"  # Development: prints to console
-)
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"  # Development: prints to console
 # For production, use:
 # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 # EMAIL_HOST = 'smtp.gmail.com'
@@ -280,9 +268,9 @@ EMAIL_BACKEND = (
 DEFAULT_FROM_EMAIL = "noreply@benji.com"
 
 # Monnify Payment Gateway
-MONNIFY_API_KEY = config("MONNIFY_API_KEY", default="")
-MONNIFY_SECRET_KEY = config("MONNIFY_SECRET_KEY", default="")
-MONNIFY_BASE_URL = config("MONNIFY_BASE_URL", default="https://api.monnify.com")
+MONNIFY_API_KEY = config('MONNIFY_API_KEY', default='')
+MONNIFY_SECRET_KEY = config('MONNIFY_SECRET_KEY', default='')
+MONNIFY_BASE_URL = config('MONNIFY_BASE_URL', default='https://api.monnify.com')
 
 
 CACHES = {
@@ -292,25 +280,24 @@ CACHES = {
     }
 }
 
-FLUTTER_LOCAL_ORIGINS = ["http://127.0.0.1:52240", "https://bomach-os-client.web.app"]
+FLUTTER_LOCAL_ORIGINS = [
+    'http://127.0.0.1:52240',
+    'https://bomach-os-client.web.app'
+]
 
-CORS_ALLOWED_ORIGIN_REGEXES = (
-    [
-        r"^http://localhost:\d+$",
-        r"^https://localhost:\d+$",
-        r"^http://127\.0\.0\.1:\d+$",
-        r"^https://127\.0\.0\.1:\d+$",
-    ]
-    if DEBUG
-    else []
-)
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^http://localhost:\d+$",
+    r"^https://localhost:\d+$",
+    r"^http://127\.0\.0\.1:\d+$",
+    r"^https://127\.0\.0\.1:\d+$",
+] if DEBUG else []
 CORS_ALLOWED_ORIGINS = []
 CSRF_TRUSTED_ORIGINS = []
 
 # Add Flutter production domains
 for domain in FRONTEND_PRODUCTION_DOMAIN.split():
-    CSRF_TRUSTED_ORIGINS.append(f"https://{domain}")
-    CORS_ALLOWED_ORIGINS.append(f"https://{domain}")
+    CSRF_TRUSTED_ORIGINS.append(f'https://{domain}')
+    CORS_ALLOWED_ORIGINS.append(f'https://{domain}')
 
 # Add Flutter local development origins
 if DEBUG:
@@ -319,10 +306,10 @@ if DEBUG:
 
 # Add backend allowed hosts
 for host in _ALLOWED_HOSTS.split():
-    CSRF_TRUSTED_ORIGINS.append(f"http://{host}")
-    CSRF_TRUSTED_ORIGINS.append(f"https://{host}")
-    CORS_ALLOWED_ORIGINS.append(f"http://{host}")
-    CORS_ALLOWED_ORIGINS.append(f"https://{host}")
+    CSRF_TRUSTED_ORIGINS.append(f'http://{host}')
+    CSRF_TRUSTED_ORIGINS.append(f'https://{host}')
+    CORS_ALLOWED_ORIGINS.append(f'http://{host}')
+    CORS_ALLOWED_ORIGINS.append(f'https://{host}')
 
 CORS_ALLOWED_ORIGINS.append("https://bomach-os-test.web.app")
 CORS_ALLOWED_ORIGINS.append("http://bomach-os-test.web.app")
@@ -336,22 +323,22 @@ CSRF_TRUSTED_ORIGINS.append("http://bomach-os-test.web.app")
 
 # Additional CORS headers for Flutter web
 CORS_ALLOW_HEADERS = [
-    "accept",
-    "accept-encoding",
-    "authorization",
-    "content-type",
-    "dnt",
-    "origin",
-    "user-agent",
-    "x-csrftoken",
-    "x-requested-with",
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
 ]
 
 CORS_ALLOW_CREDENTIALS = True
 
 CORS_EXPOSE_HEADERS = [
-    "content-type",
-    "x-csrf-token",
+    'content-type',
+    'x-csrf-token',
 ]
 
 # The initial "Bank" for the company

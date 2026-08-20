@@ -6,68 +6,68 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("user", "0066_servicerequest_invoice_paymentsubmission"),
+        ('user', '0066_servicerequest_invoice_paymentsubmission'),
     ]
 
     operations = [
         migrations.AddField(
-            model_name="client",
-            name="alternate_phone",
-            field=models.CharField(blank=True, default="", max_length=20),
+            model_name='client',
+            name='alternate_phone',
+            field=models.CharField(blank=True, default='', max_length=20),
         ),
         migrations.AddField(
-            model_name="client",
-            name="city",
-            field=models.CharField(blank=True, default="", max_length=100),
+            model_name='client',
+            name='city',
+            field=models.CharField(blank=True, default='', max_length=100),
         ),
         migrations.AddField(
-            model_name="client",
-            name="company_address",
-            field=models.CharField(blank=True, default="", max_length=500),
+            model_name='client',
+            name='company_address',
+            field=models.CharField(blank=True, default='', max_length=500),
         ),
         migrations.AddField(
-            model_name="client",
-            name="country",
-            field=models.CharField(blank=True, default="", max_length=100),
+            model_name='client',
+            name='country',
+            field=models.CharField(blank=True, default='', max_length=100),
         ),
         migrations.AddField(
-            model_name="client",
-            name="industry",
-            field=models.CharField(blank=True, default="", max_length=255),
+            model_name='client',
+            name='industry',
+            field=models.CharField(blank=True, default='', max_length=255),
         ),
         migrations.AddField(
-            model_name="client",
-            name="is_active",
+            model_name='client',
+            name='is_active',
             field=models.BooleanField(default=True),
         ),
         migrations.AddField(
-            model_name="client",
-            name="is_verified",
+            model_name='client',
+            name='is_verified',
             field=models.BooleanField(default=False),
         ),
         migrations.AddField(
-            model_name="client",
-            name="registration_number",
-            field=models.CharField(blank=True, default="", max_length=100),
+            model_name='client',
+            name='registration_number',
+            field=models.CharField(blank=True, default='', max_length=100),
         ),
         migrations.AddField(
-            model_name="client",
-            name="state",
-            field=models.CharField(blank=True, default="", max_length=100),
+            model_name='client',
+            name='state',
+            field=models.CharField(blank=True, default='', max_length=100),
         ),
         migrations.AddField(
-            model_name="client",
-            name="tax_identification_number",
-            field=models.CharField(blank=True, default="", max_length=100),
+            model_name='client',
+            name='tax_identification_number',
+            field=models.CharField(blank=True, default='', max_length=100),
         ),
         migrations.AddField(
-            model_name="client",
-            name="website",
-            field=models.URLField(blank=True, default=""),
+            model_name='client',
+            name='website',
+            field=models.URLField(blank=True, default=''),
         ),
         migrations.AlterField(
-            model_name="client",
-            name="address",
-            field=models.CharField(blank=True, default="", max_length=500),
+            model_name='client',
+            name='address',
+            field=models.CharField(blank=True, default='', max_length=500),
         ),
     ]

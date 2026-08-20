@@ -25,19 +25,18 @@ def get_dashboard_overview(request):
         new_hires_30_days = Employee.objects.filter(
             created_at__gte=now - timedelta(days=30)
         ).count()
-        new_hires_today = Employee.objects.filter(created_at__date=now.date()).count()
+        new_hires_today = Employee.objects.filter(
+            created_at__date=now.date()
+        ).count()
 
         headcount_qs = (
             Employee.objects.filter(is_active=True)
-            .values("department__name")
-            .annotate(count=Count("id"))
-            .order_by("-count")
+            .values('department__name')
+            .annotate(count=Count('id'))
+            .order_by('-count')
         )
         headcount_by_department = [
-            {
-                "department": item["department__name"] or "Unassigned",
-                "count": item["count"],
-            }
+            {"department": item['department__name'] or 'Unassigned', "count": item['count']}
             for item in headcount_qs
         ]
     except Exception as e:

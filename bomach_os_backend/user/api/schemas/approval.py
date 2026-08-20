@@ -2,36 +2,35 @@ from ninja import Schema
 from typing import Optional, List, Any, Dict
 from datetime import datetime
 
+
 # Human-readable labels for each employee level value
 _LEVEL_DISPLAY = {
-    "intern": "Intern",
-    "junior": "Junior",
-    "mid_level": "Mid Level",
-    "senior": "Senior",
-    "high": "High",
-    "head_hr": "Head of Human Resources",
-    "head_operations": "Head of Operations",
-    "head_marketing": "Head of Marketing",
-    "head_finance": "Head of Finance",
-    "head_legal": "Head of Legal",
-    "head_it": "Head of IT",
-    "manager": "Manager",
-    "cto": "Chief Technology Officer",
-    "cfo": "Chief Financial Officer",
-    "clo": "Chief Legal Officer",
-    "chro": "Chief Human Resources Officer",
-    "cmo": "Chief Marketing Officer",
-    "board_member": "Board Member",
-    "ceo": "Chief Executive Officer",
+    'intern':           'Intern',
+    'junior':           'Junior',
+    'mid_level':        'Mid Level',
+    'senior':           'Senior',
+    'high':             'High',
+    'head_hr':          'Head of Human Resources',
+    'head_operations':  'Head of Operations',
+    'head_marketing':   'Head of Marketing',
+    'head_finance':     'Head of Finance',
+    'head_legal':       'Head of Legal',
+    'head_it':          'Head of IT',
+    'manager':          'Manager',
+    'cto':              'Chief Technology Officer',
+    'cfo':              'Chief Financial Officer',
+    'clo':              'Chief Legal Officer',
+    'chro':             'Chief Human Resources Officer',
+    'cmo':              'Chief Marketing Officer',
+    'board_member':     'Board Member',
+    'ceo':              'Chief Executive Officer',
 }
 
 
 # ── Flow schemas ──────────────────────────────────────────────────────────────
 
-
 class ApprovalFlowStepInputSchema(Schema):
     """One step definition when creating / updating a flow."""
-
     step_order: int
     step_name: str
     required_level: str
@@ -89,15 +88,11 @@ class ApprovalFlowSchema(Schema):
     @staticmethod
     def resolve_created_by_name(obj):
         if obj.created_by:
-            return (
-                f"{obj.created_by.first_name} {obj.created_by.last_name}".strip()
-                or obj.created_by.email
-            )
+            return f"{obj.created_by.first_name} {obj.created_by.last_name}".strip() or obj.created_by.email
         return None
 
 
 # ── Request schemas ───────────────────────────────────────────────────────────
-
 
 class ApprovalRequestCreateSchema(Schema):
     flow_id: int
@@ -108,7 +103,6 @@ class ApprovalRequestCreateSchema(Schema):
 
 class ApprovalActionSchema(Schema):
     """Payload for approve / reject endpoints."""
-
     comment: Optional[str] = None
 
 
@@ -130,10 +124,7 @@ class ApprovalDecisionSchema(Schema):
     @staticmethod
     def resolve_approver_name(obj):
         if obj.approver:
-            return (
-                f"{obj.approver.first_name} {obj.approver.last_name}".strip()
-                or obj.approver.email
-            )
+            return f"{obj.approver.first_name} {obj.approver.last_name}".strip() or obj.approver.email
         return None
 
 
@@ -183,28 +174,24 @@ class ApprovalRequestSchema(Schema):
 
     @staticmethod
     def resolve_pending_step_name(obj):
-        if obj.status != "pending":
+        if obj.status != 'pending':
             return None
         step = obj.flow.steps.filter(step_order=obj.current_step).first()
         return step.step_name if step else None
 
     @staticmethod
     def resolve_pending_step_required_level(obj):
-        if obj.status != "pending":
+        if obj.status != 'pending':
             return None
         step = obj.flow.steps.filter(step_order=obj.current_step).first()
         return step.required_level if step else None
 
     @staticmethod
     def resolve_pending_step_required_level_display(obj):
-        if obj.status != "pending":
+        if obj.status != 'pending':
             return None
         step = obj.flow.steps.filter(step_order=obj.current_step).first()
-        return (
-            _LEVEL_DISPLAY.get(step.required_level, step.required_level)
-            if step
-            else None
-        )
+        return _LEVEL_DISPLAY.get(step.required_level, step.required_level) if step else None
 
     @staticmethod
     def resolve_decisions(obj):
@@ -213,10 +200,7 @@ class ApprovalRequestSchema(Schema):
     @staticmethod
     def resolve_created_by_name(obj):
         if obj.created_by:
-            return (
-                f"{obj.created_by.first_name} {obj.created_by.last_name}".strip()
-                or obj.created_by.email
-            )
+            return f"{obj.created_by.first_name} {obj.created_by.last_name}".strip() or obj.created_by.email
         return None
 
 

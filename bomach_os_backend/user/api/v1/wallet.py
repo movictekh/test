@@ -13,17 +13,18 @@ from user.models.user import User
 from user.utils.auth import JWTAuthenticator
 from user.utils.perm import require_permission, scope_queryset, check_obj_permission
 from user.utils.monnify import monnifyPaymentVerification
-from user.api.schemas.wallet import TransactionResponse, WalletBalanceResponse
+from user.api.schemas.wallet import (
+    TransactionResponse,
+    WalletBalanceResponse
+)
 from ninja.pagination import paginate, LimitOffsetPagination
+
 
 wallet_api = Router(tags=["Wallet Management"])
 
 
-@wallet_api.get(
-    "/transactions/",
-    response={200: List[TransactionResponse], 400: ErrorResponse},
-    auth=JWTAuthenticator(),
-)
+
+@wallet_api.get("/transactions/", response={200: List[TransactionResponse], 400: ErrorResponse}, auth=JWTAuthenticator())
 @paginate(LimitOffsetPagination, page_size=10)
 @require_permission("wallet", "list")
 def list_transactions(
@@ -32,10 +33,10 @@ def list_transactions(
     transaction_type: Optional[str] = None,
     status: Optional[str] = None,
     start_date: Optional[str] = None,
-    end_date: Optional[str] = None,
+    end_date: Optional[str] = None
 ):
     try:
-        transactions = Transaction.objects.select_related("user").all()
+        transactions = Transaction.objects.select_related('user').all()
 
         if user_id:
             transactions = transactions.filter(user_id=user_id)
@@ -47,14 +48,10 @@ def list_transactions(
             transactions = transactions.filter(status=status)
 
         if start_date:
-            transactions = transactions.filter(
-                date__gte=datetime.fromisoformat(start_date)
-            )
+            transactions = transactions.filter(date__gte=datetime.fromisoformat(start_date))
 
         if end_date:
-            transactions = transactions.filter(
-                date__lte=datetime.fromisoformat(end_date)
-            )
+            transactions = transactions.filter(date__lte=datetime.fromisoformat(end_date))
 
         transactions = scope_queryset(request, transactions, owner_field="user")
         return transactions
@@ -62,16 +59,12 @@ def list_transactions(
         return 400, {"detail": str(e)}
 
 
-@wallet_api.get(
-    "/transactions/{transaction_id}/",
-    response={200: TransactionResponse, 404: ErrorResponse},
-    auth=JWTAuthenticator(),
-)
+@wallet_api.get("/transactions/{transaction_id}/", response={200: TransactionResponse, 404: ErrorResponse}, auth=JWTAuthenticator())
 @require_permission("wallet", "view", owner_lookup="user")
 def get_transaction(request: HttpRequest, transaction_id: int):
     """Get transaction details by ID"""
     try:
-        transaction = Transaction.objects.select_related("user").get(id=transaction_id)
+        transaction = Transaction.objects.select_related('user').get(id=transaction_id)
         check_obj_permission(request, transaction, owner_field="user")
         return transaction
     except Transaction.DoesNotExist:
@@ -80,11 +73,7 @@ def get_transaction(request: HttpRequest, transaction_id: int):
         return 400, {"detail": str(e)}
 
 
-@wallet_api.get(
-    "/balance/{user_id}/",
-    response={200: WalletBalanceResponse, 404: ErrorResponse},
-    auth=JWTAuthenticator(),
-)
+@wallet_api.get("/balance/{user_id}/", response={200: WalletBalanceResponse, 404: ErrorResponse}, auth=JWTAuthenticator())
 @require_permission("wallet", "view")
 def get_wallet_balance(request: HttpRequest, user_id: int):
     try:
@@ -92,26 +81,25 @@ def get_wallet_balance(request: HttpRequest, user_id: int):
 
         # Get all completed transactions for the user
         completed_transactions = Transaction.objects.filter(
-            user=user, status="completed"
+            user=user,
+            status='completed'
         )
 
         # Calculate totals
-        credits = completed_transactions.filter(transaction_type="credit").aggregate(
-            total=Sum("amount")
-        )["total"] or Decimal("0.00")
+        credits = completed_transactions.filter(transaction_type='credit').aggregate(
+            total=Sum('amount')
+        )['total'] or Decimal('0.00')
 
-        debits = completed_transactions.filter(transaction_type="debit").aggregate(
-            total=Sum("amount")
-        )["total"] or Decimal("0.00")
+        debits = completed_transactions.filter(transaction_type='debit').aggregate(
+            total=Sum('amount')
+        )['total'] or Decimal('0.00')
 
         # Get transaction counts
-        pending_count = Transaction.objects.filter(user=user, status="pending").count()
+        pending_count = Transaction.objects.filter(user=user, status='pending').count()
         completed_count = completed_transactions.count()
 
         # Get last transaction date
-        last_transaction = (
-            Transaction.objects.filter(user=user).order_by("-date").first()
-        )
+        last_transaction = Transaction.objects.filter(user=user).order_by('-date').first()
         last_transaction_date = last_transaction.date if last_transaction else None
 
         return 200, {
@@ -122,7 +110,7 @@ def get_wallet_balance(request: HttpRequest, user_id: int):
             "current_balance": user.current_balance,
             "pending_transactions": pending_count,
             "completed_transactions": completed_count,
-            "last_transaction_date": last_transaction_date,
+            "last_transaction_date": last_transaction_date
         }
     except User.DoesNotExist:
         return 404, {"detail": "User not found"}

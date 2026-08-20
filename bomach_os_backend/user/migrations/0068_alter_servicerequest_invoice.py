@@ -7,20 +7,14 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("services", "0007_alter_budget_current_spend"),
-        ("user", "0067_client_alternate_phone_client_city_and_more"),
+        ('services', '0007_alter_budget_current_spend'),
+        ('user', '0067_client_alternate_phone_client_city_and_more'),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name="servicerequest",
-            name="invoice",
-            field=models.OneToOneField(
-                blank=True,
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                related_name="service_requests",
-                to="services.invoice",
-            ),
+            model_name='servicerequest',
+            name='invoice',
+            field=models.OneToOneField(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='service_requests', to='services.invoice'),
         ),
     ]

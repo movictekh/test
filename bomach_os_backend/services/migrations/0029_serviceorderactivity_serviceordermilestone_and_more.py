@@ -7,277 +7,138 @@ from django.db import migrations, models
 
 
 def migrate_existing_service_orders(apps, schema_editor):
-    ServiceOrder = apps.get_model("services", "ServiceOrder")
-    ServiceOrder.objects.filter(due_date__isnull=True).update(
-        due_date=models.F("valid_until")
-    )
-    ServiceOrder.objects.filter(order_status="pending").update(
-        order_status="pending_mobilisation"
-    )
-    ServiceOrder.objects.filter(order_status__in=["accepted", "in_progress"]).update(
-        order_status="active"
-    )
+    ServiceOrder = apps.get_model('services', 'ServiceOrder')
+    ServiceOrder.objects.filter(due_date__isnull=True).update(due_date=models.F('valid_until'))
+    ServiceOrder.objects.filter(order_status='pending').update(order_status='pending_mobilisation')
+    ServiceOrder.objects.filter(order_status__in=['accepted', 'in_progress']).update(order_status='active')
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("services", "0028_invoice_activation_threshold_amount_and_more"),
-        ("user", "0093_employeetargetreport"),
+        ('services', '0028_invoice_activation_threshold_amount_and_more'),
+        ('user', '0093_employeetargetreport'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name="ServiceOrderActivity",
+            name='ServiceOrderActivity',
             fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                (
-                    "activity_type",
-                    models.CharField(
-                        choices=[
-                            ("order_created", "Order Created"),
-                            ("control_update", "Control Update"),
-                            ("progress_update", "Progress Update"),
-                            ("stage_advanced", "Stage Advanced"),
-                            ("milestone_added", "Milestone Added"),
-                            ("milestone_reopened", "Milestone Reopened"),
-                            ("client_communication", "Client Communication"),
-                            ("delay_blocker", "Delay / Blocker"),
-                            ("inspection", "Inspection"),
-                            ("decision", "Decision"),
-                        ],
-                        max_length=40,
-                    ),
-                ),
-                (
-                    "visibility",
-                    models.CharField(
-                        choices=[
-                            ("internal_client", "Internal and Client"),
-                            ("internal", "Internal Only"),
-                            ("management", "Management Only"),
-                        ],
-                        default="internal_client",
-                        max_length=20,
-                    ),
-                ),
-                ("note", models.TextField()),
-                (
-                    "progress",
-                    models.PositiveIntegerField(
-                        blank=True,
-                        null=True,
-                        validators=[
-                            django.core.validators.MinValueValidator(0),
-                            django.core.validators.MaxValueValidator(100),
-                        ],
-                    ),
-                ),
-                ("next_action", models.CharField(blank=True, max_length=255)),
-                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('activity_type', models.CharField(choices=[('order_created', 'Order Created'), ('control_update', 'Control Update'), ('progress_update', 'Progress Update'), ('stage_advanced', 'Stage Advanced'), ('milestone_added', 'Milestone Added'), ('milestone_reopened', 'Milestone Reopened'), ('client_communication', 'Client Communication'), ('delay_blocker', 'Delay / Blocker'), ('inspection', 'Inspection'), ('decision', 'Decision')], max_length=40)),
+                ('visibility', models.CharField(choices=[('internal_client', 'Internal and Client'), ('internal', 'Internal Only'), ('management', 'Management Only')], default='internal_client', max_length=20)),
+                ('note', models.TextField()),
+                ('progress', models.PositiveIntegerField(blank=True, null=True, validators=[django.core.validators.MinValueValidator(0), django.core.validators.MaxValueValidator(100)])),
+                ('next_action', models.CharField(blank=True, max_length=255)),
+                ('created_at', models.DateTimeField(auto_now_add=True)),
             ],
             options={
-                "ordering": ["-created_at"],
+                'ordering': ['-created_at'],
             },
         ),
         migrations.CreateModel(
-            name="ServiceOrderMilestone",
+            name='ServiceOrderMilestone',
             fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                ("name", models.CharField(max_length=255)),
-                (
-                    "status",
-                    models.CharField(
-                        choices=[
-                            ("pending", "Pending"),
-                            ("active", "Active"),
-                            ("done", "Done"),
-                            ("blocked", "Blocked"),
-                        ],
-                        default="pending",
-                        max_length=20,
-                    ),
-                ),
-                ("sort_order", models.PositiveIntegerField(default=0)),
-                ("client_visible", models.BooleanField(default=True)),
-                ("due_date", models.DateField(blank=True, null=True)),
-                ("completed_at", models.DateTimeField(blank=True, null=True)),
-                ("created_at", models.DateTimeField(auto_now_add=True)),
-                ("updated_at", models.DateTimeField(auto_now=True)),
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('name', models.CharField(max_length=255)),
+                ('status', models.CharField(choices=[('pending', 'Pending'), ('active', 'Active'), ('done', 'Done'), ('blocked', 'Blocked')], default='pending', max_length=20)),
+                ('sort_order', models.PositiveIntegerField(default=0)),
+                ('client_visible', models.BooleanField(default=True)),
+                ('due_date', models.DateField(blank=True, null=True)),
+                ('completed_at', models.DateTimeField(blank=True, null=True)),
+                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('updated_at', models.DateTimeField(auto_now=True)),
             ],
             options={
-                "ordering": ["sort_order", "id"],
+                'ordering': ['sort_order', 'id'],
             },
         ),
         migrations.AddField(
-            model_name="serviceorder",
-            name="completed_at",
+            model_name='serviceorder',
+            name='completed_at',
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name="serviceorder",
-            name="due_date",
+            model_name='serviceorder',
+            name='due_date',
             field=models.DateField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name="serviceorder",
-            name="invoice",
-            field=models.OneToOneField(
-                blank=True,
-                null=True,
-                on_delete=django.db.models.deletion.PROTECT,
-                related_name="service_order",
-                to="services.invoice",
-            ),
+            model_name='serviceorder',
+            name='invoice',
+            field=models.OneToOneField(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='service_order', to='services.invoice'),
         ),
         migrations.AddField(
-            model_name="serviceorder",
-            name="next_action",
+            model_name='serviceorder',
+            name='next_action',
             field=models.CharField(blank=True, max_length=255),
         ),
         migrations.AddField(
-            model_name="serviceorder",
-            name="progress",
-            field=models.PositiveIntegerField(
-                default=0,
-                validators=[
-                    django.core.validators.MinValueValidator(0),
-                    django.core.validators.MaxValueValidator(100),
-                ],
-            ),
+            model_name='serviceorder',
+            name='progress',
+            field=models.PositiveIntegerField(default=0, validators=[django.core.validators.MinValueValidator(0), django.core.validators.MaxValueValidator(100)]),
         ),
         migrations.AddField(
-            model_name="serviceorder",
-            name="service_request",
-            field=models.ForeignKey(
-                blank=True,
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                related_name="orders",
-                to="services.servicerequest",
-            ),
+            model_name='serviceorder',
+            name='service_request',
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='orders', to='services.servicerequest'),
         ),
         migrations.AddField(
-            model_name="serviceorder",
-            name="stage",
+            model_name='serviceorder',
+            name='stage',
             field=models.CharField(blank=True, max_length=255),
         ),
         migrations.AddField(
-            model_name="serviceorder",
-            name="started_at",
+            model_name='serviceorder',
+            name='started_at',
             field=models.DateTimeField(blank=True, null=True),
         ),
-        migrations.RunPython(
-            migrate_existing_service_orders, migrations.RunPython.noop
-        ),
+        migrations.RunPython(migrate_existing_service_orders, migrations.RunPython.noop),
         migrations.AlterField(
-            model_name="serviceorder",
-            name="order_status",
-            field=models.CharField(
-                choices=[
-                    ("pending_mobilisation", "Pending Mobilisation"),
-                    ("active", "Active"),
-                    ("quality_review", "Quality Review"),
-                    ("awaiting_client", "Awaiting Client"),
-                    ("completed", "Completed"),
-                    ("on_hold", "On Hold"),
-                    ("cancelled", "Cancelled"),
-                ],
-                default="pending_mobilisation",
-                max_length=30,
-            ),
+            model_name='serviceorder',
+            name='order_status',
+            field=models.CharField(choices=[('pending_mobilisation', 'Pending Mobilisation'), ('active', 'Active'), ('quality_review', 'Quality Review'), ('awaiting_client', 'Awaiting Client'), ('completed', 'Completed'), ('on_hold', 'On Hold'), ('cancelled', 'Cancelled')], default='pending_mobilisation', max_length=30),
         ),
         migrations.AddIndex(
-            model_name="serviceorder",
-            index=models.Index(
-                fields=["service_request", "order_status"],
-                name="services_se_service_2041ac_idx",
-            ),
+            model_name='serviceorder',
+            index=models.Index(fields=['service_request', 'order_status'], name='services_se_service_2041ac_idx'),
         ),
         migrations.AddField(
-            model_name="serviceorderactivity",
-            name="created_by",
-            field=models.ForeignKey(
-                blank=True,
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                related_name="created_service_order_activities",
-                to=settings.AUTH_USER_MODEL,
-            ),
+            model_name='serviceorderactivity',
+            name='created_by',
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='created_service_order_activities', to=settings.AUTH_USER_MODEL),
         ),
         migrations.AddField(
-            model_name="serviceorderactivity",
-            name="order",
-            field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE,
-                related_name="activities",
-                to="services.serviceorder",
-            ),
+            model_name='serviceorderactivity',
+            name='order',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='activities', to='services.serviceorder'),
         ),
         migrations.AddField(
-            model_name="serviceordermilestone",
-            name="order",
-            field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE,
-                related_name="milestones",
-                to="services.serviceorder",
-            ),
+            model_name='serviceordermilestone',
+            name='order',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='milestones', to='services.serviceorder'),
         ),
         migrations.AddField(
-            model_name="serviceordermilestone",
-            name="owner_role",
-            field=models.ForeignKey(
-                blank=True,
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                related_name="service_order_milestones",
-                to="user.role",
-            ),
+            model_name='serviceordermilestone',
+            name='owner_role',
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='service_order_milestones', to='user.role'),
         ),
         migrations.AddField(
-            model_name="serviceordermilestone",
-            name="workflow_stage",
-            field=models.ForeignKey(
-                blank=True,
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                related_name="order_milestones",
-                to="services.serviceworkflowstage",
-            ),
+            model_name='serviceordermilestone',
+            name='workflow_stage',
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='order_milestones', to='services.serviceworkflowstage'),
         ),
         migrations.AddIndex(
-            model_name="serviceorderactivity",
-            index=models.Index(
-                fields=["order", "visibility"], name="services_se_order_i_875dce_idx"
-            ),
+            model_name='serviceorderactivity',
+            index=models.Index(fields=['order', 'visibility'], name='services_se_order_i_875dce_idx'),
         ),
         migrations.AddIndex(
-            model_name="serviceorderactivity",
-            index=models.Index(
-                fields=["activity_type"], name="services_se_activit_822f7a_idx"
-            ),
+            model_name='serviceorderactivity',
+            index=models.Index(fields=['activity_type'], name='services_se_activit_822f7a_idx'),
         ),
         migrations.AddIndex(
-            model_name="serviceordermilestone",
-            index=models.Index(
-                fields=["order", "status"], name="services_se_order_i_9cc0e5_idx"
-            ),
+            model_name='serviceordermilestone',
+            index=models.Index(fields=['order', 'status'], name='services_se_order_i_9cc0e5_idx'),
         ),
     ]

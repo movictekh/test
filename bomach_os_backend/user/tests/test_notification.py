@@ -11,22 +11,13 @@ from user.services.jwt_service import JWTService
 
 class NotificationAPITests(TestCase):
     def create_user_with_employee(
-        self,
-        email,
-        username,
-        employee_id,
-        role=None,
+        self, email, username, employee_id, role=None,
     ):
         user = User.objects.create_user(
-            email=email,
-            username=username,
-            password="password123",
+            email=email, username=username, password="password123",
         )
         return Employee.objects.create(
-            user=user,
-            employee_id=employee_id,
-            is_active=True,
-            role=role,
+            user=user, employee_id=employee_id, is_active=True, role=role,
         )
 
     def create_role(self, name, permissions):
@@ -37,26 +28,17 @@ class NotificationAPITests(TestCase):
         return {"HTTP_AUTHORIZATION": f"Bearer {token}"}
 
     def setUp(self):
-        self.role = self.create_role(
-            "Notifications User",
-            {
-                "notifications": ["view", "list", "mark_read", "mark_all_read"],
-            },
-        )
+        self.role = self.create_role("Notifications User", {
+            "notifications": ["view", "list", "mark_read", "mark_all_read"],
+        })
         self.employee = self.create_user_with_employee(
-            "notif@test.com",
-            "notifuser",
-            "EMP-NOT-001",
-            role=self.role,
+            "notif@test.com", "notifuser", "EMP-NOT-001", role=self.role,
         )
         self.headers = self.auth_headers(self.employee)
 
         self.other_role = self.create_role("No Notif", {"notifications": []})
         self.other_employee = self.create_user_with_employee(
-            "other@test.com",
-            "otheruser",
-            "EMP-NOT-002",
-            role=self.other_role,
+            "other@test.com", "otheruser", "EMP-NOT-002", role=self.other_role,
         )
         self.other_headers = self.auth_headers(self.other_employee)
 
@@ -97,10 +79,8 @@ class NotificationAPITests(TestCase):
     def post(self, path, data=None, authenticated=True):
         headers = self.headers if authenticated else {}
         return self.client.post(
-            path,
-            data=json.dumps(data) if data else None,
-            content_type="application/json",
-            **headers,
+            path, data=json.dumps(data) if data else None,
+            content_type="application/json", **headers,
         )
 
     def patch(self, path, authenticated=True):
@@ -169,8 +149,7 @@ class NotificationAPITests(TestCase):
         response = self.post("/api/v1/notifications/read-all")
         self.assertEqual(response.status_code, 200)
         unread = Notification.objects.filter(
-            user=self.employee.user,
-            is_read=False,
+            user=self.employee.user, is_read=False,
         ).count()
         self.assertEqual(unread, 0)
 
@@ -182,7 +161,6 @@ class NotificationAPITests(TestCase):
 
     def test_no_permission(self):
         response = self.client.get(
-            "/api/v1/notifications/",
-            **self.other_headers,
+            "/api/v1/notifications/", **self.other_headers,
         )
         self.assertEqual(response.status_code, 403)

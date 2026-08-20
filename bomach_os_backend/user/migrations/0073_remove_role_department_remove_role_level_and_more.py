@@ -7,42 +7,30 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("user", "0072_responsibility_sop"),
+        ('user', '0072_responsibility_sop'),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name="role",
-            name="department",
+            model_name='role',
+            name='department',
         ),
         migrations.RemoveField(
-            model_name="role",
-            name="level",
+            model_name='role',
+            name='level',
         ),
         migrations.RemoveField(
-            model_name="role",
-            name="unit",
+            model_name='role',
+            name='unit',
         ),
         migrations.AddField(
-            model_name="employee",
-            name="role",
-            field=models.ForeignKey(
-                blank=True,
-                help_text="Role assigned to this employee (determines permissions and branch access)",
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                related_name="employees",
-                to="user.role",
-            ),
+            model_name='employee',
+            name='role',
+            field=models.ForeignKey(blank=True, help_text='Role assigned to this employee (determines permissions and branch access)', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='employees', to='user.role'),
         ),
         migrations.AddField(
-            model_name="role",
-            name="branches",
-            field=models.ManyToManyField(
-                blank=True,
-                help_text="Branches this role grants access to. Empty = company-wide.",
-                related_name="roles",
-                to="user.branch",
-            ),
+            model_name='role',
+            name='branches',
+            field=models.ManyToManyField(blank=True, help_text='Branches this role grants access to. Empty = company-wide.', related_name='roles', to='user.branch'),
         ),
     ]

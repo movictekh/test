@@ -47,6 +47,7 @@ from user.models.branch import Branch
 from user.models.role import Role
 from user.utils.perm import require_permission
 
+
 router = Router(tags=["Services"])
 
 
@@ -104,16 +105,8 @@ def _service_queryset():
     )
 
 
-def _filter_services(
-    qs,
-    status=None,
-    category_id=None,
-    division=None,
-    owner_role_id=None,
-    client_visibility=None,
-    branch_id=None,
-    search=None,
-):
+def _filter_services(qs, status=None, category_id=None, division=None, owner_role_id=None,
+                     client_visibility=None, branch_id=None, search=None):
     if status:
         qs = qs.filter(status=status)
     if category_id:
@@ -228,9 +221,7 @@ def _serialize_pricing_config(config, include_fields=True):
         "updated_at": config.updated_at,
     }
     if include_fields:
-        row["fields"] = [
-            _serialize_pricing_field(field) for field in config.fields.all()
-        ]
+        row["fields"] = [_serialize_pricing_field(field) for field in config.fields.all()]
     return row
 
 
@@ -263,9 +254,7 @@ def _serialize_workflow(workflow, include_stages=True):
         "updated_at": workflow.updated_at,
     }
     if include_stages:
-        row["stages"] = [
-            _serialize_workflow_stage(stage) for stage in workflow.stages.all()
-        ]
+        row["stages"] = [_serialize_workflow_stage(stage) for stage in workflow.stages.all()]
     return row
 
 
@@ -315,62 +304,49 @@ def _serialize_service_core(service):
 
 def _serialize_catalogue_card(service):
     row = _serialize_service_core(service)
-    row.update(
-        {
-            "active_request_form": (
-                _serialize_request_form(
-                    service.active_request_form, include_fields=False
-                )
-                if service.active_request_form
-                else None
-            ),
-            "active_pricing_config": (
-                _serialize_pricing_config(
-                    service.active_pricing_config, include_fields=False
-                )
-                if service.active_pricing_config
-                else None
-            ),
-            "active_workflow": (
-                _serialize_workflow(service.active_workflow, include_stages=False)
-                if service.active_workflow
-                else None
-            ),
-            "active_branches": [
-                _serialize_branch_activation(activation)
-                for activation in service.branch_activations.all()
-                if activation.status == "active"
-            ],
-        }
-    )
+    row.update({
+        "active_request_form": (
+            _serialize_request_form(service.active_request_form, include_fields=False)
+            if service.active_request_form else None
+        ),
+        "active_pricing_config": (
+            _serialize_pricing_config(service.active_pricing_config, include_fields=False)
+            if service.active_pricing_config else None
+        ),
+        "active_workflow": (
+            _serialize_workflow(service.active_workflow, include_stages=False)
+            if service.active_workflow else None
+        ),
+        "active_branches": [
+            _serialize_branch_activation(activation)
+            for activation in service.branch_activations.all()
+            if activation.status == "active"
+        ],
+    })
     return row
 
 
 def _serialize_catalogue_detail(service):
     row = _serialize_catalogue_card(service)
-    row.update(
-        {
-            "subservices": [
-                _serialize_subservice(item) for item in service.subservices.all()
-            ],
-            "request_forms": [
-                _serialize_request_form(form, include_fields=True)
-                for form in service.request_forms.all()
-            ],
-            "pricing_configs": [
-                _serialize_pricing_config(config, include_fields=True)
-                for config in service.pricing_configs.all()
-            ],
-            "workflows": [
-                _serialize_workflow(workflow, include_stages=True)
-                for workflow in service.workflows.all()
-            ],
-            "branch_activations": [
-                _serialize_branch_activation(activation)
-                for activation in service.branch_activations.all()
-            ],
-        }
-    )
+    row.update({
+        "subservices": [_serialize_subservice(item) for item in service.subservices.all()],
+        "request_forms": [
+            _serialize_request_form(form, include_fields=True)
+            for form in service.request_forms.all()
+        ],
+        "pricing_configs": [
+            _serialize_pricing_config(config, include_fields=True)
+            for config in service.pricing_configs.all()
+        ],
+        "workflows": [
+            _serialize_workflow(workflow, include_stages=True)
+            for workflow in service.workflows.all()
+        ],
+        "branch_activations": [
+            _serialize_branch_activation(activation)
+            for activation in service.branch_activations.all()
+        ],
+    })
     return row
 
 
@@ -382,20 +358,18 @@ def _create_request_fields(form, fields):
         field_type = _item_value(item, "field_type")
         if field_type not in valid_types:
             raise ValidationError({"field_type": f"Invalid field type: {field_type}."})
-        rows.append(
-            ServiceRequestField(
-                form=form,
-                key=_item_value(item, "key"),
-                label=_item_value(item, "label"),
-                field_type=field_type,
-                required=_item_value(item, "required", False),
-                options=_item_value(item, "options", []),
-                validation=_item_value(item, "validation", {}),
-                help_text=_item_value(item, "help_text", "") or "",
-                placeholder=_item_value(item, "placeholder", "") or "",
-                sort_order=_item_value(item, "sort_order", index),
-            )
-        )
+        rows.append(ServiceRequestField(
+            form=form,
+            key=_item_value(item, "key"),
+            label=_item_value(item, "label"),
+            field_type=field_type,
+            required=_item_value(item, "required", False),
+            options=_item_value(item, "options", []),
+            validation=_item_value(item, "validation", {}),
+            help_text=_item_value(item, "help_text", "") or "",
+            placeholder=_item_value(item, "placeholder", "") or "",
+            sort_order=_item_value(item, "sort_order", index),
+        ))
     ServiceRequestField.objects.bulk_create(rows)
 
 
@@ -407,19 +381,17 @@ def _create_pricing_fields(config, fields):
         field_type = _item_value(item, "field_type")
         if field_type not in valid_types:
             raise ValidationError({"field_type": f"Invalid field type: {field_type}."})
-        rows.append(
-            ServicePricingField(
-                pricing_config=config,
-                key=_item_value(item, "key"),
-                label=_item_value(item, "label"),
-                field_type=field_type,
-                default_value=_item_value(item, "default_value"),
-                required=_item_value(item, "required", False),
-                options=_item_value(item, "options", []),
-                validation=_item_value(item, "validation", {}),
-                sort_order=_item_value(item, "sort_order", index),
-            )
-        )
+        rows.append(ServicePricingField(
+            pricing_config=config,
+            key=_item_value(item, "key"),
+            label=_item_value(item, "label"),
+            field_type=field_type,
+            default_value=_item_value(item, "default_value"),
+            required=_item_value(item, "required", False),
+            options=_item_value(item, "options", []),
+            validation=_item_value(item, "validation", {}),
+            sort_order=_item_value(item, "sort_order", index),
+        ))
     ServicePricingField.objects.bulk_create(rows)
 
 
@@ -429,25 +401,21 @@ def _create_workflow_stages(workflow, stages):
         owner_role_id = _item_value(item, "owner_role_id")
         if owner_role_id:
             get_object_or_404(Role, id=owner_role_id)
-        rows.append(
-            ServiceWorkflowStage(
-                workflow=workflow,
-                name=_item_value(item, "name"),
-                owner_role_id=owner_role_id,
-                sla_days=_item_value(item, "sla_days", 0),
-                requires_approval=_item_value(item, "requires_approval", False),
-                requires_evidence=_item_value(item, "requires_evidence", False),
-                client_visible=_item_value(item, "client_visible", False),
-                sort_order=_item_value(item, "sort_order", index),
-            )
-        )
+        rows.append(ServiceWorkflowStage(
+            workflow=workflow,
+            name=_item_value(item, "name"),
+            owner_role_id=owner_role_id,
+            sla_days=_item_value(item, "sla_days", 0),
+            requires_approval=_item_value(item, "requires_approval", False),
+            requires_evidence=_item_value(item, "requires_evidence", False),
+            client_visible=_item_value(item, "client_visible", False),
+            sort_order=_item_value(item, "sort_order", index),
+        ))
     ServiceWorkflowStage.objects.bulk_create(rows)
 
 
 def _activate_request_form(service, form):
-    ServiceRequestForm.objects.filter(service=service, is_active=True).exclude(
-        id=form.id
-    ).update(is_active=False)
+    ServiceRequestForm.objects.filter(service=service, is_active=True).exclude(id=form.id).update(is_active=False)
     form.status = "active"
     form.is_active = True
     form.save()
@@ -456,9 +424,7 @@ def _activate_request_form(service, form):
 
 
 def _activate_pricing_config(service, config):
-    ServicePricingConfig.objects.filter(service=service, is_active=True).exclude(
-        id=config.id
-    ).update(is_active=False)
+    ServicePricingConfig.objects.filter(service=service, is_active=True).exclude(id=config.id).update(is_active=False)
     config.status = "active"
     config.is_active = True
     config.save()
@@ -467,9 +433,7 @@ def _activate_pricing_config(service, config):
 
 
 def _activate_workflow(service, workflow):
-    ServiceWorkflow.objects.filter(service=service, is_active=True).exclude(
-        id=workflow.id
-    ).update(is_active=False)
+    ServiceWorkflow.objects.filter(service=service, is_active=True).exclude(id=workflow.id).update(is_active=False)
     workflow.status = "active"
     workflow.is_active = True
     workflow.save()
@@ -540,18 +504,8 @@ def get_service_catalogue_detail(request, service_id: int):
 @router.get("/pricing-configs", response=List[Dict[str, Any]])
 @paginate(LimitOffsetPagination, page_size=10)
 @require_permission("service_pricing_configs", "list")
-def list_pricing_configs(
-    request,
-    service_id: int = None,
-    status: str = None,
-    pricing_type: str = None,
-    search: str = None,
-):
-    configs = (
-        ServicePricingConfig.objects.select_related("service", "created_by")
-        .prefetch_related("fields")
-        .all()
-    )
+def list_pricing_configs(request, service_id: int = None, status: str = None, pricing_type: str = None, search: str = None):
+    configs = ServicePricingConfig.objects.select_related("service", "created_by").prefetch_related("fields").all()
     if service_id:
         configs = configs.filter(service_id=service_id)
     if status:
@@ -564,23 +518,13 @@ def list_pricing_configs(
             | Q(formula__icontains=search)
             | Q(service__name__icontains=search)
         )
-    return [
-        _serialize_pricing_config(config, include_fields=False) for config in configs
-    ]
+    return [_serialize_pricing_config(config, include_fields=False) for config in configs]
 
 
 @router.get("/branch-activation-matrix", response=List[Dict[str, Any]])
 @require_permission("service_branch_activations", "list")
-def get_branch_activation_matrix(
-    request,
-    division: str = None,
-    status: str = None,
-    branch_id: int = None,
-    search: str = None,
-):
-    services = _filter_services(
-        _service_queryset(), division=division, branch_id=branch_id, search=search
-    )
+def get_branch_activation_matrix(request, division: str = None, status: str = None, branch_id: int = None, search: str = None):
+    services = _filter_services(_service_queryset(), division=division, branch_id=branch_id, search=search)
     if status:
         services = services.filter(branch_activations__status=status).distinct()
     return [_serialize_catalogue_card(service) for service in services]
@@ -619,16 +563,8 @@ def create_service(request, payload: ServiceCreateSchema):
         if payload.status:
             _ensure_choice(payload.status, Service.STATUS_CHOICES, "status")
         if payload.fulfillment_mode:
-            _ensure_choice(
-                payload.fulfillment_mode,
-                Service.FULFILLMENT_MODE_CHOICES,
-                "fulfillment_mode",
-            )
-        _ensure_choice(
-            payload.client_visibility,
-            Service.CLIENT_VISIBILITY_CHOICES,
-            "client_visibility",
-        )
+            _ensure_choice(payload.fulfillment_mode, Service.FULFILLMENT_MODE_CHOICES, "fulfillment_mode")
+        _ensure_choice(payload.client_visibility, Service.CLIENT_VISIBILITY_CHOICES, "client_visibility")
         get_object_or_404(ServiceCategory, id=payload.category_id)
         if payload.owner_role_id:
             get_object_or_404(Role, id=payload.owner_role_id)
@@ -648,11 +584,7 @@ def create_service(request, payload: ServiceCreateSchema):
             client_visibility=payload.client_visibility,
             created_by_id=_current_user_id(request, payload.created_by_id),
         )
-        return 201, _serialize_service_core(
-            Service.objects.select_related("category", "owner_role", "created_by").get(
-                id=service.id
-            )
-        )
+        return 201, _serialize_service_core(Service.objects.select_related("category", "owner_role", "created_by").get(id=service.id))
     except (ValidationError, IntegrityError) as e:
         return 400, {"detail": _validation_detail(e)}
 
@@ -664,10 +596,7 @@ def get_service(request, service_id: int):
     return _serialize_service_core(service)
 
 
-@router.put(
-    "/{service_id}",
-    response={200: ServiceCoreOut, 400: MessageSchema, 404: MessageSchema},
-)
+@router.put("/{service_id}", response={200: ServiceCoreOut, 400: MessageSchema, 404: MessageSchema})
 @require_permission("services", "update")
 def update_service(request, service_id: int, payload: ServiceUpdateSchema):
     try:
@@ -693,10 +622,7 @@ def update_service(request, service_id: int, payload: ServiceUpdateSchema):
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.delete(
-    "/{service_id}",
-    response={200: MessageSchema, 400: MessageSchema, 404: MessageSchema},
-)
+@router.delete("/{service_id}", response={200: MessageSchema, 400: MessageSchema, 404: MessageSchema})
 @require_permission("services", "delete")
 def delete_service(request, service_id: int):
     try:
@@ -711,10 +637,7 @@ def delete_service(request, service_id: int):
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.post(
-    "/{service_id}/publish",
-    response={200: Dict[str, Any], 400: MessageSchema, 404: MessageSchema},
-)
+@router.post("/{service_id}/publish", response={200: Dict[str, Any], 400: MessageSchema, 404: MessageSchema})
 @require_permission("services", "update")
 def publish_service(request, service_id: int, payload: ServicePublishIn):
     try:
@@ -722,55 +645,28 @@ def publish_service(request, service_id: int, payload: ServicePublishIn):
             service = get_object_or_404(Service, id=service_id)
             _ensure_choice(payload.status, Service.STATUS_CHOICES, "status")
             if payload.client_visibility:
-                _ensure_choice(
-                    payload.client_visibility,
-                    Service.CLIENT_VISIBILITY_CHOICES,
-                    "client_visibility",
-                )
+                _ensure_choice(payload.client_visibility, Service.CLIENT_VISIBILITY_CHOICES, "client_visibility")
 
             request_form = (
-                get_object_or_404(
-                    ServiceRequestForm, id=payload.request_form_id, service=service
-                )
-                if payload.request_form_id
-                else service.active_request_form
+                get_object_or_404(ServiceRequestForm, id=payload.request_form_id, service=service)
+                if payload.request_form_id else service.active_request_form
             )
             pricing_config = (
-                get_object_or_404(
-                    ServicePricingConfig, id=payload.pricing_config_id, service=service
-                )
-                if payload.pricing_config_id
-                else service.active_pricing_config
+                get_object_or_404(ServicePricingConfig, id=payload.pricing_config_id, service=service)
+                if payload.pricing_config_id else service.active_pricing_config
             )
             workflow = (
-                get_object_or_404(
-                    ServiceWorkflow, id=payload.workflow_id, service=service
-                )
-                if payload.workflow_id
-                else service.active_workflow
+                get_object_or_404(ServiceWorkflow, id=payload.workflow_id, service=service)
+                if payload.workflow_id else service.active_workflow
             )
 
             if payload.status == "active":
                 if not request_form:
-                    raise ValidationError(
-                        {
-                            "request_form": "An active request form is required before publishing."
-                        }
-                    )
+                    raise ValidationError({"request_form": "An active request form is required before publishing."})
                 if not pricing_config:
-                    raise ValidationError(
-                        {
-                            "pricing_config": "An active pricing config is required before publishing."
-                        }
-                    )
-                if not ServiceBranchActivation.objects.filter(
-                    service=service, status="active"
-                ).exists():
-                    raise ValidationError(
-                        {
-                            "branch_activations": "At least one active branch is required before publishing."
-                        }
-                    )
+                    raise ValidationError({"pricing_config": "An active pricing config is required before publishing."})
+                if not ServiceBranchActivation.objects.filter(service=service, status="active").exists():
+                    raise ValidationError({"branch_activations": "At least one active branch is required before publishing."})
 
             if request_form:
                 _activate_request_form(service, request_form)
@@ -793,59 +689,37 @@ def publish_service(request, service_id: int, payload: ServicePublishIn):
 @require_permission("service_subservices", "list")
 def list_subservices(request, service_id: int):
     get_object_or_404(Service, id=service_id)
-    return [
-        _serialize_subservice(item)
-        for item in ServiceSubService.objects.filter(service_id=service_id)
-    ]
+    return [_serialize_subservice(item) for item in ServiceSubService.objects.filter(service_id=service_id)]
 
 
-@router.put(
-    "/{service_id}/subservices",
-    response={200: List[Dict[str, Any]], 400: MessageSchema},
-)
+@router.put("/{service_id}/subservices", response={200: List[Dict[str, Any]], 400: MessageSchema})
 @require_permission("service_subservices", "update")
-def replace_subservices(
-    request, service_id: int, payload: ServiceSubServiceBulkReplace
-):
+def replace_subservices(request, service_id: int, payload: ServiceSubServiceBulkReplace):
     try:
         service = get_object_or_404(Service, id=service_id)
-        codes = [
-            item.code or item.name.lower().replace(" ", "-")
-            for item in payload.subservices
-        ]
+        codes = [item.code or item.name.lower().replace(" ", "-") for item in payload.subservices]
         if len(codes) != len(set(codes)):
-            raise ValidationError(
-                {"code": "Subservice codes must be unique within a service."}
-            )
+            raise ValidationError({"code": "Subservice codes must be unique within a service."})
         with transaction.atomic():
             ServiceSubService.objects.filter(service=service).delete()
             rows = []
             for index, item in enumerate(payload.subservices):
-                rows.append(
-                    ServiceSubService(
-                        service=service,
-                        code=item.code or item.name.lower().replace(" ", "-"),
-                        name=item.name,
-                        description=item.description or "",
-                        status=item.status,
-                        default_sla_days=item.default_sla_days,
-                        sort_order=(
-                            item.sort_order if item.sort_order is not None else index
-                        ),
-                    )
-                )
+                rows.append(ServiceSubService(
+                    service=service,
+                    code=item.code or item.name.lower().replace(" ", "-"),
+                    name=item.name,
+                    description=item.description or "",
+                    status=item.status,
+                    default_sla_days=item.default_sla_days,
+                    sort_order=item.sort_order if item.sort_order is not None else index,
+                ))
             ServiceSubService.objects.bulk_create(rows)
-        return 200, [
-            _serialize_subservice(item)
-            for item in ServiceSubService.objects.filter(service=service)
-        ]
+        return 200, [_serialize_subservice(item) for item in ServiceSubService.objects.filter(service=service)]
     except (ValidationError, IntegrityError) as e:
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.post(
-    "/{service_id}/subservices", response={201: Dict[str, Any], 400: MessageSchema}
-)
+@router.post("/{service_id}/subservices", response={201: Dict[str, Any], 400: MessageSchema})
 @require_permission("service_subservices", "create")
 def create_subservice(request, service_id: int, payload: ServiceSubServiceIn):
     try:
@@ -865,23 +739,14 @@ def create_subservice(request, service_id: int, payload: ServiceSubServiceIn):
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.put(
-    "/{service_id}/subservices/{subservice_id}",
-    response={200: Dict[str, Any], 400: MessageSchema, 404: MessageSchema},
-)
+@router.put("/{service_id}/subservices/{subservice_id}", response={200: Dict[str, Any], 400: MessageSchema, 404: MessageSchema})
 @require_permission("service_subservices", "update")
-def update_subservice(
-    request, service_id: int, subservice_id: int, payload: ServiceSubServiceUpdate
-):
+def update_subservice(request, service_id: int, subservice_id: int, payload: ServiceSubServiceUpdate):
     try:
-        subservice = get_object_or_404(
-            ServiceSubService, id=subservice_id, service_id=service_id
-        )
+        subservice = get_object_or_404(ServiceSubService, id=subservice_id, service_id=service_id)
         update_data = payload.dict(exclude_unset=True)
         if update_data.get("status"):
-            _ensure_choice(
-                update_data["status"], ServiceSubService.STATUS_CHOICES, "status"
-            )
+            _ensure_choice(update_data["status"], ServiceSubService.STATUS_CHOICES, "status")
         for attr, value in update_data.items():
             setattr(subservice, attr, value)
         subservice.save()
@@ -890,15 +755,10 @@ def update_subservice(
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.delete(
-    "/{service_id}/subservices/{subservice_id}",
-    response={200: MessageSchema, 404: MessageSchema},
-)
+@router.delete("/{service_id}/subservices/{subservice_id}", response={200: MessageSchema, 404: MessageSchema})
 @require_permission("service_subservices", "delete")
 def delete_subservice(request, service_id: int, subservice_id: int):
-    subservice = get_object_or_404(
-        ServiceSubService, id=subservice_id, service_id=service_id
-    )
+    subservice = get_object_or_404(ServiceSubService, id=subservice_id, service_id=service_id)
     if subservice.status == "draft":
         subservice.delete()
         return 200, {"detail": "Subservice deleted successfully"}
@@ -911,15 +771,11 @@ def delete_subservice(request, service_id: int, subservice_id: int):
 @require_permission("service_request_forms", "list")
 def list_request_forms(request, service_id: int):
     get_object_or_404(Service, id=service_id)
-    forms = ServiceRequestForm.objects.filter(service_id=service_id).prefetch_related(
-        "fields"
-    )
+    forms = ServiceRequestForm.objects.filter(service_id=service_id).prefetch_related("fields")
     return [_serialize_request_form(form) for form in forms]
 
 
-@router.post(
-    "/{service_id}/request-forms", response={201: Dict[str, Any], 400: MessageSchema}
-)
+@router.post("/{service_id}/request-forms", response={201: Dict[str, Any], 400: MessageSchema})
 @require_permission("service_request_forms", "create")
 def create_request_form(request, service_id: int, payload: RequestFormIn):
     try:
@@ -946,31 +802,20 @@ def create_request_form(request, service_id: int, payload: RequestFormIn):
 @router.get("/{service_id}/request-forms/{form_id}", response=Dict[str, Any])
 @require_permission("service_request_forms", "view")
 def get_request_form(request, service_id: int, form_id: int):
-    form = get_object_or_404(
-        ServiceRequestForm.objects.prefetch_related("fields"),
-        id=form_id,
-        service_id=service_id,
-    )
+    form = get_object_or_404(ServiceRequestForm.objects.prefetch_related("fields"), id=form_id, service_id=service_id)
     return _serialize_request_form(form)
 
 
-@router.put(
-    "/{service_id}/request-forms/{form_id}",
-    response={200: Dict[str, Any], 400: MessageSchema, 404: MessageSchema},
-)
+@router.put("/{service_id}/request-forms/{form_id}", response={200: Dict[str, Any], 400: MessageSchema, 404: MessageSchema})
 @require_permission("service_request_forms", "update")
-def update_request_form(
-    request, service_id: int, form_id: int, payload: RequestFormUpdate
-):
+def update_request_form(request, service_id: int, form_id: int, payload: RequestFormUpdate):
     try:
         form = get_object_or_404(ServiceRequestForm, id=form_id, service_id=service_id)
         service = form.service
         update_data = payload.dict(exclude_unset=True)
         fields = update_data.pop("fields", None)
         if update_data.get("status"):
-            _ensure_choice(
-                update_data["status"], ServiceRequestForm.STATUS_CHOICES, "status"
-            )
+            _ensure_choice(update_data["status"], ServiceRequestForm.STATUS_CHOICES, "status")
         with transaction.atomic():
             make_active = update_data.pop("is_active", None)
             for attr, value in update_data.items():
@@ -993,10 +838,7 @@ def update_request_form(
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.delete(
-    "/{service_id}/request-forms/{form_id}",
-    response={200: MessageSchema, 404: MessageSchema},
-)
+@router.delete("/{service_id}/request-forms/{form_id}", response={200: MessageSchema, 404: MessageSchema})
 @require_permission("service_request_forms", "delete")
 def delete_request_form(request, service_id: int, form_id: int):
     form = get_object_or_404(ServiceRequestForm, id=form_id, service_id=service_id)
@@ -1013,37 +855,24 @@ def delete_request_form(request, service_id: int, form_id: int):
     return 200, {"detail": "Request form archived successfully"}
 
 
-@router.post(
-    "/{service_id}/request-forms/{form_id}/activate",
-    response={200: Dict[str, Any], 404: MessageSchema},
-)
+@router.post("/{service_id}/request-forms/{form_id}/activate", response={200: Dict[str, Any], 404: MessageSchema})
 @require_permission("service_request_forms", "update")
 def activate_request_form(request, service_id: int, form_id: int):
     service = get_object_or_404(Service, id=service_id)
-    form = get_object_or_404(
-        ServiceRequestForm.objects.prefetch_related("fields"),
-        id=form_id,
-        service=service,
-    )
+    form = get_object_or_404(ServiceRequestForm.objects.prefetch_related("fields"), id=form_id, service=service)
     with transaction.atomic():
         _activate_request_form(service, form)
     form.refresh_from_db()
     return 200, _serialize_request_form(form)
 
 
-@router.post(
-    "/{service_id}/pricing-configs", response={201: Dict[str, Any], 400: MessageSchema}
-)
+@router.post("/{service_id}/pricing-configs", response={201: Dict[str, Any], 400: MessageSchema})
 @require_permission("service_pricing_configs", "create")
 def create_pricing_config(request, service_id: int, payload: PricingConfigIn):
     try:
         service = get_object_or_404(Service, id=service_id)
         _ensure_choice(payload.status, ServicePricingConfig.STATUS_CHOICES, "status")
-        _ensure_choice(
-            payload.pricing_type,
-            ServicePricingConfig.PRICING_TYPE_CHOICES,
-            "pricing_type",
-        )
+        _ensure_choice(payload.pricing_type, ServicePricingConfig.PRICING_TYPE_CHOICES, "pricing_type")
         with transaction.atomic():
             config = ServicePricingConfig.objects.create(
                 service=service,
@@ -1061,11 +890,7 @@ def create_pricing_config(request, service_id: int, payload: PricingConfigIn):
             _create_pricing_fields(config, payload.fields)
             if payload.is_active:
                 _activate_pricing_config(service, config)
-        config = (
-            ServicePricingConfig.objects.select_related("service")
-            .prefetch_related("fields")
-            .get(id=config.id)
-        )
+        config = ServicePricingConfig.objects.select_related("service").prefetch_related("fields").get(id=config.id)
         return 201, _serialize_pricing_config(config)
     except (ValidationError, IntegrityError) as e:
         return 400, {"detail": _validation_detail(e)}
@@ -1075,40 +900,25 @@ def create_pricing_config(request, service_id: int, payload: PricingConfigIn):
 @require_permission("service_pricing_configs", "view")
 def get_pricing_config(request, service_id: int, config_id: int):
     config = get_object_or_404(
-        ServicePricingConfig.objects.select_related("service").prefetch_related(
-            "fields"
-        ),
+        ServicePricingConfig.objects.select_related("service").prefetch_related("fields"),
         id=config_id,
         service_id=service_id,
     )
     return _serialize_pricing_config(config)
 
 
-@router.put(
-    "/{service_id}/pricing-configs/{config_id}",
-    response={200: Dict[str, Any], 400: MessageSchema, 404: MessageSchema},
-)
+@router.put("/{service_id}/pricing-configs/{config_id}", response={200: Dict[str, Any], 400: MessageSchema, 404: MessageSchema})
 @require_permission("service_pricing_configs", "update")
-def update_pricing_config(
-    request, service_id: int, config_id: int, payload: PricingConfigUpdate
-):
+def update_pricing_config(request, service_id: int, config_id: int, payload: PricingConfigUpdate):
     try:
-        config = get_object_or_404(
-            ServicePricingConfig, id=config_id, service_id=service_id
-        )
+        config = get_object_or_404(ServicePricingConfig, id=config_id, service_id=service_id)
         service = config.service
         update_data = payload.dict(exclude_unset=True)
         fields = update_data.pop("fields", None)
         if update_data.get("status"):
-            _ensure_choice(
-                update_data["status"], ServicePricingConfig.STATUS_CHOICES, "status"
-            )
+            _ensure_choice(update_data["status"], ServicePricingConfig.STATUS_CHOICES, "status")
         if update_data.get("pricing_type"):
-            _ensure_choice(
-                update_data["pricing_type"],
-                ServicePricingConfig.PRICING_TYPE_CHOICES,
-                "pricing_type",
-            )
+            _ensure_choice(update_data["pricing_type"], ServicePricingConfig.PRICING_TYPE_CHOICES, "pricing_type")
         with transaction.atomic():
             make_active = update_data.pop("is_active", None)
             for attr, value in update_data.items():
@@ -1125,25 +935,16 @@ def update_pricing_config(
                 if service.active_pricing_config_id == config.id:
                     service.active_pricing_config = None
                     service.save(update_fields=["active_pricing_config", "updated_at"])
-        config = (
-            ServicePricingConfig.objects.select_related("service")
-            .prefetch_related("fields")
-            .get(id=config.id)
-        )
+        config = ServicePricingConfig.objects.select_related("service").prefetch_related("fields").get(id=config.id)
         return 200, _serialize_pricing_config(config)
     except (ValidationError, IntegrityError) as e:
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.delete(
-    "/{service_id}/pricing-configs/{config_id}",
-    response={200: MessageSchema, 404: MessageSchema},
-)
+@router.delete("/{service_id}/pricing-configs/{config_id}", response={200: MessageSchema, 404: MessageSchema})
 @require_permission("service_pricing_configs", "delete")
 def delete_pricing_config(request, service_id: int, config_id: int):
-    config = get_object_or_404(
-        ServicePricingConfig, id=config_id, service_id=service_id
-    )
+    config = get_object_or_404(ServicePricingConfig, id=config_id, service_id=service_id)
     service = config.service
     if config.status == "draft" and not config.is_active:
         config.delete()
@@ -1157,20 +958,11 @@ def delete_pricing_config(request, service_id: int, config_id: int):
     return 200, {"detail": "Pricing config archived successfully"}
 
 
-@router.post(
-    "/{service_id}/pricing-configs/{config_id}/activate",
-    response={200: Dict[str, Any], 404: MessageSchema},
-)
+@router.post("/{service_id}/pricing-configs/{config_id}/activate", response={200: Dict[str, Any], 404: MessageSchema})
 @require_permission("service_pricing_configs", "update")
 def activate_pricing_config(request, service_id: int, config_id: int):
     service = get_object_or_404(Service, id=service_id)
-    config = get_object_or_404(
-        ServicePricingConfig.objects.select_related("service").prefetch_related(
-            "fields"
-        ),
-        id=config_id,
-        service=service,
-    )
+    config = get_object_or_404(ServicePricingConfig.objects.select_related("service").prefetch_related("fields"), id=config_id, service=service)
     with transaction.atomic():
         _activate_pricing_config(service, config)
     config.refresh_from_db()
@@ -1178,9 +970,7 @@ def activate_pricing_config(request, service_id: int, config_id: int):
 
 
 def _workflow_queryset():
-    return ServiceWorkflow.objects.select_related(
-        "service", "created_by"
-    ).prefetch_related("stages__owner_role")
+    return ServiceWorkflow.objects.select_related("service", "created_by").prefetch_related("stages__owner_role")
 
 
 def _create_workflow(request, service, payload):
@@ -1208,9 +998,7 @@ def list_workflows(request, service_id: int):
     return [_serialize_workflow(workflow) for workflow in workflows]
 
 
-@router.post(
-    "/{service_id}/workflows", response={201: Dict[str, Any], 400: MessageSchema}
-)
+@router.post("/{service_id}/workflows", response={201: Dict[str, Any], 400: MessageSchema})
 @require_permission("service_workflows", "create")
 def create_workflow(request, service_id: int, payload: WorkflowIn):
     try:
@@ -1224,31 +1012,20 @@ def create_workflow(request, service_id: int, payload: WorkflowIn):
 @router.get("/{service_id}/workflows/{workflow_id}", response=Dict[str, Any])
 @require_permission("service_workflows", "view")
 def get_workflow(request, service_id: int, workflow_id: int):
-    workflow = get_object_or_404(
-        _workflow_queryset(), id=workflow_id, service_id=service_id
-    )
+    workflow = get_object_or_404(_workflow_queryset(), id=workflow_id, service_id=service_id)
     return _serialize_workflow(workflow)
 
 
-@router.put(
-    "/{service_id}/workflows/{workflow_id}",
-    response={200: Dict[str, Any], 400: MessageSchema, 404: MessageSchema},
-)
+@router.put("/{service_id}/workflows/{workflow_id}", response={200: Dict[str, Any], 400: MessageSchema, 404: MessageSchema})
 @require_permission("service_workflows", "update")
-def update_workflow(
-    request, service_id: int, workflow_id: int, payload: WorkflowUpdate
-):
+def update_workflow(request, service_id: int, workflow_id: int, payload: WorkflowUpdate):
     try:
-        workflow = get_object_or_404(
-            ServiceWorkflow, id=workflow_id, service_id=service_id
-        )
+        workflow = get_object_or_404(ServiceWorkflow, id=workflow_id, service_id=service_id)
         service = workflow.service
         update_data = payload.dict(exclude_unset=True)
         stages = update_data.pop("stages", None)
         if update_data.get("status"):
-            _ensure_choice(
-                update_data["status"], ServiceWorkflow.STATUS_CHOICES, "status"
-            )
+            _ensure_choice(update_data["status"], ServiceWorkflow.STATUS_CHOICES, "status")
         with transaction.atomic():
             make_active = update_data.pop("is_active", None)
             for attr, value in update_data.items():
@@ -1271,10 +1048,7 @@ def update_workflow(
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.delete(
-    "/{service_id}/workflows/{workflow_id}",
-    response={200: MessageSchema, 404: MessageSchema},
-)
+@router.delete("/{service_id}/workflows/{workflow_id}", response={200: MessageSchema, 404: MessageSchema})
 @require_permission("service_workflows", "delete")
 def delete_workflow(request, service_id: int, workflow_id: int):
     workflow = get_object_or_404(ServiceWorkflow, id=workflow_id, service_id=service_id)
@@ -1292,53 +1066,33 @@ def delete_workflow(request, service_id: int, workflow_id: int):
     return 200, {"detail": "Workflow archived successfully"}
 
 
-@router.get(
-    "/{service_id}/workflows/{workflow_id}/stages", response=List[Dict[str, Any]]
-)
+@router.get("/{service_id}/workflows/{workflow_id}/stages", response=List[Dict[str, Any]])
 @require_permission("service_workflows", "view")
 def list_workflow_stages(request, service_id: int, workflow_id: int):
     get_object_or_404(ServiceWorkflow, id=workflow_id, service_id=service_id)
-    stages = ServiceWorkflowStage.objects.filter(
-        workflow_id=workflow_id
-    ).select_related("owner_role")
+    stages = ServiceWorkflowStage.objects.filter(workflow_id=workflow_id).select_related("owner_role")
     return [_serialize_workflow_stage(stage) for stage in stages]
 
 
-@router.put(
-    "/{service_id}/workflows/{workflow_id}/stages",
-    response={200: List[Dict[str, Any]], 400: MessageSchema, 404: MessageSchema},
-)
+@router.put("/{service_id}/workflows/{workflow_id}/stages", response={200: List[Dict[str, Any]], 400: MessageSchema, 404: MessageSchema})
 @require_permission("service_workflows", "update")
-def replace_workflow_stages(
-    request, service_id: int, workflow_id: int, payload: WorkflowStageBulkReplace
-):
+def replace_workflow_stages(request, service_id: int, workflow_id: int, payload: WorkflowStageBulkReplace):
     try:
-        workflow = get_object_or_404(
-            ServiceWorkflow, id=workflow_id, service_id=service_id
-        )
+        workflow = get_object_or_404(ServiceWorkflow, id=workflow_id, service_id=service_id)
         with transaction.atomic():
             workflow.stages.all().delete()
             _create_workflow_stages(workflow, payload.stages)
-        stages = ServiceWorkflowStage.objects.filter(workflow=workflow).select_related(
-            "owner_role"
-        )
+        stages = ServiceWorkflowStage.objects.filter(workflow=workflow).select_related("owner_role")
         return 200, [_serialize_workflow_stage(stage) for stage in stages]
     except (ValidationError, IntegrityError) as e:
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.post(
-    "/{service_id}/workflows/{workflow_id}/stages",
-    response={201: Dict[str, Any], 400: MessageSchema, 404: MessageSchema},
-)
+@router.post("/{service_id}/workflows/{workflow_id}/stages", response={201: Dict[str, Any], 400: MessageSchema, 404: MessageSchema})
 @require_permission("service_workflows", "update")
-def create_workflow_stage(
-    request, service_id: int, workflow_id: int, payload: WorkflowStageIn
-):
+def create_workflow_stage(request, service_id: int, workflow_id: int, payload: WorkflowStageIn):
     try:
-        workflow = get_object_or_404(
-            ServiceWorkflow, id=workflow_id, service_id=service_id
-        )
+        workflow = get_object_or_404(ServiceWorkflow, id=workflow_id, service_id=service_id)
         if payload.owner_role_id:
             get_object_or_404(Role, id=payload.owner_role_id)
         stage = ServiceWorkflowStage.objects.create(
@@ -1351,66 +1105,38 @@ def create_workflow_stage(
             client_visible=payload.client_visible,
             sort_order=payload.sort_order,
         )
-        stage = ServiceWorkflowStage.objects.select_related("owner_role").get(
-            id=stage.id
-        )
+        stage = ServiceWorkflowStage.objects.select_related("owner_role").get(id=stage.id)
         return 201, _serialize_workflow_stage(stage)
     except (ValidationError, IntegrityError) as e:
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.put(
-    "/{service_id}/workflows/{workflow_id}/stages/{stage_id}",
-    response={200: Dict[str, Any], 400: MessageSchema, 404: MessageSchema},
-)
+@router.put("/{service_id}/workflows/{workflow_id}/stages/{stage_id}", response={200: Dict[str, Any], 400: MessageSchema, 404: MessageSchema})
 @require_permission("service_workflows", "update")
-def update_workflow_stage(
-    request,
-    service_id: int,
-    workflow_id: int,
-    stage_id: int,
-    payload: WorkflowStageUpdate,
-):
+def update_workflow_stage(request, service_id: int, workflow_id: int, stage_id: int, payload: WorkflowStageUpdate):
     try:
-        stage = get_object_or_404(
-            ServiceWorkflowStage,
-            id=stage_id,
-            workflow_id=workflow_id,
-            workflow__service_id=service_id,
-        )
+        stage = get_object_or_404(ServiceWorkflowStage, id=stage_id, workflow_id=workflow_id, workflow__service_id=service_id)
         update_data = payload.dict(exclude_unset=True)
         if update_data.get("owner_role_id"):
             get_object_or_404(Role, id=update_data["owner_role_id"])
         for attr, value in update_data.items():
             setattr(stage, attr, value)
         stage.save()
-        stage = ServiceWorkflowStage.objects.select_related("owner_role").get(
-            id=stage.id
-        )
+        stage = ServiceWorkflowStage.objects.select_related("owner_role").get(id=stage.id)
         return 200, _serialize_workflow_stage(stage)
     except (ValidationError, IntegrityError) as e:
         return 400, {"detail": _validation_detail(e)}
 
 
-@router.delete(
-    "/{service_id}/workflows/{workflow_id}/stages/{stage_id}",
-    response={200: MessageSchema, 404: MessageSchema},
-)
+@router.delete("/{service_id}/workflows/{workflow_id}/stages/{stage_id}", response={200: MessageSchema, 404: MessageSchema})
 @require_permission("service_workflows", "update")
 def delete_workflow_stage(request, service_id: int, workflow_id: int, stage_id: int):
-    stage = get_object_or_404(
-        ServiceWorkflowStage,
-        id=stage_id,
-        workflow_id=workflow_id,
-        workflow__service_id=service_id,
-    )
+    stage = get_object_or_404(ServiceWorkflowStage, id=stage_id, workflow_id=workflow_id, workflow__service_id=service_id)
     stage.delete()
     return 200, {"detail": "Workflow stage deleted successfully"}
 
 
-@router.post(
-    "/{service_id}/workflow-seed", response={201: Dict[str, Any], 400: MessageSchema}
-)
+@router.post("/{service_id}/workflow-seed", response={201: Dict[str, Any], 400: MessageSchema})
 @require_permission("service_workflows", "create")
 def seed_workflow(request, service_id: int, payload: WorkflowSeedIn):
     try:
@@ -1429,10 +1155,7 @@ def get_workflow_summary(request, service_id: int):
     return [_serialize_workflow(workflow) for workflow in workflows]
 
 
-@router.post(
-    "/{service_id}/workflows/{workflow_id}/activate",
-    response={200: Dict[str, Any], 404: MessageSchema},
-)
+@router.post("/{service_id}/workflows/{workflow_id}/activate", response={200: Dict[str, Any], 404: MessageSchema})
 @require_permission("service_workflows", "update")
 def activate_workflow(request, service_id: int, workflow_id: int):
     service = get_object_or_404(Service, id=service_id)
@@ -1447,31 +1170,20 @@ def activate_workflow(request, service_id: int, workflow_id: int):
 @require_permission("service_branch_activations", "list")
 def list_branch_activations(request, service_id: int):
     get_object_or_404(Service, id=service_id)
-    activations = ServiceBranchActivation.objects.filter(
-        service_id=service_id
-    ).select_related("branch")
+    activations = ServiceBranchActivation.objects.filter(service_id=service_id).select_related("branch")
     return [_serialize_branch_activation(activation) for activation in activations]
 
 
-@router.put(
-    "/{service_id}/branch-activations",
-    response={200: List[Dict[str, Any]], 400: MessageSchema},
-)
+@router.put("/{service_id}/branch-activations", response={200: List[Dict[str, Any]], 400: MessageSchema})
 @require_permission("service_branch_activations", "update")
-def upsert_branch_activations(
-    request, service_id: int, payload: BranchActivationBulkUpsert
-):
+def upsert_branch_activations(request, service_id: int, payload: BranchActivationBulkUpsert):
     try:
         service = get_object_or_404(Service, id=service_id)
         branch_ids = [item.branch_id for item in payload.branch_activations]
         if len(branch_ids) != len(set(branch_ids)):
-            raise ValidationError(
-                {"branch_id": "Branch IDs must be unique in the payload."}
-            )
+            raise ValidationError({"branch_id": "Branch IDs must be unique in the payload."})
         for item in payload.branch_activations:
-            _ensure_choice(
-                item.status, ServiceBranchActivation.STATUS_CHOICES, "status"
-            )
+            _ensure_choice(item.status, ServiceBranchActivation.STATUS_CHOICES, "status")
             get_object_or_404(Branch, id=item.branch_id)
         with transaction.atomic():
             for item in payload.branch_activations:
@@ -1479,19 +1191,14 @@ def upsert_branch_activations(
                     "status": item.status,
                     "client_visible": item.client_visible,
                     "capacity": item.capacity,
-                    "activated_at": item.activated_at
-                    or (timezone.now() if item.status == "active" else None),
+                    "activated_at": item.activated_at or (timezone.now() if item.status == "active" else None),
                 }
                 ServiceBranchActivation.objects.update_or_create(
                     service=service,
                     branch_id=item.branch_id,
                     defaults=defaults,
                 )
-        activations = ServiceBranchActivation.objects.filter(
-            service=service
-        ).select_related("branch")
-        return 200, [
-            _serialize_branch_activation(activation) for activation in activations
-        ]
+        activations = ServiceBranchActivation.objects.filter(service=service).select_related("branch")
+        return 200, [_serialize_branch_activation(activation) for activation in activations]
     except (ValidationError, IntegrityError) as e:
         return 400, {"detail": _validation_detail(e)}

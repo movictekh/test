@@ -10,186 +10,40 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("finance", "0006_pettycashadvance_pettycashretirementline_and_more"),
-        ("services", "0038_delete_budget"),
-        ("user", "0096_paymentsubmission_finance_metadata"),
+        ('finance', '0006_pettycashadvance_pettycashretirementline_and_more'),
+        ('services', '0038_delete_budget'),
+        ('user', '0096_paymentsubmission_finance_metadata'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name="FinanceBudget",
+            name='FinanceBudget',
             fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                (
-                    "budget_number",
-                    models.CharField(editable=False, max_length=50, unique=True),
-                ),
-                ("name", models.CharField(max_length=150)),
-                (
-                    "budget_type",
-                    models.CharField(
-                        choices=[
-                            ("operating", "Operating"),
-                            ("department", "Department"),
-                            ("service_order", "Service Order"),
-                            ("project", "Project"),
-                            ("capital", "Capital"),
-                            ("marketing", "Marketing"),
-                            ("other", "Other"),
-                        ],
-                        default="operating",
-                        max_length=30,
-                    ),
-                ),
-                ("period_label", models.CharField(max_length=50)),
-                ("period_start", models.DateField(blank=True, null=True)),
-                ("period_end", models.DateField(blank=True, null=True)),
-                (
-                    "approved_amount",
-                    models.DecimalField(
-                        decimal_places=2,
-                        max_digits=15,
-                        validators=[
-                            django.core.validators.MinValueValidator(Decimal("0.00"))
-                        ],
-                    ),
-                ),
-                (
-                    "warning_threshold_pct",
-                    models.DecimalField(
-                        decimal_places=2,
-                        default=Decimal("80.00"),
-                        max_digits=5,
-                        validators=[
-                            django.core.validators.MinValueValidator(Decimal("0.00"))
-                        ],
-                    ),
-                ),
-                (
-                    "block_threshold_pct",
-                    models.DecimalField(
-                        decimal_places=2,
-                        default=Decimal("100.00"),
-                        max_digits=5,
-                        validators=[
-                            django.core.validators.MinValueValidator(Decimal("0.00"))
-                        ],
-                    ),
-                ),
-                (
-                    "status",
-                    models.CharField(
-                        choices=[
-                            ("draft", "Draft"),
-                            ("active", "Active"),
-                            ("watch", "Watch"),
-                            ("exceeded", "Exceeded"),
-                            ("closed", "Closed"),
-                            ("cancelled", "Cancelled"),
-                        ],
-                        default="draft",
-                        max_length=20,
-                    ),
-                ),
-                ("notes", models.TextField(blank=True, default="")),
-                ("created_at", models.DateTimeField(auto_now_add=True)),
-                ("updated_at", models.DateTimeField(auto_now=True)),
-                (
-                    "branch",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="finance_budgets",
-                        to="user.branch",
-                    ),
-                ),
-                (
-                    "created_by",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="created_finance_budgets",
-                        to=settings.AUTH_USER_MODEL,
-                    ),
-                ),
-                (
-                    "department",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="finance_budgets",
-                        to="user.department",
-                    ),
-                ),
-                (
-                    "owner",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="owned_finance_budgets",
-                        to=settings.AUTH_USER_MODEL,
-                    ),
-                ),
-                (
-                    "service_order",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="finance_budgets",
-                        to="services.serviceorder",
-                    ),
-                ),
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('budget_number', models.CharField(editable=False, max_length=50, unique=True)),
+                ('name', models.CharField(max_length=150)),
+                ('budget_type', models.CharField(choices=[('operating', 'Operating'), ('department', 'Department'), ('service_order', 'Service Order'), ('project', 'Project'), ('capital', 'Capital'), ('marketing', 'Marketing'), ('other', 'Other')], default='operating', max_length=30)),
+                ('period_label', models.CharField(max_length=50)),
+                ('period_start', models.DateField(blank=True, null=True)),
+                ('period_end', models.DateField(blank=True, null=True)),
+                ('approved_amount', models.DecimalField(decimal_places=2, max_digits=15, validators=[django.core.validators.MinValueValidator(Decimal('0.00'))])),
+                ('warning_threshold_pct', models.DecimalField(decimal_places=2, default=Decimal('80.00'), max_digits=5, validators=[django.core.validators.MinValueValidator(Decimal('0.00'))])),
+                ('block_threshold_pct', models.DecimalField(decimal_places=2, default=Decimal('100.00'), max_digits=5, validators=[django.core.validators.MinValueValidator(Decimal('0.00'))])),
+                ('status', models.CharField(choices=[('draft', 'Draft'), ('active', 'Active'), ('watch', 'Watch'), ('exceeded', 'Exceeded'), ('closed', 'Closed'), ('cancelled', 'Cancelled')], default='draft', max_length=20)),
+                ('notes', models.TextField(blank=True, default='')),
+                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('updated_at', models.DateTimeField(auto_now=True)),
+                ('branch', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='finance_budgets', to='user.branch')),
+                ('created_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='created_finance_budgets', to=settings.AUTH_USER_MODEL)),
+                ('department', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='finance_budgets', to='user.department')),
+                ('owner', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='owned_finance_budgets', to=settings.AUTH_USER_MODEL)),
+                ('service_order', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='finance_budgets', to='services.serviceorder')),
             ],
             options={
-                "ordering": ["-created_at"],
-                "indexes": [
-                    models.Index(
-                        fields=["budget_number"], name="finance_fin_budget__7643c6_idx"
-                    ),
-                    models.Index(
-                        fields=["status"], name="finance_fin_status_c9d1a1_idx"
-                    ),
-                    models.Index(
-                        fields=["budget_type", "status"],
-                        name="finance_fin_budget__4d3020_idx",
-                    ),
-                    models.Index(
-                        fields=["branch", "status"],
-                        name="finance_fin_branch__3e014d_idx",
-                    ),
-                    models.Index(
-                        fields=["department", "status"],
-                        name="finance_fin_departm_1a98ec_idx",
-                    ),
-                    models.Index(
-                        fields=["service_order", "status"],
-                        name="finance_fin_service_3e5ef7_idx",
-                    ),
-                ],
-                "constraints": [
-                    models.UniqueConstraint(
-                        condition=models.Q(
-                            ("service_order__isnull", False),
-                            ("status__in", ["draft", "active", "watch", "exceeded"]),
-                        ),
-                        fields=("service_order",),
-                        name="uniq_active_fin_budget_service_order",
-                    )
-                ],
+                'ordering': ['-created_at'],
+                'indexes': [models.Index(fields=['budget_number'], name='finance_fin_budget__7643c6_idx'), models.Index(fields=['status'], name='finance_fin_status_c9d1a1_idx'), models.Index(fields=['budget_type', 'status'], name='finance_fin_budget__4d3020_idx'), models.Index(fields=['branch', 'status'], name='finance_fin_branch__3e014d_idx'), models.Index(fields=['department', 'status'], name='finance_fin_departm_1a98ec_idx'), models.Index(fields=['service_order', 'status'], name='finance_fin_service_3e5ef7_idx')],
+                'constraints': [models.UniqueConstraint(condition=models.Q(('service_order__isnull', False), ('status__in', ['draft', 'active', 'watch', 'exceeded'])), fields=('service_order',), name='uniq_active_fin_budget_service_order')],
             },
         ),
     ]

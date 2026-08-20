@@ -6,11 +6,11 @@ from django.db import migrations, models
 
 def migrate_plot_data_forward(apps, schema_editor):
     """Set property_type='plot' and price from estate price_per_sqm * plot_size for existing plots"""
-    Property = apps.get_model("user", "Property")
-    for prop in Property.objects.select_related("estate").all():
-        prop.property_type = "plot"
+    Property = apps.get_model('user', 'Property')
+    for prop in Property.objects.select_related('estate').all():
+        prop.property_type = 'plot'
         prop.price = prop.estate.price_per_sqm * prop.plot_size
-        prop.save(update_fields=["property_type", "price"])
+        prop.save(update_fields=['property_type', 'price'])
 
 
 class Migration(migrations.Migration):
@@ -25,23 +25,27 @@ class Migration(migrations.Migration):
             old_name="Plot",
             new_name="Property",
         ),
+
         # Step 2: Rename PlotImage -> PropertyImage
         migrations.RenameModel(
             old_name="PlotImage",
             new_name="PropertyImage",
         ),
+
         # Step 3: Rename the FK in PropertyImage from 'plot' to 'property'
         migrations.RenameField(
             model_name="propertyimage",
             old_name="plot",
             new_name="property",
         ),
+
         # Step 4: Rename plot_name -> property_name
         migrations.RenameField(
             model_name="property",
             old_name="plot_name",
             new_name="property_name",
         ),
+
         # Step 5: Update property_name max_length and help_text
         migrations.AlterField(
             model_name="property",
@@ -52,6 +56,7 @@ class Migration(migrations.Migration):
                 verbose_name="Property Name",
             ),
         ),
+
         # Step 6: Make plot_size nullable (it's only required for plot type now)
         migrations.AlterField(
             model_name="property",
@@ -61,10 +66,13 @@ class Migration(migrations.Migration):
                 decimal_places=2,
                 max_digits=15,
                 null=True,
-                validators=[django.core.validators.MinValueValidator(Decimal("0.01"))],
+                validators=[
+                    django.core.validators.MinValueValidator(Decimal("0.01"))
+                ],
                 verbose_name="Plot Size",
             ),
         ),
+
         # Step 7: Add property_type field
         migrations.AddField(
             model_name="property",
@@ -81,6 +89,7 @@ class Migration(migrations.Migration):
             ),
             preserve_default=False,
         ),
+
         # Step 8: Add price field (will be populated from data migration)
         migrations.AddField(
             model_name="property",
@@ -89,11 +98,14 @@ class Migration(migrations.Migration):
                 decimal_places=2,
                 default=Decimal("0.01"),
                 max_digits=15,
-                validators=[django.core.validators.MinValueValidator(Decimal("0.01"))],
+                validators=[
+                    django.core.validators.MinValueValidator(Decimal("0.01"))
+                ],
                 verbose_name="Price",
             ),
             preserve_default=False,
         ),
+
         # Step 9: Add plot_size_unit
         migrations.AddField(
             model_name="property",
@@ -111,6 +123,7 @@ class Migration(migrations.Migration):
                 verbose_name="Plot Size Unit",
             ),
         ),
+
         # Step 10: Add residential fields
         migrations.AddField(
             model_name="property",
@@ -160,10 +173,13 @@ class Migration(migrations.Migration):
                 decimal_places=2,
                 max_digits=15,
                 null=True,
-                validators=[django.core.validators.MinValueValidator(Decimal("0.01"))],
+                validators=[
+                    django.core.validators.MinValueValidator(Decimal("0.01"))
+                ],
                 verbose_name="Total Area (sqft)",
             ),
         ),
+
         # Step 11: Add commercial fields
         migrations.AddField(
             model_name="property",
@@ -191,7 +207,9 @@ class Migration(migrations.Migration):
                 decimal_places=2,
                 max_digits=15,
                 null=True,
-                validators=[django.core.validators.MinValueValidator(Decimal("0.01"))],
+                validators=[
+                    django.core.validators.MinValueValidator(Decimal("0.01"))
+                ],
                 verbose_name="Total Area (sqft)",
             ),
         ),
@@ -209,6 +227,7 @@ class Migration(migrations.Migration):
                 blank=True, null=True, verbose_name="Units/Offices"
             ),
         ),
+
         # Step 12: Update meta BEFORE data migration (fixes ordering reference to old field)
         migrations.AlterModelOptions(
             name="property",
@@ -226,11 +245,13 @@ class Migration(migrations.Migration):
                 "verbose_name_plural": "Property Images",
             },
         ),
+
         # Step 13: Data migration - set property_type and price for existing plots
         migrations.RunPython(
             migrate_plot_data_forward,
             migrations.RunPython.noop,
         ),
+
         # Step 14: Update related_name on estate FK
         migrations.AlterField(
             model_name="property",
@@ -242,6 +263,7 @@ class Migration(migrations.Migration):
                 verbose_name="Estate",
             ),
         ),
+
         # Step 15: Update PropertyImage FK and upload path
         migrations.AlterField(
             model_name="propertyimage",
@@ -267,11 +289,13 @@ class Migration(migrations.Migration):
                 verbose_name="Image",
             ),
         ),
+
         # Step 16: Remove old unique_together and add new one
         migrations.AlterUniqueTogether(
             name="property",
             unique_together={("estate", "property_name")},
         ),
+
         # Step 17: Remove old indexes and add new ones
         migrations.AddIndex(
             model_name="property",

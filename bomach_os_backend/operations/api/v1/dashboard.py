@@ -18,12 +18,8 @@ def get_dashboard_stats(request):
     total_contracts = Contract.objects.count()
     total_timelines = Timeline.objects.count()
 
-    total_budget = Project.objects.aggregate(total=Sum("budget"))["total"] or Decimal(
-        "0.00"
-    )
-    budget_utilization = Project.objects.filter(status="completed").aggregate(
-        total=Sum("budget")
-    )["total"] or Decimal("0.00")
+    total_budget = Project.objects.aggregate(total=Sum('budget'))['total'] or Decimal('0.00')
+    budget_utilization = Project.objects.filter(status='completed').aggregate(total=Sum('budget'))['total'] or Decimal('0.00')
 
     return {
         "total_projects": total_projects,

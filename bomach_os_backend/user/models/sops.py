@@ -6,11 +6,10 @@ from .base import TimeStampedModel
 from .user import User
 
 
+
 class SOP(TimeStampedModel):
     title = models.CharField(max_length=200, help_text="SOP title / name")
-    version = models.CharField(
-        max_length=20, default="v1.0", help_text="e.g. v1.2, 2025-03"
-    )
+    version = models.CharField(max_length=20, default="v1.0", help_text="e.g. v1.2, 2025-03")
     description = models.TextField(blank=True, help_text="Full procedure / content")
 
     department = models.ForeignKey(
@@ -18,21 +17,20 @@ class SOP(TimeStampedModel):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="department_sops",
+        related_name="department_sops"
     )
     unit = models.ForeignKey(
-        Unit, on_delete=models.SET_NULL, null=True, blank=True, related_name="unit_sops"
+        Unit,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="unit_sops"
     )
 
     priority = models.CharField(
         max_length=20,
-        choices=[
-            ("Critical", "Critical"),
-            ("High", "High"),
-            ("Medium", "Medium"),
-            ("Low", "Low"),
-        ],
-        default="Medium",
+        choices=[("Critical", "Critical"), ("High", "High"), ("Medium", "Medium"), ("Low", "Low")],
+        default="Medium"
     )
     is_up_to_date = models.BooleanField(default=True, help_text="Still current")
 
@@ -63,7 +61,9 @@ class SOP(TimeStampedModel):
 
 class Responsibility(TimeStampedModel):
     user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="core_responsibilities"
+        User,
+        on_delete=models.CASCADE,
+        related_name="core_responsibilities"
     )
 
     title = models.CharField(max_length=200)
@@ -72,7 +72,7 @@ class Responsibility(TimeStampedModel):
     priority = models.CharField(
         max_length=20,
         choices=[("High", "High"), ("Medium", "Medium"), ("Low", "Low")],
-        default="Medium",
+        default="Medium"
     )
     frequency = models.CharField(max_length=80, blank=True)
     kpi_target = models.CharField(max_length=120, blank=True)

@@ -17,10 +17,10 @@ from hr.api.schemas import (
 from django.core.exceptions import ValidationError
 from user.utils.perm import require_permission, scope_queryset, check_obj_permission
 
-router = Router(tags=["Job Postings"])
+router = Router(tags=['Job Postings'])
 
 
-@router.get("/", response=List[JobPostingListItemSchema])
+@router.get('/', response=List[JobPostingListItemSchema])
 @paginate(LimitOffsetPagination, page_size=10)
 @require_permission("job_postings", "list")
 def list_job_postings(
@@ -36,7 +36,9 @@ def list_job_postings(
 
     # Search functionality
     if search:
-        queryset = queryset.filter(Q(job_title__icontains=search))
+        queryset = queryset.filter(
+            Q(job_title__icontains=search)
+        )
 
     # Filters
     if branch_id:
@@ -57,7 +59,7 @@ def list_job_postings(
     return queryset
 
 
-@router.get("/{job_posting_id}", response=JobPostingResponseSchema)
+@router.get('/{job_posting_id}', response=JobPostingResponseSchema)
 @require_permission("job_postings", "view")
 def get_job_posting(request, job_posting_id: int):
     """
@@ -67,7 +69,7 @@ def get_job_posting(request, job_posting_id: int):
     return job_posting
 
 
-@router.post("/", response={201: JobPostingResponseSchema, 400: MessageSchema})
+@router.post('/', response={201: JobPostingResponseSchema, 400: MessageSchema})
 @require_permission("job_postings", "create")
 def create_job_posting(request, payload: JobPostingCreateSchema):
     """
@@ -78,12 +80,9 @@ def create_job_posting(request, payload: JobPostingCreateSchema):
         job_posting = JobPosting.objects.create(**data)
         return 201, job_posting
     except ValidationError as e:
-        return 400, {"detail": e.messages[0]}
+        return 400, {'detail': e.messages[0]}
 
-
-@router.put(
-    "/{job_posting_id}", response={200: JobPostingResponseSchema, 400: MessageSchema}
-)
+@router.put('/{job_posting_id}', response={200: JobPostingResponseSchema, 400: MessageSchema})
 @require_permission("job_postings", "update")
 def update_job_posting(request, job_posting_id: int, payload: JobPostingUpdateSchema):
     """
@@ -100,32 +99,25 @@ def update_job_posting(request, job_posting_id: int, payload: JobPostingUpdateSc
         job_posting.save()
         return 200, job_posting
     except ValidationError as e:
-        return 400, {"detail": e.messages[0]}
+        return 400, {'detail': e.messages[0]}
 
 
-@router.patch(
-    "/{job_posting_id}/status",
-    response={200: JobPostingResponseSchema, 400: MessageSchema},
-)
+@router.patch('/{job_posting_id}/status', response={200: JobPostingResponseSchema, 400: MessageSchema})
 @require_permission("job_postings", "update_status")
-def update_job_posting_status(
-    request, job_posting_id: int, payload: JobPostingStatusUpdateSchema
-):
+def update_job_posting_status(request, job_posting_id: int, payload: JobPostingStatusUpdateSchema):
     """
     Update only the status of a job posting.
     """
     try:
         job_posting = get_object_or_404(JobPosting, id=job_posting_id)
         job_posting.status = payload.status
-        job_posting.save(update_fields=["status", "updated_at"])
+        job_posting.save(update_fields=['status', 'updated_at'])
         return 200, job_posting
     except ValidationError as e:
-        return 400, {"detail": e.messages[0]}
+        return 400, {'detail': e.messages[0]}
 
 
-@router.delete(
-    "/{job_posting_id}", response={200: MessageSchema, 204: None, 400: MessageSchema}
-)
+@router.delete('/{job_posting_id}', response={200: MessageSchema, 204: None, 400: MessageSchema})
 @require_permission("job_postings", "delete")
 def delete_job_posting(request, job_posting_id: int):
     """
@@ -134,29 +126,27 @@ def delete_job_posting(request, job_posting_id: int):
     try:
         job_posting = get_object_or_404(JobPosting, id=job_posting_id)
         job_posting.delete()
-        return 200, {
-            "detail": f'Job posting "{job_posting.job_title}" deleted successfully'
-        }
+        return 200, {'detail': f'Job posting "{job_posting.job_title}" deleted successfully'}
     except ValidationError as e:
-        return 400, {"detail": e.messages[0]}
+        return 400, {'detail': e.messages[0]}
 
 
-@router.get("/stats/summary", response=dict)
+@router.get('/stats/summary', response=dict)
 @require_permission("job_postings", "list")
 def get_job_postings_summary(request):
     """
     Get summary statistics for job postings.
     """
     total = JobPosting.objects.count()
-    active = JobPosting.objects.filter(status="active").count()
-    pending = JobPosting.objects.filter(status="pending").count()
-    closed = JobPosting.objects.filter(status="closed").count()
-    draft = JobPosting.objects.filter(status="draft").count()
+    active = JobPosting.objects.filter(status='active').count()
+    pending = JobPosting.objects.filter(status='pending').count()
+    closed = JobPosting.objects.filter(status='closed').count()
+    draft = JobPosting.objects.filter(status='draft').count()
 
     return {
-        "total": total,
-        "active": active,
-        "pending": pending,
-        "closed": closed,
-        "draft": draft,
+        'total': total,
+        'active': active,
+        'pending': pending,
+        'closed': closed,
+        'draft': draft,
     }

@@ -10,98 +10,53 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("services", "0027_quote_required_approver_role"),
-        ("user", "0093_employeetargetreport"),
+        ('services', '0027_quote_required_approver_role'),
+        ('user', '0093_employeetargetreport'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddField(
-            model_name="invoice",
-            name="activation_threshold_amount",
-            field=models.DecimalField(
-                decimal_places=2,
-                default=Decimal("0.00"),
-                max_digits=15,
-                validators=[django.core.validators.MinValueValidator(Decimal("0.00"))],
-            ),
+            model_name='invoice',
+            name='activation_threshold_amount',
+            field=models.DecimalField(decimal_places=2, default=Decimal('0.00'), max_digits=15, validators=[django.core.validators.MinValueValidator(Decimal('0.00'))]),
         ),
         migrations.AddField(
-            model_name="invoice",
-            name="activation_threshold_met_at",
+            model_name='invoice',
+            name='activation_threshold_met_at',
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name="invoice",
-            name="payment_instructions",
+            model_name='invoice',
+            name='payment_instructions',
             field=models.TextField(blank=True),
         ),
         migrations.AddField(
-            model_name="invoice",
-            name="payment_schedule",
+            model_name='invoice',
+            name='payment_schedule',
             field=models.CharField(blank=True, max_length=80),
         ),
         migrations.AddField(
-            model_name="invoice",
-            name="quote",
-            field=models.ForeignKey(
-                blank=True,
-                null=True,
-                on_delete=django.db.models.deletion.PROTECT,
-                related_name="invoices",
-                to="services.quote",
-            ),
+            model_name='invoice',
+            name='quote',
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='invoices', to='services.quote'),
         ),
         migrations.AddField(
-            model_name="invoice",
-            name="service_request",
-            field=models.ForeignKey(
-                blank=True,
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                related_name="invoices",
-                to="services.servicerequest",
-            ),
+            model_name='invoice',
+            name='service_request',
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='invoices', to='services.servicerequest'),
         ),
         migrations.AlterField(
-            model_name="servicerequestactivity",
-            name="activity_type",
-            field=models.CharField(
-                choices=[
-                    ("request_created", "Request Created"),
-                    ("control_update", "Control Update"),
-                    ("assessment_scheduled", "Assessment Scheduled"),
-                    ("assessment_result", "Assessment Result"),
-                    ("document_received", "Document Received"),
-                    ("internal_note", "Internal Note"),
-                    ("phone_call", "Phone Call"),
-                    ("whatsapp", "WhatsApp"),
-                    ("email", "Email"),
-                    ("meeting", "Meeting"),
-                    ("quote_prepared", "Quote Prepared"),
-                    ("quote_sent", "Quote Sent"),
-                    ("quote_accepted", "Quote Accepted"),
-                    ("quote_rejected", "Quote Rejected"),
-                    ("invoice_issued", "Invoice Issued"),
-                    ("payment_submitted", "Payment Submitted"),
-                    ("payment_confirmed", "Payment Confirmed"),
-                    ("payment_threshold_met", "Payment Threshold Met"),
-                    ("status_change", "Status Change"),
-                ],
-                max_length=40,
-            ),
+            model_name='servicerequestactivity',
+            name='activity_type',
+            field=models.CharField(choices=[('request_created', 'Request Created'), ('control_update', 'Control Update'), ('assessment_scheduled', 'Assessment Scheduled'), ('assessment_result', 'Assessment Result'), ('document_received', 'Document Received'), ('internal_note', 'Internal Note'), ('phone_call', 'Phone Call'), ('whatsapp', 'WhatsApp'), ('email', 'Email'), ('meeting', 'Meeting'), ('quote_prepared', 'Quote Prepared'), ('quote_sent', 'Quote Sent'), ('quote_accepted', 'Quote Accepted'), ('quote_rejected', 'Quote Rejected'), ('invoice_issued', 'Invoice Issued'), ('payment_submitted', 'Payment Submitted'), ('payment_confirmed', 'Payment Confirmed'), ('payment_threshold_met', 'Payment Threshold Met'), ('status_change', 'Status Change')], max_length=40),
         ),
         migrations.AddIndex(
-            model_name="invoice",
-            index=models.Index(
-                fields=["quote", "status"], name="services_in_quote_i_3544eb_idx"
-            ),
+            model_name='invoice',
+            index=models.Index(fields=['quote', 'status'], name='services_in_quote_i_3544eb_idx'),
         ),
         migrations.AddIndex(
-            model_name="invoice",
-            index=models.Index(
-                fields=["service_request", "status"],
-                name="services_in_service_8e133d_idx",
-            ),
+            model_name='invoice',
+            index=models.Index(fields=['service_request', 'status'], name='services_in_service_8e133d_idx'),
         ),
     ]

@@ -1,6 +1,6 @@
 from .base import BaseModel, TimeStampedModel
 from .user import User
-from .roles import Department, Unit
+from .roles import  Department, Unit
 from .employee import Employee, EmployeeDocument, Review
 from .client import Lead, Client
 from .attendance import Attendance
@@ -23,11 +23,7 @@ from .approval import ApprovalFlow, ApprovalFlowStep, ApprovalRequest, ApprovalD
 from .estate import Estate, EstateDocument, Property, PropertyImage
 from .brokerage import BrokerageListing, BrokerageListingImage
 from .cart import Cart, CartItem
-from .estate_property_invoice import (
-    EstatePropertyInvoice,
-    EstatePropertyInvoiceItem,
-    InvoiceApproval,
-)
+from .estate_property_invoice import EstatePropertyInvoice, EstatePropertyInvoiceItem, InvoiceApproval
 from .role import Role
 from .role_career_path import RoleCareerPath
 from .role_description import RoleDescription

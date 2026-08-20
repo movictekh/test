@@ -23,6 +23,7 @@ from .audit_log import (
     UserInfo,
 )
 
+
 __all__ = [
     "LoginRequest",
     "LoginResponse",

@@ -76,35 +76,23 @@ class PayrollRun(models.Model):
     )
     calculated_at = models.DateTimeField(null=True, blank=True)
     submitted_by = models.ForeignKey(
-        "user.User",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
+        "user.User", on_delete=models.SET_NULL, null=True, blank=True,
         related_name="submitted_finance_payroll_runs",
     )
     submitted_at = models.DateTimeField(null=True, blank=True)
     approved_by = models.ForeignKey(
-        "user.User",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
+        "user.User", on_delete=models.SET_NULL, null=True, blank=True,
         related_name="approved_finance_payroll_runs",
     )
     approved_at = models.DateTimeField(null=True, blank=True)
     rejected_by = models.ForeignKey(
-        "user.User",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
+        "user.User", on_delete=models.SET_NULL, null=True, blank=True,
         related_name="rejected_finance_payroll_runs",
     )
     rejected_at = models.DateTimeField(null=True, blank=True)
     rejection_reason = models.TextField(blank=True, default="")
     paid_by = models.ForeignKey(
-        "user.User",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
+        "user.User", on_delete=models.SET_NULL, null=True, blank=True,
         related_name="paid_finance_payroll_runs",
     )
     paid_at = models.DateTimeField(null=True, blank=True)
@@ -150,7 +138,6 @@ class PayrollRun(models.Model):
     @property
     def period_display(self):
         import calendar
-
         if 1 <= self.period_month <= 12:
             return f"{calendar.month_name[self.period_month]} {self.period_year}"
         return f"{self.period_month}/{self.period_year}"
@@ -187,13 +174,11 @@ class PayrollRun(models.Model):
         # is created outside the API. A company run owns the whole month; branch
         # runs may coexist only with other, different branch runs.
         if self.status != self.STATUS.CANCELLED and 1 <= self.period_month <= 12:
-            conflicts = (
-                PayrollRun.objects.exclude(pk=self.pk)
-                .exclude(status=self.STATUS.CANCELLED)
-                .filter(
-                    period_year=self.period_year,
-                    period_month=self.period_month,
-                )
+            conflicts = PayrollRun.objects.exclude(pk=self.pk).exclude(
+                status=self.STATUS.CANCELLED
+            ).filter(
+                period_year=self.period_year,
+                period_month=self.period_month,
             )
             if self.branch_id:
                 conflicts = conflicts.filter(
@@ -204,20 +189,12 @@ class PayrollRun(models.Model):
                     "An active payroll run already covers this payroll period and scope."
                 )
 
-        if (
-            self.finance_account_id
-            and self.branch_id
-            and self.finance_account.branch_id
-        ):
+        if self.finance_account_id and self.branch_id and self.finance_account.branch_id:
             if self.finance_account.branch_id != self.branch_id:
-                errors["finance_account"] = (
-                    "Payroll account branch must match the payroll run branch."
-                )
+                errors["finance_account"] = "Payroll account branch must match the payroll run branch."
         if self.status == self.STATUS.PAID:
             if not self.finance_account_id:
-                errors["finance_account"] = (
-                    "Paid payroll runs require a Finance account."
-                )
+                errors["finance_account"] = "Paid payroll runs require a Finance account."
             if not self.paid_at:
                 errors["paid_at"] = "Paid payroll runs require a payment timestamp."
         if errors:
@@ -234,14 +211,9 @@ class PayrollRun(models.Model):
 
 
 class PayrollLine(models.Model):
-    payroll_run = models.ForeignKey(
-        PayrollRun, on_delete=models.CASCADE, related_name="lines"
-    )
+    payroll_run = models.ForeignKey(PayrollRun, on_delete=models.CASCADE, related_name="lines")
     employee = models.ForeignKey(
-        "user.Employee",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
+        "user.Employee", on_delete=models.SET_NULL, null=True, blank=True,
         related_name="finance_payroll_lines",
     )
     employee_number = models.CharField(max_length=50)
@@ -263,30 +235,20 @@ class PayrollLine(models.Model):
         blank=True,
     )
     gross_salary_snapshot = models.DecimalField(
-        max_digits=15,
-        decimal_places=2,
+        max_digits=15, decimal_places=2,
         validators=[MinValueValidator(Decimal("0.00"))],
     )
     gross_pay = models.DecimalField(
-        max_digits=15,
-        decimal_places=2,
-        default=Decimal("0.00"),
-        validators=[MinValueValidator(Decimal("0.00"))],
-        editable=False,
+        max_digits=15, decimal_places=2, default=Decimal("0.00"),
+        validators=[MinValueValidator(Decimal("0.00"))], editable=False,
     )
     total_deductions = models.DecimalField(
-        max_digits=15,
-        decimal_places=2,
-        default=Decimal("0.00"),
-        validators=[MinValueValidator(Decimal("0.00"))],
-        editable=False,
+        max_digits=15, decimal_places=2, default=Decimal("0.00"),
+        validators=[MinValueValidator(Decimal("0.00"))], editable=False,
     )
     net_pay = models.DecimalField(
-        max_digits=15,
-        decimal_places=2,
-        default=Decimal("0.00"),
-        validators=[MinValueValidator(Decimal("0.00"))],
-        editable=False,
+        max_digits=15, decimal_places=2, default=Decimal("0.00"),
+        validators=[MinValueValidator(Decimal("0.00"))], editable=False,
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -340,21 +302,16 @@ class PayrollLineItem(models.Model):
         COMMISSION = "commission", "Commission / Bonus"
         STATUTORY = "statutory", "Statutory Calculation"
 
-    payroll_line = models.ForeignKey(
-        PayrollLine, on_delete=models.CASCADE, related_name="items"
-    )
+    payroll_line = models.ForeignKey(PayrollLine, on_delete=models.CASCADE, related_name="items")
     item_type = models.CharField(max_length=20, choices=ITEM_TYPE.choices)
     category = models.CharField(max_length=30, choices=CATEGORY.choices)
     name = models.CharField(max_length=120)
     amount = models.DecimalField(
-        max_digits=15,
-        decimal_places=2,
+        max_digits=15, decimal_places=2,
         validators=[MinValueValidator(Decimal("0.01"))],
     )
     source_type = models.CharField(
-        max_length=30,
-        choices=SOURCE_TYPE.choices,
-        default=SOURCE_TYPE.MANUAL,
+        max_length=30, choices=SOURCE_TYPE.choices, default=SOURCE_TYPE.MANUAL,
     )
     source_reference = models.CharField(max_length=120, blank=True, default="")
     is_taxable = models.BooleanField(
@@ -366,10 +323,7 @@ class PayrollLineItem(models.Model):
     notes = models.TextField(blank=True, default="")
     sort_order = models.PositiveIntegerField(default=0)
     created_by = models.ForeignKey(
-        "user.User",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
+        "user.User", on_delete=models.SET_NULL, null=True, blank=True,
         related_name="created_payroll_line_items",
     )
     created_at = models.DateTimeField(auto_now_add=True)
@@ -386,37 +340,19 @@ class PayrollLineItem(models.Model):
     def clean(self):
         super().clean()
         earning_categories = {
-            self.CATEGORY.BASE_SALARY,
-            self.CATEGORY.ALLOWANCE,
-            self.CATEGORY.OVERTIME,
-            self.CATEGORY.COMMISSION,
-            self.CATEGORY.BONUS,
-            self.CATEGORY.REIMBURSEMENT,
+            self.CATEGORY.BASE_SALARY, self.CATEGORY.ALLOWANCE, self.CATEGORY.OVERTIME,
+            self.CATEGORY.COMMISSION, self.CATEGORY.BONUS, self.CATEGORY.REIMBURSEMENT,
             self.CATEGORY.OTHER_EARNING,
         }
         deduction_categories = {
-            self.CATEGORY.PAYE,
-            self.CATEGORY.PENSION,
-            self.CATEGORY.LOAN,
-            self.CATEGORY.ADVANCE_RECOVERY,
-            self.CATEGORY.ABSENCE,
-            self.CATEGORY.STATUTORY,
-            self.CATEGORY.OTHER_DEDUCTION,
+            self.CATEGORY.PAYE, self.CATEGORY.PENSION, self.CATEGORY.LOAN,
+            self.CATEGORY.ADVANCE_RECOVERY, self.CATEGORY.ABSENCE,
+            self.CATEGORY.STATUTORY, self.CATEGORY.OTHER_DEDUCTION,
         }
-        if (
-            self.item_type == self.ITEM_TYPE.EARNING
-            and self.category not in earning_categories
-        ):
-            raise ValidationError(
-                {"category": "This category is not an earning category."}
-            )
-        if (
-            self.item_type == self.ITEM_TYPE.DEDUCTION
-            and self.category not in deduction_categories
-        ):
-            raise ValidationError(
-                {"category": "This category is not a deduction category."}
-            )
+        if self.item_type == self.ITEM_TYPE.EARNING and self.category not in earning_categories:
+            raise ValidationError({"category": "This category is not an earning category."})
+        if self.item_type == self.ITEM_TYPE.DEDUCTION and self.category not in deduction_categories:
+            raise ValidationError({"category": "This category is not a deduction category."})
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -485,13 +421,9 @@ class CommissionRule(models.Model):
         super().clean()
         errors = {}
         if self.rate_percent <= 0 or self.rate_percent > Decimal("100.00"):
-            errors["rate_percent"] = (
-                "Commission rate must be greater than 0 and at most 100."
-            )
+            errors["rate_percent"] = "Commission rate must be greater than 0 and at most 100."
         if self.effective_to and self.effective_to < self.effective_from:
-            errors["effective_to"] = (
-                "Effective end date cannot be before the start date."
-            )
+            errors["effective_to"] = "Effective end date cannot be before the start date."
         if errors:
             raise ValidationError(errors)
 
@@ -640,7 +572,6 @@ class IncentiveAward(models.Model):
     @property
     def payout_period_display(self):
         import calendar
-
         if 1 <= self.payout_month <= 12:
             return f"{calendar.month_name[self.payout_month]} {self.payout_year}"
         return f"{self.payout_month}/{self.payout_year}"
@@ -656,37 +587,25 @@ class IncentiveAward(models.Model):
 
         if self.award_type == self.AWARD_TYPE.COMMISSION:
             if not self.payment_id:
-                errors["payment"] = (
-                    "Commission awards require a verified Payment source."
-                )
+                errors["payment"] = "Commission awards require a verified Payment source."
             if not self.commission_rule_id:
-                errors["commission_rule"] = (
-                    "Commission awards require a Commission rule."
-                )
+                errors["commission_rule"] = "Commission awards require a Commission rule."
             if not self.service_id:
                 errors["service"] = "Commission awards require a service."
             if self.verified_revenue <= 0:
-                errors["verified_revenue"] = (
-                    "Commission verified revenue must be greater than zero."
-                )
+                errors["verified_revenue"] = "Commission verified revenue must be greater than zero."
             if self.rate_percent <= 0:
                 errors["rate_percent"] = "Commission rate must be greater than zero."
         elif self.award_type == self.AWARD_TYPE.BONUS:
             if self.payment_id or self.commission_rule_id:
-                errors["payment"] = (
-                    "Bonus awards cannot be linked to a Payment or Commission rule."
-                )
+                errors["payment"] = "Bonus awards cannot be linked to a Payment or Commission rule."
             if self.verified_revenue != 0 or self.rate_percent != 0:
-                errors["verified_revenue"] = (
-                    "Bonus awards do not use verified revenue or commission rate."
-                )
+                errors["verified_revenue"] = "Bonus awards do not use verified revenue or commission rate."
             if not self.reason.strip():
                 errors["reason"] = "A bonus reason is required."
 
         if self.payroll_line_id and self.payroll_line.employee_id != self.employee_id:
-            errors["payroll_line"] = (
-                "Payroll line employee must match incentive beneficiary."
-            )
+            errors["payroll_line"] = "Payroll line employee must match incentive beneficiary."
 
         if self.status == self.STATUS.PAID and not self.paid_at:
             errors["paid_at"] = "Paid incentives require a payment timestamp."
@@ -731,80 +650,29 @@ class StatutoryObligation(models.Model):
 
     obligation_number = models.CharField(max_length=50, unique=True, editable=False)
     obligation_type = models.CharField(max_length=20, choices=OBLIGATION_TYPE.choices)
-    source_type = models.CharField(
-        max_length=30, choices=SOURCE_TYPE.choices, default=SOURCE_TYPE.MANUAL
-    )
-    branch = models.ForeignKey(
-        "user.Branch",
-        on_delete=models.PROTECT,
-        null=True,
-        blank=True,
-        related_name="finance_statutory_obligations",
-    )
+    source_type = models.CharField(max_length=30, choices=SOURCE_TYPE.choices, default=SOURCE_TYPE.MANUAL)
+    branch = models.ForeignKey("user.Branch", on_delete=models.PROTECT, null=True, blank=True, related_name="finance_statutory_obligations")
     period_label = models.CharField(max_length=80)
     period_start = models.DateField()
     period_end = models.DateField()
     basis = models.CharField(max_length=255)
-    basis_amount = models.DecimalField(
-        max_digits=15,
-        decimal_places=2,
-        default=Decimal("0.00"),
-        validators=[MinValueValidator(Decimal("0.00"))],
-    )
-    amount = models.DecimalField(
-        max_digits=15, decimal_places=2, validators=[MinValueValidator(Decimal("0.01"))]
-    )
+    basis_amount = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal("0.00"), validators=[MinValueValidator(Decimal("0.00"))])
+    amount = models.DecimalField(max_digits=15, decimal_places=2, validators=[MinValueValidator(Decimal("0.01"))])
     due_date = models.DateField()
-    status = models.CharField(
-        max_length=30, choices=STATUS.choices, default=STATUS.DRAFT, db_index=True
-    )
-    finance_account = models.ForeignKey(
-        FinanceAccount,
-        on_delete=models.PROTECT,
-        null=True,
-        blank=True,
-        related_name="statutory_payments",
-    )
+    status = models.CharField(max_length=30, choices=STATUS.choices, default=STATUS.DRAFT, db_index=True)
+    finance_account = models.ForeignKey(FinanceAccount, on_delete=models.PROTECT, null=True, blank=True, related_name="statutory_payments")
     notes = models.TextField(blank=True, default="")
-    submitted_by = models.ForeignKey(
-        "user.User",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="submitted_statutory_obligations",
-    )
+    submitted_by = models.ForeignKey("user.User", on_delete=models.SET_NULL, null=True, blank=True, related_name="submitted_statutory_obligations")
     submitted_at = models.DateTimeField(null=True, blank=True)
-    approved_by = models.ForeignKey(
-        "user.User",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="approved_statutory_obligations",
-    )
+    approved_by = models.ForeignKey("user.User", on_delete=models.SET_NULL, null=True, blank=True, related_name="approved_statutory_obligations")
     approved_at = models.DateTimeField(null=True, blank=True)
-    rejected_by = models.ForeignKey(
-        "user.User",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="rejected_statutory_obligations",
-    )
+    rejected_by = models.ForeignKey("user.User", on_delete=models.SET_NULL, null=True, blank=True, related_name="rejected_statutory_obligations")
     rejected_at = models.DateTimeField(null=True, blank=True)
     rejection_reason = models.TextField(blank=True, default="")
-    paid_by = models.ForeignKey(
-        "user.User",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="paid_statutory_obligations",
-    )
+    paid_by = models.ForeignKey("user.User", on_delete=models.SET_NULL, null=True, blank=True, related_name="paid_statutory_obligations")
     paid_at = models.DateTimeField(null=True, blank=True)
     payment_reference = models.CharField(max_length=120, blank=True, default="")
-    created_by = models.ForeignKey(
-        "user.User",
-        on_delete=models.PROTECT,
-        related_name="created_statutory_obligations",
-    )
+    created_by = models.ForeignKey("user.User", on_delete=models.PROTECT, related_name="created_statutory_obligations")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -819,41 +687,25 @@ class StatutoryObligation(models.Model):
 
     @property
     def is_overdue(self):
-        return (
-            self.status not in {self.STATUS.PAID, self.STATUS.VOID}
-            and self.due_date < timezone.localdate()
-        )
+        return self.status not in {self.STATUS.PAID, self.STATUS.VOID} and self.due_date < timezone.localdate()
 
     def clean(self):
         super().clean()
         errors = {}
         if self.period_end < self.period_start:
             errors["period_end"] = "Period end cannot be before period start."
-        if (
-            self.finance_account_id
-            and self.branch_id
-            and self.finance_account.branch_id
-            and self.finance_account.branch_id != self.branch_id
-        ):
-            errors["finance_account"] = (
-                "Payment account branch must match obligation branch."
-            )
+        if self.finance_account_id and self.branch_id and self.finance_account.branch_id and self.finance_account.branch_id != self.branch_id:
+            errors["finance_account"] = "Payment account branch must match obligation branch."
         if self.status == self.STATUS.PAID:
-            if not self.finance_account_id:
-                errors["finance_account"] = (
-                    "Paid obligations require a Finance account."
-                )
-            if not self.paid_at:
-                errors["paid_at"] = "Paid obligations require a payment timestamp."
-        if errors:
-            raise ValidationError(errors)
+            if not self.finance_account_id: errors["finance_account"] = "Paid obligations require a Finance account."
+            if not self.paid_at: errors["paid_at"] = "Paid obligations require a payment timestamp."
+        if errors: raise ValidationError(errors)
 
     def save(self, *args, **kwargs):
         if not self.obligation_number:
             prefix = self.obligation_type.upper() if self.obligation_type else "STAT"
             self.obligation_number = f"{prefix}-{uuid.uuid4().hex[:10].upper()}"
-        self.full_clean()
-        super().save(*args, **kwargs)
+        self.full_clean(); super().save(*args, **kwargs)
 
 
 class StatutoryObligationItem(models.Model):
@@ -863,42 +715,15 @@ class StatutoryObligationItem(models.Model):
         PAYROLL_LINE_ITEM = "payroll_line_item", "Payroll Line Item"
         INVOICE = "invoice", "Invoice Evidence"
 
-    obligation = models.ForeignKey(
-        StatutoryObligation, on_delete=models.CASCADE, related_name="items"
-    )
+    obligation = models.ForeignKey(StatutoryObligation, on_delete=models.CASCADE, related_name="items")
     source_type = models.CharField(max_length=30, choices=SOURCE_TYPE.choices)
     source_reference = models.CharField(max_length=120)
     description = models.CharField(max_length=255)
-    basis_amount = models.DecimalField(
-        max_digits=15,
-        decimal_places=2,
-        default=Decimal("0.00"),
-        validators=[MinValueValidator(Decimal("0.00"))],
-    )
-    liability_amount = models.DecimalField(
-        max_digits=15, decimal_places=2, validators=[MinValueValidator(Decimal("0.01"))]
-    )
-    vendor_bill = models.ForeignKey(
-        VendorBill,
-        on_delete=models.PROTECT,
-        null=True,
-        blank=True,
-        related_name="statutory_items",
-    )
-    payroll_line_item = models.ForeignKey(
-        PayrollLineItem,
-        on_delete=models.PROTECT,
-        null=True,
-        blank=True,
-        related_name="statutory_items",
-    )
-    invoice = models.ForeignKey(
-        "services.Invoice",
-        on_delete=models.PROTECT,
-        null=True,
-        blank=True,
-        related_name="statutory_items",
-    )
+    basis_amount = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal("0.00"), validators=[MinValueValidator(Decimal("0.00"))])
+    liability_amount = models.DecimalField(max_digits=15, decimal_places=2, validators=[MinValueValidator(Decimal("0.01"))])
+    vendor_bill = models.ForeignKey(VendorBill, on_delete=models.PROTECT, null=True, blank=True, related_name="statutory_items")
+    payroll_line_item = models.ForeignKey(PayrollLineItem, on_delete=models.PROTECT, null=True, blank=True, related_name="statutory_items")
+    invoice = models.ForeignKey("services.Invoice", on_delete=models.PROTECT, null=True, blank=True, related_name="statutory_items")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -910,30 +735,13 @@ class StatutoryObligationItem(models.Model):
             models.Index(fields=["invoice"]),
         ]
         constraints = [
-            models.UniqueConstraint(
-                fields=["vendor_bill"],
-                condition=Q(vendor_bill__isnull=False),
-                name="uniq_statutory_vendor_bill_source",
-            ),
-            models.UniqueConstraint(
-                fields=["payroll_line_item"],
-                condition=Q(payroll_line_item__isnull=False),
-                name="uniq_statutory_payroll_item_source",
-            ),
+            models.UniqueConstraint(fields=["vendor_bill"], condition=Q(vendor_bill__isnull=False), name="uniq_statutory_vendor_bill_source"),
+            models.UniqueConstraint(fields=["payroll_line_item"], condition=Q(payroll_line_item__isnull=False), name="uniq_statutory_payroll_item_source"),
         ]
 
     def clean(self):
         super().clean()
-        refs = [
-            bool(self.vendor_bill_id),
-            bool(self.payroll_line_item_id),
-            bool(self.invoice_id),
-        ]
-        if sum(refs) > 1:
-            raise ValidationError(
-                "A statutory item may reference only one concrete source."
-            )
+        refs = [bool(self.vendor_bill_id), bool(self.payroll_line_item_id), bool(self.invoice_id)]
+        if sum(refs) > 1: raise ValidationError("A statutory item may reference only one concrete source.")
 
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
+    def save(self, *args, **kwargs): self.full_clean(); super().save(*args, **kwargs)

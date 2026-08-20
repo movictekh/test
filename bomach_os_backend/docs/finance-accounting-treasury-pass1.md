@@ -12,6 +12,7 @@ Before this pass, Bomach already had:
 - FinanceAccount links from payments, expenses, vendor bills, petty cash, payroll and statutory payments;
 - Cashbook logic that calculates money in, money out and book/running balance.
 
+We did not rewrite those working parts just to make them look different.
 
 ## Change 1 — stop duplicate physical bank accounts
 
@@ -24,7 +25,6 @@ Migration `0011_bank_cash_account_controls` checks existing data first. If dupli
 ## Change 2 — protect historical account identity after money moves
 
 After settled financial activity exists, these fields cannot be changed:
-
 
 - account type;
 - currency;
@@ -97,16 +97,82 @@ A new file `finance/tests/test_bank_cash_accounts.py` checks:
 - prevention of clearing branch scope;
 - rejection of inactive Finance accounts for new expenses.
 
+The existing large `finance/tests/test_core.py` is not reorganized.
 
 ## Database change
 
+This pass creates no new business table.
 
 It adds one conditional uniqueness constraint to the existing FinanceAccount table and a migration data guard.
 
+## Things we intentionally did not change
 
+### FinanceAccount was not moved or renamed
 
+The model already works and many Finance features depend on it.
 
+### The accounts router was not rewritten into a service layer
 
-## review
+That would be an architecture preference, not a requirement for this pass.
 
-> We kept the existing Bank & Cash Accounts implementation. FIN-AT-1 only adds controls needed before the General Ledger: duplicate physical bank accounts are blocked, historical account identity/opening balances cannot be silently rewritten after money moves, existing Cashbook balance is exposed read-only, account writes obey existing branch scope, and inactive Finance accounts cannot be selected for new expenses.
+### Existing `payments` permission names were not renamed
+
+The naming may later deserve a dedicated Treasury permission design, but changing it now would alter existing role behavior and is not necessary for these controls.
+
+### Cashbook was not rewritten
+
+The balance endpoint deliberately reuses it.
+
+### Statement balance and reconciliation status were not added
+
+Those values require real imported bank statements and reconciliation records. They belong to the Bank Reconciliation pass.
+
+### Chart of Accounts / General Ledger fields were not added
+
+The FinanceAccount-to-LedgerAccount relation belongs in the Chart of Accounts pass when `LedgerAccount` actually exists.
+
+## Why the first three installers stopped
+
+### Installer 1
+
+It assumed the local SQLite database had the FinanceAccount table and queried it directly.
+
+The local database did not have that table, so it stopped with `no such table: finance_financeaccount`.
+
+Rollback completed.
+
+### Installer 2
+
+It correctly handled the missing local table, but added `FinanceAccountBalanceOut` only in `finance/api/schemas/accounts.py`.
+
+This repository imports Finance schemas through `finance/api/schemas/__init__.py`, so the new schema was not visible through the existing import path.
+
+Rollback completed.
+
+### Installer 3
+
+It fixed the schema export but its new smoke test used plain `python` to import Django Ninja code before Django settings were configured.
+
+That caused `ImproperlyConfigured: Requested settings, but settings are not configured`.
+
+Rollback completed.
+
+## What v4 changes about installer validation
+
+v4 fixes the validation method instead of only fixing the latest error:
+
+- it runs `python manage.py check` before editing;
+- it checks migration drift before editing;
+- it runs the full existing Django test suite before editing;
+- local database row checks only run when the FinanceAccount table exists;
+- it never runs `migrate`;
+- Django-aware imports run through `manage.py` or explicitly configured Django;
+- migration `0011` contains its own duplicate-data guard;
+- after editing it runs import checks, Django checks, migration checks, focused tests, Finance tests and the full test suite;
+- it compares the public API operation set before/after;
+- it confirms no new Finance model was introduced;
+- every touched existing file is included in rollback.
+
+## Short explanation for review
+
+> We kept the existing Bank & Cash Accounts implementation. FIN-AT-1 only adds controls needed before the General Ledger: duplicate physical bank accounts are blocked, historical account identity/opening balances cannot be silently rewritten after money moves, existing Cashbook balance is exposed read-only, account writes obey existing branch scope, and inactive Finance accounts cannot be selected for new expenses. We did not move the model, rewrite the router, rename permissions or replace Cashbook.

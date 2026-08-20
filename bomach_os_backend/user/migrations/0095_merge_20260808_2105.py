@@ -6,8 +6,9 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("user", "0083_workflow_rule"),
-        ("user", "0094_brokeragelisting_brokeragelistingimage_and_more"),
+        ('user', '0083_workflow_rule'),
+        ('user', '0094_brokeragelisting_brokeragelistingimage_and_more'),
     ]
 
-    operations = []
+    operations = [
+    ]

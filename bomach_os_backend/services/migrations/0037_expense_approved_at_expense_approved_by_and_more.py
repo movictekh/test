@@ -8,65 +8,44 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        (
-            "services",
-            "0036_expense_beneficiary_expense_billable_expense_branch_and_more",
-        ),
+        ('services', '0036_expense_beneficiary_expense_billable_expense_branch_and_more'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddField(
-            model_name="expense",
-            name="approved_at",
+            model_name='expense',
+            name='approved_at',
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name="expense",
-            name="approved_by",
-            field=models.ForeignKey(
-                blank=True,
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                related_name="approved_expenses",
-                to=settings.AUTH_USER_MODEL,
-            ),
+            model_name='expense',
+            name='approved_by',
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='approved_expenses', to=settings.AUTH_USER_MODEL),
         ),
         migrations.AddField(
-            model_name="expense",
-            name="paid_by",
-            field=models.ForeignKey(
-                blank=True,
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                related_name="paid_expenses",
-                to=settings.AUTH_USER_MODEL,
-            ),
+            model_name='expense',
+            name='paid_by',
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='paid_expenses', to=settings.AUTH_USER_MODEL),
         ),
         migrations.AddField(
-            model_name="expense",
-            name="payment_reference",
-            field=models.CharField(blank=True, default="", max_length=100),
+            model_name='expense',
+            name='payment_reference',
+            field=models.CharField(blank=True, default='', max_length=100),
         ),
         migrations.AddField(
-            model_name="expense",
-            name="rejected_at",
+            model_name='expense',
+            name='rejected_at',
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name="expense",
-            name="rejected_by",
-            field=models.ForeignKey(
-                blank=True,
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                related_name="rejected_expenses",
-                to=settings.AUTH_USER_MODEL,
-            ),
+            model_name='expense',
+            name='rejected_by',
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='rejected_expenses', to=settings.AUTH_USER_MODEL),
         ),
         migrations.AddField(
-            model_name="expense",
-            name="rejection_reason",
-            field=models.TextField(blank=True, default=""),
+            model_name='expense',
+            name='rejection_reason',
+            field=models.TextField(blank=True, default=''),
         ),
     ]

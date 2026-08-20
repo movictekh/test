@@ -15,7 +15,6 @@ logger = logging.getLogger(__name__)
 
 class AuthClientError(Exception):
     """Exception raised when auth client operations fail."""
-
     pass
 
 
@@ -43,12 +42,11 @@ class AuthClient:
         """
         try:
             from user.models import TokenBlacklist
-
             if TokenBlacklist.is_blacklisted(token):
                 return False, None
 
-            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
-            user_id = payload.get("user_id")
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+            user_id = payload.get('user_id')
             return True, user_id
 
         except jwt.ExpiredSignatureError:
@@ -59,9 +57,7 @@ class AuthClient:
             logger.error(f"Unexpected error verifying token: {str(e)}")
             return False, None
 
-    def get_current_user(
-        self, token: str
-    ) -> Tuple[bool, Optional[Dict[str, Any]], str]:
+    def get_current_user(self, token: str) -> Tuple[bool, Optional[Dict[str, Any]], str]:
         """Get current user information from token."""
         is_valid, user_id = self.verify_token(token)
         if not is_valid or not user_id:
@@ -69,75 +65,58 @@ class AuthClient:
 
         try:
             from user.models import User
-
             user = User.objects.filter(pk=user_id, is_active=True).first()
             if not user:
                 return False, None, "User not found or inactive"
             user_data = {
-                "id": user.pk,
-                "email": user.email,
-                "full_name": user.full_name,
-                "username": getattr(user, "username", ""),
-                "is_active": user.is_active,
+                'id': user.pk,
+                'email': user.email,
+                'full_name': user.full_name,
+                'username': getattr(user, 'username', ''),
+                'is_active': user.is_active,
             }
             return True, user_data, "Success"
         except Exception as e:
             logger.error(f"Error getting current user: {str(e)}")
             return False, None, f"Error: {str(e)}"
 
-    def get_user_info(
-        self, user_id: int, token: str = None
-    ) -> Optional[Dict[str, Any]]:
+    def get_user_info(self, user_id: int, token: str = None) -> Optional[Dict[str, Any]]:
         """Get user information by user ID."""
         try:
             from user.models import User
-
             user = User.objects.filter(pk=user_id).first()
             if not user:
                 return None
             return {
-                "id": user.pk,
-                "email": user.email,
-                "full_name": user.full_name,
-                "username": getattr(user, "username", ""),
-                "is_active": user.is_active,
+                'id': user.pk,
+                'email': user.email,
+                'full_name': user.full_name,
+                'username': getattr(user, 'username', ''),
+                'is_active': user.is_active,
             }
         except Exception as e:
             logger.error(f"Error getting user info: {str(e)}")
             return None
 
-    def get_employee_info(
-        self, employee_id: str, token: str = None
-    ) -> Optional[Dict[str, Any]]:
+    def get_employee_info(self, employee_id: str, token: str = None) -> Optional[Dict[str, Any]]:
         """Get employee information by employee ID."""
         try:
             from user.models import Employee
-
-            employee = (
-                Employee.objects.select_related("department", "branch")
-                .filter(pk=employee_id)
-                .first()
-            )
+            employee = Employee.objects.select_related('department', 'branch').filter(
+                pk=employee_id
+            ).first()
             if not employee:
                 return None
             return {
-                "id": str(employee.pk),
-                "employee_id": getattr(employee, "employee_id", str(employee.pk)),
-                "email": getattr(employee, "email", ""),
-                "full_name": getattr(employee, "full_name", ""),
-                "is_active": getattr(employee, "is_active", True),
-                "department_id": (
-                    str(employee.department_id) if employee.department_id else ""
-                ),
-                "department_name": (
-                    str(employee.department) if employee.department else ""
-                ),
-                "branch_name": (
-                    str(employee.branch)
-                    if hasattr(employee, "branch") and employee.branch
-                    else ""
-                ),
-                "position": getattr(employee, "position", ""),
+                'id': str(employee.pk),
+                'employee_id': getattr(employee, 'employee_id', str(employee.pk)),
+                'email': getattr(employee, 'email', ''),
+                'full_name': getattr(employee, 'full_name', ''),
+                'is_active': getattr(employee, 'is_active', True),
+                'department_id': str(employee.department_id) if employee.department_id else '',
+                'department_name': str(employee.department) if employee.department else '',
+                'branch_name': str(employee.branch) if hasattr(employee, 'branch') and employee.branch else '',
+                'position': getattr(employee, 'position', ''),
             }
         except Exception as e:
             logger.error(f"Error getting employee info: {str(e)}")
@@ -147,7 +126,6 @@ class AuthClient:
         """Check if an employee ID exists."""
         try:
             from user.models import Employee
-
             return Employee.objects.filter(pk=employee_id).exists()
         except Exception:
             return False
@@ -172,12 +150,12 @@ def verify_request_token(request) -> Tuple[bool, Optional[int], str]:
     Returns:
         Tuple of (is_valid, user_id, error_message)
     """
-    auth_header = request.headers.get("Authorization", "")
+    auth_header = request.headers.get('Authorization', '')
 
     if not auth_header:
         return False, None, "No authorization header"
 
-    if not auth_header.startswith("Bearer "):
+    if not auth_header.startswith('Bearer '):
         return False, None, "Invalid authorization header format"
 
     token = auth_header[7:]
@@ -192,9 +170,9 @@ def verify_request_token(request) -> Tuple[bool, Optional[int], str]:
 
 def get_request_user(request) -> Tuple[bool, Optional[Dict[str, Any]], str]:
     """Get user information from request token."""
-    auth_header = request.headers.get("Authorization", "")
+    auth_header = request.headers.get('Authorization', '')
 
-    if not auth_header or not auth_header.startswith("Bearer "):
+    if not auth_header or not auth_header.startswith('Bearer '):
         return False, None, "Invalid authorization"
 
     token = auth_header[7:]

@@ -8,28 +8,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("user", "0040_alter_user_first_name_alter_user_last_name"),
+        ('user', '0040_alter_user_first_name_alter_user_last_name'),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name="loan",
-            name="employee",
-            field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL
-            ),
+            model_name='loan',
+            name='employee',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL),
         ),
         migrations.AlterField(
-            model_name="loan",
-            name="status",
-            field=models.CharField(
-                choices=[
-                    ("pending", "Pending"),
-                    ("approved", "Approved"),
-                    ("rejected", "Rejected"),
-                ],
-                default="pending",
-                max_length=20,
-            ),
+            model_name='loan',
+            name='status',
+            field=models.CharField(choices=[('pending', 'Pending'), ('approved', 'Approved'), ('rejected', 'Rejected')], default='pending', max_length=20),
         ),
     ]

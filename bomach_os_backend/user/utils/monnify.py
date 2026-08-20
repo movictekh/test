@@ -23,9 +23,7 @@ def _get_auth_token():
     return response.json().get("responseBody", {}).get("token")
 
 
-def monnifyPaymentVerification(
-    transaction_reference: str, expected_amount: float
-) -> bool:
+def monnifyPaymentVerification(transaction_reference: str, expected_amount: float) -> bool:
     """Verify a completed Monnify payment by transaction reference and expected amount."""
     try:
         token = _get_auth_token()

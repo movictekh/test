@@ -5,12 +5,7 @@ from django.db.models import Q
 from django.core.exceptions import ValidationError
 
 from operations.models import Contract, Project
-from ..schema.schemas import (
-    ContractCreateSchema,
-    ContractUpdateSchema,
-    ContractOutSchema,
-    MessageSchema,
-)
+from ..schema.schemas import ContractCreateSchema, ContractUpdateSchema, ContractOutSchema, MessageSchema
 from ninja.pagination import paginate, LimitOffsetPagination
 from user.utils.perm import require_permission
 
@@ -38,7 +33,8 @@ def list_contracts(
         contracts = contracts.filter(contract_type=contract_type)
     if search:
         contracts = contracts.filter(
-            Q(name__icontains=search) | Q(contract_number__icontains=search)
+            Q(name__icontains=search) |
+            Q(contract_number__icontains=search)
         )
 
     return list(contracts)
@@ -58,11 +54,11 @@ def create_contract(request, payload: ContractCreateSchema):
     """Create a new contract"""
     try:
         contract_data = payload.dict()
-        project = get_object_or_404(Project, id=contract_data.pop("project_id"))
+        project = get_object_or_404(Project, id=contract_data.pop('project_id'))
         contract = Contract.objects.create(project=project, **contract_data)
         return contract
     except ValidationError as e:
-        return 400, {"detail": e.messages[0]}
+        return 400, {'detail': e.messages[0]}
 
 
 @router.put("/{contract_id}", response={200: ContractOutSchema, 400: MessageSchema})
@@ -73,8 +69,8 @@ def update_contract(request, contract_id: int, payload: ContractUpdateSchema):
         contract = get_object_or_404(Contract, id=contract_id)
 
         update_data = payload.dict(exclude_unset=True)
-        if "project_id" in update_data:
-            project = get_object_or_404(Project, id=update_data.pop("project_id"))
+        if 'project_id' in update_data:
+            project = get_object_or_404(Project, id=update_data.pop('project_id'))
             contract.project = project
 
         for attr, value in update_data.items():
@@ -83,7 +79,7 @@ def update_contract(request, contract_id: int, payload: ContractUpdateSchema):
         contract.save()
         return contract
     except ValidationError as e:
-        return 400, {"detail": e.messages[0]}
+        return 400, {'detail': e.messages[0]}
 
 
 @router.delete("/{contract_id}")

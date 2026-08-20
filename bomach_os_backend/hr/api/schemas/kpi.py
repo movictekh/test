@@ -3,8 +3,8 @@ from typing import Optional, List
 from decimal import Decimal
 from datetime import datetime
 
-# --- KPIMetric schemas ---
 
+# --- KPIMetric schemas ---
 
 class KPIMetricSchema(Schema):
     id: int
@@ -20,8 +20,8 @@ class KPIMetricSchema(Schema):
 
 class KPIMetricCreateSchema(Schema):
     name: str
-    description: str = ""
-    unit: str = "percentage"
+    description: str = ''
+    unit: str = 'percentage'
 
 
 class KPIMetricUpdateSchema(Schema):
@@ -31,7 +31,6 @@ class KPIMetricUpdateSchema(Schema):
 
 
 # --- KPITemplateMetric schemas (through table) ---
-
 
 class KPITemplateMetricSchema(Schema):
     id: int
@@ -55,7 +54,6 @@ class KPITemplateMetricUpdateSchema(Schema):
 
 
 # --- KPITemplate schemas ---
-
 
 class KPITemplateSchema(Schema):
     id: int

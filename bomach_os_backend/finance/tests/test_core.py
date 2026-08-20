@@ -18,14 +18,7 @@ from finance.models import (
 from services.models.expenses import Expense
 from services.models.payment import Payment
 from services.models.payment import Invoice
-from services.models.service import (
-    Service,
-    ServiceCategory,
-    ServiceOrder,
-    ServiceRequest,
-    ServiceRequestActivity,
-    ServiceRequestForm,
-)
+from services.models.service import Service, ServiceCategory, ServiceOrder, ServiceRequest, ServiceRequestActivity, ServiceRequestForm
 from user.models.branch import Branch
 from user.models.client import Client as CustomerClient
 from user.models.estate_property_invoice import EstatePropertyInvoice
@@ -44,38 +37,10 @@ class FinanceInvoiceAPITests(RoleAPITestMixin, TestCase):
             {
                 "service_invoices": ["list", "update"],
                 "payments": ["list", "create", "view"],
-                "expenses": [
-                    "list",
-                    "create",
-                    "view",
-                    "update",
-                    "delete",
-                    "approve",
-                    "reject",
-                    "pay",
-                ],
+                "expenses": ["list", "create", "view", "update", "delete", "approve", "reject", "pay"],
                 "finance_vendors": ["list", "create", "view", "update", "deactivate"],
-                "vendor_bills": [
-                    "list",
-                    "create",
-                    "view",
-                    "update",
-                    "approve",
-                    "reject",
-                    "pay",
-                    "void",
-                ],
-                "petty_cash": [
-                    "list",
-                    "create",
-                    "view",
-                    "update",
-                    "approve",
-                    "reject",
-                    "issue",
-                    "retire",
-                    "cancel",
-                ],
+                "vendor_bills": ["list", "create", "view", "update", "approve", "reject", "pay", "void"],
+                "petty_cash": ["list", "create", "view", "update", "approve", "reject", "issue", "retire", "cancel"],
             },
         )
         self.employee = self.create_user_with_employee(
@@ -279,9 +244,7 @@ class FinanceInvoiceAPITests(RoleAPITestMixin, TestCase):
             {item["id"] for item in body["items"]},
             {self.sent_invoice.id, self.overdue_invoice.id, self.paid_invoice.id},
         )
-        overdue_row = next(
-            item for item in body["items"] if item["id"] == self.overdue_invoice.id
-        )
+        overdue_row = next(item for item in body["items"] if item["id"] == self.overdue_invoice.id)
         self.assertEqual(overdue_row["status"], "sent")
         self.assertEqual(overdue_row["display_status"], "overdue")
         self.assertTrue(overdue_row["is_overdue"])
@@ -298,9 +261,7 @@ class FinanceInvoiceAPITests(RoleAPITestMixin, TestCase):
         )
         self.assertEqual(search_response.status_code, 200)
         self.assertEqual(search_response.json()["count"], 1)
-        self.assertEqual(
-            search_response.json()["items"][0]["id"], self.overdue_invoice.id
-        )
+        self.assertEqual(search_response.json()["items"][0]["id"], self.overdue_invoice.id)
 
         branch_response = self.client.get(
             "/api/v1/finance/invoices",
@@ -317,9 +278,7 @@ class FinanceInvoiceAPITests(RoleAPITestMixin, TestCase):
         )
         self.assertEqual(overdue_response.status_code, 200)
         self.assertEqual(overdue_response.json()["count"], 1)
-        self.assertEqual(
-            overdue_response.json()["items"][0]["id"], self.overdue_invoice.id
-        )
+        self.assertEqual(overdue_response.json()["items"][0]["id"], self.overdue_invoice.id)
 
         due_response = self.client.get(
             "/api/v1/finance/invoices",
@@ -418,9 +377,7 @@ class FinanceInvoiceAPITests(RoleAPITestMixin, TestCase):
         self.assertEqual(rows[self.overdue_invoice.id]["display_status"], "overdue")
 
     def test_receivables_summary_totals_and_buckets(self):
-        response = self.client.get(
-            "/api/v1/finance/receivables/summary", **self.headers
-        )
+        response = self.client.get("/api/v1/finance/receivables/summary", **self.headers)
 
         self.assertEqual(response.status_code, 200)
         body = response.json()
@@ -453,14 +410,10 @@ class FinanceInvoiceAPITests(RoleAPITestMixin, TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["count"], 1)
-        self.assertEqual(
-            response.json()["items"][0]["invoice_id"], self.sent_invoice.id
-        )
+        self.assertEqual(response.json()["items"][0]["invoice_id"], self.sent_invoice.id)
 
     @patch("finance.api.v1.receivables.send_mail")
-    def test_send_receivable_reminder_emails_logs_activity_and_does_not_mutate_invoice(
-        self, send_mail_mock
-    ):
+    def test_send_receivable_reminder_emails_logs_activity_and_does_not_mutate_invoice(self, send_mail_mock):
         response = self.client.post(
             f"/api/v1/finance/receivables/{self.sent_invoice.id}/send-reminder",
             data={"message": "Please settle this balance."},
@@ -470,10 +423,7 @@ class FinanceInvoiceAPITests(RoleAPITestMixin, TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.json()["sent"])
-        self.assertEqual(
-            response.json()["recipient"],
-            self.sent_invoice.service_request.contact_email,
-        )
+        self.assertEqual(response.json()["recipient"], self.sent_invoice.service_request.contact_email)
         send_mail_mock.assert_called_once()
         activity = ServiceRequestActivity.objects.get(id=response.json()["activity_id"])
         self.assertEqual(activity.activity_type, "email")
@@ -562,9 +512,7 @@ class FinanceInvoiceAPITests(RoleAPITestMixin, TestCase):
             **self.headers,
         )
         self.assertEqual(update_response.status_code, 200)
-        self.assertEqual(
-            update_response.json()["display_name"], "GTBank Main Operating"
-        )
+        self.assertEqual(update_response.json()["display_name"], "GTBank Main Operating")
         self.assertEqual(update_response.json()["opening_balance"], "2500.00")
 
         deactivate_response = self.client.post(
@@ -613,9 +561,7 @@ class FinanceInvoiceAPITests(RoleAPITestMixin, TestCase):
         self.assertEqual(invoice.balance, Decimal("1000.00"))
         submission = PaymentSubmission.objects.get(id=response.json()["id"])
         self.assertEqual(submission.submitted_by, self.customer.user)
-        self.assertEqual(
-            submission.submitted_by_type, PaymentSubmission.SUBMITTED_BY_TYPE.CLIENT
-        )
+        self.assertEqual(submission.submitted_by_type, PaymentSubmission.SUBMITTED_BY_TYPE.CLIENT)
         self.assertEqual(submission.receiving_account_text, "GTBank 0123456789")
         self.assertIsNone(submission.finance_account_id)
 
@@ -667,9 +613,7 @@ class FinanceInvoiceAPITests(RoleAPITestMixin, TestCase):
         self.assertEqual(invoice.balance, Decimal("600.00"))
         payment = Payment.objects.get(invoice=invoice)
         self.assertEqual(payment.finance_account, account)
-        self.assertEqual(
-            payment.proof_of_payment, "https://example.com/staff-proof.png"
-        )
+        self.assertEqual(payment.proof_of_payment, "https://example.com/staff-proof.png")
         self.assertEqual(payment.transaction_reference, "STAFF-TXN-001")
         self.assertEqual(approve_response.json()["confirmed_payment_id"], payment.id)
         self.assertFalse(FinanceWalletEntry.objects.filter(payment=payment).exists())
@@ -779,9 +723,7 @@ class FinanceInvoiceAPITests(RoleAPITestMixin, TestCase):
 
         list_response = self.client.get("/api/v1/finance/wallets", **self.headers)
         self.assertEqual(list_response.status_code, 200)
-        row = next(
-            item for item in list_response.json()["items"] if item["id"] == wallet_id
-        )
+        row = next(item for item in list_response.json()["items"] if item["id"] == wallet_id)
         self.assertEqual(row["funded"], "1500.00")
         self.assertEqual(row["spent"], "200.00")
         self.assertEqual(row["available"], "1300.00")
@@ -793,9 +735,7 @@ class FinanceInvoiceAPITests(RoleAPITestMixin, TestCase):
         self.assertEqual(void_response.status_code, 200)
         self.assertEqual(void_response.json()["status"], "void")
 
-        detail_response = self.client.get(
-            f"/api/v1/finance/wallets/{wallet_id}", **self.headers
-        )
+        detail_response = self.client.get(f"/api/v1/finance/wallets/{wallet_id}", **self.headers)
         self.assertEqual(detail_response.status_code, 200)
         self.assertEqual(detail_response.json()["spent"], "0.00")
         self.assertEqual(detail_response.json()["available"], "1500.00")
@@ -844,21 +784,13 @@ class FinanceInvoiceAPITests(RoleAPITestMixin, TestCase):
         self.assertEqual(create_response.status_code, 201)
         expense_id = create_response.json()["id"]
         self.assertTrue(create_response.json()["expense_number"].startswith("EXP-"))
-        self.assertEqual(
-            create_response.json()["service_order_id"], self.lagos_order.id
-        )
-        self.assertEqual(
-            create_response.json()["project_name"], self.lagos_order.description
-        )
+        self.assertEqual(create_response.json()["service_order_id"], self.lagos_order.id)
+        self.assertEqual(create_response.json()["project_name"], self.lagos_order.description)
         self.assertEqual(create_response.json()["cost_type"], "direct_cost")
 
         filter_response = self.client.get(
             "/api/v1/finance/expenses",
-            {
-                "service_order_id": self.lagos_order.id,
-                "cost_type": "direct_cost",
-                "search": "field",
-            },
+            {"service_order_id": self.lagos_order.id, "cost_type": "direct_cost", "search": "field"},
             **self.headers,
         )
         self.assertEqual(filter_response.status_code, 200)
@@ -874,9 +806,7 @@ class FinanceInvoiceAPITests(RoleAPITestMixin, TestCase):
         self.assertEqual(patch_response.status_code, 400)
         self.assertIn("approve, reject, or pay", patch_response.json()["detail"])
 
-        detail_response = self.client.get(
-            f"/api/v1/finance/expenses/{expense_id}", **self.headers
-        )
+        detail_response = self.client.get(f"/api/v1/finance/expenses/{expense_id}", **self.headers)
         self.assertEqual(detail_response.status_code, 200)
         self.assertEqual(detail_response.json()["finance_account_id"], account.id)
         self.assertEqual(detail_response.json()["status"], Expense.STATUS.PENDING)
@@ -923,9 +853,7 @@ class FinanceInvoiceAPITests(RoleAPITestMixin, TestCase):
         )
         self.assertEqual(approve_response.status_code, 200)
         self.assertEqual(approve_response.json()["status"], Expense.STATUS.APPROVED)
-        self.assertEqual(
-            approve_response.json()["approved_by_id"], self.employee.user.id
-        )
+        self.assertEqual(approve_response.json()["approved_by_id"], self.employee.user.id)
 
         commitment = FinanceWalletEntry.objects.get(
             expense_id=expense_id,
@@ -979,9 +907,7 @@ class FinanceInvoiceAPITests(RoleAPITestMixin, TestCase):
             **self.headers,
         )
         self.assertEqual(duplicate_pay.status_code, 400)
-        self.assertEqual(
-            FinanceWalletEntry.objects.filter(expense_id=expense_id).count(), 3
-        )
+        self.assertEqual(FinanceWalletEntry.objects.filter(expense_id=expense_id).count(), 3)
 
     def test_finance_expense_reject_records_reason(self):
         requester = self.create_user_with_employee(
@@ -1054,9 +980,7 @@ class FinanceInvoiceAPITests(RoleAPITestMixin, TestCase):
             **self.headers,
         )
         self.assertEqual(deactivate_response.status_code, 200)
-        self.assertEqual(
-            deactivate_response.json()["status"], FinanceVendor.STATUS.INACTIVE
-        )
+        self.assertEqual(deactivate_response.json()["status"], FinanceVendor.STATUS.INACTIVE)
 
     def test_vendor_bill_workflow_posts_payable_wallet_cashbook_and_order_costs(self):
         account = self._create_account(self.lagos, opening_balance=Decimal("0.00"))
@@ -1119,9 +1043,7 @@ class FinanceInvoiceAPITests(RoleAPITestMixin, TestCase):
         self.assertEqual(commitment.wallet, wallet)
         self.assertEqual(commitment.amount, Decimal("1850000.00"))
 
-        summary_response = self.client.get(
-            "/api/v1/finance/vendor-bills/summary", **self.headers
-        )
+        summary_response = self.client.get("/api/v1/finance/vendor-bills/summary", **self.headers)
         self.assertEqual(summary_response.status_code, 200)
         self.assertEqual(summary_response.json()["total_payable"], "1757500.00")
         self.assertEqual(summary_response.json()["approved_unpaid"], "1757500.00")
@@ -1188,9 +1110,7 @@ class FinanceInvoiceAPITests(RoleAPITestMixin, TestCase):
         )
         self.assertEqual(transactions_response.status_code, 200)
         self.assertEqual(transactions_response.json()["count"], 1)
-        self.assertEqual(
-            transactions_response.json()["items"][0]["money_out"], "1757500.00"
-        )
+        self.assertEqual(transactions_response.json()["items"][0]["money_out"], "1757500.00")
 
         duplicate_pay = self.client.post(
             f"/api/v1/finance/vendor-bills/{bill_id}/pay",
@@ -1234,12 +1154,8 @@ class FinanceInvoiceAPITests(RoleAPITestMixin, TestCase):
         )
         self.assertEqual(reject_response.status_code, 200)
         self.assertEqual(reject_response.json()["status"], VendorBill.STATUS.REJECTED)
-        self.assertEqual(
-            reject_response.json()["rejection_reason"], "Duplicate supplier bill"
-        )
-        self.assertFalse(
-            FinanceWalletEntry.objects.filter(vendor_bill=rejected_bill).exists()
-        )
+        self.assertEqual(reject_response.json()["rejection_reason"], "Duplicate supplier bill")
+        self.assertFalse(FinanceWalletEntry.objects.filter(vendor_bill=rejected_bill).exists())
 
         wallet = FinanceWallet.objects.create(
             client=self.lagos_order.client,
@@ -1288,9 +1204,7 @@ class FinanceInvoiceAPITests(RoleAPITestMixin, TestCase):
             "pettyrequester",
             "EMP-PETTY-REQ",
         )
-        account = self._create_cash_account(
-            self.lagos, opening_balance=Decimal("1000000.00")
-        )
+        account = self._create_cash_account(self.lagos, opening_balance=Decimal("1000000.00"))
         wallet = FinanceWallet.objects.create(
             client=self.lagos_order.client,
             service_order=self.lagos_order,
@@ -1327,9 +1241,7 @@ class FinanceInvoiceAPITests(RoleAPITestMixin, TestCase):
             **self.headers,
         )
         self.assertEqual(approve_response.status_code, 200)
-        self.assertEqual(
-            approve_response.json()["status"], PettyCashAdvance.STATUS.APPROVED
-        )
+        self.assertEqual(approve_response.json()["status"], PettyCashAdvance.STATUS.APPROVED)
 
         issue_response = self.client.post(
             f"/api/v1/finance/petty-cash/advances/{advance_id}/issue",
@@ -1338,9 +1250,7 @@ class FinanceInvoiceAPITests(RoleAPITestMixin, TestCase):
             **self.headers,
         )
         self.assertEqual(issue_response.status_code, 200)
-        self.assertEqual(
-            issue_response.json()["status"], PettyCashAdvance.STATUS.ISSUED
-        )
+        self.assertEqual(issue_response.json()["status"], PettyCashAdvance.STATUS.ISSUED)
         self.assertEqual(issue_response.json()["amount_issued"], "285000.00")
 
         cashbook_issue = self.client.get(
@@ -1351,9 +1261,7 @@ class FinanceInvoiceAPITests(RoleAPITestMixin, TestCase):
         self.assertEqual(cashbook_issue.status_code, 200)
         self.assertEqual(cashbook_issue.json()["count"], 1)
         self.assertEqual(cashbook_issue.json()["items"][0]["money_out"], "285000.00")
-        self.assertEqual(
-            cashbook_issue.json()["items"][0]["running_balance"], "715000.00"
-        )
+        self.assertEqual(cashbook_issue.json()["items"][0]["running_balance"], "715000.00")
 
         retire_response = self.client.post(
             f"/api/v1/finance/petty-cash/advances/{advance_id}/retire",
@@ -1379,19 +1287,13 @@ class FinanceInvoiceAPITests(RoleAPITestMixin, TestCase):
             **self.headers,
         )
         self.assertEqual(retire_response.status_code, 200)
-        self.assertEqual(
-            retire_response.json()["status"], PettyCashAdvance.STATUS.RETIRED
-        )
+        self.assertEqual(retire_response.json()["status"], PettyCashAdvance.STATUS.RETIRED)
         self.assertEqual(retire_response.json()["amount_retired"], "250000.00")
         self.assertEqual(retire_response.json()["amount_returned"], "35000.00")
         self.assertEqual(retire_response.json()["unretired_amount"], "0.00")
 
-        spend_line = PettyCashRetirementLine.objects.get(
-            amount_spent=Decimal("250000.00")
-        )
-        spend_entry = FinanceWalletEntry.objects.get(
-            petty_cash_retirement_line=spend_line
-        )
+        spend_line = PettyCashRetirementLine.objects.get(amount_spent=Decimal("250000.00"))
+        spend_entry = FinanceWalletEntry.objects.get(petty_cash_retirement_line=spend_line)
         self.assertEqual(spend_entry.wallet, wallet)
         self.assertEqual(spend_entry.entry_type, FinanceWalletEntry.ENTRY_TYPE.SPEND)
         self.assertEqual(spend_entry.amount, Decimal("250000.00"))
@@ -1413,13 +1315,8 @@ class FinanceInvoiceAPITests(RoleAPITestMixin, TestCase):
             **self.headers,
         )
         self.assertEqual(cashbook_full.status_code, 200)
-        self.assertEqual(
-            [row["source"] for row in cashbook_full.json()["items"]],
-            ["petty_cash_advance", "petty_cash_return"],
-        )
-        self.assertEqual(
-            cashbook_full.json()["items"][-1]["running_balance"], "750000.00"
-        )
+        self.assertEqual([row["source"] for row in cashbook_full.json()["items"]], ["petty_cash_advance", "petty_cash_return"])
+        self.assertEqual(cashbook_full.json()["items"][-1]["running_balance"], "750000.00")
 
         summary_response = self.client.get(
             "/api/v1/finance/petty-cash/summary",
@@ -1458,9 +1355,7 @@ class FinanceInvoiceAPITests(RoleAPITestMixin, TestCase):
         )
         self.assertEqual(transactions_response.status_code, 200)
         self.assertEqual(transactions_response.json()["count"], 1)
-        self.assertEqual(
-            transactions_response.json()["items"][0]["money_out"], "250000.00"
-        )
+        self.assertEqual(transactions_response.json()["items"][0]["money_out"], "250000.00")
 
     def test_petty_cash_issue_blocks_requester_with_overdue_unretired_advance(self):
         requester = self.create_user_with_employee(
@@ -1468,9 +1363,7 @@ class FinanceInvoiceAPITests(RoleAPITestMixin, TestCase):
             "pettyoverdue",
             "EMP-PETTY-OVERDUE",
         )
-        account = self._create_cash_account(
-            self.lagos, opening_balance=Decimal("500000.00")
-        )
+        account = self._create_cash_account(self.lagos, opening_balance=Decimal("500000.00"))
         PettyCashAdvance.objects.create(
             requester=requester.user,
             branch=self.lagos,
@@ -1508,9 +1401,7 @@ class FinanceInvoiceAPITests(RoleAPITestMixin, TestCase):
         new_advance.refresh_from_db()
         self.assertEqual(new_advance.status, PettyCashAdvance.STATUS.APPROVED)
 
-    def test_cashbook_lists_payments_and_paid_expense_outflows_with_running_balance(
-        self,
-    ):
+    def test_cashbook_lists_payments_and_paid_expense_outflows_with_running_balance(self):
         account = self._create_account(
             self.lagos,
             opening_balance=Decimal("1000.00"),
@@ -1575,14 +1466,11 @@ class FinanceInvoiceAPITests(RoleAPITestMixin, TestCase):
 
         self.assertEqual(response.status_code, 200)
         rows = response.json()["items"]
-        self.assertEqual(
-            [row["reference"] for row in rows],
-            [
-                payment.payment_reference,
-                service_cost.expense_number,
-                operating_expense.expense_number,
-            ],
-        )
+        self.assertEqual([row["reference"] for row in rows], [
+            payment.payment_reference,
+            service_cost.expense_number,
+            operating_expense.expense_number,
+        ])
         self.assertEqual(rows[0]["source"], "client_payment")
         self.assertEqual(rows[0]["money_in"], "400.00")
         self.assertEqual(rows[0]["running_balance"], "1400.00")
@@ -1695,18 +1583,9 @@ class FinanceInvoiceAPITests(RoleAPITestMixin, TestCase):
         self.assertEqual(detail_response.status_code, 200)
         detail = detail_response.json()
         self.assertEqual(detail["order_id"], self.lagos_order.id)
-        self.assertEqual(
-            detail["collected_total"],
-            payment.amount.quantize(Decimal("0.01")).to_eng_string(),
-        )
-        self.assertEqual(
-            detail["paid_costs"],
-            paid_cost.amount.quantize(Decimal("0.01")).to_eng_string(),
-        )
-        self.assertEqual(
-            detail["committed_costs"],
-            approved_cost.amount.quantize(Decimal("0.01")).to_eng_string(),
-        )
+        self.assertEqual(detail["collected_total"], payment.amount.quantize(Decimal("0.01")).to_eng_string())
+        self.assertEqual(detail["paid_costs"], paid_cost.amount.quantize(Decimal("0.01")).to_eng_string())
+        self.assertEqual(detail["committed_costs"], approved_cost.amount.quantize(Decimal("0.01")).to_eng_string())
 
     def test_service_order_profitability_summary_totals(self):
         self._seed_profitability_activity()
@@ -1773,10 +1652,7 @@ class FinanceInvoiceAPITests(RoleAPITestMixin, TestCase):
 
         self.assertEqual(response.status_code, 200)
         rows = response.json()["items"]
-        self.assertEqual(
-            [row["reference"] for row in rows],
-            [payment.payment_reference, paid_cost.expense_number],
-        )
+        self.assertEqual([row["reference"] for row in rows], [payment.payment_reference, paid_cost.expense_number])
         self.assertEqual(rows[0]["source"], "client_payment")
         self.assertEqual(rows[0]["money_in"], "500.00")
         self.assertEqual(rows[0]["money_out"], "0.00")
@@ -1936,10 +1812,7 @@ class FinanceInvoiceAPITests(RoleAPITestMixin, TestCase):
         self.assertEqual(response.json()["id"], payment.id)
         self.assertEqual(response.json()["invoice_id"], invoice.id)
         self.assertEqual(response.json()["finance_account_id"], account.id)
-        self.assertEqual(
-            response.json()["proof_of_payment"],
-            "https://example.com/pay-detail-proof.png",
-        )
+        self.assertEqual(response.json()["proof_of_payment"], "https://example.com/pay-detail-proof.png")
 
     def test_rejection_leaves_balance_unchanged_and_allows_resubmission(self):
         invoice = self._create_invoice(
@@ -2047,10 +1920,7 @@ class FinanceInvoiceAPITests(RoleAPITestMixin, TestCase):
         )
         scoped_role = Role.objects.create(
             name="Scoped Enugu Payment Reviewer",
-            permissions={
-                "payments": ["list", "create", "view"],
-                "service_invoices": ["list"],
-            },
+            permissions={"payments": ["list", "create", "view"], "service_invoices": ["list"]},
         )
         scoped_role.branches.add(self.enugu)
         scoped_employee = self.create_user_with_employee(
@@ -2061,9 +1931,7 @@ class FinanceInvoiceAPITests(RoleAPITestMixin, TestCase):
         )
         scoped_headers = self.auth_headers(scoped_employee)
 
-        list_response = self.client.get(
-            "/api/v1/finance/payments/submissions", **scoped_headers
-        )
+        list_response = self.client.get("/api/v1/finance/payments/submissions", **scoped_headers)
         self.assertEqual(list_response.status_code, 200)
         self.assertEqual(list_response.json()["count"], 0)
 
@@ -2217,9 +2085,7 @@ class FinanceInvoiceAPITests(RoleAPITestMixin, TestCase):
         )
         return payment, paid_cost, approved_cost, wallet
 
-    def _create_account(
-        self, branch, opening_balance=Decimal("0.00"), opening_balance_date=None
-    ):
+    def _create_account(self, branch, opening_balance=Decimal("0.00"), opening_balance_date=None):
         return FinanceAccount.objects.create(
             account_type=FinanceAccount.ACCOUNT_TYPE.BANK,
             display_name=f"{branch.branch_name} Collections",
@@ -2232,9 +2098,7 @@ class FinanceInvoiceAPITests(RoleAPITestMixin, TestCase):
             created_by=self.employee.user,
         )
 
-    def _create_cash_account(
-        self, branch, opening_balance=Decimal("0.00"), opening_balance_date=None
-    ):
+    def _create_cash_account(self, branch, opening_balance=Decimal("0.00"), opening_balance_date=None):
         return FinanceAccount.objects.create(
             account_type=FinanceAccount.ACCOUNT_TYPE.CASH,
             display_name=f"{branch.branch_name} Petty Cash",

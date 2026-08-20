@@ -7,51 +7,47 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("user", "0082_roledescription_roledescriptionattachment_and_more"),
+        ('user', '0082_roledescription_roledescriptionattachment_and_more'),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name="roledescriptionattachment",
-            name="role_description",
+            model_name='roledescriptionattachment',
+            name='role_description',
         ),
         migrations.RemoveIndex(
-            model_name="roledescription",
-            name="user_rolede_role_id_c00c04_idx",
+            model_name='roledescription',
+            name='user_rolede_role_id_c00c04_idx',
         ),
         migrations.RemoveField(
-            model_name="roledescription",
-            name="content",
+            model_name='roledescription',
+            name='content',
         ),
         migrations.RemoveField(
-            model_name="roledescription",
-            name="title",
+            model_name='roledescription',
+            name='title',
         ),
         migrations.AddField(
-            model_name="roledescription",
-            name="job_description",
-            field=models.TextField(blank=True, default=""),
+            model_name='roledescription',
+            name='job_description',
+            field=models.TextField(blank=True, default=''),
         ),
         migrations.AddField(
-            model_name="roledescription",
-            name="purpose",
-            field=models.TextField(blank=True, default=""),
+            model_name='roledescription',
+            name='purpose',
+            field=models.TextField(blank=True, default=''),
         ),
         migrations.AddField(
-            model_name="roledescription",
-            name="responsibilities",
-            field=models.TextField(blank=True, default=""),
+            model_name='roledescription',
+            name='responsibilities',
+            field=models.TextField(blank=True, default=''),
         ),
         migrations.AlterField(
-            model_name="roledescription",
-            name="role",
-            field=models.OneToOneField(
-                on_delete=django.db.models.deletion.CASCADE,
-                related_name="role_description",
-                to="user.role",
-            ),
+            model_name='roledescription',
+            name='role',
+            field=models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='role_description', to='user.role'),
         ),
         migrations.DeleteModel(
-            name="RoleDescriptionAttachment",
+            name='RoleDescriptionAttachment',
         ),
     ]

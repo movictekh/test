@@ -57,7 +57,6 @@ class RoleResponseSchema(Schema):
 
 class PermissionsMapSchema(Schema):
     """Returns all valid resources and their actions for the frontend checkbox grid."""
-
     permissions_map: Dict[str, List[str]]
 
 
@@ -74,7 +73,6 @@ class AuthorityLimitsResponseSchema(Schema):
 
 class AssignRolesSchema(Schema):
     """Assign a role to an employee."""
-
     role_id: int
 
 

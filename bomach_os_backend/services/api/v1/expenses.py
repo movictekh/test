@@ -25,10 +25,10 @@ def list_expenses(
     category: str = None,
     user_id: int = None,
     department_id: int = None,
-    search: str = None,
+    search: str = None
 ):
     """List all expenses with optional filtering."""
-    expenses = Expense.objects.select_related("department").all()
+    expenses = Expense.objects.select_related('department').all()
 
     if status:
         expenses = expenses.filter(status=status)
@@ -39,7 +39,9 @@ def list_expenses(
     if department_id:
         expenses = expenses.filter(department_id=department_id)
     if search:
-        expenses = expenses.filter(Q(description__icontains=search))
+        expenses = expenses.filter(
+            Q(description__icontains=search)
+        )
 
     return expenses
 
@@ -51,17 +53,15 @@ def create_expense(request, payload: ExpenseIn):
     try:
         data = payload.dict()
         if data.get("status", Expense.STATUS.PENDING) != Expense.STATUS.PENDING:
-            return 400, {
-                "detail": "New expenses must start pending; use the Finance approval/payment workflow for status changes."
-            }
+            return 400, {"detail": "New expenses must start pending; use the Finance approval/payment workflow for status changes."}
         expense = Expense.objects.create(**data)
 
         expense.refresh_from_db()
         return 201, expense
     except ValidationError as e:
-        return 400, {"detail": e.messages[0]}
+        return 400, {'detail': e.messages[0]}
     except Exception as e:
-        return 400, {"detail": str(e)}
+        return 400, {'detail': str(e)}
 
 
 @router.get("/{expense_id}", response=ExpenseOut)
@@ -71,9 +71,7 @@ def get_expense(request, expense_id: int):
     return get_object_or_404(Expense, id=expense_id)
 
 
-@router.put(
-    "/{expense_id}", response={200: ExpenseOut, 400: MessageSchema, 404: MessageSchema}
-)
+@router.put("/{expense_id}", response={200: ExpenseOut, 400: MessageSchema, 404: MessageSchema})
 @require_permission("expenses", "update")
 def update_expense(request, expense_id: int, payload: ExpenseUpdate):
     """Update an existing expense."""
@@ -83,38 +81,31 @@ def update_expense(request, expense_id: int, payload: ExpenseUpdate):
             return 400, {"detail": "Only pending expenses can be updated."}
         data = payload.dict(exclude_unset=True)
         if "status" in data:
-            return 400, {
-                "detail": "Use the approve/reject Finance workflow to change expense status."
-            }
+            return 400, {"detail": "Use the approve/reject Finance workflow to change expense status."}
         for attr, value in data.items():
             setattr(expense, attr, value)
         expense.save()
         return 200, expense
     except ValidationError as e:
-        return 400, {"detail": e.messages[0]}
+        return 400, {'detail': e.messages[0]}
     except Exception as e:
-        return 400, {"detail": str(e)}
+        return 400, {'detail': str(e)}
 
 
-@router.delete(
-    "/{expense_id}",
-    response={200: MessageSchema, 400: MessageSchema, 404: MessageSchema},
-)
+@router.delete("/{expense_id}", response={200: MessageSchema, 400: MessageSchema, 404: MessageSchema})
 @require_permission("expenses", "delete")
 def delete_expense(request, expense_id: int):
     """Delete an expense."""
     try:
         expense = get_object_or_404(Expense, id=expense_id)
         if expense.status not in {Expense.STATUS.PENDING, Expense.STATUS.REJECTED}:
-            return 400, {
-                "detail": "Only pending or rejected expenses can be deleted; approved/paid sources must remain auditable."
-            }
+            return 400, {"detail": "Only pending or rejected expenses can be deleted; approved/paid sources must remain auditable."}
         expense.delete()
         return 200, {"detail": "Expense deleted successfully"}
     except ValidationError as e:
-        return 400, {"detail": e.messages[0]}
+        return 400, {'detail': e.messages[0]}
     except Exception as e:
-        return 400, {"detail": str(e)}
+        return 400, {'detail': str(e)}
 
 
 @router.get("/user/{user_id}/expenses", response=List[ExpenseOut])
@@ -124,11 +115,11 @@ def get_user_expenses(request, user_id: int):
     expenses = Expense.objects.filter(user_id=user_id)
     return expenses
 
-
-@router.post(
-    "/{expense_id}/approve",
-    response={200: ExpenseOut, 404: MessageSchema, 400: MessageSchema},
-)
+@router.post("/{expense_id}/approve", response={
+    200: ExpenseOut,
+    404: MessageSchema,
+    400: MessageSchema
+})
 @require_permission("expenses", "approve")
 def approve_expense(request, expense_id: int):
     """Approve an expense."""
@@ -144,11 +135,11 @@ def approve_expense(request, expense_id: int):
     except Exception as e:
         return 400, {"detail": str(e)}
 
-
-@router.post(
-    "/{expense_id}/reject",
-    response={200: ExpenseOut, 404: MessageSchema, 400: MessageSchema},
-)
+@router.post("/{expense_id}/reject", response={
+    200: ExpenseOut,
+    404: MessageSchema,
+    400: MessageSchema
+})
 @require_permission("expenses", "reject")
 def reject_expense(request, expense_id: int):
     """Reject an expense."""

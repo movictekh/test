@@ -5,7 +5,6 @@ from decimal import Decimal
 from pydantic import validator
 from decimal import Decimal
 
-
 class EmployeeOut(Schema):
     id: int
     full_name: str
@@ -14,16 +13,15 @@ class EmployeeOut(Schema):
     @staticmethod
     def resolve_full_name(obj):
         full_name = f"{getattr(obj.user, 'first_name', '')} {getattr(obj.user, 'last_name', '')}".strip()
-
-        return full_name if full_name else getattr(obj.user, "username", "N/A")
-
+        
+        return full_name if full_name else getattr(obj.user, 'username', 'N/A')
 
 class PayrollOut(Schema):
     id: int
     employee: EmployeeOut
     period_display: str
-    net_pay: Decimal
-    base_salary: Optional[Decimal]
+    net_pay: Decimal  
+    base_salary: Optional[Decimal]  
     commission_bonus: Decimal
     tax_deductions: Decimal
     status: str
@@ -48,17 +46,15 @@ class PayrollOut(Schema):
     @staticmethod
     def resolve_commission_bonus(obj):
         return obj.total_allowances
-
+    
     @staticmethod
     def resolve_period_display(obj):
         import calendar
-
         month_name = calendar.month_name[obj.period_month]
         return f"{month_name} {obj.period_year}"
 
-
 class ProcessPayrollSchema(Schema):
-    period_date: date
+    period_date: date 
 
 
 class PayrollFilterSchema(Schema):
@@ -78,3 +74,4 @@ class PayrollSummaryOut(Schema):
     total_allowances: Decimal
     total_deductions: Decimal
     employee_count: int
+

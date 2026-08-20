@@ -3,19 +3,16 @@ from typing import Optional
 from datetime import date, datetime
 from decimal import Decimal
 
-# ============== Audit Schemas ==============
 
+# ============== Audit Schemas ==============
 
 class CreateAuditRequest(Schema):
     """Request schema for creating a new audit"""
-
     audit_name: str
     audit_type: str  # external, regulatory, internal, customer, financial, operational, compliance
     auditor_name: str
     auditor_title: Optional[str] = ""
-    status: Optional[str] = (
-        "scheduled"  # completed, in_progress, scheduled, draft, cancelled, failed
-    )
+    status: Optional[str] = 'scheduled'  # completed, in_progress, scheduled, draft, cancelled, failed
     score: Optional[int] = None  # 0-100
     audit_date: date
     audit_number: Optional[str] = None
@@ -30,7 +27,6 @@ class CreateAuditRequest(Schema):
 
 class UpdateAuditRequest(Schema):
     """Request schema for updating an audit"""
-
     audit_name: Optional[str] = None
     audit_type: Optional[str] = None
     auditor_name: Optional[str] = None
@@ -50,19 +46,16 @@ class UpdateAuditRequest(Schema):
 
 class UpdateAuditStatusRequest(Schema):
     """Request schema for updating audit status"""
-
     status: str  # completed, in_progress, scheduled, draft, cancelled, failed
 
 
 class UpdateAuditScoreRequest(Schema):
     """Request schema for updating audit score"""
-
     score: int  # 0-100
 
 
 class AuditResponse(Schema):
     """Response schema for audit details"""
-
     id: int
     audit_name: str
     audit_type: str
@@ -110,7 +103,6 @@ class AuditResponse(Schema):
 
 class AuditStatisticsResponse(Schema):
     """Response schema for audit statistics"""
-
     total_audits: int
     completed_audits: int
     in_progress_audits: int
@@ -126,7 +118,6 @@ class AuditStatisticsResponse(Schema):
 
 class AuditPerformanceTrendsResponse(Schema):
     """Response schema for audit performance trends"""
-
     period: str  # month, quarter, year
     trends: list  # List of {period: str, average_score: float, total_audits: int, pass_rate: float}
     overall_improvement: Optional[float]
@@ -134,7 +125,6 @@ class AuditPerformanceTrendsResponse(Schema):
 
 class AuditorSummaryResponse(Schema):
     """Response schema for auditor summary"""
-
     auditor_name: str
     total_audits: int
     average_score: Optional[float]
@@ -142,7 +132,6 @@ class AuditorSummaryResponse(Schema):
 
 class DepartmentAuditSummaryResponse(Schema):
     """Response schema for department audit summary"""
-
     department: str
     total_audits: int
     average_score: Optional[float]

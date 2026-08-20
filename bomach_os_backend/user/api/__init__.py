@@ -26,9 +26,7 @@ from user.api.v1.loan import loan_api as loan_router
 from user.api.v1.estate import estate_api as estate_router
 from user.api.v1.brokerage import brokerage_api as brokerage_router
 from user.api.v1.cart import cart_api as cart_router
-from user.api.v1.estate_property_invoice import (
-    estate_invoice_api as estate_invoice_router,
-)
+from user.api.v1.estate_property_invoice import estate_invoice_api as estate_invoice_router
 from user.api.v1.dashboard import employee_dashboard_api as employee_dashboard_router
 from user.api.v1.role import role_api as role_router
 from user.api.v1.drawing_bank import drawing_bank_api as drawing_bank_router
@@ -47,35 +45,20 @@ from operations.api.v1 import dashboard as ops_dashboard, projects as ops_projec
 from operations.api.v1 import tasks as ops_tasks, my_tasks as ops_my_tasks
 from operations.api.v1 import worksites as ops_worksites
 from operations.api.v1 import contracts as ops_contracts, timelines as ops_timelines
-from operations.api.v1 import (
-    milestones as ops_milestones,
-    site_equipment as ops_site_equipment,
-)
+from operations.api.v1 import milestones as ops_milestones, site_equipment as ops_site_equipment
 
 # Services routers
 from services.api.v1 import (
-    categories as svc_categories,
-    content as svc_content,
-    documents as svc_documents,
-    expenses as svc_expenses,
+    categories as svc_categories, content as svc_content,
+    documents as svc_documents, expenses as svc_expenses,
     feedback as svc_feedback,
-    invoices as svc_invoices,
-    leads as svc_leads,
-    marketing_campaigns as svc_marketing,
-    orders as svc_orders,
-    payments as svc_payments,
-    property as svc_property,
-    quotes as svc_quotes,
-    reports as svc_reports,
-    revenue_execution as svc_revenue_execution,
-    service_leads as svc_service_leads,
-    service_requests as svc_service_requests,
-    services as svc_services,
-    stats as svc_stats,
-    funnel_router as svc_funnel,
-    marketing_router as svc_marketing_cc,
-    csrc_router as svc_csrc,
-    pipeline_router as svc_pipeline,
+    invoices as svc_invoices, leads as svc_leads, marketing_campaigns as svc_marketing,
+    orders as svc_orders, payments as svc_payments, property as svc_property,
+    quotes as svc_quotes, reports as svc_reports, revenue_execution as svc_revenue_execution,
+    service_leads as svc_service_leads, service_requests as svc_service_requests,
+    services as svc_services, stats as svc_stats,
+    funnel_router as svc_funnel, marketing_router as svc_marketing_cc,
+    csrc_router as svc_csrc, pipeline_router as svc_pipeline,
 )
 from finance.api.v1 import (
     accounting as finance_accounting,
@@ -119,6 +102,8 @@ from hr.api.v1.kpis import router as kpis_router
 from hr.api.v1.interviews import router as interviews_router
 from hr.api.v1.offer_letters import router as offer_letters_router
 
+
+
 authenticator = JWTAuthenticator()
 
 # Main API instance
@@ -131,12 +116,10 @@ api = NinjaAPI(
     docs=Swagger(settings={"persistAuthorization": True}),
 )
 
-
 @api.get("/health", tags=["Health"], auth=None)
 def health_check(request):
     """Health check endpoint"""
     return {"status": "healthy", "detail": "API is running"}
-
 
 # === User routers ===
 api.add_router("/auth/", auth_router)
@@ -179,22 +162,22 @@ api.add_router("/workflow-rules", workflow_rule_router)
 
 # === HR routers ===
 
-api.add_router("/dashboard", dashboard_router)
-api.add_router("/job-postings", job_postings_router)
-api.add_router("/applicants", applicants_router)
-api.add_router("/leave-requests", leave_requests_router)
-api.add_router("/performance-reviews", performance_reviews_router)
-api.add_router("/payroll", payroll_router)
-api.add_router("/training-programs", training_programs_router)
-api.add_router("/assets", assets_router)
-api.add_router("/awards", award_router)
-api.add_router("/work-reports", work_reports_router)
-api.add_router("/disciplinary-cases", disciplinary_cases_router)
-api.add_router("/monthly-scorecards", monthly_scorecards_router)
-api.add_router("/employee-evaluations", employee_evaluations_router)
-api.add_router("/kpis", kpis_router)
-api.add_router("/applicants", interviews_router)
-api.add_router("/applicants", offer_letters_router)
+api.add_router('/dashboard', dashboard_router)
+api.add_router('/job-postings', job_postings_router)
+api.add_router('/applicants', applicants_router)
+api.add_router('/leave-requests', leave_requests_router)
+api.add_router('/performance-reviews', performance_reviews_router)
+api.add_router('/payroll', payroll_router)
+api.add_router('/training-programs', training_programs_router)
+api.add_router('/assets', assets_router)
+api.add_router('/awards', award_router)
+api.add_router('/work-reports', work_reports_router)
+api.add_router('/disciplinary-cases', disciplinary_cases_router)
+api.add_router('/monthly-scorecards', monthly_scorecards_router)
+api.add_router('/employee-evaluations', employee_evaluations_router)
+api.add_router('/kpis', kpis_router)
+api.add_router('/applicants', interviews_router)
+api.add_router('/applicants', offer_letters_router)
 
 
 # === Operations routers ===
@@ -250,6 +233,7 @@ api.add_router("/finance", finance_cash_flow.router)
 api.add_router("/finance", finance_commissions.router)
 api.add_router("/finance", finance_service_orders.router)
 api.add_router("/finance", finance_statutory.router)
+
 
 
 api.add_router("/sop/departments", dept_router)

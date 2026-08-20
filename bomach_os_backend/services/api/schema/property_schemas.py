@@ -63,7 +63,7 @@ class PropertyOut(Schema):
             if isinstance(img, str):
                 result.append(img)
             elif isinstance(img, dict):
-                result.append(img.get("url", img.get("image", str(img))))
+                result.append(img.get('url', img.get('image', str(img))))
             else:
                 result.append(str(img))
         return result

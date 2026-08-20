@@ -51,51 +51,14 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="CompanyProfile",
             fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                (
-                    "created_at",
-                    models.DateTimeField(
-                        auto_now_add=True, help_text="When this record was created"
-                    ),
-                ),
-                (
-                    "updated_at",
-                    models.DateTimeField(
-                        auto_now=True, help_text="When this record was last updated"
-                    ),
-                ),
-                (
-                    "company_name",
-                    models.CharField(max_length=255, verbose_name="Company Name"),
-                ),
-                (
-                    "company_email",
-                    models.EmailField(max_length=254, verbose_name="Company Email"),
-                ),
-                (
-                    "company_phone",
-                    models.CharField(max_length=20, verbose_name="Company Phone"),
-                ),
-                (
-                    "company_addresses",
-                    models.TextField(verbose_name="Company Addresses"),
-                ),
-                (
-                    "rc_number",
-                    models.CharField(
-                        help_text="Company registration number",
-                        max_length=50,
-                        verbose_name="RC Number",
-                    ),
-                ),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("created_at", models.DateTimeField(auto_now_add=True, help_text="When this record was created")),
+                ("updated_at", models.DateTimeField(auto_now=True, help_text="When this record was last updated")),
+                ("company_name", models.CharField(max_length=255, verbose_name="Company Name")),
+                ("company_email", models.EmailField(max_length=254, verbose_name="Company Email")),
+                ("company_phone", models.CharField(max_length=20, verbose_name="Company Phone")),
+                ("company_addresses", models.TextField(verbose_name="Company Addresses")),
+                ("rc_number", models.CharField(help_text="Company registration number", max_length=50, verbose_name="RC Number")),
             ],
             options={
                 "verbose_name": "Company Profile",
@@ -106,62 +69,13 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="CompanyBranding",
             fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                (
-                    "created_at",
-                    models.DateTimeField(
-                        auto_now_add=True, help_text="When this record was created"
-                    ),
-                ),
-                (
-                    "updated_at",
-                    models.DateTimeField(
-                        auto_now=True, help_text="When this record was last updated"
-                    ),
-                ),
-                (
-                    "company_logo",
-                    models.URLField(
-                        blank=True,
-                        help_text="URL to the company logo (upload via /upload-file endpoint)",
-                        max_length=500,
-                        null=True,
-                        verbose_name="Company Logo",
-                    ),
-                ),
-                (
-                    "primary_color_code",
-                    models.CharField(
-                        default="#FE0000",
-                        max_length=7,
-                        verbose_name="Primary Color Code",
-                    ),
-                ),
-                (
-                    "secondary_color_code",
-                    models.CharField(
-                        default="#3E4094",
-                        max_length=7,
-                        verbose_name="Secondary Color Code",
-                    ),
-                ),
-                (
-                    "company_slogan",
-                    models.CharField(
-                        blank=True,
-                        default="",
-                        max_length=255,
-                        verbose_name="Company Slogan",
-                    ),
-                ),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("created_at", models.DateTimeField(auto_now_add=True, help_text="When this record was created")),
+                ("updated_at", models.DateTimeField(auto_now=True, help_text="When this record was last updated")),
+                ("company_logo", models.URLField(blank=True, help_text="URL to the company logo (upload via /upload-file endpoint)", max_length=500, null=True, verbose_name="Company Logo")),
+                ("primary_color_code", models.CharField(default="#FE0000", max_length=7, verbose_name="Primary Color Code")),
+                ("secondary_color_code", models.CharField(default="#3E4094", max_length=7, verbose_name="Secondary Color Code")),
+                ("company_slogan", models.CharField(blank=True, default="", max_length=255, verbose_name="Company Slogan")),
             ],
             options={
                 "verbose_name": "Company Branding",
@@ -172,83 +86,13 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="CompanyPreferences",
             fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                (
-                    "created_at",
-                    models.DateTimeField(
-                        auto_now_add=True, help_text="When this record was created"
-                    ),
-                ),
-                (
-                    "updated_at",
-                    models.DateTimeField(
-                        auto_now=True, help_text="When this record was last updated"
-                    ),
-                ),
-                (
-                    "default_currency",
-                    models.CharField(
-                        choices=[
-                            ("NGN", "NGN - Nigerian Naira"),
-                            ("GHS", "GHS - Ghanaian Cedi"),
-                            ("KES", "KES - Kenyan Shilling"),
-                            ("ZAR", "ZAR - South African Rand"),
-                            ("EGP", "EGP - Egyptian Pound"),
-                            ("USD", "USD - US Dollar"),
-                            ("EUR", "EUR - Euro"),
-                            ("GBP", "GBP - British Pound Sterling"),
-                            ("CAD", "CAD - Canadian Dollar"),
-                            ("AUD", "AUD - Australian Dollar"),
-                            ("JPY", "JPY - Japanese Yen"),
-                            ("CHF", "CHF - Swiss Franc"),
-                            ("CNY", "CNY - Chinese Yuan"),
-                            ("INR", "INR - Indian Rupee"),
-                            ("AED", "AED - UAE Dirham"),
-                            ("SAR", "SAR - Saudi Riyal"),
-                            ("SGD", "SGD - Singapore Dollar"),
-                        ],
-                        default="NGN",
-                        max_length=3,
-                        verbose_name="Default Currency",
-                    ),
-                ),
-                (
-                    "language_preference",
-                    models.CharField(
-                        choices=[
-                            ("en-GB", "English UK"),
-                            ("en-US", "English US"),
-                            ("fr", "French"),
-                            ("es", "Spanish"),
-                        ],
-                        default="en-GB",
-                        max_length=10,
-                        verbose_name="Language Preference",
-                    ),
-                ),
-                (
-                    "business_rules",
-                    models.TextField(
-                        blank=True, default="", verbose_name="Business Rules"
-                    ),
-                ),
-                (
-                    "extras",
-                    models.JSONField(
-                        blank=True,
-                        default=dict,
-                        help_text="Open-ended key-value store for future settings (e.g. timezone, tax IDs).",
-                        verbose_name="Extras",
-                    ),
-                ),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("created_at", models.DateTimeField(auto_now_add=True, help_text="When this record was created")),
+                ("updated_at", models.DateTimeField(auto_now=True, help_text="When this record was last updated")),
+                ("default_currency", models.CharField(choices=[("NGN", "NGN - Nigerian Naira"), ("GHS", "GHS - Ghanaian Cedi"), ("KES", "KES - Kenyan Shilling"), ("ZAR", "ZAR - South African Rand"), ("EGP", "EGP - Egyptian Pound"), ("USD", "USD - US Dollar"), ("EUR", "EUR - Euro"), ("GBP", "GBP - British Pound Sterling"), ("CAD", "CAD - Canadian Dollar"), ("AUD", "AUD - Australian Dollar"), ("JPY", "JPY - Japanese Yen"), ("CHF", "CHF - Swiss Franc"), ("CNY", "CNY - Chinese Yuan"), ("INR", "INR - Indian Rupee"), ("AED", "AED - UAE Dirham"), ("SAR", "SAR - Saudi Riyal"), ("SGD", "SGD - Singapore Dollar")], default="NGN", max_length=3, verbose_name="Default Currency")),
+                ("language_preference", models.CharField(choices=[("en-GB", "English UK"), ("en-US", "English US"), ("fr", "French"), ("es", "Spanish")], default="en-GB", max_length=10, verbose_name="Language Preference")),
+                ("business_rules", models.TextField(blank=True, default="", verbose_name="Business Rules")),
+                ("extras", models.JSONField(blank=True, default=dict, help_text="Open-ended key-value store for future settings (e.g. timezone, tax IDs).", verbose_name="Extras")),
             ],
             options={
                 "verbose_name": "Company Preferences",

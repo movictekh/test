@@ -14,8 +14,8 @@ from user.api.schemas.compliance import (
     ComplianceRecordUpdateSchema,
 )
 
-compliance_api = Router(tags=["Compliance"])
 
+compliance_api = Router(tags=["Compliance"])
 
 @compliance_api.get(
     "/compliance-records",
@@ -25,19 +25,10 @@ compliance_api = Router(tags=["Compliance"])
 @require_permission("compliance_records", "list")
 def list_compliance_records(
     request,
-    date_from: Optional[date] = Query(
-        None, description="Filter records issued from this date (YYYY-MM-DD)"
-    ),
-    date_to: Optional[date] = Query(
-        None, description="Filter records issued until this date (YYYY-MM-DD)"
-    ),
-    compliance_type: Optional[str] = Query(
-        None, description="Filter by compliance type (partial match)"
-    ),
-    search: Optional[str] = Query(
-        None,
-        description="General search across name, email, reference number, and phone",
-    ),
+    date_from: Optional[date] = Query(None, description="Filter records issued from this date (YYYY-MM-DD)"),
+    date_to: Optional[date] = Query(None, description="Filter records issued until this date (YYYY-MM-DD)"),
+    compliance_type: Optional[str] = Query(None, description="Filter by compliance type (partial match)"),
+    search: Optional[str] = Query(None, description="General search across name, email, reference number, and phone")
 ):
     queryset = ComplianceRecord.objects.all()
 
@@ -53,13 +44,14 @@ def list_compliance_records(
 
     if search:
         queryset = queryset.filter(
-            Q(full_name__icontains=search)
-            | Q(email_address__icontains=search)
-            | Q(reference_number__icontains=search)
-            | Q(phone_number__icontains=search)
+            Q(full_name__icontains=search) |
+            Q(email_address__icontains=search) |
+            Q(reference_number__icontains=search) |
+            Q(phone_number__icontains=search)
         )
 
     return queryset
+
 
 
 @compliance_api.get(
@@ -91,7 +83,9 @@ def create_compliance_record(request, payload: ComplianceRecordCreateSchema):
 )
 @require_permission("compliance_records", "update")
 def update_compliance_record(
-    request, record_id: int, payload: ComplianceRecordUpdateSchema
+    request,
+    record_id: int,
+    payload: ComplianceRecordUpdateSchema
 ):
     record = get_object_or_404(ComplianceRecord, id=record_id)
 
@@ -105,7 +99,6 @@ def update_compliance_record(
         return 200, record
     except Exception as e:
         return 400, {"detail": str(e)}
-
 
 @compliance_api.delete(
     "/compliance-records/{record_id}",

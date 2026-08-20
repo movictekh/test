@@ -10,7 +10,7 @@ class JWTAuthenticator(HttpBearer):
     def authenticate(self, request, token):
         try:
             # Decode JWT token (using HS256 algorithm)
-            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
             user_id = payload.get("user_id")
 
             # Check if token is blacklisted
@@ -43,9 +43,7 @@ class JWTAuthenticator(HttpBearer):
             raise HttpError(401, "Invalid token. Try to login again.")
 
     def on_auth_fail(self, response):
-        return HttpResponseForbidden(
-            "Failed to authenticate! or maybe you requested for a password change."
-        )
+        return HttpResponseForbidden("Failed to authenticate! or maybe you requested for a password change.")
 
 
 def get_token_from_request(request):

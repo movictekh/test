@@ -100,11 +100,7 @@ class ConfirmedFinancePaymentOut(Schema):
     @staticmethod
     def resolve_client_name(obj):
         full_name = obj.invoice.client.user.get_full_name()
-        return (
-            obj.invoice.client.company_name
-            or full_name
-            or obj.invoice.client.user.email
-        )
+        return obj.invoice.client.company_name or full_name or obj.invoice.client.user.email
 
     @staticmethod
     def resolve_service_id(obj):

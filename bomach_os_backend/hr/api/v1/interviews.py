@@ -15,13 +15,11 @@ from hr.api.schemas import (
 )
 from user.utils.perm import require_permission, scope_queryset, check_obj_permission
 
-router = Router(tags=["Interviews"])
+
+router = Router(tags=['Interviews'])
 
 
-@router.post(
-    "/{applicant_id}/interviews/",
-    response={201: InterviewResponseSchema, 400: MessageSchema},
-)
+@router.post('/{applicant_id}/interviews/', response={201: InterviewResponseSchema, 400: MessageSchema})
 @require_permission("interviews", "create")
 def create_interview(request, applicant_id: int, payload: InterviewCreateSchema):
     try:
@@ -35,16 +33,16 @@ def create_interview(request, applicant_id: int, payload: InterviewCreateSchema)
         )
 
         # Update applicant status to interviewed
-        if applicant.status in ("applied", "shortlisted"):
-            applicant.status = "interviewed"
-            applicant.save(update_fields=["status", "updated_at"])
+        if applicant.status in ('applied', 'shortlisted'):
+            applicant.status = 'interviewed'
+            applicant.save(update_fields=['status', 'updated_at'])
 
         return 201, interview
     except ValidationError as e:
-        return 400, {"detail": e.messages[0]}
+        return 400, {'detail': e.messages[0]}
 
 
-@router.get("/{applicant_id}/interviews/", response=List[InterviewListItemSchema])
+@router.get('/{applicant_id}/interviews/', response=List[InterviewListItemSchema])
 @paginate(LimitOffsetPagination, page_size=10)
 @require_permission("interviews", "list")
 def list_interviews(request, applicant_id: int):
@@ -52,23 +50,18 @@ def list_interviews(request, applicant_id: int):
     return Interview.objects.filter(applicant=applicant)
 
 
-@router.get(
-    "/{applicant_id}/interviews/{interview_id}", response=InterviewResponseSchema
-)
+@router.get('/{applicant_id}/interviews/{interview_id}', response=InterviewResponseSchema)
 @require_permission("interviews", "view")
 def get_interview(request, applicant_id: int, interview_id: int):
-    interview = get_object_or_404(Interview, id=interview_id, applicant_id=applicant_id)
+    interview = get_object_or_404(
+        Interview, id=interview_id, applicant_id=applicant_id
+    )
     return interview
 
 
-@router.patch(
-    "/{applicant_id}/interviews/{interview_id}",
-    response={200: InterviewResponseSchema, 400: MessageSchema},
-)
+@router.patch('/{applicant_id}/interviews/{interview_id}', response={200: InterviewResponseSchema, 400: MessageSchema})
 @require_permission("interviews", "update")
-def update_interview(
-    request, applicant_id: int, interview_id: int, payload: InterviewUpdateSchema
-):
+def update_interview(request, applicant_id: int, interview_id: int, payload: InterviewUpdateSchema):
     try:
         interview = get_object_or_404(
             Interview, id=interview_id, applicant_id=applicant_id
@@ -82,17 +75,12 @@ def update_interview(
         interview.save()
         return 200, interview
     except ValidationError as e:
-        return 400, {"detail": e.messages[0]}
+        return 400, {'detail': e.messages[0]}
 
 
-@router.patch(
-    "/{applicant_id}/interviews/{interview_id}/feedback",
-    response={200: InterviewResponseSchema, 400: MessageSchema},
-)
+@router.patch('/{applicant_id}/interviews/{interview_id}/feedback', response={200: InterviewResponseSchema, 400: MessageSchema})
 @require_permission("interviews", "update")
-def submit_feedback(
-    request, applicant_id: int, interview_id: int, payload: InterviewFeedbackSchema
-):
+def submit_feedback(request, applicant_id: int, interview_id: int, payload: InterviewFeedbackSchema):
     try:
         interview = get_object_or_404(
             Interview, id=interview_id, applicant_id=applicant_id
@@ -104,13 +92,10 @@ def submit_feedback(
         interview.save()
         return 200, interview
     except ValidationError as e:
-        return 400, {"detail": e.messages[0]}
+        return 400, {'detail': e.messages[0]}
 
 
-@router.delete(
-    "/{applicant_id}/interviews/{interview_id}",
-    response={200: MessageSchema, 400: MessageSchema},
-)
+@router.delete('/{applicant_id}/interviews/{interview_id}', response={200: MessageSchema, 400: MessageSchema})
 @require_permission("interviews", "delete")
 def delete_interview(request, applicant_id: int, interview_id: int):
     try:
@@ -118,6 +103,6 @@ def delete_interview(request, applicant_id: int, interview_id: int):
             Interview, id=interview_id, applicant_id=applicant_id
         )
         interview.delete()
-        return 200, {"detail": "Interview deleted successfully"}
+        return 200, {'detail': 'Interview deleted successfully'}
     except ValidationError as e:
-        return 400, {"detail": e.messages[0]}
+        return 400, {'detail': e.messages[0]}

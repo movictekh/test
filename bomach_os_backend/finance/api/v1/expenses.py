@@ -27,6 +27,7 @@ from user.models.roles import Department
 from user.models.user import User
 from user.utils.perm import require_permission
 
+
 router = Router(tags=["Finance Expenses"])
 
 
@@ -71,9 +72,7 @@ def _get_scoped_account(request, account_id):
 
 
 def _get_scoped_order(request, order_id):
-    orders = ServiceOrder.objects.select_related("branch", "service").filter(
-        id=order_id
-    )
+    orders = ServiceOrder.objects.select_related("branch", "service").filter(id=order_id)
     branch_ids = getattr(request, "_perm_branch_ids", [])
     if getattr(request, "_perm_scope", "branches") != "company" and branch_ids:
         orders = orders.filter(Q(branch_id__in=branch_ids) | Q(branch__isnull=True))
@@ -86,22 +85,16 @@ def _assign_expense_relations(request, expense, data):
         expense.user = get_object_or_404(User, id=user_id) if user_id else request.user
     if "department_id" in data:
         department_id = data.pop("department_id")
-        expense.department = (
-            get_object_or_404(Department, id=department_id) if department_id else None
-        )
+        expense.department = get_object_or_404(Department, id=department_id) if department_id else None
     if "branch_id" in data:
         branch_id = data.pop("branch_id")
         expense.branch = get_object_or_404(Branch, id=branch_id) if branch_id else None
     if "finance_account_id" in data:
         account_id = data.pop("finance_account_id")
-        expense.finance_account = (
-            _get_scoped_account(request, account_id) if account_id else None
-        )
+        expense.finance_account = _get_scoped_account(request, account_id) if account_id else None
     if "service_order_id" in data:
         order_id = data.pop("service_order_id")
-        expense.service_order = (
-            _get_scoped_order(request, order_id) if order_id else None
-        )
+        expense.service_order = _get_scoped_order(request, order_id) if order_id else None
 
 
 @router.get("/expenses", response=List[FinanceExpenseOut])
@@ -175,32 +168,21 @@ def create_finance_expense(request, payload: FinanceExpenseIn):
         return 400, {"detail": str(exc)}
 
 
-@router.get(
-    "/expenses/{expense_id}", response={200: FinanceExpenseOut, 404: MessageSchema}
-)
+@router.get("/expenses/{expense_id}", response={200: FinanceExpenseOut, 404: MessageSchema})
 @require_permission("expenses", "view")
 def get_finance_expense(request, expense_id: int):
-    expense = get_object_or_404(
-        _apply_branch_scope(request, _expense_queryset()), id=expense_id
-    )
+    expense = get_object_or_404(_apply_branch_scope(request, _expense_queryset()), id=expense_id)
     return 200, expense
 
 
-@router.patch(
-    "/expenses/{expense_id}",
-    response={200: FinanceExpenseOut, 400: MessageSchema, 404: MessageSchema},
-)
+@router.patch("/expenses/{expense_id}", response={200: FinanceExpenseOut, 400: MessageSchema, 404: MessageSchema})
 @require_permission("expenses", "update")
 def update_finance_expense(request, expense_id: int, payload: FinanceExpenseUpdate):
     try:
-        expense = get_object_or_404(
-            _apply_branch_scope(request, _expense_queryset()), id=expense_id
-        )
+        expense = get_object_or_404(_apply_branch_scope(request, _expense_queryset()), id=expense_id)
         data = payload.dict(exclude_unset=True)
         if "status" in data or "paid_at" in data:
-            return 400, {
-                "detail": "Use the approve, reject, or pay endpoint to change expense workflow status."
-            }
+            return 400, {"detail": "Use the approve, reject, or pay endpoint to change expense workflow status."}
         if expense.status != Expense.STATUS.PENDING:
             return 400, {"detail": "Only pending expenses can be updated."}
         _assign_expense_relations(request, expense, data)
@@ -216,71 +198,43 @@ def update_finance_expense(request, expense_id: int, payload: FinanceExpenseUpda
         return 400, {"detail": str(exc)}
 
 
-@router.delete(
-    "/expenses/{expense_id}",
-    response={200: MessageSchema, 400: MessageSchema, 404: MessageSchema},
-)
+@router.delete("/expenses/{expense_id}", response={200: MessageSchema, 400: MessageSchema, 404: MessageSchema})
 @require_permission("expenses", "delete")
 def delete_finance_expense(request, expense_id: int):
-    expense = get_object_or_404(
-        _apply_branch_scope(request, _expense_queryset()), id=expense_id
-    )
+    expense = get_object_or_404(_apply_branch_scope(request, _expense_queryset()), id=expense_id)
     if expense.status not in {Expense.STATUS.PENDING, Expense.STATUS.REJECTED}:
-        return 400, {
-            "detail": "Only pending or rejected expenses can be deleted; settled/approved sources must remain auditable."
-        }
+        return 400, {"detail": "Only pending or rejected expenses can be deleted; settled/approved sources must remain auditable."}
     expense.delete()
     return 200, {"detail": "Expense deleted successfully"}
 
 
-@router.post(
-    "/expenses/{expense_id}/approve",
-    response={200: FinanceExpenseOut, 400: MessageSchema, 404: MessageSchema},
-)
+@router.post("/expenses/{expense_id}/approve", response={200: FinanceExpenseOut, 400: MessageSchema, 404: MessageSchema})
 @require_permission("expenses", "approve")
 def approve_finance_expense_endpoint(request, expense_id: int):
     try:
-        expense = get_object_or_404(
-            _apply_branch_scope(request, _expense_queryset()), id=expense_id
-        )
+        expense = get_object_or_404(_apply_branch_scope(request, _expense_queryset()), id=expense_id)
         approved = approve_finance_expense(expense, request.user)
         return 200, _expense_queryset().get(id=approved.id)
     except Exception as exc:
         return 400, handle_payment_exception(exc)
 
 
-@router.post(
-    "/expenses/{expense_id}/reject",
-    response={200: FinanceExpenseOut, 400: MessageSchema, 404: MessageSchema},
-)
+@router.post("/expenses/{expense_id}/reject", response={200: FinanceExpenseOut, 400: MessageSchema, 404: MessageSchema})
 @require_permission("expenses", "reject")
-def reject_finance_expense_endpoint(
-    request, expense_id: int, payload: FinanceExpenseRejectIn
-):
+def reject_finance_expense_endpoint(request, expense_id: int, payload: FinanceExpenseRejectIn):
     try:
-        expense = get_object_or_404(
-            _apply_branch_scope(request, _expense_queryset()), id=expense_id
-        )
-        rejected = reject_finance_expense(
-            expense, request.user, payload.rejection_reason
-        )
+        expense = get_object_or_404(_apply_branch_scope(request, _expense_queryset()), id=expense_id)
+        rejected = reject_finance_expense(expense, request.user, payload.rejection_reason)
         return 200, _expense_queryset().get(id=rejected.id)
     except Exception as exc:
         return 400, handle_payment_exception(exc)
 
 
-@router.post(
-    "/expenses/{expense_id}/pay",
-    response={200: FinanceExpenseOut, 400: MessageSchema, 404: MessageSchema},
-)
+@router.post("/expenses/{expense_id}/pay", response={200: FinanceExpenseOut, 400: MessageSchema, 404: MessageSchema})
 @require_permission("expenses", "pay")
-def pay_finance_expense_endpoint(
-    request, expense_id: int, payload: FinanceExpensePayIn
-):
+def pay_finance_expense_endpoint(request, expense_id: int, payload: FinanceExpensePayIn):
     try:
-        expense = get_object_or_404(
-            _apply_branch_scope(request, _expense_queryset()), id=expense_id
-        )
+        expense = get_object_or_404(_apply_branch_scope(request, _expense_queryset()), id=expense_id)
         account = _get_scoped_account(request, payload.finance_account_id)
         paid = pay_finance_expense(
             expense,

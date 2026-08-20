@@ -10,7 +10,6 @@ from user.utils.perm import require_permission, scope_queryset, check_obj_permis
 
 router = Router(tags=["Awards"])
 
-
 @router.post("/", response={201: AwardSchema, 400: MessageSchema})
 @require_permission("awards", "create")
 def create_award(request, payload: AwardCreateSchema):
@@ -20,12 +19,11 @@ def create_award(request, payload: AwardCreateSchema):
             category=payload.category,
             date_awarded=payload.date_awarded,
             rank_level=payload.rank_level,
-            description=payload.description,
+            description=payload.description
         )
         return 201, award
     except ValidationError as e:
-        return 400, {"detail": e.messages[0]}
-
+        return 400, {'detail': e.messages[0]}
 
 @router.get("/", response=List[AwardSchema])
 @paginate(LimitOffsetPagination, page_size=10)
@@ -36,12 +34,10 @@ def list_awards(request, year: int = None):
         qs = qs.filter(date_awarded__year=year)
     return qs
 
-
 @router.get("/{award_id}", response=AwardSchema)
 @require_permission("awards", "view")
 def get_award(request, award_id: int):
     return get_object_or_404(Award, id=award_id)
-
 
 @router.put("/{award_id}", response={200: AwardSchema, 400: MessageSchema})
 @require_permission("awards", "update")
@@ -53,8 +49,7 @@ def update_award(request, award_id: int, payload: AwardUpdateSchema):
         award.save()
         return 200, award
     except ValidationError as e:
-        return 400, {"detail": e.messages[0]}
-
+        return 400, {'detail': e.messages[0]}
 
 @router.delete("/{award_id}", response={200: MessageSchema, 400: MessageSchema})
 @require_permission("awards", "delete")
@@ -64,4 +59,4 @@ def delete_award(request, award_id: int):
         award.delete()
         return 200, {"detail": "Deleted successfully"}
     except ValidationError as e:
-        return 400, {"detail": e.messages[0]}
+        return 400, {'detail': e.messages[0]}

@@ -10,383 +10,108 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("services", "0022_traditionalmediaplacement"),
-        ("user", "0093_employeetargetreport"),
+        ('services', '0022_traditionalmediaplacement'),
+        ('user', '0093_employeetargetreport'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddField(
-            model_name="lead",
-            name="referral_partner",
-            field=models.ForeignKey(
-                blank=True,
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                related_name="referred_leads",
-                to="user.partner",
-            ),
+            model_name='lead',
+            name='referral_partner',
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='referred_leads', to='user.partner'),
         ),
         migrations.CreateModel(
-            name="PartnerInvitation",
+            name='PartnerInvitation',
             fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                ("email", models.EmailField(max_length=254)),
-                ("token_hash", models.CharField(max_length=64, unique=True)),
-                (
-                    "status",
-                    models.CharField(
-                        choices=[
-                            ("sent", "Sent"),
-                            ("accepted", "Accepted"),
-                            ("expired", "Expired"),
-                            ("revoked", "Revoked"),
-                        ],
-                        default="sent",
-                        max_length=20,
-                    ),
-                ),
-                ("invite_url", models.URLField(blank=True, max_length=1000)),
-                ("expires_at", models.DateTimeField()),
-                ("accepted_at", models.DateTimeField(blank=True, null=True)),
-                ("last_sent_at", models.DateTimeField(blank=True, null=True)),
-                ("created_at", models.DateTimeField(auto_now_add=True)),
-                ("updated_at", models.DateTimeField(auto_now=True)),
-                (
-                    "invited_by",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="sent_partner_invitations",
-                        to=settings.AUTH_USER_MODEL,
-                    ),
-                ),
-                (
-                    "partner",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        related_name="marketing_invitations",
-                        to="user.partner",
-                    ),
-                ),
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('email', models.EmailField(max_length=254)),
+                ('token_hash', models.CharField(max_length=64, unique=True)),
+                ('status', models.CharField(choices=[('sent', 'Sent'), ('accepted', 'Accepted'), ('expired', 'Expired'), ('revoked', 'Revoked')], default='sent', max_length=20)),
+                ('invite_url', models.URLField(blank=True, max_length=1000)),
+                ('expires_at', models.DateTimeField()),
+                ('accepted_at', models.DateTimeField(blank=True, null=True)),
+                ('last_sent_at', models.DateTimeField(blank=True, null=True)),
+                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('updated_at', models.DateTimeField(auto_now=True)),
+                ('invited_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='sent_partner_invitations', to=settings.AUTH_USER_MODEL)),
+                ('partner', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='marketing_invitations', to='user.partner')),
             ],
             options={
-                "ordering": ["-created_at"],
-                "indexes": [
-                    models.Index(
-                        fields=["partner", "status"],
-                        name="services_pa_partner_e55296_idx",
-                    ),
-                    models.Index(fields=["email"], name="services_pa_email_95fb07_idx"),
-                    models.Index(
-                        fields=["expires_at"], name="services_pa_expires_56c10c_idx"
-                    ),
-                ],
+                'ordering': ['-created_at'],
+                'indexes': [models.Index(fields=['partner', 'status'], name='services_pa_partner_e55296_idx'), models.Index(fields=['email'], name='services_pa_email_95fb07_idx'), models.Index(fields=['expires_at'], name='services_pa_expires_56c10c_idx')],
             },
         ),
         migrations.CreateModel(
-            name="PartnerTask",
+            name='PartnerTask',
             fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                (
-                    "partner_type",
-                    models.CharField(
-                        choices=[
-                            ("realtor", "Realtor"),
-                            ("influencer", "Influencer"),
-                            ("institutional_partner", "Institutional Partner"),
-                            ("external_partner", "External Partner"),
-                        ],
-                        default="external_partner",
-                        max_length=30,
-                    ),
-                ),
-                ("title", models.CharField(max_length=255)),
-                ("objective", models.TextField(blank=True)),
-                ("due_date", models.DateField(blank=True, null=True)),
-                (
-                    "fee",
-                    models.DecimalField(
-                        decimal_places=2,
-                        default=Decimal("0.00"),
-                        max_digits=12,
-                        validators=[
-                            django.core.validators.MinValueValidator(Decimal("0.00"))
-                        ],
-                    ),
-                ),
-                ("proof_requirement", models.TextField(blank=True)),
-                ("tracking_url", models.URLField(blank=True, max_length=1000)),
-                (
-                    "status",
-                    models.CharField(
-                        choices=[
-                            ("assigned", "Assigned"),
-                            ("in_progress", "In Progress"),
-                            ("report_submitted", "Report Submitted"),
-                            ("approved", "Approved"),
-                            ("cancelled", "Cancelled"),
-                        ],
-                        default="assigned",
-                        max_length=30,
-                    ),
-                ),
-                ("created_at", models.DateTimeField(auto_now_add=True)),
-                ("updated_at", models.DateTimeField(auto_now=True)),
-                (
-                    "assigned_by",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="assigned_partner_tasks",
-                        to=settings.AUTH_USER_MODEL,
-                    ),
-                ),
-                (
-                    "campaign",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="partner_tasks",
-                        to="services.marketingcampaign",
-                    ),
-                ),
-                (
-                    "partner",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        related_name="marketing_tasks",
-                        to="user.partner",
-                    ),
-                ),
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('partner_type', models.CharField(choices=[('realtor', 'Realtor'), ('influencer', 'Influencer'), ('institutional_partner', 'Institutional Partner'), ('external_partner', 'External Partner')], default='external_partner', max_length=30)),
+                ('title', models.CharField(max_length=255)),
+                ('objective', models.TextField(blank=True)),
+                ('due_date', models.DateField(blank=True, null=True)),
+                ('fee', models.DecimalField(decimal_places=2, default=Decimal('0.00'), max_digits=12, validators=[django.core.validators.MinValueValidator(Decimal('0.00'))])),
+                ('proof_requirement', models.TextField(blank=True)),
+                ('tracking_url', models.URLField(blank=True, max_length=1000)),
+                ('status', models.CharField(choices=[('assigned', 'Assigned'), ('in_progress', 'In Progress'), ('report_submitted', 'Report Submitted'), ('approved', 'Approved'), ('cancelled', 'Cancelled')], default='assigned', max_length=30)),
+                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('updated_at', models.DateTimeField(auto_now=True)),
+                ('assigned_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='assigned_partner_tasks', to=settings.AUTH_USER_MODEL)),
+                ('campaign', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='partner_tasks', to='services.marketingcampaign')),
+                ('partner', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='marketing_tasks', to='user.partner')),
             ],
             options={
-                "ordering": ["status", "due_date", "-created_at"],
-                "indexes": [
-                    models.Index(
-                        fields=["partner", "status"],
-                        name="services_pa_partner_fc60f7_idx",
-                    ),
-                    models.Index(
-                        fields=["campaign"], name="services_pa_campaig_a170c1_idx"
-                    ),
-                    models.Index(
-                        fields=["partner_type"], name="services_pa_partner_0805b1_idx"
-                    ),
-                    models.Index(
-                        fields=["due_date"], name="services_pa_due_dat_8f377e_idx"
-                    ),
-                ],
+                'ordering': ['status', 'due_date', '-created_at'],
+                'indexes': [models.Index(fields=['partner', 'status'], name='services_pa_partner_fc60f7_idx'), models.Index(fields=['campaign'], name='services_pa_campaig_a170c1_idx'), models.Index(fields=['partner_type'], name='services_pa_partner_0805b1_idx'), models.Index(fields=['due_date'], name='services_pa_due_dat_8f377e_idx')],
             },
         ),
         migrations.CreateModel(
-            name="PartnerReport",
+            name='PartnerReport',
             fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                ("reach", models.PositiveIntegerField(default=0)),
-                ("lead_count", models.PositiveIntegerField(default=0)),
-                ("proof_url", models.URLField(blank=True, max_length=1000)),
-                ("note", models.TextField(blank=True)),
-                (
-                    "status",
-                    models.CharField(
-                        choices=[
-                            ("submitted", "Submitted"),
-                            ("approved", "Approved"),
-                            ("rejected", "Rejected"),
-                        ],
-                        default="submitted",
-                        max_length=20,
-                    ),
-                ),
-                ("reviewed_at", models.DateTimeField(blank=True, null=True)),
-                ("review_note", models.TextField(blank=True)),
-                ("created_at", models.DateTimeField(auto_now_add=True)),
-                ("updated_at", models.DateTimeField(auto_now=True)),
-                (
-                    "partner",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        related_name="marketing_reports",
-                        to="user.partner",
-                    ),
-                ),
-                (
-                    "reviewed_by",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="reviewed_partner_reports",
-                        to=settings.AUTH_USER_MODEL,
-                    ),
-                ),
-                (
-                    "task",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        related_name="reports",
-                        to="services.partnertask",
-                    ),
-                ),
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('reach', models.PositiveIntegerField(default=0)),
+                ('lead_count', models.PositiveIntegerField(default=0)),
+                ('proof_url', models.URLField(blank=True, max_length=1000)),
+                ('note', models.TextField(blank=True)),
+                ('status', models.CharField(choices=[('submitted', 'Submitted'), ('approved', 'Approved'), ('rejected', 'Rejected')], default='submitted', max_length=20)),
+                ('reviewed_at', models.DateTimeField(blank=True, null=True)),
+                ('review_note', models.TextField(blank=True)),
+                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('updated_at', models.DateTimeField(auto_now=True)),
+                ('partner', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='marketing_reports', to='user.partner')),
+                ('reviewed_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='reviewed_partner_reports', to=settings.AUTH_USER_MODEL)),
+                ('task', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='reports', to='services.partnertask')),
             ],
             options={
-                "ordering": ["-created_at"],
-                "indexes": [
-                    models.Index(
-                        fields=["partner", "status"],
-                        name="services_pa_partner_f86326_idx",
-                    ),
-                    models.Index(
-                        fields=["task", "status"], name="services_pa_task_id_6b37da_idx"
-                    ),
-                    models.Index(
-                        fields=["created_at"], name="services_pa_created_c18acf_idx"
-                    ),
-                ],
+                'ordering': ['-created_at'],
+                'indexes': [models.Index(fields=['partner', 'status'], name='services_pa_partner_f86326_idx'), models.Index(fields=['task', 'status'], name='services_pa_task_id_6b37da_idx'), models.Index(fields=['created_at'], name='services_pa_created_c18acf_idx')],
             },
         ),
         migrations.CreateModel(
-            name="PartnerCommission",
+            name='PartnerCommission',
             fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                (
-                    "amount_basis",
-                    models.DecimalField(
-                        decimal_places=2,
-                        default=Decimal("0.00"),
-                        max_digits=15,
-                        validators=[
-                            django.core.validators.MinValueValidator(Decimal("0.00"))
-                        ],
-                    ),
-                ),
-                (
-                    "commission_rate",
-                    models.DecimalField(
-                        decimal_places=2,
-                        default=Decimal("0.00"),
-                        max_digits=5,
-                        validators=[
-                            django.core.validators.MinValueValidator(Decimal("0.00")),
-                            django.core.validators.MaxValueValidator(Decimal("100.00")),
-                        ],
-                    ),
-                ),
-                (
-                    "commission_due",
-                    models.DecimalField(
-                        decimal_places=2,
-                        default=Decimal("0.00"),
-                        max_digits=15,
-                        validators=[
-                            django.core.validators.MinValueValidator(Decimal("0.00"))
-                        ],
-                    ),
-                ),
-                (
-                    "status",
-                    models.CharField(
-                        choices=[
-                            ("pending_verification", "Pending Verification"),
-                            ("approved", "Approved"),
-                            ("paid", "Paid"),
-                            ("rejected", "Rejected"),
-                        ],
-                        default="pending_verification",
-                        max_length=30,
-                    ),
-                ),
-                ("approved_at", models.DateTimeField(blank=True, null=True)),
-                ("paid_at", models.DateTimeField(blank=True, null=True)),
-                ("payment_reference", models.CharField(blank=True, max_length=120)),
-                ("note", models.TextField(blank=True)),
-                ("created_at", models.DateTimeField(auto_now_add=True)),
-                ("updated_at", models.DateTimeField(auto_now=True)),
-                (
-                    "approved_by",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="approved_partner_commissions",
-                        to=settings.AUTH_USER_MODEL,
-                    ),
-                ),
-                (
-                    "lead",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="partner_commissions",
-                        to="services.lead",
-                    ),
-                ),
-                (
-                    "partner",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        related_name="marketing_commissions",
-                        to="user.partner",
-                    ),
-                ),
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('amount_basis', models.DecimalField(decimal_places=2, default=Decimal('0.00'), max_digits=15, validators=[django.core.validators.MinValueValidator(Decimal('0.00'))])),
+                ('commission_rate', models.DecimalField(decimal_places=2, default=Decimal('0.00'), max_digits=5, validators=[django.core.validators.MinValueValidator(Decimal('0.00')), django.core.validators.MaxValueValidator(Decimal('100.00'))])),
+                ('commission_due', models.DecimalField(decimal_places=2, default=Decimal('0.00'), max_digits=15, validators=[django.core.validators.MinValueValidator(Decimal('0.00'))])),
+                ('status', models.CharField(choices=[('pending_verification', 'Pending Verification'), ('approved', 'Approved'), ('paid', 'Paid'), ('rejected', 'Rejected')], default='pending_verification', max_length=30)),
+                ('approved_at', models.DateTimeField(blank=True, null=True)),
+                ('paid_at', models.DateTimeField(blank=True, null=True)),
+                ('payment_reference', models.CharField(blank=True, max_length=120)),
+                ('note', models.TextField(blank=True)),
+                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('updated_at', models.DateTimeField(auto_now=True)),
+                ('approved_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='approved_partner_commissions', to=settings.AUTH_USER_MODEL)),
+                ('lead', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='partner_commissions', to='services.lead')),
+                ('partner', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='marketing_commissions', to='user.partner')),
             ],
             options={
-                "ordering": ["status", "-created_at"],
-                "indexes": [
-                    models.Index(
-                        fields=["partner", "status"],
-                        name="services_pa_partner_5d4244_idx",
-                    ),
-                    models.Index(
-                        fields=["lead"], name="services_pa_lead_id_c371b0_idx"
-                    ),
-                    models.Index(
-                        fields=["status"], name="services_pa_status_439c5e_idx"
-                    ),
-                ],
+                'ordering': ['status', '-created_at'],
+                'indexes': [models.Index(fields=['partner', 'status'], name='services_pa_partner_5d4244_idx'), models.Index(fields=['lead'], name='services_pa_lead_id_c371b0_idx'), models.Index(fields=['status'], name='services_pa_status_439c5e_idx')],
             },
         ),
         migrations.AddIndex(
-            model_name="lead",
-            index=models.Index(
-                fields=["referral_partner"], name="services_le_referra_daf7ab_idx"
-            ),
+            model_name='lead',
+            index=models.Index(fields=['referral_partner'], name='services_le_referra_daf7ab_idx'),
         ),
     ]

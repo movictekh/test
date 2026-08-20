@@ -8,181 +8,52 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("services", "0018_medialibraryasset"),
+        ('services', '0018_medialibraryasset'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name="SalesPlaybook",
+            name='SalesPlaybook',
             fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                (
-                    "created_at",
-                    models.DateTimeField(
-                        auto_now_add=True, help_text="When this record was created"
-                    ),
-                ),
-                (
-                    "updated_at",
-                    models.DateTimeField(
-                        auto_now=True, help_text="When this record was last updated"
-                    ),
-                ),
-                ("title", models.CharField(max_length=255)),
-                (
-                    "division",
-                    models.CharField(
-                        choices=[
-                            ("real_estate", "Real Estate"),
-                            ("engineering", "Engineering & Construction"),
-                            ("surveying", "Land Surveying"),
-                            ("benji", "Benji"),
-                            ("ict", "ICT / Platforms"),
-                        ],
-                        max_length=30,
-                    ),
-                ),
-                (
-                    "stage",
-                    models.CharField(
-                        choices=[
-                            ("discovery", "Discovery"),
-                            ("qualification", "Qualification"),
-                            ("proposal", "Proposal"),
-                            ("negotiation", "Negotiation"),
-                            ("closing", "Closing"),
-                            ("retention", "Retention / Referral"),
-                        ],
-                        max_length=30,
-                    ),
-                ),
-                (
-                    "persona",
-                    models.CharField(
-                        choices=[
-                            ("individual_buyer", "Individual Buyer"),
-                            ("diaspora_investor", "Diaspora Investor"),
-                            ("corporate_client", "Corporate Client"),
-                            ("partner_realtor", "Partner / Realtor"),
-                        ],
-                        max_length=40,
-                    ),
-                ),
-                ("objective", models.TextField(blank=True, default="")),
-                ("opening_script", models.TextField(blank=True, default="")),
-                ("questions", models.JSONField(blank=True, default=list)),
-                ("proof_to_use", models.TextField(blank=True, default="")),
-                ("primary_cta", models.TextField(blank=True, default="")),
-                ("exit_criteria", models.TextField(blank=True, default="")),
-                (
-                    "status",
-                    models.CharField(
-                        choices=[
-                            ("draft", "Draft"),
-                            ("active", "Active"),
-                            ("archived", "Archived"),
-                        ],
-                        default="draft",
-                        max_length=20,
-                    ),
-                ),
-                ("sort_order", models.PositiveIntegerField(default=0)),
-                (
-                    "branch",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="sales_playbooks",
-                        to="user.branch",
-                    ),
-                ),
-                (
-                    "created_by",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="created_sales_playbooks",
-                        to=settings.AUTH_USER_MODEL,
-                    ),
-                ),
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('created_at', models.DateTimeField(auto_now_add=True, help_text='When this record was created')),
+                ('updated_at', models.DateTimeField(auto_now=True, help_text='When this record was last updated')),
+                ('title', models.CharField(max_length=255)),
+                ('division', models.CharField(choices=[('real_estate', 'Real Estate'), ('engineering', 'Engineering & Construction'), ('surveying', 'Land Surveying'), ('benji', 'Benji'), ('ict', 'ICT / Platforms')], max_length=30)),
+                ('stage', models.CharField(choices=[('discovery', 'Discovery'), ('qualification', 'Qualification'), ('proposal', 'Proposal'), ('negotiation', 'Negotiation'), ('closing', 'Closing'), ('retention', 'Retention / Referral')], max_length=30)),
+                ('persona', models.CharField(choices=[('individual_buyer', 'Individual Buyer'), ('diaspora_investor', 'Diaspora Investor'), ('corporate_client', 'Corporate Client'), ('partner_realtor', 'Partner / Realtor')], max_length=40)),
+                ('objective', models.TextField(blank=True, default='')),
+                ('opening_script', models.TextField(blank=True, default='')),
+                ('questions', models.JSONField(blank=True, default=list)),
+                ('proof_to_use', models.TextField(blank=True, default='')),
+                ('primary_cta', models.TextField(blank=True, default='')),
+                ('exit_criteria', models.TextField(blank=True, default='')),
+                ('status', models.CharField(choices=[('draft', 'Draft'), ('active', 'Active'), ('archived', 'Archived')], default='draft', max_length=20)),
+                ('sort_order', models.PositiveIntegerField(default=0)),
+                ('branch', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='sales_playbooks', to='user.branch')),
+                ('created_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='created_sales_playbooks', to=settings.AUTH_USER_MODEL)),
             ],
             options={
-                "ordering": ["sort_order", "title"],
-                "indexes": [
-                    models.Index(
-                        fields=["division", "stage", "persona"],
-                        name="services_sa_divisio_ccec95_idx",
-                    ),
-                    models.Index(
-                        fields=["status", "sort_order"],
-                        name="services_sa_status_f45dbe_idx",
-                    ),
-                    models.Index(
-                        fields=["branch", "status"],
-                        name="services_sa_branch__dacde6_idx",
-                    ),
-                ],
+                'ordering': ['sort_order', 'title'],
+                'indexes': [models.Index(fields=['division', 'stage', 'persona'], name='services_sa_divisio_ccec95_idx'), models.Index(fields=['status', 'sort_order'], name='services_sa_status_f45dbe_idx'), models.Index(fields=['branch', 'status'], name='services_sa_branch__dacde6_idx')],
             },
         ),
         migrations.CreateModel(
-            name="SalesPlaybookObjection",
+            name='SalesPlaybookObjection',
             fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                (
-                    "created_at",
-                    models.DateTimeField(
-                        auto_now_add=True, help_text="When this record was created"
-                    ),
-                ),
-                (
-                    "updated_at",
-                    models.DateTimeField(
-                        auto_now=True, help_text="When this record was last updated"
-                    ),
-                ),
-                ("objection", models.CharField(max_length=255)),
-                ("response", models.TextField()),
-                ("sort_order", models.PositiveIntegerField(default=0)),
-                ("is_active", models.BooleanField(default=True)),
-                (
-                    "playbook",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        related_name="objections",
-                        to="services.salesplaybook",
-                    ),
-                ),
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('created_at', models.DateTimeField(auto_now_add=True, help_text='When this record was created')),
+                ('updated_at', models.DateTimeField(auto_now=True, help_text='When this record was last updated')),
+                ('objection', models.CharField(max_length=255)),
+                ('response', models.TextField()),
+                ('sort_order', models.PositiveIntegerField(default=0)),
+                ('is_active', models.BooleanField(default=True)),
+                ('playbook', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='objections', to='services.salesplaybook')),
             ],
             options={
-                "ordering": ["sort_order", "id"],
-                "indexes": [
-                    models.Index(
-                        fields=["playbook", "is_active"],
-                        name="services_sa_playboo_5d4820_idx",
-                    ),
-                    models.Index(
-                        fields=["sort_order"], name="services_sa_sort_or_d47acd_idx"
-                    ),
-                ],
+                'ordering': ['sort_order', 'id'],
+                'indexes': [models.Index(fields=['playbook', 'is_active'], name='services_sa_playboo_5d4820_idx'), models.Index(fields=['sort_order'], name='services_sa_sort_or_d47acd_idx')],
             },
         ),
     ]

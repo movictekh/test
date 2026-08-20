@@ -36,11 +36,7 @@ class ReceivableOut(Schema):
 
     @staticmethod
     def resolve_client_email(obj):
-        return (
-            obj.service_request.contact_email
-            if obj.service_request and obj.service_request.contact_email
-            else obj.client.user.email
-        )
+        return obj.service_request.contact_email if obj.service_request and obj.service_request.contact_email else obj.client.user.email
 
     @staticmethod
     def resolve_service_name(obj):

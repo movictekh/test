@@ -6,8 +6,9 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("user", "0074_alter_auditlog_audit_type_alter_otpcode_intent"),
-        ("user", "0074_attendance_clock_in_latitude_and_more"),
+        ('user', '0074_alter_auditlog_audit_type_alter_otpcode_intent'),
+        ('user', '0074_attendance_clock_in_latitude_and_more'),
     ]
 
-    operations = []
+    operations = [
+    ]

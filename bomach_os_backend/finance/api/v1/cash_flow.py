@@ -14,6 +14,7 @@ from finance.models import PayrollRun, StatutoryObligation, VendorBill
 from services.models.payment import Invoice
 from user.utils.perm import require_permission
 
+
 router = Router(tags=["Finance Cash Flow"])
 
 OPEN_VENDOR_BILL_STATUSES = {
@@ -88,27 +89,26 @@ def _apply_statutory_scope(request, obligations):
 
 
 def _receivable_items(request, as_of, query_end, branch_id=None):
-    invoices = (
-        Invoice.objects.select_related(
-            "client",
-            "client__user",
-            "service",
-            "service_request",
-            "service_request__branch",
-            "order",
-            "order__branch",
-        )
-        .exclude(status__in=["draft", "cancelled"])
-        .filter(
-            total_amount__gt=F("amount_paid"),
-            due_date__lte=query_end,
-        )
+    invoices = Invoice.objects.select_related(
+        "client",
+        "client__user",
+        "service",
+        "service_request",
+        "service_request__branch",
+        "order",
+        "order__branch",
+    ).exclude(
+        status__in=["draft", "cancelled"]
+    ).filter(
+        total_amount__gt=F("amount_paid"),
+        due_date__lte=query_end,
     )
 
     invoices = _apply_invoice_scope(request, invoices)
     if branch_id:
         invoices = invoices.filter(
-            Q(service_request__branch_id=branch_id) | Q(order__branch_id=branch_id)
+            Q(service_request__branch_id=branch_id)
+            | Q(order__branch_id=branch_id)
         )
 
     items = []
@@ -219,7 +219,9 @@ def _payroll_items(request, as_of, query_end, branch_id=None):
                 "is_overdue": overdue,
                 "branch_id": payroll_run.branch_id,
                 "branch_name": (
-                    payroll_run.branch.branch_name if payroll_run.branch else ""
+                    payroll_run.branch.branch_name
+                    if payroll_run.branch
+                    else ""
                 ),
                 "client_id": None,
                 "client_name": "",
@@ -258,7 +260,9 @@ def _statutory_items(request, as_of, query_end, branch_id=None):
                 "is_overdue": overdue,
                 "branch_id": obligation.branch_id,
                 "branch_name": (
-                    obligation.branch.branch_name if obligation.branch else ""
+                    obligation.branch.branch_name
+                    if obligation.branch
+                    else ""
                 ),
                 "client_id": None,
                 "client_name": "",
@@ -318,10 +322,16 @@ def cash_flow_forecast(
     )
 
     thirty_day_items = [
-        item for item in items if as_of <= item["forecast_date"] <= thirty_day_end
+        item
+        for item in items
+        if as_of <= item["forecast_date"] <= thirty_day_end
     ]
-    inflows_30d = [item for item in thirty_day_items if item["direction"] == "inflow"]
-    outflows_30d = [item for item in thirty_day_items if item["direction"] == "outflow"]
+    inflows_30d = [
+        item for item in thirty_day_items if item["direction"] == "inflow"
+    ]
+    outflows_30d = [
+        item for item in thirty_day_items if item["direction"] == "outflow"
+    ]
 
     expected_inflows_30d = _sum_amount(inflows_30d)
     expected_outflows_30d = _sum_amount(outflows_30d)
@@ -335,10 +345,16 @@ def cash_flow_forecast(
         week_start = as_of + timedelta(days=index * 7)
         week_end = week_start + timedelta(days=6)
         week_items = [
-            item for item in items if week_start <= item["forecast_date"] <= week_end
+            item
+            for item in items
+            if week_start <= item["forecast_date"] <= week_end
         ]
-        week_inflows = [item for item in week_items if item["direction"] == "inflow"]
-        week_outflows = [item for item in week_items if item["direction"] == "outflow"]
+        week_inflows = [
+            item for item in week_items if item["direction"] == "inflow"
+        ]
+        week_outflows = [
+            item for item in week_items if item["direction"] == "outflow"
+        ]
         expected_inflows = _sum_amount(week_inflows)
         expected_outflows = _sum_amount(week_outflows)
         net_movement = _money(expected_inflows - expected_outflows)
