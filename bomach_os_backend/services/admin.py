@@ -14,7 +14,6 @@ from domains.marketing_sales.models.revenue_execution import (
 from domains.marketing_sales.models.sales import Lead, LeadActivity, LeadFunnelEvent
 
 from .models import (
-    Budget,
     Document,
     Expense,
     Invoice,
@@ -144,7 +143,6 @@ class PaymentAdmin(admin.ModelAdmin):
     readonly_fields = ["payment_reference"]
 
 
-admin.site.register(Budget)
 admin.site.register(Expense)
 admin.site.register(Property)
 admin.site.register(Document)

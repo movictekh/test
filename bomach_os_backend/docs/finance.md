@@ -1,7 +1,8 @@
 # Finance
 
 The Finance module is the finance-facing workspace for service-backed invoices,
-receiving accounts, payment submissions, and confirmed receipts.
+receiving accounts, payment submissions, confirmed receipts, and client/project
+wallets.
 
 Estate property invoices are legacy for this flow. Finance invoice endpoints use
 `services.Invoice`, which is tied to a service, quote, request, order, or lead.
@@ -81,6 +82,14 @@ Accounts may be `bank` or `cash`, may be branch-scoped, and default to `NGN`.
 Bank accounts require bank name, account number, and account name. Deactivation
 keeps historical payments linked while removing the account from active choices.
 
+Each Finance account may also carry an account-scoped opening balance:
+
+- `opening_balance`
+- `opening_balance_date`
+
+Cashbook endpoints use these values as the starting point for account and
+branch-scoped running balances. Existing accounts default to `0.00`.
+
 ## Payment Submissions
 
 Payments are submission-first. Creating a payment submission does not change
@@ -139,6 +148,431 @@ amount, method, transaction reference, proof URL, and creator.
 Invoice balances are derived from confirmed `Payment` rows. Pending and rejected
 submissions do not affect `Invoice.amount_paid` or `Invoice.balance`.
 
+## Client And Project Wallets
+
+Finance wallets are optional fund-control containers for clients and service
+orders. A wallet is not a stored balance; balances are computed from posted
+`FinanceWalletEntry` ledger rows.
+
+```http
+GET  /api/v1/finance/wallets
+POST /api/v1/finance/wallets
+GET  /api/v1/finance/wallets/{wallet_id}
+PATCH /api/v1/finance/wallets/{wallet_id}
+GET  /api/v1/finance/wallets/{wallet_id}/entries
+POST /api/v1/finance/wallets/{wallet_id}/entries
+POST /api/v1/finance/wallets/{wallet_id}/entries/{entry_id}/void
+```
+
+Wallet types:
+
+- `client`
+- `project`
+- `property`
+- `restricted_project`
+
+Client wallets require a client and may exist without a service order. Project,
+property, and restricted project wallets require a linked `ServiceOrder` at API
+validation time. Existing service orders are not required to have wallets.
+
+Wallet entry types:
+
+- `funding`
+- `spend`
+- `commitment`
+- `commitment_release`
+- `adjustment`
+
+Only posted entries affect balances. Pending and void entries are ignored.
+Balances are derived as:
+
+- `funded = posted funding + posted positive adjustments`
+- `spent = posted spend`
+- `committed = posted commitments - posted commitment releases`
+- `available = funded - spent - committed`
+
+Wallet balances are read-only API fields. The create/update endpoints do not
+accept direct `funded`, `spent`, `committed`, or `available` values.
+
+When a payment submission is approved, Finance still creates the confirmed
+`services.Payment` and recalculates the invoice balance as before. If the
+payment invoice is linked to a service order that has a Finance wallet, approval
+also creates a posted `funding` wallet entry linked to the wallet, invoice,
+payment, and service order. If no wallet exists, payment approval skips wallet
+posting.
+
+Manual wallet entries can still record adjustments and exceptional wallet
+activity. Expense approval/payment now posts standard project wallet movements
+automatically when the expense is linked to a service order with a wallet.
+
+## Budgets And Controls
+
+Finance budgets are represented by `FinanceBudget`. This replaces the legacy
+`services.Budget` model, which only supported branch/department fiscal
+allocations and stored spend directly.
+
+There are no Finance budget endpoints in this slice. The model is in place for
+the later Budgets & Controls API.
+
+`FinanceBudget` supports:
+
+- generated `budget_number`
+- budget name
+- owner
+- optional branch
+- optional department
+- optional service order
+- budget type
+- period label, start date, and end date
+- approved amount
+- warning and block thresholds
+- status
+- notes and audit timestamps
+
+Budget types:
+
+- `operating`
+- `department`
+- `service_order`
+- `project`
+- `capital`
+- `marketing`
+- `other`
+
+Budget statuses:
+
+- `draft`
+- `active`
+- `watch`
+- `exceeded`
+- `closed`
+- `cancelled`
+
+`spent`, `committed`, `available`, and `utilization_pct` are model properties.
+For now, spent and committed return `0.00` until the next slice defines how
+expenses, vendor bills, petty cash, and wallet entries are mapped into budget
+control calculations.
+
+Compatibility note: the legacy `/api/v1/budgets` services route and the
+`services.Budget` code surface have been removed. Historical migrations still
+contain the old model history, and the new services migration drops the legacy
+budget table.
+
+## Expenses And Service Costs
+
+Finance expense endpoints use the existing `services.Expense` model with
+additional Finance fields for order costing and cashbook classification.
+
+```http
+GET    /api/v1/finance/expenses
+POST   /api/v1/finance/expenses
+GET    /api/v1/finance/expenses/{expense_id}
+PATCH  /api/v1/finance/expenses/{expense_id}
+DELETE /api/v1/finance/expenses/{expense_id}
+POST   /api/v1/finance/expenses/{expense_id}/approve
+POST   /api/v1/finance/expenses/{expense_id}/reject
+POST   /api/v1/finance/expenses/{expense_id}/pay
+```
+
+Finance expenses may link to a branch, Finance account, and service order. They
+also include project/cost-centre label, stage, cost type, beneficiary,
+billability, client visibility, attachment, approval/rejection audit fields,
+payment reference, and payment audit fields.
+
+Cost types:
+
+- `direct_cost`
+- `operating_expense`
+- `overhead_allocation`
+- `capital_expenditure`
+
+Expense statuses:
+
+- `pending`
+- `approved`
+- `rejected`
+- `paid`
+
+Finance expense status changes are controlled workflow actions. Create defaults
+to `pending`, and `PATCH /api/v1/finance/expenses/{expense_id}` must not be used
+to move an expense to `approved`, `rejected`, or `paid`.
+
+Workflow rules:
+
+- approve: pending only; requester cannot approve their own expense; records
+  approver and timestamp
+- reject: pending only; requester cannot reject their own expense; records
+  reviewer, timestamp, and optional reason
+- pay: approved only; requires a Finance account; records payer, `paid_at`, and
+  optional `payment_reference`
+
+Pay payload:
+
+```json
+{
+  "finance_account_id": 1,
+  "paid_at": "2026-08-17T10:30:00+01:00",
+  "payment_reference": "BANK-TXN-12345"
+}
+```
+
+`paid_at` and `payment_reference` are optional. If `paid_at` is omitted, the
+current timestamp is used.
+
+Project wallet posting:
+
+- approved expense: creates a posted `commitment` entry
+- rejected expense: no wallet entry
+- paid expense: creates a posted `commitment_release` entry when a commitment
+  exists, and creates a posted `spend` entry
+
+These automatic wallet entries are linked to the `services.Expense` record for
+traceability and duplicate prevention. If the expense has no service order
+wallet, the workflow status change succeeds and wallet posting is skipped.
+
+Compatibility note: legacy service expense approve/reject URLs remain available
+for existing clients. Finance clients should use the Finance approve/reject/pay
+endpoints because generic status edits no longer represent the supported Finance
+workflow path.
+
+## Vendor Bills And Accounts Payable
+
+Vendor bills represent external supplier obligations. They are separate from
+staff expenses because they need vendor filtering, due-date/payable reporting,
+withholding tax fields, and supplier payment tracking.
+
+```http
+GET  /api/v1/finance/vendors
+POST /api/v1/finance/vendors
+GET  /api/v1/finance/vendors/{vendor_id}
+PATCH /api/v1/finance/vendors/{vendor_id}
+POST /api/v1/finance/vendors/{vendor_id}/deactivate
+
+GET   /api/v1/finance/vendor-bills
+POST  /api/v1/finance/vendor-bills
+GET   /api/v1/finance/vendor-bills/summary
+GET   /api/v1/finance/vendor-bills/{bill_id}
+PATCH /api/v1/finance/vendor-bills/{bill_id}
+POST  /api/v1/finance/vendor-bills/{bill_id}/approve
+POST  /api/v1/finance/vendor-bills/{bill_id}/reject
+POST  /api/v1/finance/vendor-bills/{bill_id}/pay
+POST  /api/v1/finance/vendor-bills/{bill_id}/void
+```
+
+`FinanceVendor` is the slim supplier record used for filtering payable bills. It
+stores vendor number, name, contact fields, tax ID/TIN, default category, status,
+and an optional compatibility link to `Partner`.
+
+Vendor bills link to `ServiceOrder` when the obligation belongs to a specific
+order. There is no Finance project FK in this slice; project/cost-centre labels
+are display values derived from the linked service order where available.
+Unlinked vendor bills remain valid for general operating obligations.
+
+Vendor bill statuses:
+
+- `draft`
+- `awaiting_approval`
+- `approved`
+- `scheduled`
+- `paid`
+- `rejected`
+- `void`
+
+Workflow rules:
+
+- create: defaults to `awaiting_approval` and calculates
+  `net_amount = gross_amount - withholding_tax`
+- approve: awaiting approval only; records approver and timestamp
+- reject: awaiting approval only; records reviewer, timestamp, and reason
+- pay: approved or scheduled only; requires a Finance account and records
+  `paid_at`, payer, and optional payment reference
+- void: allowed only before payment
+
+Project wallet posting:
+
+- approved service-order bill: creates a posted `commitment` using gross amount
+- rejected bill: no wallet entry
+- paid service-order bill: creates posted `commitment_release` and `spend` rows
+  using gross amount
+- void unpaid bill: voids the posted commitment if one exists
+
+Accounts payable summary returns open payable total, overdue payable, due-soon
+payable, approved unpaid, scheduled unpaid, paid total, bill count, overdue
+count, due-soon count, and status counts. Payable totals use `net_amount`; order
+cost/profitability totals use `gross_amount`.
+
+## Petty Cash
+
+Petty cash is modeled as cash-account-backed advances and retirement lines. It
+does not create a separate wallet type. A petty cash advance must use an active
+`FinanceAccount` with `account_type=cash`.
+
+```http
+GET  /api/v1/finance/petty-cash/advances
+POST /api/v1/finance/petty-cash/advances
+GET  /api/v1/finance/petty-cash/advances/{advance_id}
+PATCH /api/v1/finance/petty-cash/advances/{advance_id}
+POST /api/v1/finance/petty-cash/advances/{advance_id}/approve
+POST /api/v1/finance/petty-cash/advances/{advance_id}/reject
+POST /api/v1/finance/petty-cash/advances/{advance_id}/issue
+POST /api/v1/finance/petty-cash/advances/{advance_id}/retire
+POST /api/v1/finance/petty-cash/advances/{advance_id}/cancel
+GET  /api/v1/finance/petty-cash/advances/{advance_id}/retirement-lines
+GET  /api/v1/finance/petty-cash/summary
+```
+
+Advance statuses:
+
+- `requested`
+- `approved`
+- `rejected`
+- `issued`
+- `partially_retired`
+- `retired`
+- `cancelled`
+
+Workflow rules:
+
+- create: records requester, cash account, purpose, requested amount, due date,
+  optional branch, optional service order, attachment, and notes
+- approve: requested only; records approver and timestamp
+- reject: requested only; records reviewer, timestamp, and optional reason
+- issue: approved only; records issued amount, custodian, issuer, and timestamp
+- retire: issued or partially retired only; records spent lines and/or returned
+  cash lines
+- cancel: requested or approved only
+
+Issue is blocked when the requester has another overdue unretired advance.
+Unretired balance is derived as `amount_issued - amount_retired -
+amount_returned`.
+
+Retirement lines support category, cost type, stage, description, receipt URL,
+billable flag, client visibility flag, spent amount, and returned amount. A
+single line may record spend or returned cash, not both. Spend lines require a
+category.
+
+Cashbook treatment:
+
+- issuing petty cash is a `petty_cash_advance` outflow from the cash account
+- returned unused cash is a `petty_cash_return` inflow to the same cash account
+- spent retirement lines do not create another cashbook outflow, because the
+  cash already left the account at issue time
+
+Service-order treatment:
+
+- retirement spend lines linked to a service order count as `petty_cash` costs
+  in service order cost ledger and transaction views
+- service-order profitability includes retirement spend in paid costs
+- when the linked service order has a Finance wallet, retirement spend posts a
+  wallet `spend` entry
+
+The petty cash summary returns issued, retired, returned, unretired, overdue,
+status counts, and one row per cash account. Account calculated balance is
+derived as `opening_balance - issued_total + returned_total`. Replenishment is
+flagged when the calculated balance is at or below 25% of the opening balance.
+
+## Cashbook And Transaction Ledger
+
+Cashbook is read-only and derived. There is no manual cashbook posting endpoint
+in this slice.
+
+```http
+GET /api/v1/finance/cashbook
+GET /api/v1/finance/cashbook/summary
+```
+
+Cashbook rows are derived from:
+
+- account opening balances on `FinanceAccount`
+- confirmed `services.Payment` rows as inflows
+- paid `services.Expense` rows as outflows
+- paid `VendorBill` rows as outflows
+- issued `PettyCashAdvance` rows as cash outflows
+- `PettyCashRetirementLine` returned-cash rows as cash inflows
+
+Cashbook source rules:
+
+- confirmed payment: `client_payment`
+- paid expense with a service order: `service_cost`
+- paid expense without a service order and `cost_type=operating_expense`:
+  `operating_expense`
+- paid expense without a service order and another cost type: `expense`
+- paid vendor bill: `vendor_bill`
+- issued petty cash: `petty_cash_advance`
+- returned unused petty cash: `petty_cash_return`
+
+Filters:
+
+- `date_from`
+- `date_to`
+- `finance_account_id`
+- `branch_id`
+- `service_order_id`
+- `client_id`
+- `source`
+- `status`
+- `search`
+
+Rows include date, reference, source, description, service/order/project labels,
+Finance account, branch, money in, money out, running balance, and status.
+
+The summary endpoint returns opening balance, period inflow, period outflow, net
+movement, closing balance, posted count, pending count, and source breakdowns.
+
+## Service Order Profitability
+
+Service order profitability is a read-only Finance view over existing
+`ServiceOrder` records. Finance does not create or sync service orders from this
+surface.
+
+```http
+GET /api/v1/finance/service-orders/profitability
+GET /api/v1/finance/service-orders/profitability/summary
+GET /api/v1/finance/service-orders/{order_id}/profitability
+GET /api/v1/finance/service-orders/{order_id}/costs
+GET /api/v1/finance/service-orders/{order_id}/transactions
+```
+
+The profitability list and detail endpoints expose order identity, client,
+service, branch, project label, order/payment status, progress, stage, due date,
+contract value, invoiced total, collected total, outstanding balance, paid
+costs, committed costs, cash contribution, accrued profit, and wallet balances
+where a Finance wallet exists.
+
+Current source rules:
+
+- contract value: `ServiceOrder.amount`
+- project label: `ServiceOrder.description`
+- invoiced total: invoices linked to the order
+- collected total: confirmed payment rows linked through order invoices
+- paid costs: paid expenses, paid vendor bills, and petty cash retirement spend
+  linked to the order
+- committed costs: approved expenses and approved/scheduled vendor bills linked
+  to the order
+- cash contribution: collected total minus paid costs
+- accrued profit: invoiced total minus paid costs
+
+The following fields are nullable until dedicated finance-control fields exist:
+
+- `contract_type`
+- `cost_budget`
+- `overhead_amount`
+- `expected_gross_profit`
+- `expected_margin_pct`
+
+The cost ledger endpoint returns expenses, vendor bills, and petty cash
+retirement spend linked to the order. Rows include source, date, category, cost
+type, stage, description, beneficiary/vendor, amount, status, billable flag,
+client visibility, Finance account, attachment, and paid timestamp.
+
+The transaction endpoint returns order-level cash/contribution movement:
+confirmed payment inflows, paid expense outflows, paid vendor bill outflows, and
+petty cash retirement spend. Its running contribution starts at zero for the
+order and is not the same as account-level cashbook running balance.
+
+List and summary filters include date range, branch, client, service, order
+status, payment status, profitability status, service order, and search.
+
 ## Compatibility
 
 Existing client invoice submission endpoints remain available:
@@ -174,3 +608,28 @@ These routes expose the older service payment API. They are not the Finance UI
 path. New direct creates must include `finance_account_id` and
 `proof_of_payment`; the Finance UI should use `/api/v1/finance/payments/*`
 submission and review endpoints instead.
+
+Existing user wallet routes remain available:
+
+```http
+GET  /api/v1/wallet/transactions/
+GET  /api/v1/wallet/balance/{user_id}/
+POST /api/v1/wallet/fund-wallet-webhook/
+```
+
+Those routes manage personal user wallet transactions. They are separate from
+Finance client/project wallets and are not used for Finance project fund
+availability.
+
+Finance wallets are additive. Service requests, invoices, service orders, and
+payment submissions do not require wallet fields. Existing clients and
+historical orders continue to work without wallet records.
+
+Existing `/api/v1/expenses` routes remain available for compatibility. The
+Finance UI should use `/api/v1/finance/expenses` for the richer expense/cost
+surface.
+
+Petty cash is additive. It does not replace Finance expenses, vendor bills, or
+legacy service expense routes. Existing clients that do not create petty cash
+advances continue to use invoices, payments, expenses, vendor bills, and wallets
+without supplying petty cash fields.

@@ -31,6 +31,8 @@ class AuditLog(BaseModel):
         # Client / Lead
         ADD_CLIENT = "add_client", "Add Client"
         ADD_LEAD = "add_lead", "Add Lead"
+        # Finance
+        FINANCE_ACTION = "finance_action", "Finance Action"
 
     audit_type = models.CharField(
         max_length=100, choices=AuditType.choices, help_text="Audit type"

@@ -42,10 +42,27 @@ from domains.service_operations.api.v1 import (
 from domains.service_operations.api.v1 import (
     service_requests_router as svc_service_requests_router,
 )
+from finance.api.v1 import accounting as finance_accounting
+from finance.api.v1 import audit as finance_audit
 from finance.api.v1 import accounts as finance_accounts
+from finance.api.v1 import cash_flow as finance_cash_flow
+from finance.api.v1 import cashbook as finance_cashbook
+from finance.api.v1 import command_center as finance_command_center
+from finance.api.v1 import commissions as finance_commissions
+from finance.api.v1 import exceptions as finance_exceptions
+from finance.api.v1 import expenses as finance_finance_expenses
+from finance.api.v1 import fixed_assets as finance_fixed_assets
 from finance.api.v1 import invoices as finance_invoices
 from finance.api.v1 import payments as finance_payments
+from finance.api.v1 import payroll as finance_payroll
+from finance.api.v1 import petty_cash as finance_petty_cash
 from finance.api.v1 import receivables as finance_receivables
+from finance.api.v1 import reports as finance_reports
+from finance.api.v1 import service_orders as finance_service_orders
+from finance.api.v1 import settings as finance_settings
+from finance.api.v1 import statutory as finance_statutory
+from finance.api.v1 import vendors as finance_vendors
+from finance.api.v1 import wallets as finance_wallets
 from hr.api.v1.applicants import router as applicants_router
 from hr.api.v1.assets import router as assets_router
 from hr.api.v1.award import router as award_router
@@ -64,7 +81,6 @@ from hr.api.v1.training_programs import router as training_programs_router
 from hr.api.v1.work_reports import router as work_reports_router
 
 # Remaining legacy Services routers
-from services.api.v1 import budgets as svc_budgets
 from services.api.v1 import documents as svc_documents
 from services.api.v1 import expenses as svc_expenses
 from services.api.v1 import payments as svc_payments
@@ -197,7 +213,6 @@ api.add_router("/applicants", offer_letters_router)
 register_project_operations_v1(api)
 
 # === Services routers ===
-api.add_router("/budgets", svc_budgets.router)
 api.add_router("/categories", svc_categories_router)
 api.add_router("/content", svc_content_router)
 api.add_router("/documents", svc_documents.router)
@@ -220,10 +235,27 @@ api.add_router("/revenue-execution", svc_revenue_execution_router)
 api.add_router("/stats", svc_stats_router)
 
 # === Finance routers ===
+api.add_router("/finance", finance_accounting.router)
+api.add_router("/finance", finance_command_center.router)
+api.add_router("/finance", finance_settings.router)
+api.add_router("/finance", finance_reports.router)
+api.add_router("/finance", finance_exceptions.router)
+api.add_router("/finance", finance_audit.router)
+api.add_router("/finance", finance_fixed_assets.router)
 api.add_router("/finance", finance_invoices.router)
 api.add_router("/finance", finance_accounts.router)
+api.add_router("/finance", finance_cashbook.router)
+api.add_router("/finance", finance_cash_flow.router)
+api.add_router("/finance", finance_commissions.router)
+api.add_router("/finance", finance_finance_expenses.router)
 api.add_router("/finance", finance_payments.router)
+api.add_router("/finance", finance_payroll.router)
+api.add_router("/finance", finance_petty_cash.router)
 api.add_router("/finance", finance_receivables.router)
+api.add_router("/finance", finance_service_orders.router)
+api.add_router("/finance", finance_statutory.router)
+api.add_router("/finance", finance_vendors.router)
+api.add_router("/finance", finance_wallets.router)
 
 
 api.add_router("/sop/departments", dept_router)

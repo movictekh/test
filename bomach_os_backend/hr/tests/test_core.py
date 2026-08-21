@@ -1,5 +1,6 @@
-from django.test import TestCase
 from pydantic import ValidationError
+
+from django.test import TestCase
 
 from hr.api.schemas.asset import AssetCreate, AssetUpdate
 from hr.models.asset import Asset
