@@ -153,7 +153,7 @@ Soft-deletes by setting `is_active=False`. The rule is preserved but will not fi
 
 The engine is called from:
 - `services/utils/service_orders.py` — after order status changes
-- `services/api/v1/quotes.py` — after quote status changes
+- `domains/service_operations/api/v1/routers/quotes.py` — after quote status changes
 
 ## Example: Condition Evaluation
 

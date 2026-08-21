@@ -14,7 +14,7 @@ domains/service_operations/api/v1/routers/invoices.py
 The legacy router path is removed:
 
 ```text
-services/api/v1/invoices.py
+domains/service_operations/api/v1/routers/invoices.py
 ```
 
 This router represents the commercial/service lifecycle attached to Service Requests and

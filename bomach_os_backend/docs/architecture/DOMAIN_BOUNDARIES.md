@@ -45,7 +45,7 @@ Forbidden direction:
 ```text
 finance
   ↓
-services.api.v1.invoices
+domains.service_operations.api.v1.routers.invoices
 ```
 
 Acceptable transition:

@@ -1855,7 +1855,7 @@ class ServiceRequestAPITests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("required_approver_role_id", response.json()["detail"])
 
-    @patch("services.api.v1.quotes.send_mail")
+    @patch("domains.service_operations.api.v1.routers.quotes.send_mail")
     def test_quote_approval_sends_to_client_and_client_can_accept(self, send_mail_mock):
         service_request = self.create_admin_request()
         quoted_request = self.create_request_quote(service_request["id"])
@@ -1970,7 +1970,7 @@ class ServiceRequestAPITests(TestCase):
         self.assertEqual(response.status_code, 403)
         self.assertIn("different role", response.json()["detail"])
 
-    @patch("services.api.v1.quotes.send_mail")
+    @patch("domains.service_operations.api.v1.routers.quotes.send_mail")
     def test_rejected_quote_is_immutable_and_replacement_links_revision(
         self, send_mail_mock
     ):
@@ -2012,8 +2012,8 @@ class ServiceRequestAPITests(TestCase):
         self.assertEqual(replacement_detail.json()["previous_quote_id"], quote_id)
         self.assertEqual(replacement_detail.json()["version"], 2)
 
-    @patch("services.api.v1.invoices.send_mail")
-    @patch("services.api.v1.quotes.send_mail")
+    @patch("domains.service_operations.api.v1.routers.invoices.send_mail")
+    @patch("domains.service_operations.api.v1.routers.quotes.send_mail")
     def test_invoice_and_payment_flow_from_accepted_quote(
         self, quote_send_mail_mock, invoice_send_mail_mock
     ):
