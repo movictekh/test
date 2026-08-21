@@ -21,7 +21,7 @@ from finance.services import (
     handle_payment_exception,
 )
 from finance.services import review_payment_submission as review_submission_payment
-from services.api.schema.others import MessageSchema
+from shared.api.schema.others import MessageSchema
 from user.api.schemas.client_service import (
     PaymentSubmissionResponseSchema,
     ReviewPaymentSchema,

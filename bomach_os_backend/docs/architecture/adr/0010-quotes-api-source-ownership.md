@@ -14,7 +14,7 @@ domains/service_operations/api/v1/routers/quotes.py
 The legacy router path is removed:
 
 ```text
-services/api/v1/quotes.py
+domains/service_operations/api/v1/routers/quotes.py
 ```
 
 The global API composition root imports and registers the Quotes router directly from

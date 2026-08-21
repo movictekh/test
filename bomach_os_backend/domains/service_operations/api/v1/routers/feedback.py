@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404
 from ninja import Router
 
 from domains.service_operations.models import ClientFeedback
-from services.api.schema.others import MessageSchema
+from shared.api.schema.others import MessageSchema
 from user.utils.perm import require_permission
 
 from ..schemas.feedback import (

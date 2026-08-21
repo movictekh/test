@@ -75,7 +75,7 @@ from domains.marketing_sales.services.marketing import (
 from domains.marketing_sales.services.marketing import (
     _content_sync_media_to_campaign_asset as _sync_media_to_campaign_asset,
 )
-from services.api.schema.others import MessageSchema
+from shared.api.schema.others import MessageSchema
 from user.utils.perm import require_permission
 
 content_router = Router(tags=["Content"])
