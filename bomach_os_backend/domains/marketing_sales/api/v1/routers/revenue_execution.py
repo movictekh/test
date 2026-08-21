@@ -191,7 +191,7 @@ from domains.marketing_sales.services.sales import _revenue_open_day as _open_da
 from domains.marketing_sales.services.sales import (
     _revenue_seed_turnaround_actions as _seed_turnaround_actions,
 )
-from services.api.schema.others import MessageSchema
+from shared.api.schema.others import MessageSchema
 from user.models.role_targets import (
     EmployeeTarget,
     RoleTargetTemplate,

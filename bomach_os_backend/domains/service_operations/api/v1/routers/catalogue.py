@@ -19,7 +19,7 @@ from domains.service_operations.models import (
     ServiceWorkflow,
 )
 from domains.service_operations.services import catalogue as domain_services
-from services.api.schema.others import MessageSchema
+from shared.api.schema.others import MessageSchema
 from user.models.role import Role
 from user.utils.perm import require_permission
 
@@ -451,7 +451,7 @@ from ninja import Router
 from ninja.pagination import LimitOffsetPagination, paginate
 
 from domains.service_operations.models import ServiceCategory
-from services.api.schema.others import MessageSchema
+from shared.api.schema.others import MessageSchema
 from user.utils.perm import require_permission
 
 from ..schemas.lifecycle import ServiceCategoryIn, ServiceCategoryOut

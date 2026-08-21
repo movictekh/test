@@ -97,7 +97,7 @@ from domains.marketing_sales.selectors.marketing import (
 from domains.marketing_sales.services.marketing import (
     _campaign_apply_payload as _apply_payload,
 )
-from services.api.schema.others import MessageSchema
+from shared.api.schema.others import MessageSchema
 from user.models.branch import Branch
 from user.models.employee import Employee
 from user.utils.perm import require_permission

@@ -17,7 +17,7 @@ from domains.service_operations.models import (
     ServiceRequestActivity,
 )
 from domains.service_operations.services import quotes as quote_services
-from services.api.schema.others import MessageSchema
+from shared.api.schema.others import MessageSchema
 from user.utils.perm import require_permission, scope_queryset
 
 from ..schemas.lifecycle import (

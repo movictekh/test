@@ -24,7 +24,7 @@ from domains.service_operations.models import (
     ServiceWorkflowStage,
 )
 from domains.service_operations.services import catalogue as domain_services
-from services.api.schema.others import MessageSchema
+from shared.api.schema.others import MessageSchema
 from user.models.role import Role
 from user.utils.perm import require_permission
 
@@ -572,7 +572,7 @@ from ninja import Router
 from domains.service_operations import selectors as domain_selectors
 from domains.service_operations.models import Service, ServiceBranchActivation
 from domains.service_operations.services import catalogue as domain_services
-from services.api.schema.others import MessageSchema
+from shared.api.schema.others import MessageSchema
 from user.models.branch import Branch
 from user.utils.perm import require_permission
 

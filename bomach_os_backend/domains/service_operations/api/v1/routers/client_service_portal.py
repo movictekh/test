@@ -13,7 +13,7 @@ from domains.service_operations.models import Invoice
 from domains.service_operations.services import invoices as invoice_services
 from domains.service_operations.services import orders as order_services
 from domains.service_operations.services import quotes as quote_services
-from services.api.schema.others import MessageSchema
+from shared.api.schema.others import MessageSchema
 from user.api.schemas.client_service import (
     ClientInvoiceSchema,
     PaymentSubmissionCreateSchema,

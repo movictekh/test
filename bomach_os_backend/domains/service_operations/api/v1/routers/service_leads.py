@@ -7,7 +7,7 @@ from ninja import Router
 from ninja.pagination import LimitOffsetPagination, paginate
 
 from domains.service_operations.models import ServiceLead
-from services.api.schema.others import MessageSchema
+from shared.api.schema.others import MessageSchema
 from user.utils.perm import require_permission
 
 from ..schemas.lifecycle import ServiceLeadIn, ServiceLeadOut, ServiceLeadUpdate
