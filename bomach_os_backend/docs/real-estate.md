@@ -263,6 +263,6 @@ grants `brokerage`; granting it is a data change (role or migration), not code.
   is additive: creates the two brokerage tables, adds `plot_number` and
   `client_name` to `Property`, adds the `hold` status choice, and adds the
   `(estate, plot_number)` index. No existing field was renamed or removed.
-- Tests live in `user/tests/test_real_estate.py` (estate stats, layout,
-  quick-update, brokerage CRUD/verify/stats/choices, and permission
-  enforcement).
+- Real Estate tests live in `domains/real_estate/tests/`, including estate
+  stats/layout/quick-update, brokerage CRUD/verify/stats/choices and permission
+  enforcement, plus invoice approval/payment hardening coverage.

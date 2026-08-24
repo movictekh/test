@@ -2,8 +2,8 @@ from decimal import Decimal
 
 from django.test import TestCase
 
-from user.models import BrokerageListing, Estate, Property
-from user.models.employee import Employee
+from domains.real_estate.models.brokerage import BrokerageListing
+from domains.real_estate.models.estate import Estate, Property
 from user.tests.helpers import RoleAPITestMixin
 
 
