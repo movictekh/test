@@ -1,43 +1,10 @@
-import json
-import logging
 
-import requests
-from django.conf import settings
 from django.template.loader import render_to_string
-
-logger = logging.getLogger(__name__)
-
-ZEPTO_URL = "https://api.zeptomail.com/v1.1/email"
-FROM_ADDRESS = "noreply@bomachgroup.com"
-FROM_NAME = "Bomach OS"
+from system.messaging.email.providers.zeptomail import send_zepto_email as _send_zepto_email
 
 
-def _send_zepto_email(to_address, to_name, subject, html_content):
-    """Send a single email via Zoho ZeptoMail API."""
-    headers = {
-        "accept": "application/json",
-        "content-type": "application/json",
-        "authorization": settings.ZOHOZEPTOMAIL_KEY,
-    }
-    payload = {
-        "from": {"address": FROM_ADDRESS, "name": FROM_NAME},
-        "to": [
-            {
-                "email_address": {
-                    "address": to_address,
-                    "name": to_name or to_address.split("@")[0],
-                }
-            }
-        ],
-        "subject": subject,
-        "htmlbody": html_content,
-    }
-    response = requests.post(ZEPTO_URL, data=json.dumps(payload), headers=headers)
-    if not response.ok:
-        logger.warning(
-            "ZeptoMail API error (%s): %s", response.status_code, response.text
-        )
-    return response
+
+
 
 
 def _chunk_list(lst, size):
