@@ -29,7 +29,7 @@ from domains.real_estate.services.invoices import (
     update_estate_invoice,
 )
 from user.utils.perm import require_permission
-from user.utils.send_email import send_invoice_email
+from domains.real_estate.email import send_invoice_email
 
 estate_invoice_api = Router(tags=["Estate Property Invoices"])
 logger = logging.getLogger(__name__)

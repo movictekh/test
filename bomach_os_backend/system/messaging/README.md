@@ -48,3 +48,29 @@ so it imports the generic service directly while preserving the local
 The Phase 1 private `_send_zepto_email` compatibility alias remains available.
 Direct Django `send_mail()` users are still unchanged; transport convergence is
 deliberately deferred.
+
+## Email — Phase 3
+
+Business email composition now starts moving out of the legacy
+`user.utils.send_email` catch-all and into the domain that owns the business
+meaning.
+
+This phase moves the clearest ownership cases:
+
+- Real Estate invoice composition -> `domains.real_estate.email`
+- Project Operations task-assignment composition ->
+  `domains.project_operations.email`
+
+Those domain modules depend on
+`system.messaging.email.services.send_email()` and do not import the ZeptoMail
+provider directly.
+
+The existing Real Estate and Project Operations callers now import their
+domain-owned functions directly. `user.utils.send_email` keeps compatibility
+re-exports so older imports continue to resolve to the same canonical function
+objects.
+
+Authentication/2FA, employee/client/associate onboarding, shareholder access,
+and the generic custom-email helper intentionally remain in the legacy module
+until their owning Identity, People, and Organization boundaries are handled.
+Direct Django `send_mail()` paths are still outside this phase.
