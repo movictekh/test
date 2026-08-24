@@ -106,3 +106,24 @@ is removed.
 This phase does not switch Django-mail flows to ZeptoMail and does not merge
 plain-text and HTML composition. It centralizes ownership while preserving both
 existing transport semantics.
+
+## Email — Phase 5
+
+Service Operations API routers no longer carry duplicate, unreachable email
+composition.
+
+The invoice router's private `_client_email()`, `_portal_invoice_url()`, and
+`_send_invoice_email()` helpers were dead because the send endpoint already
+delegates to `domains.service_operations.services.invoices.send_invoice()`.
+
+The quote router's private `_client_email()`, `_portal_quote_url()`, and
+`_send_quote_email()` helpers were likewise dead because quote approval already
+delegates to `domains.service_operations.services.quotes.approve_quote()`.
+
+Their router-only `settings` and `send_mail` imports were removed with those
+dead clusters. Active Service Operations email composition remains in the
+service layer and still uses
+`system.messaging.email.services.send_text_email()`.
+
+No email subject, body, recipient, transport, route, permission, or state
+transition changes in this phase.

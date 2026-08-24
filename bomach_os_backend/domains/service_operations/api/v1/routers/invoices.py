@@ -1,8 +1,6 @@
 from typing import List, Optional
 
-from django.conf import settings
 from django.core.exceptions import ValidationError
-from system.messaging.email.services import send_text_email as send_mail
 from django.db import IntegrityError
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
@@ -87,53 +85,6 @@ def _log_request_activity(
         note=note,
         next_action=next_action,
         created_by=created_by,
-    )
-
-
-def _client_email(invoice):
-    if invoice.service_request and invoice.service_request.contact_email:
-        return invoice.service_request.contact_email
-    return invoice.client.user.email
-
-
-def _portal_invoice_url(invoice):
-    base_url = getattr(settings, "FRONTEND_PRODUCTION_DOMAIN", "").strip().split()
-    if not base_url:
-        return ""
-    url = base_url[0]
-    if not url.startswith(("http://", "https://")):
-        url = f"https://{url}"
-    return f"{url.rstrip('/')}/service-requests/invoices/{invoice.id}"
-
-
-def _send_invoice_email(invoice):
-    recipient = _client_email(invoice)
-    if not recipient:
-        raise ValidationError("Client email is not available.")
-
-    portal_url = _portal_invoice_url(invoice)
-    body = (
-        f"Hello {invoice.client.user.get_full_name() or invoice.client.user.email},\n\n"
-        f"Invoice {invoice.invoice_number} for {invoice.service.name} has been issued.\n\n"
-        f"Total: {invoice.total_amount}\n"
-        f"Amount paid: {invoice.amount_paid}\n"
-        f"Balance: {invoice.balance}\n"
-        f"Due date: {invoice.due_date}\n"
-    )
-    if invoice.activation_threshold_amount:
-        body += f"Required mobilisation/payment threshold: {invoice.activation_threshold_amount}\n"
-    if invoice.payment_instructions:
-        body += f"\nPayment instructions:\n{invoice.payment_instructions}\n"
-    if portal_url:
-        body += f"\nView and pay this invoice here: {portal_url}\n"
-    body += "\nBomach Group"
-
-    send_mail(
-        subject=f"Invoice {invoice.invoice_number} from Bomach Group",
-        message=body,
-        from_email=getattr(settings, "DEFAULT_FROM_EMAIL", None),
-        recipient_list=[recipient],
-        fail_silently=False,
     )
 
 
