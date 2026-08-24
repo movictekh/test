@@ -2,7 +2,7 @@
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.mail import send_mail
+from system.messaging.email.services import send_text_email as send_mail
 from django.db import transaction
 
 from domains.service_operations.models import Invoice, InvoiceItem

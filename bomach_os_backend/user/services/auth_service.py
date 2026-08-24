@@ -6,7 +6,6 @@ from typing import Dict, Optional, Tuple
 import jwt as pyjwt
 from django.conf import settings
 from django.contrib.auth import authenticate
-from django.core.mail import send_mail
 
 from user.models import OTPCode, User
 from user.utils.send_email import send_email_util, send_two_factor_code_email

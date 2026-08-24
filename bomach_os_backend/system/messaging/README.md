@@ -74,3 +74,35 @@ Authentication/2FA, employee/client/associate onboarding, shareholder access,
 and the generic custom-email helper intentionally remain in the legacy module
 until their owning Identity, People, and Organization boundaries are handled.
 Direct Django `send_mail()` paths are still outside this phase.
+
+## Email — Phase 4
+
+The remaining direct `django.core.mail.send_mail()` dependency is now owned by
+System Messaging without changing the underlying transport behavior.
+
+`system.messaging.email.providers.django_mail.send_django_mail()` is a thin
+adapter around Django's configured email backend, and
+`system.messaging.email.services.send_text_email()` is the application-facing
+plain-text service boundary.
+
+The dependency direction for these existing plain-text flows is now:
+
+```text
+Service Operations / Finance composition
+    -> system.messaging.email.services.send_text_email
+    -> system.messaging.email.providers.django_mail.send_django_mail
+    -> django.core.mail.send_mail
+```
+
+Existing Service Operations quote/invoice messages and Finance receivables
+reminders keep their current subjects, bodies, sender lookup, recipient lists,
+exception behavior, and configured Django email backend. Their local
+`send_mail` symbol is retained as an alias to `send_text_email` so function
+bodies and existing patch points remain stable.
+
+The unused `django.core.mail.send_mail` import in `user.services.auth_service`
+is removed.
+
+This phase does not switch Django-mail flows to ZeptoMail and does not merge
+plain-text and HTML composition. It centralizes ownership while preserving both
+existing transport semantics.
