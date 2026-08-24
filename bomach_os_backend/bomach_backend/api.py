@@ -115,7 +115,7 @@ from user.api.v1.employee import router as employee_router
 from user.api.v1.event import events_api as events_router
 from user.api.v1.loan import loan_api as loan_router
 from user.api.v1.meeting import meeting_api as meeting_router
-from user.api.v1.notification import notification_router
+from system.notifications.api.v1 import notification_router
 from user.api.v1.others import orthers_api as orthers_router
 from user.api.v1.partner import partner_api as partner_router
 from user.api.v1.policy import policy_api as policy_router

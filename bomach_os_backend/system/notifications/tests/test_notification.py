@@ -3,7 +3,7 @@ import json
 from django.test import TestCase
 
 from user.models.employee import Employee
-from user.models.notification import Notification
+from system.notifications.models import Notification
 from user.models.role import Role
 from user.models.user import User
 from user.services.jwt_service import JWTService

@@ -1,19 +1,3 @@
-from datetime import datetime
-from typing import Optional
-
-from ninja import Schema
-
-
-class NotificationOut(Schema):
-    id: int
-    title: str
-    message: str
-    notification_type: str
-    is_read: bool
-    link: str = ""
-    metadata: dict = {}
-    created_at: datetime
-
-
-class NotificationStats(Schema):
-    unread_count: int
+"""Compatibility exports for System Notifications API schemas."""
+from system.notifications.api.v1.schemas import NotificationOut, NotificationStats
+__all__ = ["NotificationOut", "NotificationStats"]
