@@ -12,6 +12,14 @@ from domains.marketing_sales.api.v1 import (
     revenue_execution_router as svc_revenue_execution_router,
 )
 
+# Real Estate API v1
+from domains.real_estate.api.v1 import (
+    brokerage_api as brokerage_router,
+    cart_api as cart_router,
+    estate_api as estate_router,
+    estate_invoice_api as estate_invoice_router,
+)
+
 # Project Operations API v1
 from domains.project_operations.api.v1 import register_project_operations_v1
 
@@ -94,8 +102,6 @@ from user.api.v1.auth import auth_api as auth_router
 from user.api.v1.biometric import biometric_api as biometric_router
 from user.api.v1.board_resolution import board_resolution_api as board_resolution_router
 from user.api.v1.branch import branch_api as branch_router
-from user.api.v1.brokerage import brokerage_api as brokerage_router
-from user.api.v1.cart import cart_api as cart_router
 from user.api.v1.cases import cases_api as cases_router
 from user.api.v1.client_inventory import inventory_api as inventory_router
 from user.api.v1.client_service import client_service_api as client_service_router
@@ -106,10 +112,6 @@ from user.api.v1.compliance import compliance_api as compliance_router
 from user.api.v1.dashboard import employee_dashboard_api as employee_dashboard_router
 from user.api.v1.drawing_bank import drawing_bank_api as drawing_bank_router
 from user.api.v1.employee import router as employee_router
-from user.api.v1.estate import estate_api as estate_router
-from user.api.v1.estate_property_invoice import (
-    estate_invoice_api as estate_invoice_router,
-)
 from user.api.v1.event import events_api as events_router
 from user.api.v1.loan import loan_api as loan_router
 from user.api.v1.meeting import meeting_api as meeting_router
