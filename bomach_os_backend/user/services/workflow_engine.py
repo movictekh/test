@@ -41,7 +41,7 @@ def _evaluate_conditions(conditions, instance):
 
 def _execute_notification(action_config, trigger_event, instance):
     """Create Notification records for specified recipients."""
-    from user.models.notification import Notification
+    from system.notifications.services import notify_users
 
     recipient_ids = action_config.get("recipient_ids", [])
     title = action_config.get("title", f"Workflow: {trigger_event}")
@@ -49,19 +49,18 @@ def _execute_notification(action_config, trigger_event, instance):
         "message", f"An automated action was triggered by {trigger_event}."
     )
 
-    for user_id in recipient_ids:
-        Notification.objects.create(
-            user_id=user_id,
-            title=title,
-            message=message,
-            notification_type="system",
-            link=action_config.get("link", ""),
-            metadata={
-                "trigger_event": trigger_event,
-                "object_type": type(instance).__name__,
-                "object_id": instance.pk,
-            },
-        )
+    notify_users(
+        user_ids=recipient_ids,
+        title=title,
+        message=message,
+        notification_type="system",
+        link=action_config.get("link", ""),
+        metadata={
+            "trigger_event": trigger_event,
+            "object_type": type(instance).__name__,
+            "object_id": instance.pk,
+        },
+    )
 
 
 def evaluate_workflow_rules(trigger_event, instance):
