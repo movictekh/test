@@ -1,13 +1,11 @@
 from typing import List, Optional
 
 from django.core.exceptions import ValidationError
-from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from ninja import Query, Router
 from ninja.pagination import LimitOffsetPagination, paginate
 
-import user
 from domains.real_estate.api.v1.schemas.estate_property_invoice import (
     ApprovalDecisionSchema,
     EstateInvoiceChoicesSchema,
@@ -17,6 +15,11 @@ from domains.real_estate.api.v1.schemas.estate_property_invoice import (
     RecordPaymentSchema,
 )
 from shared.api.schema.others import MessageSchema
+from domains.real_estate.selectors.invoices import (
+    get_estate_invoice as select_estate_invoice,
+    list_estate_invoices,
+    list_pending_estate_invoice_approvals,
+)
 from domains.real_estate.models.estate import Property
 from domains.real_estate.models.estate_property_invoice import (
     EstatePropertyInvoice,
@@ -24,7 +27,7 @@ from domains.real_estate.models.estate_property_invoice import (
     InvoiceApproval,
 )
 from user.models.user import User
-from user.utils.perm import require_permission, scope_queryset
+from user.utils.perm import require_permission
 from user.utils.send_email import send_invoice_email
 
 estate_invoice_api = Router(tags=["Estate Property Invoices"])
@@ -61,30 +64,13 @@ def list_invoices(
     client_id: Optional[int] = Query(None),
     search: Optional[str] = Query(None),
 ):
-    """List all estate property invoices with filtering and search."""
-    invoices = EstatePropertyInvoice.objects.select_related(
-        "client", "created_by"
-    ).all()
-
-    if status:
-        invoices = invoices.filter(status=status)
-    if invoice_type:
-        invoices = invoices.filter(invoice_type=invoice_type)
-    if client_id:
-        invoices = invoices.filter(client_id=client_id)
-    if search:
-        invoices = invoices.filter(
-            Q(invoice_number__icontains=search) | Q(notes__icontains=search)
-        )
-
-    invoices = scope_queryset(
-        request,
-        invoices,
-        owner_field="created_by",
-        branch_field="created_by__employee_profile__branch",
+    return list_estate_invoices(
+        request=request,
+        status=status,
+        invoice_type=invoice_type,
+        client_id=client_id,
+        search=search,
     )
-
-    return invoices.order_by("-created_at")
 
 
 @estate_invoice_api.get("/pending-approvals", response=List[InvoiceSchema])
@@ -94,29 +80,10 @@ def list_pending_approvals(
     request,
     search: Optional[str] = Query(None),
 ):
-    """List invoices pending the current user's approval.
-
-    Returns invoices where the current user is either:
-    - Specifically assigned to a pending approval step, OR
-    - Has the required level for a pending approval step (when no specific user is assigned)
-      and all previous steps are already approved.
-    """
-    user = request.user
-
-    # Invoices where the user is specifically assigned to a pending step
-    assigned_invoices = EstatePropertyInvoice.objects.filter(
-        approvals__assigned_to=user,
-        approvals__decision="pending",
+    return list_pending_estate_invoice_approvals(
+        user=request.user,
+        search=search,
     )
-
-    invoices = assigned_invoices.distinct().select_related("client", "created_by")
-
-    if search:
-        invoices = invoices.filter(
-            Q(invoice_number__icontains=search) | Q(notes__icontains=search)
-        )
-
-    return invoices.order_by("-created_at")
 
 
 @estate_invoice_api.get(
@@ -124,14 +91,8 @@ def list_pending_approvals(
 )
 @require_permission("estate_invoices", "view")
 def get_invoice(request, invoice_id: int):
-    """Get a specific estate property invoice by ID."""
     try:
-        invoice = (
-            EstatePropertyInvoice.objects.select_related("client", "created_by")
-            .prefetch_related("estate_invoice_items__property__estate")
-            .get(id=invoice_id)
-        )
-        return 200, invoice
+        return 200, select_estate_invoice(invoice_id)
     except EstatePropertyInvoice.DoesNotExist:
         return 404, {"detail": "Invoice not found"}
 
