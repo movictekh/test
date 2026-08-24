@@ -24,6 +24,7 @@ from .core import (
     reject_payment_submission,
     review_payment_submission,
     handle_payment_exception,
+    resolve_receipt_finance_account,
 )
 
 from .accounting import (
@@ -42,6 +43,7 @@ from .accounting import (
     post_vendor_bill_payment_journal,
     reverse_journal_entry,
     update_manual_journal,
+    post_external_receipt_journal,
 )
 
 from .reconciliation import (
@@ -129,6 +131,7 @@ __all__ = [
     "post_vendor_bill_payment_journal",
     "reverse_journal_entry",
     "update_manual_journal",
+    "post_external_receipt_journal",
     "validation_detail",
     "log_request_activity",
     "get_active_finance_account",
@@ -154,6 +157,7 @@ __all__ = [
     "reject_payment_submission",
     "review_payment_submission",
     "handle_payment_exception",
+    "resolve_receipt_finance_account",
     "refresh_payroll_line_totals",
     "refresh_payroll_run_totals",
     "calculate_payroll_run",

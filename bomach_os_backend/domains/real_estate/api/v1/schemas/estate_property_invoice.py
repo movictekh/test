@@ -50,7 +50,9 @@ class InvoiceItemSchema(Schema):
 
     @staticmethod
     def resolve_estate_name(obj):
-        return obj.property.estate.estate_name
+        if obj.property.estate:
+            return obj.property.estate.estate_name
+        return ""
 
 
 # ============== Invoice Schemas ==============
@@ -195,3 +197,6 @@ class ApprovalDecisionSchema(Schema):
 
 class RecordPaymentSchema(Schema):
     amount: Decimal
+    finance_account_id: Optional[int] = None
+    payment_date: Optional[date] = None
+    payment_reference: Optional[str] = ""

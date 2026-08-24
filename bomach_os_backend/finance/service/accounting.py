@@ -943,3 +943,132 @@ def post_opening_balance_journal(finance_account, created_by=None):
         branch=finance_account.branch,
         created_by=created_by,
     )
+
+
+def _get_real_estate_revenue_account():
+    try:
+        return LedgerAccount.objects.get(
+            code="4200",
+            account_type=LedgerAccount.ACCOUNT_TYPE.REVENUE,
+            normal_balance=LedgerAccount.NORMAL_BALANCE.CREDIT,
+            is_active=True,
+            is_postable=True,
+        )
+    except LedgerAccount.DoesNotExist as exc:
+        raise ValidationError(
+            "Real Estate Revenue ledger account 4200 is not configured."
+        ) from exc
+
+
+def post_external_receipt_journal(
+    *,
+    source_type,
+    source_id,
+    source_event,
+    finance_account,
+    amount,
+    total_due,
+    total_tax,
+    prior_paid,
+    entry_date,
+    reference,
+    memo,
+    branch,
+    created_by,
+    revenue_account_code="4200",
+):
+    """Post an idempotent cash-basis receipt journal for a non-Service invoice."""
+    total = money(amount)
+    if total <= ZERO:
+        raise ValidationError("Receipt amount must be greater than zero.")
+
+    existing = JournalEntry.objects.filter(
+        source_type=source_type,
+        source_id=str(source_id),
+        source_event=source_event,
+    ).first()
+    if existing:
+        if money(existing.total_debit) != total:
+            raise ValidationError(
+                "This payment reference was already recorded with a different amount."
+            )
+        return existing, False
+
+    cash = ensure_finance_account_ledger_account(finance_account, created_by)
+    if revenue_account_code == "4200":
+        revenue = _get_real_estate_revenue_account()
+    else:
+        try:
+            revenue = LedgerAccount.objects.get(
+                code=revenue_account_code,
+                account_type=LedgerAccount.ACCOUNT_TYPE.REVENUE,
+                normal_balance=LedgerAccount.NORMAL_BALANCE.CREDIT,
+                is_active=True,
+                is_postable=True,
+            )
+        except LedgerAccount.DoesNotExist as exc:
+            raise ValidationError(
+                f"Revenue ledger account {revenue_account_code} is unavailable."
+            ) from exc
+
+    statutory = get_system_ledger_account(LedgerAccount.SYSTEM_ROLE.STATUTORY_PAYABLE)
+    due = money(total_due)
+    tax_due = money(total_tax)
+    paid_before = money(prior_paid)
+    if total > money(due - paid_before):
+        raise ValidationError("Receipt amount exceeds the outstanding balance.")
+
+    tax_component = ZERO
+    if due and tax_due:
+        prior_basis = min(paid_before, due)
+        cumulative_basis = min(money(paid_before + total), due)
+        prior_tax_target = money(prior_basis * tax_due / due)
+        cumulative_tax_target = (
+            tax_due
+            if cumulative_basis >= due
+            else money(cumulative_basis * tax_due / due)
+        )
+        tax_component = max(ZERO, money(cumulative_tax_target - prior_tax_target))
+        tax_component = min(tax_component, total)
+
+    revenue_component = money(total - tax_component)
+    lines = [
+        {
+            "ledger_account_id": cash.id,
+            "debit": total,
+            "credit": ZERO,
+            "description": memo,
+        }
+    ]
+    if revenue_component:
+        lines.append(
+            {
+                "ledger_account_id": revenue.id,
+                "debit": ZERO,
+                "credit": revenue_component,
+                "description": memo,
+            }
+        )
+    if tax_component:
+        lines.append(
+            {
+                "ledger_account_id": statutory.id,
+                "debit": ZERO,
+                "credit": tax_component,
+                "description": f"Tax component: {memo}",
+            }
+        )
+
+    return _create_posted_source_journal(
+        entry_date=entry_date,
+        currency=finance_account.currency,
+        lines=lines,
+        entry_type=JournalEntry.ENTRY_TYPE.AUTOMATIC,
+        source_type=source_type,
+        source_id=source_id,
+        source_event=source_event,
+        reference=(reference or "")[:120],
+        memo=memo,
+        branch=branch,
+        created_by=created_by,
+    )

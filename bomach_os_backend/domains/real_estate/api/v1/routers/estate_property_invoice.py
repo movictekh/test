@@ -1,8 +1,7 @@
+import logging
 from typing import List, Optional
 
 from django.core.exceptions import ValidationError
-from django.shortcuts import get_object_or_404
-from django.utils import timezone
 from ninja import Query, Router
 from ninja.pagination import LimitOffsetPagination, paginate
 
@@ -20,17 +19,41 @@ from domains.real_estate.selectors.invoices import (
     list_estate_invoices,
     list_pending_estate_invoice_approvals,
 )
-from domains.real_estate.models.estate import Property
-from domains.real_estate.models.estate_property_invoice import (
-    EstatePropertyInvoice,
-    EstatePropertyInvoiceItem,
-    InvoiceApproval,
+from domains.real_estate.models.estate_property_invoice import EstatePropertyInvoice
+from domains.real_estate.services.invoices import (
+    create_estate_invoice,
+    decide_estate_invoice_approval,
+    delete_estate_invoice,
+    record_estate_invoice_payment,
+    submit_estate_invoice,
+    update_estate_invoice,
 )
-from user.models.user import User
 from user.utils.perm import require_permission
 from user.utils.send_email import send_invoice_email
 
 estate_invoice_api = Router(tags=["Estate Property Invoices"])
+logger = logging.getLogger(__name__)
+
+
+def _validation_message(exc):
+    if hasattr(exc, "message_dict"):
+        return "; ".join(
+            f"{field}: {', '.join(messages)}"
+            for field, messages in exc.message_dict.items()
+        )
+    if getattr(exc, "messages", None):
+        return exc.messages[0]
+    return str(exc)
+
+
+def _send_invoice_email_safely(invoice):
+    try:
+        send_invoice_email(invoice.client.email, invoice.client.first_name, invoice)
+    except Exception:
+        logger.exception(
+            "Failed to email approved Real Estate invoice %s",
+            invoice.invoice_number,
+        )
 
 
 # ============== Choices ==============
@@ -100,119 +123,10 @@ def get_invoice(request, invoice_id: int):
 @estate_invoice_api.post("/", response={201: InvoiceSchema, 400: MessageSchema})
 @require_permission("estate_invoices", "create")
 def create_invoice(request, payload: InvoiceCreateSchema):
-    """Create a new estate property invoice with optional items and approvers.
-
-    If `approvers` is provided, the invoice is created as 'draft' and approval
-    steps are automatically created for each specified approver. Each approver
-    entry requires: user_id, step (order), and step_name.
-
-    If no approvers are provided and invoice_type is 'full-payment', the invoice
-    is sent directly to the client.
-    """
     try:
-        client = get_object_or_404(User, id=payload.client_id)
-        props_list = []
-        for item_data in payload.items:
-            prop = get_object_or_404(Property, id=item_data.property_id)
-            props_list.append(prop)
-
-            if prop.status in {"sold", "reserved", "not-for-sale"}:
-                return 400, {
-                    "detail": f"Property '{prop.property_name}' is not available for sale."
-                }
-
-        data = payload.dict(exclude={"client_id", "items", "approvers"})
-        data = {k: v for k, v in data.items() if v is not None}
-
-        status = "sent" if payload.invoice_type == "full-payment" else "draft"
-
-        invoice = EstatePropertyInvoice.objects.create(
-            **data,
-            client=client,
-            created_by=request.user,
-            status=status,
-        )
-
-        # Create invoice items (properties)
-        for prop in props_list:
-            EstatePropertyInvoiceItem.objects.create(
-                invoice=invoice,
-                property=prop,
-                description=item_data.description or "",
-                unit_price=item_data.unit_price or prop.price,
-                quantity=item_data.quantity,
-            )
-
-        # Recalculate subtotal from items
-        if payload.items:
-            invoice.recalculate_subtotal()
-
-        invoice.generate_payment_details()
-
-        # Create approval steps
-        creator_employee = request.user.employee_profile
-        creator_branch = creator_employee.branch
-
-        # Step 1: Find a manager in the same branch (by reporting structure)
-        manager_qs = User.objects.filter(
-            employee_profile__employment_status="active",
-            employee_profile__role__isnull=False,
-        )
-        if creator_branch:
-            manager_qs = manager_qs.filter(employee_profile__branch=creator_branch)
-        # Prefer the creator's direct manager if available
-        if creator_employee.reporting_to:
-            approver_manager = creator_employee.reporting_to.user
-        else:
-            approver_manager = manager_qs.exclude(id=request.user.id).first()
-        if not approver_manager:
-            return 400, {
-                "detail": "No active manager found in your branch to approve this invoice."
-            }
-
-        # Step 2: Find a company-wide approver (role with no branch restriction)
-        from user.models.role import Role
-
-        company_wide_roles = Role.objects.filter(branches__isnull=True).exclude(
-            branches__isnull=False
-        )
-        approver_ceo = (
-            User.objects.filter(
-                employee_profile__role__in=company_wide_roles,
-                employee_profile__employment_status="active",
-            )
-            .exclude(id=approver_manager.id)
-            .first()
-        )
-        if not approver_ceo:
-            return 400, {
-                "detail": "No company-wide approver found to approve this invoice."
-            }
-
-        InvoiceApproval.objects.create(
-            invoice=invoice,
-            step=1,
-            step_name="Manager Approval",
-            assigned_to=approver_manager,
-        )
-
-        InvoiceApproval.objects.create(
-            invoice=invoice,
-            step=2,
-            step_name="Final Approval",
-            assigned_to=approver_ceo,
-        )
-
-        invoice.refresh_from_db()
-
-        # Only send email if no approval needed and full-payment
-        if payload.invoice_type == "full-payment":
-            send_invoice_email(invoice.client.email, invoice.client.first_name, invoice)
-
-        return 201, invoice
-
+        return 201, create_estate_invoice(created_by=request.user, payload=payload)
     except ValidationError as e:
-        return 400, {"detail": e.messages[0] if hasattr(e, "messages") else str(e)}
+        return 400, {"detail": _validation_message(e)}
     except Exception as e:
         return 400, {"detail": str(e)}
 
@@ -223,43 +137,30 @@ def create_invoice(request, payload: InvoiceCreateSchema):
 )
 @require_permission("estate_invoices", "update")
 def update_invoice(request, invoice_id: int, payload: InvoiceUpdateSchema):
-    """Update an existing estate property invoice."""
     try:
-        invoice = get_object_or_404(EstatePropertyInvoice, id=invoice_id)
-        if invoice.status != "draft":
-            return 400, {"detail": "You can only update a draft invoice."}
-
-        update_data = payload.dict(exclude_unset=True)
-
-        for field, value in update_data.items():
-            if value is not None:
-                setattr(invoice, field, value)
-
-        invoice.save()
-        invoice.refresh_from_db()
-        return 200, invoice
-
+        invoice = EstatePropertyInvoice.objects.get(id=invoice_id)
+        return 200, update_estate_invoice(invoice, payload)
+    except EstatePropertyInvoice.DoesNotExist:
+        return 404, {"detail": "Invoice not found"}
     except ValidationError as e:
-        return 400, {"detail": e.messages[0] if hasattr(e, "messages") else str(e)}
+        return 400, {"detail": _validation_message(e)}
     except Exception as e:
         return 400, {"detail": str(e)}
 
 
 @estate_invoice_api.delete(
-    "/{invoice_id}", response={200: MessageSchema, 404: MessageSchema}
+    "/{invoice_id}", response={200: MessageSchema, 400: MessageSchema, 404: MessageSchema}
 )
 @require_permission("estate_invoices", "delete")
 def delete_invoice(request, invoice_id: int):
-    """Delete an estate property invoice."""
     try:
-        invoice = get_object_or_404(EstatePropertyInvoice, id=invoice_id)
-
-        if invoice.status != "draft":
-            return 400, {"detail": "You can only delete a draft invoice."}
-
-        invoice.delete()
+        invoice = EstatePropertyInvoice.objects.get(id=invoice_id)
+        delete_estate_invoice(invoice)
         return 200, {"detail": "Invoice deleted successfully"}
-
+    except EstatePropertyInvoice.DoesNotExist:
+        return 404, {"detail": "Invoice not found"}
+    except ValidationError as e:
+        return 400, {"detail": _validation_message(e)}
     except Exception as e:
         return 400, {"detail": str(e)}
 
@@ -274,37 +175,13 @@ def delete_invoice(request, invoice_id: int):
 )
 @require_permission("estate_invoices", "submit_for_approval")
 def submit_for_approval(request, invoice_id: int):
-    """Submit a draft invoice for approval. Creates the 2-step approval chain."""
     try:
-        invoice = get_object_or_404(EstatePropertyInvoice, id=invoice_id)
-
-        if invoice.status != "draft":
-            return 400, {"detail": "Only draft invoices can be submitted for approval."}
-
-        if invoice.estate_invoice_items.count() == 0:
-            return 400, {"detail": "Cannot submit an invoice with no items."}
-
-        # Prevent duplicate submissions
-        if invoice.approvals.exists():
-            return 400, {"detail": "Invoice has already been submitted for approval."}
-
-        # Create the two approval steps
-        InvoiceApproval.objects.create(
-            invoice=invoice,
-            step=1,
-            step_name="Manager Approval",
-        )
-        InvoiceApproval.objects.create(
-            invoice=invoice,
-            step=2,
-            step_name="Final Approval",
-        )
-
-        invoice.status = "draft"  # remains draft until fully approved
-        invoice.save(update_fields=["status", "updated_at"])
-        invoice.refresh_from_db()
-        return 200, invoice
-
+        invoice = EstatePropertyInvoice.objects.get(id=invoice_id)
+        return 200, submit_estate_invoice(invoice, submitted_by=request.user)
+    except EstatePropertyInvoice.DoesNotExist:
+        return 404, {"detail": "Invoice not found"}
+    except ValidationError as e:
+        return 400, {"detail": _validation_message(e)}
     except Exception as e:
         return 400, {"detail": str(e)}
 
@@ -317,57 +194,22 @@ def submit_for_approval(request, invoice_id: int):
 def decide_approval(
     request, invoice_id: int, step: int, payload: ApprovalDecisionSchema
 ):
-    """Approve or reject an approval step. Manager handles step 1, CEO handles step 2."""
     try:
-
-        invoice = get_object_or_404(EstatePropertyInvoice, id=invoice_id)
-
-        if invoice.status == "cancelled":
-            return 400, {"detail": "Cannot act on a cancelled invoice."}
-
-        approval = get_object_or_404(InvoiceApproval, invoice=invoice, step=step)
-
-        if approval.decision != "pending":
-            return 400, {"detail": f"Step {step} has already been decided."}
-
-        # Ensure previous steps are approved before this one
-        if step > 1:
-            previous = InvoiceApproval.objects.filter(
-                invoice=invoice, step=step - 1
-            ).first()
-            if not previous or previous.decision != "approved":
-                return 400, {"detail": "Previous approval step must be approved first."}
-
-        # Check the user is authorized to decide this step
-        if approval.assigned_to and approval.assigned_to != request.user:
-            return 400, {
-                "detail": f"This approval step is assigned to {approval.assigned_to.get_full_name() or approval.assigned_to}. Only they can decide it."
-            }
-
-        # Record the decision
-        approval.decision = payload.decision
-        approval.decided_by = request.user
-        approval.decided_at = timezone.now()
-        approval.comment = payload.comment or ""
-        approval.save()
-
-        # Handle rejection — mark invoice cancelled
-        if payload.decision == "rejected":
-            invoice.status = "cancelled"
-            invoice.save(update_fields=["status", "updated_at"])
-            invoice.refresh_from_db()
-            return 200, invoice
-
-        # If approved and this is the last step, mark invoice as 'sent' and email client
-        all_approved = not invoice.approvals.filter(decision="pending").exists()
-        if all_approved:
-            invoice.status = "sent"
-            invoice.save(update_fields=["status", "updated_at"])
-            send_invoice_email(invoice.client.email, invoice.client.first_name, invoice)
-
-        invoice.refresh_from_db()
+        invoice = EstatePropertyInvoice.objects.get(id=invoice_id)
+        invoice, should_email = decide_estate_invoice_approval(
+            invoice,
+            step=step,
+            decision=payload.decision,
+            comment=payload.comment or "",
+            decided_by=request.user,
+        )
+        if should_email:
+            _send_invoice_email_safely(invoice)
         return 200, invoice
-
+    except EstatePropertyInvoice.DoesNotExist:
+        return 404, {"detail": "Invoice not found"}
+    except ValidationError as e:
+        return 400, {"detail": _validation_message(e)}
     except Exception as e:
         return 400, {"detail": str(e)}
 
@@ -381,44 +223,20 @@ def decide_approval(
 )
 @require_permission("estate_invoices", "record_payment")
 def record_payment(request, invoice_id: int, payload: RecordPaymentSchema):
-    """Record a client payment (partial or full). Updates amount_paid on the invoice."""
     try:
-        invoice = get_object_or_404(EstatePropertyInvoice, id=invoice_id)
-
-        if invoice.status not in ("sent", "partially_paid"):
-            return 400, {
-                "detail": f"Payments can only be recorded on sent or partially paid invoices. Current status: '{invoice.status}'."
-            }
-
-        if payload.amount <= 0:
-            return 400, {"detail": "Payment amount must be greater than zero."}
-
-        invoice.amount_paid += payload.amount
-
-        if invoice.amount_paid >= invoice.total_amount:
-            invoice.status = "paid"
-            invoice.payment_completed_date = timezone.now().date()
-
-            # the property should now be assigned to the client and marked as sold
-            for item in invoice.estate_invoice_items.select_related("property").all():
-                prop = item.property
-                prop.owner = invoice.client
-                prop.status = "sold"
-                prop.save(update_fields=["owner", "status", "updated_at"])
-
-        else:
-            invoice.status = "partially_paid"
-
-        invoice.save(
-            update_fields=[
-                "amount_paid",
-                "status",
-                "payment_completed_date",
-                "updated_at",
-            ]
+        invoice = EstatePropertyInvoice.objects.get(id=invoice_id)
+        invoice = record_estate_invoice_payment(
+            invoice,
+            amount=payload.amount,
+            recorded_by=request.user,
+            finance_account_id=payload.finance_account_id,
+            payment_date=payload.payment_date,
+            payment_reference=payload.payment_reference or "",
         )
-        invoice.refresh_from_db()
         return 200, invoice
-
+    except EstatePropertyInvoice.DoesNotExist:
+        return 404, {"detail": "Invoice not found"}
+    except ValidationError as e:
+        return 400, {"detail": _validation_message(e)}
     except Exception as e:
         return 400, {"detail": str(e)}

@@ -783,3 +783,46 @@ def handle_payment_exception(exc):
     if isinstance(exc, (ValidationError, IntegrityError)):
         return {"detail": validation_detail(exc)}
     return {"detail": str(exc)}
+
+
+def resolve_receipt_finance_account(
+    finance_account_id=None,
+    *,
+    branch_id=None,
+    currency="NGN",
+):
+    """Resolve an active bank account for an incoming receipt."""
+    accounts = FinanceAccount.objects.filter(
+        is_active=True,
+        account_type=FinanceAccount.ACCOUNT_TYPE.BANK,
+        currency=currency,
+    ).order_by("id")
+
+    if finance_account_id:
+        try:
+            account = accounts.get(id=finance_account_id)
+        except FinanceAccount.DoesNotExist as exc:
+            raise ValidationError("The selected Finance bank account is unavailable.") from exc
+        if branch_id and account.branch_id not in {None, branch_id}:
+            raise ValidationError(
+                "The selected Finance bank account is outside this invoice branch."
+            )
+        return account
+
+    if branch_id:
+        account = accounts.filter(branch_id=branch_id).first()
+        if account:
+            return account
+        account = accounts.filter(branch__isnull=True).first()
+        if account:
+            return account
+        raise ValidationError(
+            "No active Finance bank account is configured for this branch and no company-wide bank account is available."
+        )
+
+    account = accounts.filter(branch__isnull=True).first() or accounts.first()
+    if not account:
+        raise ValidationError(
+            "No active Finance bank account is configured for incoming receipts."
+        )
+    return account

@@ -1,3 +1,4 @@
+from datetime import timedelta
 import uuid
 from decimal import Decimal
 
@@ -135,20 +136,56 @@ class EstatePropertyInvoice(BaseModel):
 
         super().save(*args, **kwargs)
 
-    def generate_payment_details(self):
-        """Regenerate payment details based on client's default payment info."""
-        if (
+    def generate_payment_details(self, finance_account=None, valid_for_hours=24):
+        """Populate payment instructions from a real Finance bank account."""
+        if finance_account is None:
+            return False
+        if getattr(finance_account, "account_type", None) != "bank":
+            raise ValidationError(
+                {"bank_name": "Estate invoice payment details require a bank account."}
+            )
+        required = {
+            "bank_name": getattr(finance_account, "bank_name", ""),
+            "account_number": getattr(finance_account, "account_number", ""),
+            "account_name": getattr(finance_account, "account_name", ""),
+        }
+        missing = [name for name, value in required.items() if not value]
+        if missing:
+            raise ValidationError(
+                {
+                    "bank_name": (
+                        "The selected Finance bank account is missing payment details: "
+                        + ", ".join(missing)
+                    )
+                }
+            )
+        still_valid = (
             self.bank_details_expires_at
             and self.bank_details_expires_at > timezone.now()
-        ):
-            return  # Still valid, no need to regenerate
-
-        self.sort_code = "000000"  # Placeholder sort code
-        self.bank_code = "000000"  # Placeholder bank code
-        self.bank_name = "Placeholder Bank Name"  # Placeholder bank name
-        self.account_number = "00000000"  # Placeholder account number
-        self.account_name = "Placeholder Account Name"  # Placeholder account name
-        self.save()
+            and self.bank_name == finance_account.bank_name
+            and self.account_number == finance_account.account_number
+            and self.account_name == finance_account.account_name
+        )
+        if still_valid:
+            return False
+        self.sort_code = ""
+        self.bank_code = ""
+        self.bank_name = finance_account.bank_name
+        self.account_number = finance_account.account_number
+        self.account_name = finance_account.account_name
+        self.bank_details_expires_at = timezone.now() + timedelta(hours=valid_for_hours)
+        self.save(
+            update_fields=[
+                "sort_code",
+                "bank_code",
+                "bank_name",
+                "account_number",
+                "account_name",
+                "bank_details_expires_at",
+                "updated_at",
+            ]
+        )
+        return True
 
     def recalculate_subtotal(self):
         """Recalculate subtotal from invoice items and save."""
@@ -246,9 +283,12 @@ class EstatePropertyInvoiceItem(BaseModel):
 
     def save(self, *args, **kwargs):
         if not self.description:
-            self.description = (
-                f"{self.property.property_name} - {self.property.estate.estate_name}"
+            estate_name = (
+                self.property.estate.estate_name
+                if self.property.estate_id
+                else "Standalone Property"
             )
+            self.description = f"{self.property.property_name} - {estate_name}"
         if not self.unit_price:
             self.unit_price = self.property.price
         self.total = self.quantity * self.unit_price
