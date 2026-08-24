@@ -1,6 +1,7 @@
 
 from django.template.loader import render_to_string
 from system.messaging.email.providers.zeptomail import send_zepto_email as _send_zepto_email
+from system.messaging.email.services import send_email as _send_system_email
 
 
 
@@ -31,9 +32,9 @@ def send_email_util(
             name = recipient.get("name", "")
             if not email:
                 continue
-            resp = _send_zepto_email(
-                to_address=email,
-                to_name=name,
+            resp = _send_system_email(
+                recipient=email,
+                name=name,
                 subject=title,
                 html_content=html_content,
             )
@@ -96,9 +97,9 @@ def send_invoice_email(email: str, name: str, invoice):
 
     html_content = render_to_string("email_template/estate_invoice.html", context_data)
 
-    return _send_zepto_email(
-        to_address=email,
-        to_name=name,
+    return _send_system_email(
+        recipient=email,
+        name=name,
         subject=f"Invoice {invoice.invoice_number} - Bomach Engineering Services",
         html_content=html_content,
     )
@@ -106,9 +107,9 @@ def send_invoice_email(email: str, name: str, invoice):
 
 def _send_email(recipient: str, name: str, subject: str, html_content: str):
     """Internal helper to send a single email."""
-    return _send_zepto_email(
-        to_address=recipient,
-        to_name=name,
+    return _send_system_email(
+        recipient=recipient,
+        name=name,
         subject=subject,
         html_content=html_content,
     )
