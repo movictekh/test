@@ -15,7 +15,7 @@ from finance.models import (
     StatutoryObligationItem,
     VendorBill,
 )
-from services.models.payment import Payment
+from finance.transactions.payment import Payment
 
 from .accounting import post_payroll_payment_journal, post_statutory_payment_journal
 

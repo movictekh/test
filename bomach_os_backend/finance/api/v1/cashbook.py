@@ -16,8 +16,8 @@ from finance.models import (
     StatutoryObligation,
     VendorBill,
 )
-from services.models.expenses import Expense
-from services.models.payment import Payment
+from finance.transactions.expense import Expense
+from finance.transactions.payment import Payment
 from system.authorization import require_permission
 
 router = Router(tags=["Finance Cashbook"])

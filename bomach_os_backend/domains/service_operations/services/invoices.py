@@ -7,7 +7,7 @@ from django.db import transaction
 
 from domains.service_operations.models import Invoice, InvoiceItem
 from domains.service_operations.services.requests import log_activity
-from user.models.client_service import PaymentSubmission
+from finance.transactions.payment_submission import PaymentSubmission
 
 EDITABLE_STATUSES = {"draft", "sent"}
 

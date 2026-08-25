@@ -20,8 +20,8 @@ from finance.service.accounting import (
     post_statutory_payment_journal,
     post_vendor_bill_payment_journal,
 )
-from services.models.expenses import Expense
-from services.models.payment import Payment
+from finance.transactions.expense import Expense
+from finance.transactions.payment import Payment
 
 
 class Command(BaseCommand):

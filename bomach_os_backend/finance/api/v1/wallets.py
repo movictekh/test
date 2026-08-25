@@ -14,8 +14,9 @@ from finance.api.schemas import (
 )
 from finance.models import FinanceWallet, FinanceWalletEntry, VendorBill
 from shared.api.schema import MessageSchema
-from services.models.expenses import Expense
-from services.models.payment import Invoice, Payment
+from finance.transactions.expense import Expense
+from domains.service_operations.models import Invoice
+from finance.transactions.payment import Payment
 from services.models.service import ServiceOrder
 from user.models.client import Client
 from system.authorization import require_permission

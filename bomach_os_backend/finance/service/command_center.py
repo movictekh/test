@@ -5,8 +5,8 @@ from decimal import Decimal
 from django.utils import timezone
 
 from finance.models import PayrollRun, PettyCashAdvance, StatutoryObligation, VendorBill
-from services.models.expenses import Expense
-from user.models.client_service import PaymentSubmission
+from finance.transactions.expense import Expense
+from finance.transactions.payment_submission import PaymentSubmission
 
 
 def _money(value):

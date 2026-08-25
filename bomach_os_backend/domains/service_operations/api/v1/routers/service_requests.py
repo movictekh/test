@@ -230,7 +230,7 @@ from user.api.schemas.client_service import (
     ReviewPaymentSchema,
 )
 from user.models.client import Client as CustomerClient
-from user.models.client_service import PaymentSubmission
+from finance.transactions.payment_submission import PaymentSubmission
 from system.authorization import require_permission, scope_queryset
 
 from ..schemas.service_requests import (

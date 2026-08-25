@@ -12,7 +12,7 @@ from finance.api.schemas import (
     FinanceInvoiceSummaryOut,
     finance_invoice_status,
 )
-from services.models.payment import Invoice
+from domains.service_operations.models import Invoice
 from system.authorization import require_permission
 
 router = Router(tags=["Finance Invoices"])

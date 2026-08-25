@@ -31,7 +31,7 @@ def _days_since(dt):
 @require_permission("command_center", "view")
 def get_activity_feed(request):
     """Recent activity across orders, approvals, invoices."""
-    from services.models.payment import Invoice
+    from domains.service_operations.models import Invoice
     from services.models.service import Quote, ServiceOrder
     from system.approvals.models.approval import ApprovalRequest
 
@@ -86,7 +86,7 @@ def get_activity_feed(request):
 def get_pending_approvals(request):
     """Summary of pending approvals across domains."""
     from hr.models.leave_request import LeaveRequest
-    from services.models.expenses import Expense
+    from finance.transactions.expense import Expense
     from services.models.service import Quote, ServiceOrder
 
     items = []
@@ -157,8 +157,8 @@ def get_pending_approvals(request):
 @require_permission("command_center", "view")
 def get_financials(request):
     """Revenue, expenses, outstanding, and margin."""
-    from services.models.expenses import Expense
-    from services.models.payment import Invoice
+    from finance.transactions.expense import Expense
+    from domains.service_operations.models import Invoice
 
     revenue = Invoice.objects.filter(
         status__in=["paid", "partially_paid"],

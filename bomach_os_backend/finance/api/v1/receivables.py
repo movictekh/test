@@ -18,7 +18,7 @@ from finance.api.schemas import (
     ReceivableSummaryOut,
 )
 from shared.api.schema import MessageSchema
-from services.models.payment import Invoice
+from domains.service_operations.models import Invoice
 from services.models.service import ServiceRequestActivity
 from system.authorization import require_permission
 

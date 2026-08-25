@@ -15,8 +15,9 @@ from finance.api.schemas import (
 from finance.models import FinanceAccount
 from finance.service import handle_payment_exception, review_payment_submission
 from shared.api.schema import MessageSchema
-from services.models.payment import Invoice, Payment
-from user.models.client_service import PaymentSubmission
+from domains.service_operations.models import Invoice
+from finance.transactions.payment import Payment
+from finance.transactions.payment_submission import PaymentSubmission
 from system.authorization import require_permission
 
 router = Router(tags=["Finance Payments"])

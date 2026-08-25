@@ -11,7 +11,7 @@ from ninja.errors import HttpError
 from finance.api.schemas import CashFlowForecastOut
 from finance.api.v1.cashbook import cash_position_as_of
 from finance.models import PayrollRun, StatutoryObligation, VendorBill
-from services.models.payment import Invoice
+from domains.service_operations.models import Invoice
 from system.authorization import require_permission
 
 router = Router(tags=["Finance Cash Flow"])

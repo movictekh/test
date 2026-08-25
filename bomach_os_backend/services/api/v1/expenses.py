@@ -10,7 +10,7 @@ from ninja.pagination import LimitOffsetPagination, paginate
 
 from services.api.schema.expense_schemas import ExpenseIn, ExpenseOut, ExpenseUpdate
 from shared.api.schema import MessageSchema
-from services.models.expenses import Expense
+from finance.transactions.expense import Expense
 from system.authorization import require_permission
 
 router = Router(tags=["Expenses"])

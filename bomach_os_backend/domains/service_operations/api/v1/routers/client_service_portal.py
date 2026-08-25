@@ -19,7 +19,7 @@ from user.api.schemas.client_service import (
     PaymentSubmissionCreateSchema,
     PaymentSubmissionResponseSchema,
 )
-from user.models.client_service import PaymentSubmission
+from finance.transactions.payment_submission import PaymentSubmission
 
 from ..schemas.lifecycle import (
     InvoiceOut,

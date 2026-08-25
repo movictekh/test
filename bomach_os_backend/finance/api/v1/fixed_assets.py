@@ -25,7 +25,7 @@ from finance.service import (
     post_fixed_asset_depreciation,
 )
 from shared.api.schema import MessageSchema
-from services.models.expenses import Expense
+from finance.transactions.expense import Expense
 from domains.organization.models.branch import Branch
 from system.authorization import require_permission, scope_queryset
 

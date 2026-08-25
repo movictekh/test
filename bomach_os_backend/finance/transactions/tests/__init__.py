@@ -1,0 +1,1 @@
+"""Finance transaction ownership tests."""

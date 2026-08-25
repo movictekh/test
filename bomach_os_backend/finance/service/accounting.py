@@ -510,7 +510,7 @@ def post_client_payment_journal(payment, created_by):
 
 
 def _expense_debit_account(expense):
-    from services.models.expenses import Expense
+    from finance.transactions.expense import Expense
 
     if expense.cost_type == Expense.COST_TYPE.CAPITAL_EXPENDITURE:
         return get_system_ledger_account(

@@ -20,7 +20,7 @@ from finance.service import (
     reject_finance_expense,
 )
 from shared.api.schema import MessageSchema
-from services.models.expenses import Expense
+from finance.transactions.expense import Expense
 from services.models.service import ServiceOrder
 from domains.organization.models.branch import Branch
 from domains.organization.models.roles import Department

@@ -6,7 +6,7 @@ from django.db import models
 from ninja import Schema
 from pydantic import EmailStr
 
-from services.models.payment import Invoice
+from domains.service_operations.models import Invoice
 
 # ============== Lead Schemas ==============
 
