@@ -94,7 +94,7 @@ from services.api.v1 import expenses as svc_expenses
 from services.api.v1 import payments as svc_payments
 from services.api.v1 import property as svc_property
 from user.api.v1.announcement import announcement_api as announcement_router
-from user.api.v1.approval import approval_api as approval_router
+from system.approvals.api.v1.routers.approval import approval_api as approval_router
 from user.api.v1.approval_queue import approval_queue_api as approval_queue_router
 from user.api.v1.audit import audit_api as audit_router
 from system.audit.api.v1.routers.audit_log import audit_log_api as audit_log_router
@@ -125,7 +125,7 @@ from user.api.v1.sops import dept_router, resp_router, sop_dashboard_router, uni
 from user.api.v1.stats import stats_api as stats_router
 from domains.people.api.v1.routers.target_report import target_report_api as target_report_router
 from user.api.v1.wallet import wallet_api as wallet_router
-from user.api.v1.workflow_rule import workflow_rule_router
+from system.automation.api.v1.routers.workflow_rule import workflow_rule_router
 from user.utils.auth import JWTAuthenticator
 
 # HR

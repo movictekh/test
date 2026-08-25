@@ -33,7 +33,7 @@ def get_activity_feed(request):
     """Recent activity across orders, approvals, invoices."""
     from services.models.payment import Invoice
     from services.models.service import Quote, ServiceOrder
-    from user.models.approval import ApprovalRequest
+    from system.approvals.models.approval import ApprovalRequest
 
     items = []
 
@@ -233,7 +233,7 @@ def get_pipeline(request):
 def get_action_items(request):
     """Pending items requiring user's attention."""
     from services.models.service import ServiceOrder
-    from user.models.approval import ApprovalRequest
+    from system.approvals.models.approval import ApprovalRequest
 
     items = []
 
