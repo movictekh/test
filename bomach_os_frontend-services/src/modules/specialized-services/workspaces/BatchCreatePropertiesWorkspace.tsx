@@ -56,14 +56,17 @@ function numberInputValue(value: number | null | undefined) {
 export function BatchCreatePropertiesWorkspace({
   estateId,
   estateName,
+  estates,
   onClose,
   onChanged,
 }: {
-  estateId: number
-  estateName: string
+  estateId: number | null
+  estateName: string | null
+  estates: Array<{ id: number; estateName: string; estateCode: string }>
   onClose: () => void
   onChanged: () => Promise<void> | void
 }) {
+  const [selectedEstateId, setSelectedEstateId] = useState<number | null>(estateId)
   const [propertyType, setPropertyType] = useState<PropertyType>('plot')
   const [count, setCount] = useState(10)
   const [start, setStart] = useState(1)
@@ -130,7 +133,10 @@ export function BatchCreatePropertiesWorkspace({
       rows.map((row) => (row.key === item.key ? { ...row, status: 'creating', error: '' } : row)),
     )
     try {
-      const created = await realEstateApi.createProperty(estateId, item.input)
+      const created =
+        selectedEstateId != null
+          ? await realEstateApi.createProperty(selectedEstateId, item.input)
+          : await realEstateApi.createStandaloneProperty(item.input)
       setItems((rows) =>
         rows.map((row) =>
           row.key === item.key
@@ -201,13 +207,17 @@ export function BatchCreatePropertiesWorkspace({
         className="commercial-modal commercial-modal--xl specialized-real-estate-modal"
         role="dialog"
         aria-modal="true"
-        aria-label="Add Estate Properties"
+        aria-label="Add Properties"
         onMouseDown={(event) => event.stopPropagation()}
       >
         <header className="commercial-modal-header">
           <div>
-            <h2>Add Estate Properties</h2>
-            <p>{estateName} · Create one property or a controlled batch of up to 250.</p>
+            <h2>Add Properties</h2>
+            <p>
+              {selectedEstateId != null
+                ? `${estateName ?? 'Selected estate'} · Create one property or a controlled batch of up to 250.`
+                : 'Create one property or a controlled batch of up to 250, and optionally attach it to an estate.'}
+            </p>
           </div>
           <button
             type="button"
@@ -228,8 +238,35 @@ export function BatchCreatePropertiesWorkspace({
               <section className="commercial-form-section">
                 <div className="commercial-form-section-heading">
                   <div>
+                    <h3>Estate link</h3>
+                    <p>Attach these properties to an estate, or leave them as non-estate properties.</p>
+                  </div>
+                </div>
+
+                <div className="commercial-form-grid">
+                  <label className="commercial-field commercial-form-span">
+                    <span>Attach to estate</span>
+                    <select
+                      value={selectedEstateId ?? 0}
+                      onChange={(event) => setSelectedEstateId(Number(event.target.value) || null)}
+                      disabled={running}
+                    >
+                      <option value={0}>No estate — create as non-estate property</option>
+                      {estates.map((estate) => (
+                        <option key={estate.id} value={estate.id}>
+                          {estate.estateCode} · {estate.estateName}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              </section>
+
+              <section className="commercial-form-section">
+                <div className="commercial-form-section-heading">
+                  <div>
                     <h3>Property type</h3>
-                    <p>Choose the asset class you want to create for this estate.</p>
+                    <p>Choose the asset class you want to create.</p>
                   </div>
                 </div>
 

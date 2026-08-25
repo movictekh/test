@@ -12,6 +12,9 @@ export const realEstateKeys = {
     [...realEstateKeys.properties(estateId), 'list', f] as const,
   propertyDetail: (estateId: number, id: number) =>
     [...realEstateKeys.properties(estateId), 'detail', id] as const,
+  standaloneProperties: () => [...realEstateKeys.all, 'standalone-properties'] as const,
+  standalonePropertyList: (f: PropertyFilters) =>
+    [...realEstateKeys.standaloneProperties(), 'list', f] as const,
   brokerage: () => [...realEstateKeys.all, 'brokerage'] as const,
   brokerageList: (f: BrokerageFilters) => [...realEstateKeys.brokerage(), 'list', f] as const,
   brokerageStats: () => [...realEstateKeys.brokerage(), 'stats'] as const,

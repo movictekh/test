@@ -22,6 +22,7 @@ import type {
   PropertyFilters,
   QuickUpdatePlotInput,
 } from './real-estate.types'
+import type { Estate } from './real-estate.types'
 
 function pageQuery(filters: { page?: number; limit?: number }) {
   const q = new URLSearchParams()
@@ -71,6 +72,8 @@ const estatePayload = (i: CreateEstateInput) => ({
   state: i.state,
   city_town: i.cityTown,
   precise_address: i.preciseAddress,
+  estate_map_url: i.estateMapUrl ?? '',
+  virtual_tour_url: i.virtualTourUrl ?? '',
   documents: i.documents ?? [],
   has_c_of_o: i.hasCOfO,
   has_deed_of_assignment: i.hasDeedOfAssignment,
@@ -140,6 +143,14 @@ const brokeragePayload = (i: CreateBrokerageInput) => ({
 })
 
 export const realEstateApi = {
+  uploadEstateAsset: async (file: File, signal?: AbortSignal): Promise<string> => {
+    const formData = new FormData()
+    formData.set('file', file)
+    const payload = await apiClient.post<{ url: string }>('/others/upload-file', formData, {
+      ...(signal ? { signal } : {}),
+    })
+    return payload.url
+  },
   listEstates: async (f: EstateFilters = {}) =>
     mapEstateList(await apiClient.get<unknown>(`/estates/?${estateQuery(f)}`)),
   estateDetail: async (id: number) => mapEstate(await apiClient.get<unknown>(`/estates/${id}`)),
@@ -159,12 +170,16 @@ export const realEstateApi = {
     mapPropertyList(
       await apiClient.get<unknown>(`/estates/${estateId}/properties?${propertyQuery(f)}`),
     ),
+  listStandaloneProperties: async (f: PropertyFilters = {}) =>
+    mapPropertyList(await apiClient.get<unknown>(`/estates/properties/all?${propertyQuery(f)}`)),
   propertyDetail: async (estateId: number, id: number) =>
     mapProperty(await apiClient.get<unknown>(`/estates/${estateId}/properties/${id}`)),
   createProperty: async (estateId: number, i: CreatePropertyInput) =>
     mapProperty(
       await apiClient.post<unknown>(`/estates/${estateId}/properties`, propertyPayload(i)),
     ),
+  createStandaloneProperty: async (i: CreatePropertyInput) =>
+    mapProperty(await apiClient.post<unknown>('/estates/properties/all', propertyPayload(i))),
   updateProperty: async (estateId: number, id: number, i: CreatePropertyInput) =>
     mapProperty(
       await apiClient.put<unknown>(`/estates/${estateId}/properties/${id}`, propertyPayload(i)),
@@ -194,4 +209,48 @@ export const realEstateApi = {
       }),
     ),
   deleteBrokerage: async (id: number) => apiClient.delete<unknown>(`/brokerage/${id}`),
+}
+
+export function mapEstateToInput(estate: Estate): CreateEstateInput {
+  return {
+    isOurEstate: estate.isOurEstate,
+    estateName: estate.estateName,
+    estateCode: estate.estateCode,
+    estateType: estate.estateType,
+    developerCompanyName: estate.developerCompanyName,
+    estateDescription: estate.estateDescription,
+    country: estate.country,
+    countryCode: estate.countryCode,
+    state: estate.state,
+    cityTown: estate.cityTown,
+    preciseAddress: estate.preciseAddress,
+    estateMapUrl: estate.estateMapUrl,
+    virtualTourUrl: estate.virtualTourUrl,
+    hasCOfO: estate.hasCOfO,
+    hasDeedOfAssignment: estate.hasDeedOfAssignment,
+    hasSurveyPlan: estate.hasSurveyPlan,
+    zoningInformation: estate.zoningInformation,
+    hasPlanningPermit: estate.hasPlanningPermit,
+    hasBuildingApproval: estate.hasBuildingApproval,
+    hasEnvironmentalClearance: estate.hasEnvironmentalClearance,
+    pricePerSqm: estate.pricePerSqm,
+    availablePlotSizes: estate.availablePlotSizes,
+    minPriceOtherProperties: estate.minPriceOtherProperties,
+    maxPriceOtherProperties: estate.maxPriceOtherProperties,
+    estateStatus: estate.estateStatus,
+    totalArea: estate.totalArea,
+    areaUnit: estate.areaUnit,
+    hasRoads: estate.hasRoads,
+    hasElectricity: estate.hasElectricity,
+    hasWater: estate.hasWater,
+    hasFencing: estate.hasFencing,
+    hasSecurity: estate.hasSecurity,
+    hasDrainage: estate.hasDrainage,
+    hasRecreation: estate.hasRecreation,
+    legalFee: estate.legalFee,
+    developmentFee: estate.developmentFee,
+    receiptFee: estate.receiptFee,
+    tags: estate.tags,
+    documents: estate.documents.map((document) => document.file),
+  }
 }

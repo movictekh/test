@@ -35,6 +35,8 @@ export interface Estate {
   state: string
   cityTown: string
   preciseAddress: string
+  estateMapUrl: string
+  virtualTourUrl: string
   boundary: Array<{ lat: number; lng: number }>
   documents: EstateDocument[]
   hasCOfO: boolean
@@ -124,6 +126,8 @@ export interface CreateEstateInput {
   state: string
   cityTown: string
   preciseAddress: string
+  estateMapUrl?: string
+  virtualTourUrl?: string
   hasCOfO: boolean
   hasDeedOfAssignment: boolean
   hasSurveyPlan: boolean

@@ -41,6 +41,13 @@ export const realEstateQueries = {
       placeholderData: (p) => p,
       staleTime: 10_000,
     }),
+  standaloneProperties: (f: PropertyFilters) =>
+    queryOptions({
+      queryKey: realEstateKeys.standalonePropertyList(f),
+      queryFn: () => realEstateApi.listStandaloneProperties(f),
+      placeholderData: (p) => p,
+      staleTime: 10_000,
+    }),
   brokerage: (f: BrokerageFilters) =>
     queryOptions({
       queryKey: realEstateKeys.brokerageList(f),

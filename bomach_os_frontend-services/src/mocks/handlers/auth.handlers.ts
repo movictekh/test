@@ -27,7 +27,7 @@ function authenticate(email: string, password: string): keyof typeof mockAuthUse
 
   // Fallback default admin login
   if (normalizedEmail === 'admin@gmail.com' || normalizedEmail === 'admin@bomach.com') {
-    return 'admin' as keyof typeof mockAuthUsers
+    return 'admin'
   }
 
   return null

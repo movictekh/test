@@ -37,6 +37,10 @@
 .specialized-filter-row:last-child {
   margin-bottom: 0;
 }
+.specialized-filter-row--directory {
+  margin-top: -2px;
+  margin-bottom: 10px;
+}
 .specialized-filter-row--compact {
   align-items: flex-end;
 }
@@ -470,16 +474,55 @@
   max-height: 340px;
   padding-right: 2px;
 }
+.specialized-table-wrap--directory {
+  max-height: none;
+}
 .specialized-table {
   width: 100%;
   min-width: 720px;
   border-collapse: collapse;
+}
+.specialized-table--directory {
+  min-width: 100%;
 }
 .specialized-table th,
 .specialized-table td {
   padding: 9px;
   border-bottom: 1px solid #e1e7ef;
   font-size: 9px;
+}
+.specialized-table th {
+  color: #70809a;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-align: left;
+}
+.specialized-table td b,
+.specialized-table td small {
+  display: block;
+}
+.specialized-table td b {
+  color: #141b34;
+  font-size: 10px;
+  font-weight: 800;
+}
+.specialized-table td small {
+  margin-top: 3px;
+  color: #8c95a8;
+  font-size: 8px;
+}
+.specialized-table-action {
+  width: 1%;
+  text-align: right;
+  white-space: nowrap;
+}
+.specialized-directory-tabs {
+  margin-bottom: 10px;
+}
+.specialized-directory-tabs-list {
+  border-bottom: 1px solid #e1e7ef;
 }
 .specialized-progress {
   width: 90px;
@@ -1120,6 +1163,161 @@
 .specialized-control-list b {
   font-size: 9px;
   text-align: right;
+}
+.specialized-estate-assets {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+.specialized-estate-asset {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid #dbe3ef;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+.specialized-estate-asset-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: #edf3ff;
+  color: #23438c;
+  flex: 0 0 auto;
+}
+.specialized-estate-asset-body {
+  flex: 1;
+  min-width: 0;
+}
+.specialized-estate-asset-body strong {
+  display: block;
+  font-size: 12px;
+  color: #1f2a44;
+}
+.specialized-estate-asset-body small {
+  display: block;
+  margin-top: 3px;
+  font-size: 10px;
+  line-height: 1.45;
+  color: #6b7688;
+}
+.specialized-estate-link-input {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 12px;
+  border: 1px solid #d8e0ec;
+  border-radius: 12px;
+  background: #fff;
+}
+.specialized-estate-link-icon {
+  color: #6a7486;
+  flex: 0 0 auto;
+}
+.specialized-estate-link-input input {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  width: 100%;
+  min-width: 0;
+  outline: none;
+}
+.specialized-estate-preview {
+  min-height: 60vh;
+  border: 1px solid #dbe3ef;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #f8fafc;
+}
+.specialized-estate-preview-shell {
+  display: grid;
+  gap: 12px;
+}
+.specialized-estate-preview-topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid #dbe3ef;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+.specialized-estate-preview-topbar strong {
+  display: block;
+  font-size: 12px;
+  color: #1f2a44;
+}
+.specialized-estate-preview-topbar small {
+  display: block;
+  margin-top: 3px;
+  font-size: 10px;
+  color: #697386;
+}
+.specialized-estate-preview-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 60px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #e8f0ff;
+  color: #22448d;
+  font-size: 10px;
+  font-weight: 700;
+  flex: 0 0 auto;
+}
+.specialized-estate-preview-tips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.specialized-estate-preview-tips span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid #dbe3ef;
+  border-radius: 999px;
+  background: #fff;
+  color: #5f6d83;
+  font-size: 10px;
+  font-weight: 600;
+}
+.specialized-estate-preview-frame,
+.specialized-estate-preview-video,
+.specialized-estate-preview-image {
+  display: block;
+  width: 100%;
+  height: 60vh;
+  border: 0;
+  background: #fff;
+}
+.specialized-estate-preview-video,
+.specialized-estate-preview-image {
+  object-fit: contain;
+}
+.specialized-estate-preview-fallback {
+  min-height: 60vh;
+  display: grid;
+  place-content: center;
+  gap: 10px;
+  padding: 20px;
+  text-align: center;
+  background: #fff;
+}
+.specialized-estate-preview-fallback strong {
+  font-size: 13px;
+  color: #1f2a44;
+}
+.specialized-estate-preview-fallback small {
+  font-size: 10px;
+  color: #697386;
 }
 .specialized-operations-toolbar {
   padding-block: 12px;

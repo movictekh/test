@@ -1,12 +1,18 @@
 import {
+  IconArrowLeft,
   IconBuilding,
+  IconChevronRight,
+  IconExternalLink,
+  IconX,
   IconFilePlus,
   IconHome,
   IconMap2,
+  IconMapPin2,
   IconPlus,
   IconRefresh,
   IconSearch,
   IconTrash,
+  IconWorldWww,
 } from '@tabler/icons-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
@@ -22,13 +28,14 @@ import { withOptionalSearchValue, withoutSearchKeys } from '@/shared/navigation/
 import { ErrorState, useToast } from '@/shared/ui'
 import { ConfirmDialog } from '@/shared/ui/confirm-dialog'
 import { EmptyState } from '@/shared/ui/empty-state'
+import { Tabs, TabsList, TabsTrigger } from '@/shared/ui/tabs'
 import {
   CompactActionButton,
   CompactPageToolbar,
   ModulePageFrame,
 } from '@/shared/ui/module-controls'
 
-import { realEstateApi } from '../real-estate/real-estate.api'
+import { mapEstateToInput, realEstateApi } from '../real-estate/real-estate.api'
 import { realEstateKeys } from '../real-estate/real-estate.keys'
 import { realEstateQueries } from '../real-estate/real-estate.queries'
 import {
@@ -111,6 +118,124 @@ function secondary(property: Property) {
   if (property.propertyType === 'residential')
     return `${property.buildingTypeResidentialDisplay || property.buildingTypeResidential || 'Residential'} · ${property.bedrooms ?? '—'} bed · ${property.bathrooms ?? '—'} bath`
   return `${property.buildingTypeCommercialDisplay || property.buildingTypeCommercial || 'Commercial'} · ${property.numberOfFloors ?? '—'} floor(s) · ${property.unitsOffices ?? '—'} unit(s)`
+}
+
+function estateMediaPath(url: string) {
+  try {
+    return new URL(url, window.location.origin).pathname.toLowerCase()
+  } catch {
+    return url.toLowerCase()
+  }
+}
+
+function estateMediaKind(url: string): 'pdf' | 'video' | 'image' | 'embed' {
+  const normalized = estateMediaPath(url)
+  if (normalized.endsWith('.pdf')) return 'pdf'
+  if (/\.(mp4|webm|mov|m4v|ogg)$/i.test(normalized)) return 'video'
+  if (/\.(png|jpg|jpeg|webp|gif|svg)$/i.test(normalized)) return 'image'
+  return 'embed'
+}
+
+function EstateDirectoryList({
+  estates,
+  onOpen,
+}: {
+  estates: Array<{
+    id: number
+    estateCode: string
+    estateName: string
+    cityTown: string
+    state: string
+    estateTypeDisplay: string
+    estateStatusDisplay: string
+    developerCompanyName: string
+    isOurEstate: boolean
+  }>
+  onOpen: (estateId: number) => void
+}) {
+  return (
+    <div className="specialized-table-wrap specialized-table-wrap--directory">
+      <table className="specialized-table specialized-table--directory">
+        <thead>
+          <tr>
+            <th>Estate</th>
+            <th>Location</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Developer</th>
+            <th>Ownership</th>
+            <th />
+          </tr>
+        </thead>
+        <tbody>
+          {estates.map((estate) => (
+            <tr key={estate.id}>
+              <td>
+                <b>{estate.estateName}</b>
+                <small>{estate.estateCode}</small>
+              </td>
+              <td>
+                <b>{estate.cityTown || '—'}</b>
+                <small>{estate.state || '—'}</small>
+              </td>
+              <td>{estate.estateTypeDisplay || '—'}</td>
+              <td>{estate.estateStatusDisplay || '—'}</td>
+              <td>{estate.developerCompanyName || '—'}</td>
+              <td>{estate.isOurEstate ? 'Bomach estate' : 'Third-party estate'}</td>
+              <td className="specialized-table-action">
+                <button
+                  type="button"
+                  className="specialized-btn specialized-btn-small"
+                  onClick={() => onOpen(estate.id)}
+                >
+                  Open
+                  <IconChevronRight size={12} />
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+function StandalonePropertyDirectoryList({
+  properties,
+}: {
+  properties: Property[]
+}) {
+  return (
+    <div className="specialized-table-wrap specialized-table-wrap--directory">
+      <table className="specialized-table specialized-table--directory">
+        <thead>
+          <tr>
+            <th>Property</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Client</th>
+            <th>Price</th>
+            <th>Created</th>
+          </tr>
+        </thead>
+        <tbody>
+          {properties.map((property) => (
+            <tr key={property.id}>
+              <td>
+                <b>{property.propertyName}</b>
+                <small>{secondary(property)}</small>
+              </td>
+              <td>{property.propertyTypeDisplay || property.propertyType}</td>
+              <td>{property.statusDisplay || property.status}</td>
+              <td>{property.clientName || '—'}</td>
+              <td>{formatCurrency(property.price)}</td>
+              <td>{new Date(property.createdAt).toLocaleDateString()}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
 }
 
 function SelectedPropertyForm({
@@ -252,15 +377,28 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
   const [searchDraft, setSearchDraft] = useState(recordSearch.search ?? '')
   const [syncedSearch, setSyncedSearch] = useState(recordSearch.search ?? '')
   const [estateOpen, setEstateOpen] = useState(false)
+  const [estateEditOpen, setEstateEditOpen] = useState(false)
   const [propertiesOpen, setPropertiesOpen] = useState(false)
   const [brokerageOpen, setBrokerageOpen] = useState(false)
   const [propertyEditOpen, setPropertyEditOpen] = useState(false)
   const [deleteId, setDeleteId] = useState<number | null>(null)
   const [formError, setFormError] = useState('')
+  const [estateMediaPreview, setEstateMediaPreview] = useState<{
+    title: string
+    url: string
+    kind: 'pdf' | 'video' | 'image' | 'embed'
+  } | null>(null)
+  const [inventoryView, setInventoryView] = useState<
+    'estates' | 'non-estate-properties' | 'brokerage'
+  >('estates')
+  const [standalonePropertyType, setStandalonePropertyType] = useState<
+    'all' | Property['propertyType']
+  >('all')
 
   const canEstateList = hasPermission(user, PERMISSIONS.estatesList)
   const canEstateView = hasPermission(user, PERMISSIONS.estatesView)
   const canEstateCreate = hasPermission(user, PERMISSIONS.estatesCreate)
+  const canEstateUpdate = hasPermission(user, PERMISSIONS.estatesUpdate)
   const canPropertyList = hasPermission(user, PERMISSIONS.propertiesList)
   const canPropertyCreate = hasPermission(user, PERMISSIONS.propertiesCreate)
   const canPropertyUpdate = hasPermission(user, PERMISSIONS.propertiesUpdate)
@@ -292,12 +430,21 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
     ...realEstateQueries.properties(estateId ?? 0, { page: 1, limit: 250 }),
     enabled: Boolean(estateId) && canPropertyList,
   })
-  const brokerageQuery = useQuery({
-    ...realEstateQueries.brokerage({ page: 1, limit: 8 }),
-    enabled: canBrokerageList,
+  const standalonePropertiesQuery = useQuery({
+    ...realEstateQueries.standaloneProperties({
+      ...(recordSearch.search ? { search: recordSearch.search } : {}),
+      ...(standalonePropertyType !== 'all' ? { propertyType: standalonePropertyType } : {}),
+      page: 1,
+      limit: 100,
+    }),
+    enabled: !estateId && inventoryView === 'non-estate-properties' && canPropertyList,
   })
-  const brokerageStatsQuery = useQuery({
-    ...realEstateQueries.brokerageStats(),
+  const brokerageQuery = useQuery({
+    ...realEstateQueries.brokerage({
+      ...(recordSearch.search ? { search: recordSearch.search } : {}),
+      page: 1,
+      limit: 100,
+    }),
     enabled: canBrokerageList,
   })
 
@@ -305,7 +452,15 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
   const selectedEstate =
     detailQuery.data ?? estates.find((estate) => estate.id === estateId) ?? null
   const properties = propertiesQuery.data?.items ?? []
+  const standaloneProperties = standalonePropertiesQuery.data?.items ?? []
   const selectedProperty = properties.find((property) => property.id === propertyId) ?? null
+  const estateBrokerageListings = useMemo(
+    () =>
+      selectedEstate
+        ? (brokerageQuery.data?.items ?? []).filter((listing) => listing.estateId === selectedEstate.id)
+        : [],
+    [brokerageQuery.data?.items, selectedEstate],
+  )
 
   const setSearchValue = useCallback(
     function <Key extends keyof AppSectionSearch>(
@@ -334,16 +489,6 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
     const id = window.setTimeout(() => setSearchValue('search', searchDraft), 350)
     return () => clearTimeout(id)
   }, [recordSearch.search, searchDraft, setSearchValue])
-  useEffect(() => {
-    if (estateId || !estates[0]) return
-    void navigate({
-      to: '/app/$section',
-      params: { section: 'real-estate-inventory' },
-      search: (previous) => ({ ...previous, estate: String(estates[0]!.id) }),
-      replace: true,
-    })
-  }, [estateId, estates, navigate])
-
   const invalidateEstate = async (id: number) => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: realEstateKeys.estates() }),
@@ -380,6 +525,41 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
     },
     onError: (error) =>
       toast.error('Property could not be updated', {
+        description: presentError(error, 'form-submit').message,
+      }),
+  })
+  const updateEstateMutation = useMutation({
+    mutationFn: ({ id, input }: { id: number; input: CreateEstateInput }) =>
+      realEstateApi.updateEstate(id, input),
+    onSuccess: async (estate) => {
+      queryClient.setQueryData(realEstateKeys.estateDetail(estate.id), estate)
+      queryClient.setQueryData(
+        realEstateKeys.estateList({
+          ...(recordSearch.search ? { search: recordSearch.search } : {}),
+          page: 1,
+          limit: 100,
+        }),
+        (current:
+          | {
+              count: number
+              items: Array<(typeof estate) | Record<string, unknown>>
+            }
+          | undefined) => {
+          if (!current) return current
+          return {
+            ...current,
+            items: current.items.map((item) =>
+              'id' in item && item.id === estate.id ? estate : item,
+            ),
+          }
+        },
+      )
+      await invalidateEstate(estate.id)
+      setEstateEditOpen(false)
+      toast.success(`Estate ${estate.estateCode} updated`)
+    },
+    onError: (error) =>
+      toast.error('Estate could not be updated', {
         description: presentError(error, 'form-submit').message,
       }),
   })
@@ -451,7 +631,6 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
   const initialInventoryLoading =
     canEstateList &&
     (estatesQuery.isPending ||
-      (!estateId && Boolean(estatesQuery.data?.items.length)) ||
       (Boolean(estateId) &&
         ((canEstateView && (detailQuery.isPending || statsQuery.isPending)) ||
           (canPropertyList && propertiesQuery.isPending))))
@@ -462,8 +641,8 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
 
   const brokerageList = !canBrokerageList ? (
     <div className="specialized-empty">Brokerage access not granted.</div>
-  ) : brokerageQuery.data?.items.length ? (
-    brokerageQuery.data.items.map((listing) => (
+  ) : estateBrokerageListings.length ? (
+    estateBrokerageListings.map((listing) => (
       <div key={listing.id} className="specialized-row">
         <div className="specialized-row-main">
           <div className="specialized-row-name">{listing.title}</div>
@@ -496,120 +675,190 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
     <div className="specialized-empty">No Brokerage Listings.</div>
   )
 
-  const estateSelectionState = !canEstateList ? (
-    <EmptyState
-      title="Estate access required"
-      description="You need estate list access before you can select an Estate and manage its property inventory."
-    />
-  ) : estatesQuery.isError ? (
-    <ErrorState
-      title="Estates could not be loaded"
-      description={presentError(estatesQuery.error, 'section-load').message}
-      onRetry={() => void estatesQuery.refetch()}
-    />
-  ) : recordSearch.search && !estates.length ? (
-    <EmptyState
-      title="No Estates match this search"
-      description="Change the estate search or clear it to review other estate records."
-    />
-  ) : !estates.length ? (
-    <EmptyState
-      title="No Estates yet"
-      description="Add the first Estate record, then create its property inventory and brokerage links."
-      action={
-        canEstateCreate ? (
-          <button
-            type="button"
-            className="commercial-btn commercial-btn-primary"
-            onClick={() => setEstateOpen(true)}
-          >
-            Add Estate
-          </button>
-        ) : null
-      }
-    />
-  ) : (
-    <EmptyState
-      title="Select an Estate"
-      description="Choose an Estate from the selector above to review its property board, details and inventory status."
-    />
-  )
-
-  const brokerageState = !canBrokerageList ? (
-    <EmptyState
-      title="Brokerage access required"
-      description="You need brokerage list access before third-party listings can be reviewed here."
-    />
-  ) : brokerageQuery.isError || brokerageStatsQuery.isError ? (
-    <ErrorState
-      title="Brokerage Listings could not be loaded"
-      description={
-        presentError(brokerageQuery.error ?? brokerageStatsQuery.error, 'section-load').message
-      }
-      onRetry={() => {
-        void brokerageQuery.refetch()
-        void brokerageStatsQuery.refetch()
-      }}
-    />
-  ) : brokerageQuery.isPending || brokerageStatsQuery.isPending ? (
-    <EmptyState
-      title="Loading Brokerage Listings"
-      description="Brokerage listing totals and verification status are being loaded."
-    />
-  ) : !brokerageQuery.data?.items.length ? (
-    <EmptyState
-      title="No Brokerage Listings yet"
-      description="Add the first third-party property listing to start tracking brokerage inventory here."
-      action={
-        canBrokerageCreate ? (
-          <button
-            type="button"
-            className="commercial-btn commercial-btn-primary"
-            onClick={() => setBrokerageOpen(true)}
-          >
-            Add Brokerage Listing
-          </button>
-        ) : null
-      }
-    />
-  ) : (
-    brokerageList
-  )
+  const inventoryDirectoryState =
+    inventoryView === 'estates' ? (
+      !canEstateList ? (
+        <EmptyState
+          title="Estate access required"
+          description="You need estate list access before you can review or open estate inventory records."
+        />
+      ) : estatesQuery.isError ? (
+        <ErrorState
+          title="Estates could not be loaded"
+          description={presentError(estatesQuery.error, 'section-load').message}
+          onRetry={() => void estatesQuery.refetch()}
+        />
+      ) : recordSearch.search && !estates.length ? (
+        <EmptyState
+          title="No Estates match this search"
+          description="Change the estate search or clear it to review other estate records."
+        />
+      ) : !estates.length ? (
+        <EmptyState
+          title="No Estates yet"
+          description="Add the first Estate record, then create its property inventory and brokerage links."
+          action={
+            canEstateCreate ? (
+              <button
+                type="button"
+                className="commercial-btn commercial-btn-primary"
+                onClick={() => setEstateOpen(true)}
+              >
+                Add Estate
+              </button>
+            ) : null
+          }
+        />
+      ) : (
+        <EstateDirectoryList
+          estates={estates}
+          onOpen={(nextEstateId) =>
+            void navigate({
+              to: '/app/$section',
+              params: { section: 'real-estate-inventory' },
+              search: (previous) => ({
+                ...withoutSearchKeys(previous, ['property']),
+                ...previous,
+                estate: String(nextEstateId),
+              }),
+            })
+          }
+        />
+      )
+    ) : inventoryView === 'non-estate-properties' ? (
+      !canPropertyList ? (
+        <EmptyState
+          title="Property access required"
+          description="You need property list access before non-estate property records can be reviewed here."
+        />
+      ) : standalonePropertiesQuery.isError ? (
+        <ErrorState
+          title="Non-estate Properties could not be loaded"
+          description={presentError(standalonePropertiesQuery.error, 'section-load').message}
+          onRetry={() => void standalonePropertiesQuery.refetch()}
+        />
+      ) : recordSearch.search && !standaloneProperties.length ? (
+        <EmptyState
+          title="No non-estate Properties match this search"
+          description="Change the property search or clear it to review other non-estate property records."
+        />
+      ) : !standaloneProperties.length ? (
+        <EmptyState
+          title="No non-estate Properties yet"
+          description="Standalone property records that are not linked to an estate will appear here."
+        />
+      ) : (
+        <StandalonePropertyDirectoryList properties={standaloneProperties} />
+      )
+    ) : !canBrokerageList ? (
+      <EmptyState
+        title="Brokerage access required"
+        description="You need brokerage list access before brokerage listings can be reviewed here."
+      />
+    ) : brokerageQuery.isError ? (
+      <ErrorState
+        title="Brokerage Listings could not be loaded"
+        description={presentError(brokerageQuery.error, 'section-load').message}
+        onRetry={() => void brokerageQuery.refetch()}
+      />
+    ) : recordSearch.search && !brokerageQuery.data?.items.length ? (
+      <EmptyState
+        title="No Brokerage Listings match this search"
+        description="Change the listing search or clear it to review other brokerage records."
+      />
+    ) : !brokerageQuery.data?.items.length ? (
+      <EmptyState
+        title="No Brokerage Listings yet"
+        description="Add the first brokerage listing to start tracking third-party inventory here."
+        action={
+          canBrokerageCreate ? (
+            <button
+              type="button"
+              className="commercial-btn commercial-btn-primary"
+              onClick={() => setBrokerageOpen(true)}
+            >
+              Add Brokerage Listing
+            </button>
+          ) : null
+        }
+      />
+    ) : (
+      brokerageList
+    )
 
   return (
     <ModulePageFrame
       header={
         <CompactPageToolbar
-          title="Real Estate Inventory"
+          title={selectedEstate ? selectedEstate.estateName : 'Real Estate Inventory'}
           breadcrumb="Specialized Services / Real Estate"
           secondaryAction={
-            <CompactActionButton
-              disabled={!canCreateServiceRequest}
-              locked={!canCreateServiceRequest}
-              onClick={() =>
-                void navigate({
-                  to: '/app/$section',
-                  params: { section: 'service-requests' },
-                  search: { create: 'request' },
-                })
-              }
-            >
-              <IconFilePlus size={14} />
-              New Request
-            </CompactActionButton>
+            selectedEstate ? (
+              <CompactActionButton
+                onClick={() =>
+                  void navigate({
+                    to: '/app/$section',
+                    params: { section: 'real-estate-inventory' },
+                    search: (previous) => withoutSearchKeys(previous, ['estate', 'property']),
+                  })
+                }
+              >
+                <IconArrowLeft size={14} />
+                Back to inventory
+              </CompactActionButton>
+            ) : (
+              <CompactActionButton
+                disabled={!canCreateServiceRequest}
+                locked={!canCreateServiceRequest}
+                onClick={() =>
+                  void navigate({
+                    to: '/app/$section',
+                    params: { section: 'service-requests' },
+                    search: { create: 'request' },
+                  })
+                }
+              >
+                <IconFilePlus size={14} />
+                New Request
+              </CompactActionButton>
+            )
           }
           primaryAction={
-            <CompactActionButton
-              tone="primary"
-              disabled={!canCreateService}
-              locked={!canCreateService}
-              onClick={() =>
-                void navigate({ to: '/app/$section', params: { section: 'service-catalogue' } })
-              }
-            >
-              <IconPlus size={14} />
-              Create Service
-            </CompactActionButton>
+            selectedEstate ? (
+              <>
+                <CompactActionButton disabled={!canPropertyCreate} onClick={() => setPropertiesOpen(true)}>
+                  <IconPlus size={14} />
+                  Add Properties
+                </CompactActionButton>
+                <CompactActionButton
+                  disabled={!canBrokerageCreate}
+                  onClick={() => setBrokerageOpen(true)}
+                >
+                  <IconPlus size={14} />
+                  Add Brokerage Listing
+                </CompactActionButton>
+                <CompactActionButton
+                  tone="primary"
+                  disabled={!canEstateCreate}
+                  onClick={() => setEstateOpen(true)}
+                >
+                  <IconPlus size={14} />
+                  Add Estate
+                </CompactActionButton>
+              </>
+            ) : (
+              <CompactActionButton
+                tone="primary"
+                disabled={!canCreateService}
+                locked={!canCreateService}
+                onClick={() =>
+                  void navigate({ to: '/app/$section', params: { section: 'service-catalogue' } })
+                }
+              >
+                <IconPlus size={14} />
+                Create Service
+              </CompactActionButton>
+            )
           }
         />
       }
@@ -636,12 +885,21 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
 
         <section className="specialized-card">
           <header className="specialized-card-header specialized-card-header-utility">
-            <div>
-              <div className="specialized-card-title">Inventory Controls</div>
-              <div className="specialized-card-subtitle">
-                Manage estates, brokerage listings and estate property records.
+            {selectedEstate ? (
+              <div>
+                <div className="specialized-card-title">Estate controls</div>
+                <div className="specialized-card-subtitle">
+                  Search this workspace, refresh the record, or update the estate details.
+                </div>
               </div>
-            </div>
+            ) : (
+              <div>
+                <div className="specialized-card-title">Inventory Controls</div>
+                <div className="specialized-card-subtitle">
+                  Manage estates, brokerage listings and estate property records.
+                </div>
+              </div>
+            )}
             <div className="specialized-action-row">
               <button
                 type="button"
@@ -652,6 +910,7 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
                     detailQuery.refetch(),
                     statsQuery.refetch(),
                     propertiesQuery.refetch(),
+                    standalonePropertiesQuery.refetch(),
                     brokerageQuery.refetch(),
                   ])
                 }}
@@ -659,63 +918,88 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
                 <IconRefresh size={14} />
                 Refresh
               </button>
-              <button
-                type="button"
-                className="specialized-btn"
-                disabled={!canBrokerageCreate}
-                onClick={() => setBrokerageOpen(true)}
-              >
-                <IconPlus size={14} />
-                Add Brokerage Listing
-              </button>
-              <button
-                type="button"
-                className="specialized-btn"
-                disabled={!selectedEstate || !canPropertyCreate}
-                onClick={() => setPropertiesOpen(true)}
-              >
-                <IconPlus size={14} />
-                Add Estate Properties
-              </button>
-              <button
-                type="button"
-                className="specialized-btn specialized-btn-primary"
-                disabled={!canEstateCreate}
-                onClick={() => setEstateOpen(true)}
-              >
-                <IconPlus size={14} />
-                Add Estate
-              </button>
+              {!selectedEstate ? (
+                <>
+                  <button
+                    type="button"
+                    className="specialized-btn"
+                    disabled={!canPropertyCreate}
+                    onClick={() => setPropertiesOpen(true)}
+                  >
+                    <IconPlus size={14} />
+                    Add Properties
+                  </button>
+                  <button
+                    type="button"
+                    className="specialized-btn"
+                    disabled={!canBrokerageCreate}
+                    onClick={() => setBrokerageOpen(true)}
+                  >
+                    <IconPlus size={14} />
+                    Add Brokerage Listing
+                  </button>
+                  <button
+                    type="button"
+                    className="specialized-btn specialized-btn-primary"
+                    disabled={!canEstateCreate}
+                    onClick={() => setEstateOpen(true)}
+                  >
+                    <IconPlus size={14} />
+                    Add Estate
+                  </button>
+                </>
+              ) : null}
             </div>
           </header>
           <div className="specialized-filter-row">
-            <select
-              value={estateId ?? ''}
-              disabled={!canEstateList}
-              onChange={(event) =>
-                void navigate({
-                  to: '/app/$section',
-                  params: { section: 'real-estate-inventory' },
-                  search: (previous) => ({
-                    ...withoutSearchKeys(previous, ['estate', 'property']),
-                    ...(event.target.value ? { estate: event.target.value } : {}),
-                  }),
-                })
-              }
-            >
-              <option value="">Select Estate</option>
-              {estates.map((estate) => (
-                <option key={estate.id} value={estate.id}>
-                  {estate.estateCode} · {estate.estateName} — {estate.cityTown}
-                </option>
-              ))}
-            </select>
+            {selectedEstate ? (
+              <button
+                type="button"
+                className="specialized-btn"
+                disabled={!canEstateUpdate}
+                onClick={() => setEstateEditOpen(true)}
+              >
+                <IconMapPin2 size={14} />
+                Edit Estate
+              </button>
+            ) : null}
+            {selectedEstate ? (
+              <select
+                value={estateId ?? ''}
+                disabled={!canEstateList}
+                onChange={(event) =>
+                  void navigate({
+                    to: '/app/$section',
+                    params: { section: 'real-estate-inventory' },
+                    search: (previous) => ({
+                      ...withoutSearchKeys(previous, ['estate', 'property']),
+                      ...(event.target.value ? { estate: event.target.value } : {}),
+                    }),
+                  })
+                }
+              >
+                <option value="">Back to inventory directory</option>
+                {estates.map((estate) => (
+                  <option key={estate.id} value={estate.id}>
+                    {estate.estateCode} · {estate.estateName} — {estate.cityTown}
+                  </option>
+                ))}
+              </select>
+            ) : null}
             <label className="commercial-search">
               <IconSearch size={14} />
               <input
                 value={searchDraft}
                 onChange={(event) => setSearchDraft(event.target.value)}
-                placeholder="Search Estates"
+                placeholder={
+                  selectedEstate
+                    ? 'Search Estates'
+                    : inventoryView === 'estates'
+                      ? 'Search Estates'
+                      : inventoryView === 'non-estate-properties'
+                        ? 'Search non-estate Properties'
+                        : 'Search Brokerage Listings'
+                }
               />
             </label>
           </div>
@@ -723,174 +1007,292 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
 
         {selectedEstate ? (
           <>
-            <div className="specialized-grid-2-1">
+            {selectedEstate.estateMapUrl || selectedEstate.virtualTourUrl ? (
               <section className="specialized-card">
                 <header className="specialized-card-header">
                   <div>
-                    <div className="specialized-card-title">Property Inventory</div>
+                    <div className="specialized-card-title">Estate map and virtual tour</div>
                     <div className="specialized-card-subtitle">
-                      All Estate Properties in one board. Color shows status; icon shows Property
-                      type.
-                    </div>
-                  </div>
-                  <div className="specialized-inventory-legend">
-                    <div className="specialized-legend">
-                      <span>
-                        <i className="av" />
-                        Available
-                      </span>
-                      <span>
-                        <i className="rs" />
-                        Reserved
-                      </span>
-                      <span>
-                        <i className="sd" />
-                        Sold
-                      </span>
-                      <span>
-                        <i className="hd" />
-                        Hold / NFS
-                      </span>
-                    </div>
-                    <div className="specialized-type-legend">
-                      <span>
-                        <IconMap2 size={13} />
-                        Plot
-                      </span>
-                      <span>
-                        <IconHome size={13} />
-                        Residential
-                      </span>
-                      <span>
-                        <IconBuilding size={13} />
-                        Commercial
-                      </span>
+                      Open the latest layout drawing and immersive walkthrough for{' '}
+                      {selectedEstate.estateName}.
                     </div>
                   </div>
                 </header>
-                {propertiesQuery.isError ? (
-                  <ErrorState
-                    title="Property Inventory unavailable"
-                    description={presentError(propertiesQuery.error, 'section-load').message}
-                    onRetry={() => void propertiesQuery.refetch()}
-                  />
-                ) : properties.length ? (
-                  <div className="specialized-property-board-wrap scrollbar-thin">
-                    <div className="specialized-property-board">
-                      {properties.map((property) => (
-                        <button
-                          key={property.id}
-                          type="button"
-                          className={
-                            property.id === propertyId
-                              ? `specialized-property-tile ${statusClass(property.status)} is-selected`
-                              : `specialized-property-tile ${statusClass(property.status)}`
-                          }
-                          onClick={() =>
-                            void navigate({
-                              to: '/app/$section',
-                              params: { section: 'real-estate-inventory' },
-                              search: (previous) => ({
-                                ...previous,
-                                estate: String(selectedEstate.id),
-                                property: String(property.id),
-                              }),
-                            })
-                          }
-                        >
-                          <span className="specialized-property-tile-icon">
-                            <TypeIcon property={property} />
-                          </span>
-                          <span className="specialized-property-tile-name">
-                            {property.propertyName}
-                          </span>
-                          <span className="specialized-property-tile-type">
-                            {property.propertyTypeDisplay || property.propertyType}
-                          </span>
-                        </button>
-                      ))}
+                <div className="specialized-estate-assets">
+                  {selectedEstate.estateMapUrl ? (
+                    <article className="specialized-estate-asset">
+                      <div className="specialized-estate-asset-icon">
+                        <IconMap2 size={18} />
+                      </div>
+                      <div className="specialized-estate-asset-body">
+                        <strong>Estate map</strong>
+                        <small>Open the uploaded estate map or reference image.</small>
+                      </div>
+                      <button
+                        type="button"
+                        className="specialized-btn specialized-btn-small"
+                        onClick={() =>
+                          setEstateMediaPreview({
+                            title: 'Estate map',
+                            url: selectedEstate.estateMapUrl,
+                            kind: estateMediaKind(selectedEstate.estateMapUrl),
+                          })
+                        }
+                      >
+                        <IconExternalLink size={12} />
+                        Open map
+                      </button>
+                    </article>
+                  ) : null}
+
+                  {selectedEstate.virtualTourUrl ? (
+                    <article className="specialized-estate-asset">
+                      <div className="specialized-estate-asset-icon">
+                        <IconWorldWww size={18} />
+                      </div>
+                      <div className="specialized-estate-asset-body">
+                        <strong>Virtual tour</strong>
+                        <small>Open the uploaded walkthrough inside this workspace.</small>
+                      </div>
+                      <button
+                        type="button"
+                        className="specialized-btn specialized-btn-small"
+                        onClick={() =>
+                          setEstateMediaPreview({
+                            title: 'Virtual tour',
+                            url: selectedEstate.virtualTourUrl,
+                            kind: estateMediaKind(selectedEstate.virtualTourUrl),
+                          })
+                        }
+                      >
+                        <IconExternalLink size={12} />
+                        Open tour
+                      </button>
+                    </article>
+                  ) : null}
+                </div>
+              </section>
+            ) : null}
+
+            {estateMediaPreview ? (
+              <section className="specialized-card">
+                <header className="specialized-card-header">
+                  <div>
+                    <div className="specialized-card-title">{estateMediaPreview.title}</div>
+                    <div className="specialized-card-subtitle">
+                      Review this file here, then return to the estate record when you are done.
                     </div>
                   </div>
-                ) : (
-                  <EmptyState
-                    title="No Property inventory"
-                    description="Use Add Estate Properties to add Plots, Residential Buildings or Commercial Buildings."
-                  />
-                )}
+                  <div className="specialized-card-actions">
+                    <a
+                      className="specialized-btn specialized-btn-small"
+                      href={estateMediaPreview.url}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <IconExternalLink size={12} />
+                      Open original
+                    </a>
+                    <button
+                      type="button"
+                      className="specialized-btn specialized-btn-small"
+                      onClick={() => setEstateMediaPreview(null)}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </header>
+                <div className="specialized-estate-preview-shell">
+                  <div className="specialized-estate-preview">
+                    {estateMediaPreview.kind === 'pdf' ? (
+                      <iframe
+                        title={estateMediaPreview.title}
+                        src={`${estateMediaPreview.url}#toolbar=1&navpanes=1&view=FitH`}
+                        className="specialized-estate-preview-frame"
+                      />
+                    ) : estateMediaPreview.kind === 'video' ? (
+                      <video
+                        className="specialized-estate-preview-video"
+                        src={estateMediaPreview.url}
+                        controls
+                        playsInline
+                        preload="metadata"
+                      />
+                    ) : estateMediaPreview.kind === 'image' ? (
+                      <img
+                        className="specialized-estate-preview-image"
+                        src={estateMediaPreview.url}
+                        alt={estateMediaPreview.title}
+                      />
+                    ) : (
+                      <iframe
+                        title={estateMediaPreview.title}
+                        src={estateMediaPreview.url}
+                        className="specialized-estate-preview-frame"
+                      />
+                    )}
+                  </div>
+                </div>
               </section>
+            ) : null}
 
-              <aside>
-                <section className="specialized-card">
-                  <header className="specialized-card-header">
-                    <div>
-                      <div className="specialized-card-title">Selected Property</div>
-                      <div className="specialized-card-subtitle">
-                        Inventory record and type-specific details
-                      </div>
-                    </div>
-                  </header>
-                  {!selectedProperty ? (
-                    <div className="specialized-empty">Select a Property from the board.</div>
-                  ) : (
-                    <SelectedPropertyForm
-                      key={selectedProperty.id}
-                      selectedEstateName={selectedEstate.estateName}
-                      selectedProperty={selectedProperty}
-                      canPropertyUpdate={canPropertyUpdate}
-                      canPropertyDelete={canPropertyDelete}
-                      updatePending={updateMutation.isPending}
-                      formError={formError}
-                      setFormError={setFormError}
-                      onSubmit={(input) =>
-                        updateMutation.mutate({ id: selectedProperty.id, input })
-                      }
-                      onEdit={() => setPropertyEditOpen(true)}
-                      onDelete={() => setDeleteId(selectedProperty.id)}
-                    />
-                  )}
-                </section>
+            <section className="specialized-card">
+              <header className="specialized-card-header">
+                <div>
+                  <div className="specialized-card-title">Property Inventory</div>
+                  <div className="specialized-card-subtitle">
+                    All Estate Properties in one board. Color shows status; icon shows Property
+                    type.
+                  </div>
+                </div>
+                <div className="specialized-inventory-legend">
+                  <div className="specialized-legend">
+                    <span>
+                      <i className="av" />
+                      Available
+                    </span>
+                    <span>
+                      <i className="rs" />
+                      Reserved
+                    </span>
+                    <span>
+                      <i className="sd" />
+                      Sold
+                    </span>
+                    <span>
+                      <i className="hd" />
+                      Hold / NFS
+                    </span>
+                  </div>
+                  <div className="specialized-type-legend">
+                    <span>
+                      <IconMap2 size={13} />
+                      Plot
+                    </span>
+                    <span>
+                      <IconHome size={13} />
+                      Residential
+                    </span>
+                    <span>
+                      <IconBuilding size={13} />
+                      Commercial
+                    </span>
+                  </div>
+                </div>
+              </header>
+              {propertiesQuery.isError ? (
+                <ErrorState
+                  title="Property Inventory unavailable"
+                  description={presentError(propertiesQuery.error, 'section-load').message}
+                  onRetry={() => void propertiesQuery.refetch()}
+                />
+              ) : properties.length ? (
+                <div className="specialized-property-board-wrap scrollbar-thin">
+                  <div className="specialized-property-board">
+                    {properties.map((property) => (
+                      <button
+                        key={property.id}
+                        type="button"
+                        className={
+                          property.id === propertyId
+                            ? `specialized-property-tile ${statusClass(property.status)} is-selected`
+                            : `specialized-property-tile ${statusClass(property.status)}`
+                        }
+                        onClick={() =>
+                          void navigate({
+                            to: '/app/$section',
+                            params: { section: 'real-estate-inventory' },
+                            search: (previous) => ({
+                              ...previous,
+                              estate: String(selectedEstate.id),
+                              property: String(property.id),
+                            }),
+                          })
+                        }
+                      >
+                        <span className="specialized-property-tile-icon">
+                          <TypeIcon property={property} />
+                        </span>
+                        <span className="specialized-property-tile-name">
+                          {property.propertyName}
+                        </span>
+                        <span className="specialized-property-tile-type">
+                          {property.propertyTypeDisplay || property.propertyType}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <EmptyState
+                  title="No Property inventory"
+                  description="Use Add Properties to add Plots, Residential Buildings or Commercial Buildings."
+                />
+              )}
+            </section>
 
+            {canBrokerageList && estateBrokerageListings.length ? (
                 <section className="specialized-card">
                   <header className="specialized-card-header">
                     <div>
                       <div className="specialized-card-title">Brokerage Listings</div>
                       <div className="specialized-card-subtitle">
-                        {brokerageStatsQuery.data?.total ?? 0} total ·{' '}
-                        {brokerageStatsQuery.data?.verified ?? 0} verified
+                        Listings linked to {selectedEstate.estateName}
                       </div>
                     </div>
                   </header>
                   {brokerageList}
                 </section>
-              </aside>
-            </div>
+            ) : null}
           </>
         ) : (
-          <div className="specialized-grid-2-1">
-            <section className="specialized-card">
-              <header className="specialized-card-header">
-                <div>
-                  <div className="specialized-card-title">Estate Inventory</div>
-                  <div className="specialized-card-subtitle">
-                    Select an estate record before managing its property inventory.
-                  </div>
+          <section className="specialized-card">
+            <header className="specialized-card-header">
+              <div>
+                <div className="specialized-card-title">Inventory Directory</div>
+                <div className="specialized-card-subtitle">
+                  Switch between estate records and standalone properties, then open the record you want to manage.
                 </div>
-              </header>
-              {estateSelectionState}
-            </section>
-            <section className="specialized-card">
-              <header className="specialized-card-header">
-                <div>
-                  <div className="specialized-card-title">Brokerage Listings</div>
-                  <div className="specialized-card-subtitle">
-                    {brokerageStatsQuery.data?.total ?? 0} total ·{' '}
-                    {brokerageStatsQuery.data?.verified ?? 0} verified
-                  </div>
-                </div>
-              </header>
-              {brokerageState}
-            </section>
-          </div>
+              </div>
+            </header>
+            <Tabs
+              value={inventoryView}
+              onValueChange={(value) =>
+                setInventoryView(
+                  value === 'brokerage'
+                    ? 'brokerage'
+                    : value === 'non-estate-properties'
+                      ? 'non-estate-properties'
+                      : 'estates',
+                )
+              }
+              className="specialized-directory-tabs"
+            >
+              <TabsList className="specialized-directory-tabs-list">
+                <TabsTrigger value="estates">Estates</TabsTrigger>
+                <TabsTrigger value="non-estate-properties">Non-estate Properties</TabsTrigger>
+                <TabsTrigger value="brokerage">Brokerage Listings</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <div className="specialized-filter-row specialized-filter-row--directory">
+              {inventoryView === 'non-estate-properties' ? (
+                <select
+                  value={standalonePropertyType}
+                  onChange={(event) =>
+                    setStandalonePropertyType(
+                      event.target.value as 'all' | Property['propertyType'],
+                    )
+                  }
+                >
+                  <option value="all">All property types</option>
+                  <option value="plot">Plots</option>
+                  <option value="residential">Residential</option>
+                  <option value="commercial">Commercial</option>
+                </select>
+              ) : null}
+            </div>
+            {inventoryDirectoryState}
+          </section>
         )}
       </main>
 
@@ -898,10 +1300,21 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
         <Suspense fallback={<RealEstateWorkspaceFallback />}>
           <CreateEstateLiveWorkspace
             saving={createEstateMutation.isPending}
-
             onClose={() => setEstateOpen(false)}
-
             onSubmit={(input) => createEstateMutation.mutate(input)}
+          />
+        </Suspense>
+      ) : null}
+      {estateEditOpen && selectedEstate ? (
+        <Suspense fallback={<RealEstateWorkspaceFallback />}>
+          <CreateEstateLiveWorkspace
+            mode="edit"
+            saving={updateEstateMutation.isPending}
+            initialValue={mapEstateToInput(selectedEstate)}
+            onClose={() => setEstateEditOpen(false)}
+            onSubmit={(input) =>
+              updateEstateMutation.mutate({ id: selectedEstate.id, input })
+            }
           />
         </Suspense>
       ) : null}
@@ -909,9 +1322,31 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
         <BatchCreatePropertiesWorkspace
           estateId={selectedEstate.id}
           estateName={selectedEstate.estateName}
+          estates={estates.map((estate) => ({
+            id: estate.id,
+            estateName: estate.estateName,
+            estateCode: estate.estateCode,
+          }))}
           onClose={() => setPropertiesOpen(false)}
           onChanged={async () => {
             await invalidateEstate(selectedEstate.id)
+          }}
+        />
+      ) : propertiesOpen ? (
+        <BatchCreatePropertiesWorkspace
+          estateId={null}
+          estateName={null}
+          estates={estates.map((estate) => ({
+            id: estate.id,
+            estateName: estate.estateName,
+            estateCode: estate.estateCode,
+          }))}
+          onClose={() => setPropertiesOpen(false)}
+          onChanged={async () => {
+            await Promise.all([
+              queryClient.invalidateQueries({ queryKey: realEstateKeys.estates() }),
+              queryClient.invalidateQueries({ queryKey: realEstateKeys.standaloneProperties() }),
+            ])
           }}
         />
       ) : null}
@@ -935,6 +1370,65 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
           onClose={() => setPropertyEditOpen(false)}
           onSubmit={(input) => updatePropertyMutation.mutate({ id: selectedProperty.id, input })}
         />
+      ) : null}
+      {selectedProperty && selectedEstate ? (
+        <div
+          className="commercial-modal-backdrop"
+          role="presentation"
+          onMouseDown={() =>
+            void navigate({
+              to: '/app/$section',
+              params: { section: 'real-estate-inventory' },
+              search: (previous) => withoutSearchKeys(previous, ['property']),
+              replace: true,
+            })
+          }
+        >
+          <section
+            className="commercial-modal specialized-real-estate-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Selected property"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <header className="commercial-modal-header">
+              <div>
+                <h2>Selected Property</h2>
+                <p>Inventory record and type-specific details.</p>
+              </div>
+              <button
+                type="button"
+                className="commercial-modal-close"
+                onClick={() =>
+                  void navigate({
+                    to: '/app/$section',
+                    params: { section: 'real-estate-inventory' },
+                    search: (previous) => withoutSearchKeys(previous, ['property']),
+                    replace: true,
+                  })
+                }
+                aria-label="Close"
+              >
+                <IconX size={16} />
+              </button>
+            </header>
+            <div className="commercial-modal-body">
+              <SelectedPropertyForm
+                key={selectedProperty.id}
+                selectedEstateName={selectedEstate.estateName}
+                selectedProperty={selectedProperty}
+                canPropertyUpdate={canPropertyUpdate}
+                canPropertyDelete={canPropertyDelete}
+                updatePending={updateMutation.isPending}
+                formError={formError}
+                setFormError={setFormError}
+                onSubmit={(input) => updateMutation.mutate({ id: selectedProperty.id, input })}
+                onEdit={() => setPropertyEditOpen(true)}
+                onDelete={() => setDeleteId(selectedProperty.id)}
+              />
+            </div>
+          </section>
+        </div>
       ) : null}
       <ConfirmDialog
         open={deleteId != null}

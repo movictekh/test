@@ -28,6 +28,13 @@ export function validateEstate(i: CreateEstateInput) {
     i.minPriceOtherProperties > i.maxPriceOtherProperties
   )
     return 'Minimum property price cannot exceed maximum property price.'
+  if (i.virtualTourUrl?.trim()) {
+    try {
+      new URL(i.virtualTourUrl)
+    } catch {
+      return 'Virtual tour link must be a valid URL.'
+    }
+  }
   return ''
 }
 export function validateProperty(i: CreatePropertyInput) {
