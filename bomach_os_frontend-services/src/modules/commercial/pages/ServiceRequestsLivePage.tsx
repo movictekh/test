@@ -70,7 +70,7 @@ export function ServiceRequestsLivePage({ recordSearch }: { recordSearch: AppSec
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const toast = useToast()
-  const [createOpen, setCreateOpen] = useState(false)
+  const [manualCreateOpen, setManualCreateOpen] = useState(false)
   const [searchDraft, setSearchDraft] = useState(recordSearch.search ?? '')
   const [syncedSearch, setSyncedSearch] = useState(recordSearch.search ?? '')
 
@@ -150,7 +150,7 @@ export function ServiceRequestsLivePage({ recordSearch }: { recordSearch: AppSec
     },
     onSuccess: async ({ request, attachmentFailures }) => {
       await invalidate(request.id)
-      setCreateOpen(false)
+      setManualCreateOpen(false)
       toast.success(`Request ${request.requestNumber} created`)
       if (attachmentFailures.length > 0) {
         toast.warning('Some documents could not be attached', {
@@ -161,7 +161,7 @@ export function ServiceRequestsLivePage({ recordSearch }: { recordSearch: AppSec
         to: '/app/$section',
         params: { section: 'service-requests' },
         search: (previous) => ({
-          ...previous,
+          ...withoutCreateSearch(previous),
           request: String(request.id),
         }),
       })
@@ -287,20 +287,7 @@ export function ServiceRequestsLivePage({ recordSearch }: { recordSearch: AppSec
     return () => window.clearTimeout(timeoutId)
   }, [recordSearch.search, searchDraft, setSearchValue])
 
-  useEffect(() => {
-    if (recordSearch.create !== 'request') return
-    setCreateOpen(true)
-  }, [recordSearch.create])
-
-  useEffect(() => {
-    if (!createOpen || recordSearch.create !== 'request') return
-    void navigate({
-      to: '/app/$section',
-      params: { section: 'service-requests' },
-      search: (previous) => withoutCreateSearch(previous),
-      replace: true,
-    })
-  }, [createOpen, navigate, recordSearch.create])
+  const createOpen = manualCreateOpen || recordSearch.create === 'request'
 
   if (
     listQuery.isPending ||
@@ -360,7 +347,7 @@ export function ServiceRequestsLivePage({ recordSearch }: { recordSearch: AppSec
             <CompactActionButton
               disabled={!hasPermission(user, PERMISSIONS.serviceRequestsCreate)}
               locked={!hasPermission(user, PERMISSIONS.serviceRequestsCreate)}
-              onClick={() => setCreateOpen(true)}
+              onClick={() => setManualCreateOpen(true)}
             >
               <IconFilePlus size={14} />
               New Request
@@ -410,7 +397,7 @@ export function ServiceRequestsLivePage({ recordSearch }: { recordSearch: AppSec
                 tone="primary"
                 disabled={!hasPermission(user, PERMISSIONS.serviceRequestsCreate)}
                 locked={!hasPermission(user, PERMISSIONS.serviceRequestsCreate)}
-                onClick={() => setCreateOpen(true)}
+                onClick={() => setManualCreateOpen(true)}
               >
                 <IconFilePlus size={14} />
                 New Request
@@ -596,7 +583,16 @@ export function ServiceRequestsLivePage({ recordSearch }: { recordSearch: AppSec
           services={services}
           choices={choices}
           saving={createMutation.isPending}
-          onClose={() => setCreateOpen(false)}
+          onClose={() => {
+            setManualCreateOpen(false)
+            if (recordSearch.create !== 'request') return
+            void navigate({
+              to: '/app/$section',
+              params: { section: 'service-requests' },
+              search: (previous) => withoutCreateSearch(previous),
+              replace: true,
+            })
+          }}
           onSubmit={(input, attachments) => createMutation.mutateAsync({ input, attachments })}
         />
       ) : null}

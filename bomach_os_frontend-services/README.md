@@ -2,23 +2,13 @@
 
 Production frontend for the Bomach Service Operations OS.
 
-## Foundation stack
+## Stack
 
-- React
-- TypeScript
-- Vite
+- React + TypeScript + Vite
 - Tailwind CSS
-- TanStack Router
-- TanStack Query
-- TanStack Form
-- TanStack Table
-- TanStack Virtual
-- TanStack Pacer (planned for search, autosave, and queues when required)
-- TanStack Store (deferred while its current API remains experimental)
-- MSW
-- Vitest and Testing Library
-- Storybook
-- ESLint and Prettier
+- TanStack Router, Query, Form, Table, Virtual
+- MSW for local/dev API mocks (loaded only in development)
+- Vitest, ESLint, Prettier
 
 ## Development
 
@@ -28,48 +18,22 @@ npm install
 npm run dev
 ```
 
+Use `VITE_ENABLE_MOCKS=true` with `VITE_API_BASE_URL=/api/v1` for MSW, or point at the Django backend with mocks disabled (see `.env.example`).
+
 ## Quality checks
 
 ```bash
-npm run check
+npm run typecheck
+npm run lint
+npm run build
 ```
 
-## Sync to GitHub production repo
+## Architecture
 
-This workspace is the development copy. The publishable repo is
-`../../bomach_os_frontend/services`.
+- `src/app` composes the application (providers, shell, auth, navigation)
+- `src/modules` owns business features
+- `src/shared` contains reusable infrastructure and UI
+- `src/routes` stays thin and delegates to modules
+- Server data belongs to TanStack Query
 
-```bash
-# Preview what would change
-npm run sync -- --dry-run
-
-# Copy production code (excludes tests/stories/local env/session docs)
-npm run sync
-```
-
-Then in the destination repo, review and commit:
-
-```bash
-cd ../../bomach_os_frontend/services
-git status
-git add -A
-git commit -m "…"
-git push
-```
-
-## Component workshop
-
-```bash
-npm run storybook
-```
-
-## Architecture rule
-
-- `app` composes the application.
-- `modules` owns business features.
-- `shared` contains genuinely reusable infrastructure and UI.
-- `routes` stays thin and delegates to modules.
-- Server data belongs to TanStack Query.
-- Shareable page state belongs to TanStack Router.
-- Form state belongs to TanStack Form.
-- Small cross-application UI state may use TanStack Store.
+See `docs/architecture/` and `docs/api-integration/API_Integration_Standard.md` for standards.

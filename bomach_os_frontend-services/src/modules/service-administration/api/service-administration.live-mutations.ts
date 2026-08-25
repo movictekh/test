@@ -15,6 +15,7 @@ import type {
 import { mapRequestFormDto } from '../mappers/request-form.mapper'
 import type { PricingConfigInputDto, WorkflowInputDto } from './service-administration.contracts'
 import { serviceAdministrationBackendApi } from './service-administration.backend-api'
+import { syncLiveSubservices } from './service-subservices.live'
 
 export type ServiceSetupStage = 'service-core' | 'subservices' | 'request-form'
 
@@ -99,15 +100,7 @@ export async function createServiceThroughRequestForm(
   }
 
   try {
-    await serviceAdministrationBackendApi.replaceSubservices(
-      serviceId,
-      input.subservices.map((name, index) => ({
-        name,
-        status: 'draft',
-        default_sla_days: input.slaDays,
-        sort_order: index,
-      })),
-    )
+    await syncLiveSubservices(serviceId, input.subservices)
   } catch (error) {
     throw new ServiceSetupStageError('subservices', serviceId, error)
   }

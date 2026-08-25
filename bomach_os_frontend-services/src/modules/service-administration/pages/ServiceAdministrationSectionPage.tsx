@@ -33,6 +33,7 @@ import {
 } from '../api/service-administration.live-mutations'
 import { serviceAdministrationQueries } from '../api/service-administration.queries'
 import { runLiveServiceSetup } from '../api/service-setup.orchestrator'
+import { syncLiveSubservices } from '../api/service-subservices.live'
 import { BranchActivationScreen } from '../screens/BranchActivationScreen'
 import {
   CalculatorLibraryScreen,
@@ -121,7 +122,10 @@ export function ServiceAdministrationSectionPage({
   const cataloguePage = section === 'service-catalogue' ? Math.max(1, recordSearch.page ?? 1) : 1
   const cataloguePageSize = 12
   const createStageAccess: CreateServiceStageAccess = {
-    subservices: capabilities.canUpdateSubservices,
+    subservices:
+      capabilities.canListSubservices &&
+      capabilities.canCreateSubservices &&
+      capabilities.canUpdateSubservices,
     pricing: capabilities.canCreatePricingConfig,
     requestForm: capabilities.canCreateRequestForm,
     workflow: capabilities.canCreateWorkflow,
@@ -470,20 +474,7 @@ export function ServiceAdministrationSectionPage({
         client_visibility: 'visible',
       })
 
-      await serviceAdministrationBackendApi.replaceSubservices(
-        serviceId,
-        input.subservices.map((name, index) => ({
-          name,
-          status:
-            input.status === 'inactive'
-              ? 'archived'
-              : input.status === 'active'
-                ? 'active'
-                : 'draft',
-          default_sla_days: input.slaDays,
-          sort_order: index,
-        })),
-      )
+      await syncLiveSubservices(serviceId, input.subservices)
 
       await saveLivePricingConfig({
         ...(selectedCalculator ? { id: selectedCalculator.id } : {}),
@@ -493,11 +484,7 @@ export function ServiceAdministrationSectionPage({
         description: selectedCalculator?.description ?? `Pricing for ${input.name}`,
         pricingType: pricingTypeMap[input.pricing.method.trim().toLowerCase()] ?? 'fixed',
         status:
-          input.status === 'inactive'
-            ? 'inactive'
-            : input.status === 'active'
-              ? 'active'
-              : 'draft',
+          input.status === 'inactive' ? 'inactive' : input.status === 'active' ? 'active' : 'draft',
         variables: selectedCalculator?.variables ?? [],
         charges: [
           {

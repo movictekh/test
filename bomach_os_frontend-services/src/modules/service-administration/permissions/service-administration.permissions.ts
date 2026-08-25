@@ -8,6 +8,8 @@ export interface ServiceAdministrationCapabilities {
   canUpdateService: boolean
   canDeleteService: boolean
   canListCategories: boolean
+  canListSubservices: boolean
+  canCreateSubservices: boolean
   canUpdateSubservices: boolean
   canCreateInitialServiceSetup: boolean
 
@@ -48,6 +50,8 @@ export function getServiceAdministrationCapabilities(
       [PERMISSIONS.servicesCreate, PERMISSIONS.categoriesList],
       'all',
     ),
+    canListSubservices: hasPermission(user, PERMISSIONS.serviceSubservicesList),
+    canCreateSubservices: hasPermission(user, PERMISSIONS.serviceSubservicesCreate),
     canUpdateSubservices: hasPermission(user, PERMISSIONS.serviceSubservicesUpdate),
 
     canListPricingConfigs: hasPermission(user, PERMISSIONS.servicePricingConfigsList),

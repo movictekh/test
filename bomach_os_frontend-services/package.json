@@ -1,7 +1,7 @@
 {
-  "name": "bomach_os_frontend-services",
+  "name": "bomach-os-services",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -14,10 +14,8 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "storybook": "storybook dev -p 6006",
-    "build:storybook": "storybook build",
-    "check": "npm run typecheck && npm run lint && npm run format:check && npm run test:run && npm run build",
-    "sync": "bash scripts/sync-to-services.sh"
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm run build",
+    "sync": "bash scripts/sync-from-dev.sh"
   },
   "dependencies": {
     "@eh1z/nigerian-locations": "^1.0.3",

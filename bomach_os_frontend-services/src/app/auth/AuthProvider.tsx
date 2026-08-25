@@ -45,6 +45,41 @@ export function AuthProvider({ children }: PropsWithChildren) {
     }
   }, [currentUserQueryOptions.queryKey, queryClient])
 
+  // Handle token passed from query params (e.g. embedded in Bomach OS) or window postMessage
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const params = new URLSearchParams(window.location.search)
+    const queryToken = params.get('token') || params.get('access_token')
+    const queryRefreshToken = params.get('refresh_token') || queryToken
+
+    if (queryToken) {
+      tokenStore.set({
+        accessToken: queryToken,
+        refreshToken: queryRefreshToken || queryToken,
+      })
+      queryClient.invalidateQueries({
+        queryKey: currentUserQueryOptions.queryKey,
+      })
+    }
+
+    const handleMessage = (e: MessageEvent) => {
+      if (e.data && e.data.type === 'BOMACH_AUTH_TOKEN' && e.data.token) {
+        const t = String(e.data.token)
+        tokenStore.set({
+          accessToken: t,
+          refreshToken: e.data.refreshToken ? String(e.data.refreshToken) : t,
+        })
+        queryClient.invalidateQueries({
+          queryKey: currentUserQueryOptions.queryKey,
+        })
+      }
+    }
+
+    window.addEventListener('message', handleMessage)
+    return () => window.removeEventListener('message', handleMessage)
+  }, [currentUserQueryOptions.queryKey, queryClient])
+
   const loadCurrentUser = useCallback(async (): Promise<AuthUser> => {
     const user = await queryClient.fetchQuery({
       ...currentUserQueryOptions,

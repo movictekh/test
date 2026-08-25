@@ -238,18 +238,6 @@ export function WorkflowDesignerScreen({
             </div>
           </div>
 
-          <div className="service-admin-life">
-            {['Request Review', 'Execution', 'Quality Review', 'Client Acceptance'].map(
-              (name, index) => (
-                <article key={name} className="service-admin-step opacity-60">
-                  <small>{String(index + 1).padStart(2, '0')}</small>
-                  <b>{name}</b>
-                  <span>Not configured</span>
-                </article>
-              ),
-            )}
-          </div>
-
           <div className="service-admin-table-wrap" style={{ marginTop: 12 }}>
             <table className="service-admin-table service-admin-workflow-table">
               <thead>
@@ -376,16 +364,6 @@ export function WorkflowDesignerScreen({
               </>
             )}
           </div>
-        </div>
-
-        <div className="service-admin-life">
-          {stages.map((stage, index) => (
-            <article key={stage.id} className="service-admin-step">
-              <small>{String(index + 1).padStart(2, '0')}</small>
-              <b>{stage.name}</b>
-              <span>Pending</span>
-            </article>
-          ))}
         </div>
 
         <div className="service-admin-table-wrap" style={{ marginTop: 12 }}>

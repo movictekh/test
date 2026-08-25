@@ -261,6 +261,14 @@ export interface ServicePricingSetup {
   discountApprovalPercent: number
 }
 
+export interface ServiceSubserviceSetup {
+  code?: string | null
+  name: string
+  description: string
+  status: 'draft' | 'active' | 'inactive'
+  defaultSlaDays: number
+}
+
 export interface CreateServiceWizardInput {
   name: string
   categoryId: number
@@ -272,7 +280,7 @@ export interface CreateServiceWizardInput {
   fulfilmentMode: string
   status: ServiceStatus
   branchNames: string[]
-  subservices: string[]
+  subservices: ServiceSubserviceSetup[]
   pricing: ServicePricingSetup
   requestFields: string[]
   workflowStages: string[]
@@ -294,7 +302,7 @@ export interface ConfigureServiceInput {
   fulfilmentMode: string
   status: ServiceStatus
   branchNames: string[]
-  subservices: string[]
+  subservices: ServiceSubserviceSetup[]
   pricing: ServicePricingSetup
   requestFields: string[]
   workflowStages: string[]

@@ -678,7 +678,7 @@ export function createMockServiceWizard(input: CreateServiceWizardInput) {
     readiness: input.status === 'active' ? 100 : 82,
     slaDays: input.slaDays,
     fulfilmentMode: input.fulfilmentMode,
-    subservices: input.subservices,
+    subservices: input.subservices.map((item) => item.name),
     requestFields: input.requestFields,
     workflowStages: input.workflowStages,
   }
@@ -820,7 +820,7 @@ export function configureMockService(input: ConfigureServiceInput) {
     fulfilmentMode: input.fulfilmentMode,
     status: input.status,
     branchNames: input.branchNames,
-    subservices: input.subservices,
+    subservices: input.subservices.map((item) => item.name),
     subserviceCount: input.subservices.length,
     requestFields: input.requestFields,
     workflowStages: input.workflowStages,

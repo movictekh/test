@@ -1,4 +1,5 @@
 import { serviceAdministrationBackendApi } from './service-administration.backend-api'
+import { syncLiveSubservices } from './service-subservices.live'
 import type {
   CreateServiceStageAccess,
   CreateServiceWizardInput,
@@ -151,15 +152,7 @@ export async function runLiveServiceSetup(
 
     try {
       if (stage === 'subservices') {
-        await serviceAdministrationBackendApi.replaceSubservices(
-          serviceId,
-          input.subservices.map((name, index) => ({
-            name,
-            status: activeNested ? 'active' : 'draft',
-            default_sla_days: input.slaDays,
-            sort_order: index,
-          })),
-        )
+        await syncLiveSubservices(serviceId, input.subservices)
       } else if (stage === 'pricing') {
         await serviceAdministrationBackendApi.createPricingConfig(serviceId, {
           name: `${input.name} Pricing`,

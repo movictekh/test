@@ -958,6 +958,15 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
   background: #fffbeb;
 }
 
+.service-admin-field-error {
+  display: block;
+  margin-top: 6px;
+  color: #b42318;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
 .service-admin-inline-entry {
   display: flex;
   gap: 6px;
@@ -980,6 +989,71 @@ button.service-admin-wizard-step.service-admin-wizard-step--reachable:not(:disab
   background: var(--service-admin-surface-muted);
   padding: 8px 10px;
   font-size: 9px;
+}
+
+.service-admin-subservice-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.service-admin-subservice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.service-admin-subservice-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  border: 1px solid var(--service-admin-border);
+  border-radius: 12px;
+  background: #fff;
+  padding: 14px 16px;
+}
+
+.service-admin-subservice-card-meta {
+  min-width: 0;
+  flex: 1;
+}
+
+.service-admin-subservice-card-name {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--service-admin-foreground);
+}
+
+.service-admin-subservice-card-subtitle {
+  margin-top: 4px;
+  font-size: 9px;
+  color: var(--service-admin-foreground-subtle);
+}
+
+.service-admin-subservice-card-description {
+  margin-top: 8px;
+  font-size: 10px;
+  line-height: 1.55;
+  color: var(--service-admin-foreground-muted);
+}
+
+.service-admin-subservice-card-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.service-admin-modal-backdrop--nested {
+  z-index: 90;
+  background: #0f172a66;
+}
+
+.service-admin-modal--nested {
+  width: min(640px, calc(100vw - 48px));
+  max-height: min(520px, calc(100vh - 48px));
 }
 
 .service-admin-html-config {

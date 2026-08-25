@@ -27,13 +27,34 @@ function notify(event: AuthSessionEvent): void {
 function readSessionValue(key: string): string | null {
   if (typeof window === 'undefined') return null
   const result = tokenSchema.safeParse(window.sessionStorage.getItem(key))
-  return result.success ? result.data : null
+  if (result.success) return result.data
+
+  // Fallback to localStorage if not in sessionStorage
+  const localResult = tokenSchema.safeParse(window.localStorage.getItem(key))
+  return localResult.success ? localResult.data : null
 }
 
 function readLocalValue(key: string): string | null {
   if (typeof window === 'undefined') return null
   const result = tokenSchema.safeParse(window.localStorage.getItem(key))
   return result.success ? result.data : null
+}
+
+// Ingest tokens from URL parameters synchronously upon script evaluation
+if (typeof window !== 'undefined') {
+  try {
+    const params = new URLSearchParams(window.location.search)
+    const urlToken = params.get('token') || params.get('access_token')
+    const urlRefreshToken = params.get('refresh_token') || urlToken
+    if (urlToken) {
+      window.sessionStorage.setItem(ACCESS_TOKEN_KEY, urlToken)
+      window.localStorage.setItem(ACCESS_TOKEN_KEY, urlToken)
+      if (urlRefreshToken) {
+        window.sessionStorage.setItem(REFRESH_TOKEN_KEY, urlRefreshToken)
+        window.localStorage.setItem(REFRESH_TOKEN_KEY, urlRefreshToken)
+      }
+    }
+  } catch (_) {}
 }
 
 export const tokenStore = {
