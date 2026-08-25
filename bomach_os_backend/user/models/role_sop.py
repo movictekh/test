@@ -1,28 +1,7 @@
-from django.db import models
+"""Compatibility module alias for canonical Organization ownership."""
 
-from user.models.base import BaseModel
+import importlib
+import sys
 
-
-class RoleSOP(BaseModel):
-    role = models.ForeignKey(
-        "Role",
-        on_delete=models.CASCADE,
-        related_name="role_sops",
-    )
-    sop = models.ForeignKey(
-        "SOP",
-        on_delete=models.CASCADE,
-        related_name="role_links",
-    )
-    is_active = models.BooleanField(default=True)
-
-    class Meta:
-        ordering = ["-created_at"]
-        indexes = [
-            models.Index(fields=["role", "sop"]),
-            models.Index(fields=["role", "is_active"]),
-        ]
-        unique_together = [("role", "sop")]
-
-    def __str__(self):
-        return f"{self.role.name}: {self.sop.title}"
+_canonical = importlib.import_module("domains.organization.models.role_sop")
+sys.modules[__name__] = _canonical

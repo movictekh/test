@@ -1,68 +1,7 @@
-from django.core.validators import MinValueValidator
-from django.db import models
+"""Compatibility module alias for canonical Organization ownership."""
 
-from user.models.base import BaseModel
+import importlib
+import sys
 
-
-class RoleTaskTemplate(BaseModel):
-    PRIORITY_CHOICES = [
-        ("low", "Low"),
-        ("medium", "Medium"),
-        ("high", "High"),
-    ]
-
-    role = models.ForeignKey(
-        "Role",
-        on_delete=models.CASCADE,
-        related_name="task_templates",
-    )
-    title = models.CharField(max_length=255)
-    description = models.TextField(blank=True, default="")
-    sequence = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
-    default_priority = models.CharField(
-        max_length=20,
-        choices=PRIORITY_CHOICES,
-        default="medium",
-    )
-    estimated_minutes = models.PositiveIntegerField(
-        blank=True,
-        null=True,
-        validators=[MinValueValidator(1)],
-    )
-    is_active = models.BooleanField(default=True)
-
-    class Meta:
-        ordering = ["sequence", "id"]
-        indexes = [
-            models.Index(fields=["role", "sequence"]),
-        ]
-
-    def __str__(self):
-        return f"{self.role.name}: {self.title}"
-
-
-class RoleDailyRoutineItem(BaseModel):
-    role = models.ForeignKey(
-        "Role",
-        on_delete=models.CASCADE,
-        related_name="daily_routine_items",
-    )
-    title = models.CharField(max_length=255)
-    description = models.TextField(blank=True, default="")
-    sequence = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
-    time_of_day = models.TimeField(blank=True, null=True)
-    estimated_minutes = models.PositiveIntegerField(
-        blank=True,
-        null=True,
-        validators=[MinValueValidator(1)],
-    )
-    is_active = models.BooleanField(default=True)
-
-    class Meta:
-        ordering = ["sequence", "id"]
-        indexes = [
-            models.Index(fields=["role", "sequence"]),
-        ]
-
-    def __str__(self):
-        return f"{self.role.name}: {self.title}"
+_canonical = importlib.import_module("domains.organization.models.role_workflows")
+sys.modules[__name__] = _canonical

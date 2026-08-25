@@ -13,7 +13,8 @@ from user.api.schemas import (
     SOPIn,
     SOPOut,
 )
-from user.models import SOP, Responsibility
+from domains.organization.models.sop import SOP
+from domains.people.models.responsibility import Responsibility
 from domains.organization.models.roles import Department, Unit
 from system.identity.models.user import User
 

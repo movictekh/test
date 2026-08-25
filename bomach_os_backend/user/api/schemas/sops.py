@@ -4,7 +4,8 @@ from typing import Optional
 
 from ninja import ModelSchema, Schema
 
-from user.models import SOP, Responsibility  # adjust imports as needed
+from domains.organization.models.sop import SOP
+from domains.people.models.responsibility import Responsibility
 
 
 class SOPIn(ModelSchema):

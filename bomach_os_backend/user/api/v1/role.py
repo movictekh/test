@@ -62,7 +62,11 @@ from user.api.schemas.role import (
     RoleTrainingRequirementUpdateSchema,
     RoleUpdateSchema,
 )
-from user.models import SOP, RoleCareerPath, RoleDailyRoutineItem, RoleSOP, RoleSuccessPlaybookItem, RoleTaskTemplate
+from domains.organization.models.role_career_path import RoleCareerPath
+from domains.organization.models.role_sop import RoleSOP
+from domains.organization.models.role_success_playbook import RoleSuccessPlaybookItem
+from domains.organization.models.role_workflows import RoleDailyRoutineItem, RoleTaskTemplate
+from domains.organization.models.sop import SOP
 from domains.organization.models.branch import Branch
 from domains.organization.models.role_description import RoleDescription
 from domains.organization.models.role_reporting import RoleReportingLine

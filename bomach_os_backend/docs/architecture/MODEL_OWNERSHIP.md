@@ -35,16 +35,16 @@ This is an architecture inventory, not permission to delete or merge legacy mode
 | RoleReportingLine | user | Organization | MOVE SOURCE | preserve `user.*` | Role structure. |
 | RoleResource | user | Organization / Authorization | MOVE SOURCE | preserve `user.*` | Role resource configuration. |
 | RoleDescription | user | Organization | MOVE SOURCE | preserve `user.*` | Role definition. |
-| RoleCareerPath | user | People / Organization boundary | INVESTIGATE | preserve `user.*` | Role design vs employee development. |
+| RoleCareerPath | user | Organization / Role Design | MOVE SOURCE | preserve `user.*` | Role-to-role progression graph; definition belongs to the role, not an employee instance. |
 | RoleKPIMetric | user | People | MOVE SOURCE | preserve `user.*` | Performance framework. |
 | EmployeeKPIRecord | user | People | MOVE SOURCE | preserve `user.*` | Employee performance result. |
 | RoleTrainingRequirement | user | People | MOVE SOURCE | preserve `user.*` | HR development concern. |
 | RoleTargetTemplate | user | People | MOVE SOURCE | preserve `user.*` | Performance target definition. |
 | EmployeeTarget | user | People | MOVE SOURCE | preserve `user.*` | Employee performance target. |
 | EmployeeTargetReport | user | People | MOVE SOURCE | preserve `user.*` | Employee performance reporting. |
-| RoleTaskTemplate / RoleDailyRoutineItem | user | People / Organization boundary | INVESTIGATE | preserve `user.*` | Inspect consumers. |
-| RoleSOP | user | Organization / Platform knowledge | INVESTIGATE | preserve `user.*` | Depends on SOP ownership decision. |
-| RoleSuccessPlaybookItem | user | People / Organization boundary | INVESTIGATE | preserve `user.*` | Role development/operating guidance. |
+| RoleTaskTemplate / RoleDailyRoutineItem | user | Organization / Role Design | MOVE SOURCE | preserve `user.*` | Default work/routine definition attached to a role; employee execution remains outside this model. |
+| RoleSOP | user | Organization / Knowledge | MOVE SOURCE | preserve `user.*` | Links an Organization Role to an Organization SOP. |
+| RoleSuccessPlaybookItem | user | Organization / Role Design | MOVE SOURCE | preserve `user.*` | Operating guidance is attached to the role definition, not an employee record. |
 | Employee | user | People | MOVE SOURCE | `user.Employee` | Employment record is distinct from login identity. |
 | EmployeeDocument | user | People | MOVE SOURCE | preserve `user.*` | HR record. |
 | Review | user | People | MOVE SOURCE | preserve `user.*` | Employee review. |
@@ -56,9 +56,9 @@ This is an architecture inventory, not permission to delete or merge legacy mode
 | EstateDocument | user | Real Estate | MOVE SOURCE | preserve `user.*` | Estate-specific document. |
 | Property / PropertyImage | user | Real Estate | MOVE SOURCE | preserve `user.*` | Real-estate inventory/media. |
 | BrokerageListing / Image | user | Real Estate | MOVE SOURCE | preserve `user.*` | Brokerage domain. |
-| EstatePropertyInvoice / Item | user | Real Estate / Finance boundary | INVESTIGATE | preserve `user.*` | Keep with estate transaction initially; Finance may project over it. |
-| InvoiceApproval | user | Real Estate / Platform Approvals boundary | INVESTIGATE | preserve `user.*` | Determine generic approval integration. |
-| Cart / CartItem | user | Real Estate / Commerce boundary | INVESTIGATE | preserve `user.*` | Determine whether cart is estate-specific. |
+| EstatePropertyInvoice / Item | user | Real Estate | MOVE SOURCE | preserve `user.*` | Canonical source already lives in Real Estate; Finance may project over the transaction. |
+| InvoiceApproval | user | Real Estate | MOVE SOURCE | preserve `user.*` | Canonical source remains with the estate transaction; any System Approvals integration is a later behavior redesign. |
+| Cart / CartItem | user | Real Estate | MOVE SOURCE | preserve `user.*` | Canonical source already lives in Real Estate and current cart behavior is estate-specific. |
 | LegalCase | user | Legal & Compliance | MOVE SOURCE | `user.LegalCase` | Legal domain. |
 | Compliance models | user | Legal & Compliance | MOVE SOURCE | preserve `user.*` | Expand model-by-model later. |
 | Audit (compliance audit) | user | Legal & Compliance | MOVE SOURCE | `user.Audit` | Distinct from technical `AuditLog`. |
@@ -72,9 +72,10 @@ This is an architecture inventory, not permission to delete or merge legacy mode
 | Notification | user | Platform / Notifications | PLATFORM | `user.Notification` | Generic per-user notification. |
 | WorkflowRule / WorkflowRuleLog | user | Platform / Workflow | PLATFORM | preserve `user.*` | Generic trigger/condition/action automation. |
 | AuditLog | user | Platform / Audit | PLATFORM | `user.AuditLog` | Technical/security/activity audit trail. |
-| SOP / Responsibility | user | Organization / Platform knowledge | INVESTIGATE | preserve `user.*` | Inspect operating-knowledge semantics. |
-| ClientService | user | Legacy customer/service domain | INVESTIGATE | `user.ClientService` | Older service catalogue concept overlaps modern Services domain. |
-| legacy ServiceRequest | user | Legacy customer/service domain | INVESTIGATE | `user.ServiceRequest` | Do not merge/delete until consumers and data are mapped. |
+| SOP | user | Organization / Knowledge | MOVE SOURCE | `user.SOP` | Department/Unit-owned operating procedure. |
+| Responsibility | user | People | MOVE SOURCE | `user.Responsibility` | User-specific workforce responsibility; distinct from role-definition templates. |
+| ClientService | user | Service Operations / Legacy | MOVE SOURCE | `user.ClientService` | Legacy catalogue remains distinct from modern `services.Service`; source ownership can converge without data/model merge. |
+| legacy ServiceRequest | user | Service Operations / Legacy | MOVE SOURCE | `user.ServiceRequest` | Legacy request source belongs to Service Operations but remains distinct from modern `services.ServiceRequest`. |
 | PaymentSubmission | user | Finance | MOVE SOURCE | `user.PaymentSubmission` | Finance already owns review/confirmation workflow. |
 | Client inventory models | user | CRM / Commerce boundary | INVESTIGATE | preserve `user.*` | Expand after caller inventory. |
 | Wallet models | user | Finance / Customer wallet boundary | INVESTIGATE | preserve `user.*` | Inspect wallet semantics first. |

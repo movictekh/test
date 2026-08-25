@@ -24,7 +24,7 @@ from user.api.schemas.client_service import (
     ServiceRequestFullResponseSchema,
 )
 from user.api.schemas.others import MessageSchema
-from user.models.client_service import ClientService, ServiceRequest
+from domains.service_operations.models.legacy_client_service import ClientService, ServiceRequest
 from finance.transactions.payment_submission import PaymentSubmission
 
 client_service_api = Router(tags=["Client Services"])
