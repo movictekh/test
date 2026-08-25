@@ -229,7 +229,7 @@ from user.api.schemas.client_service import (
     PaymentSubmissionResponseSchema,
     ReviewPaymentSchema,
 )
-from user.models.client import Client as CustomerClient
+from domains.crm.models.client import Client as CustomerClient
 from finance.transactions.payment_submission import PaymentSubmission
 from system.authorization import require_permission, scope_queryset
 

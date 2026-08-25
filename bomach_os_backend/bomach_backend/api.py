@@ -93,34 +93,34 @@ from services.api.v1 import documents as svc_documents
 from services.api.v1 import expenses as svc_expenses
 from services.api.v1 import payments as svc_payments
 from services.api.v1 import property as svc_property
-from user.api.v1.announcement import announcement_api as announcement_router
+from domains.governance.api.v1.routers.announcement import announcement_api as announcement_router
 from system.approvals.api.v1.routers.approval import approval_api as approval_router
 from user.api.v1.approval_queue import approval_queue_api as approval_queue_router
-from user.api.v1.audit import audit_api as audit_router
+from domains.legal_compliance.api.v1.routers.audit import audit_api as audit_router
 from system.audit.api.v1.routers.audit_log import audit_log_api as audit_log_router
 from user.api.v1.auth import auth_api as auth_router
 from domains.people.api.v1.routers.biometric import biometric_api as biometric_router
-from user.api.v1.board_resolution import board_resolution_api as board_resolution_router
+from domains.governance.api.v1.routers.board_resolution import board_resolution_api as board_resolution_router
 from domains.organization.api.v1.routers.branch import branch_api as branch_router
-from user.api.v1.cases import cases_api as cases_router
+from domains.legal_compliance.api.v1.routers.cases import cases_api as cases_router
 from user.api.v1.client_inventory import inventory_api as inventory_router
 from user.api.v1.client_service import client_service_api as client_service_router
-from user.api.v1.clients import clients_api as clients_router
+from domains.crm.api.v1.routers.clients import clients_api as clients_router
 from user.api.v1.command_center import command_center_router
 from domains.organization.api.v1.routers.company import company_api as company_router
-from user.api.v1.compliance import compliance_api as compliance_router
+from domains.legal_compliance.api.v1.routers.compliance import compliance_api as compliance_router
 from user.api.v1.dashboard import employee_dashboard_api as employee_dashboard_router
 from user.api.v1.drawing_bank import drawing_bank_api as drawing_bank_router
 from user.api.v1.employee import router as employee_router
 from user.api.v1.event import events_api as events_router
 from user.api.v1.loan import loan_api as loan_router
-from user.api.v1.meeting import meeting_api as meeting_router
+from domains.governance.api.v1.routers.meeting import meeting_api as meeting_router
 from system.notifications.api.v1 import notification_router
 from user.api.v1.others import orthers_api as orthers_router
-from user.api.v1.partner import partner_api as partner_router
-from user.api.v1.policy import policy_api as policy_router
+from domains.crm.api.v1.routers.partner import partner_api as partner_router
+from domains.governance.api.v1.routers.policy import policy_api as policy_router
 from user.api.v1.role import role_api as role_router
-from user.api.v1.shareholder import shareholder_api as shareholder_router
+from domains.governance.api.v1.routers.shareholder import shareholder_api as shareholder_router
 from user.api.v1.sops import dept_router, resp_router, sop_dashboard_router, unit_router
 from user.api.v1.stats import stats_api as stats_router
 from domains.people.api.v1.routers.target_report import target_report_api as target_report_router

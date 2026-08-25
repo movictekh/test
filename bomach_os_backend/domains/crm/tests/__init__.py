@@ -1,0 +1,1 @@
+"""CRM architecture tests."""

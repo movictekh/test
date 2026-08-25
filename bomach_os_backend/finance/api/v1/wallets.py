@@ -18,7 +18,7 @@ from finance.transactions.expense import Expense
 from domains.service_operations.models import Invoice
 from finance.transactions.payment import Payment
 from services.models.service import ServiceOrder
-from user.models.client import Client
+from domains.crm.models.client import Client
 from system.authorization import require_permission
 
 router = Router(tags=["Finance Wallets"])

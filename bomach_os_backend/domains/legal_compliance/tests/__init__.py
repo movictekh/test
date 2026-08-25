@@ -1,0 +1,1 @@
+"""Legal & Compliance architecture tests."""

@@ -30,7 +30,7 @@ from finance.service import (
 from shared.api.schema import MessageSchema
 from services.models.service import ServiceOrder
 from domains.organization.models.branch import Branch
-from user.models.partner import Partner
+from domains.crm.models.partner import Partner
 from system.authorization import require_permission
 
 router = Router(tags=["Finance Vendors And Payables"])

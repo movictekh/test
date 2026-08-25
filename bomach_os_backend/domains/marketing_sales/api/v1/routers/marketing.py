@@ -131,10 +131,10 @@ from domains.marketing_sales.services.marketing import (
     _set_meeting_attendees,
 )
 from domains.organization.models.branch import Branch
-from user.models.client import Client as CustomerClient
+from domains.crm.models.client import Client as CustomerClient
 from domains.people.models.employee import Employee
-from user.models.meeting import Meeting
-from user.models.partner import Partner
+from domains.governance.models.meeting import Meeting
+from domains.crm.models.partner import Partner
 from system.authorization import require_permission, scope_queryset
 from system.messaging.email.services import send_email as send_marketing_email
 

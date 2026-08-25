@@ -149,7 +149,7 @@ class AuthClient:
     ) -> Optional[Dict[str, Any]]:
         """Get client information by client ID."""
         try:
-            from user.models import Client
+            from domains.crm.models.client import Client
 
             client = Client.objects.filter(pk=client_id).first()
             if not client:
@@ -174,7 +174,7 @@ class AuthClient:
     def validate_client_id(self, client_id: str, token: str = None) -> bool:
         """Check if a client ID exists."""
         try:
-            from user.models import Client
+            from domains.crm.models.client import Client
 
             return Client.objects.filter(pk=client_id).exists()
         except Exception:

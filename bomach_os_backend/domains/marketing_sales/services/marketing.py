@@ -32,9 +32,9 @@ from domains.marketing_sales.selectors.marketing import (
     _partner_portal_token,
 )
 from domains.marketing_sales.services.funnel import record_initial_funnel_event
-from user.models.client import Client as CustomerClient
+from domains.crm.models.client import Client as CustomerClient
 from domains.people.models.employee import Employee
-from user.models.partner import Partner
+from domains.crm.models.partner import Partner
 from user.models.user import User
 from system.authorization import scope_queryset
 
