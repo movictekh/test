@@ -112,7 +112,7 @@ class AuthClient:
     ) -> Optional[Dict[str, Any]]:
         """Get employee information by employee ID."""
         try:
-            from user.models import Employee
+            from domains.people.models.employee import Employee
 
             employee = (
                 Employee.objects.select_related("department", "branch")
@@ -147,7 +147,7 @@ class AuthClient:
     def validate_employee_id(self, employee_id: str, token: str = None) -> bool:
         """Check if an employee ID exists."""
         try:
-            from user.models import Employee
+            from domains.people.models.employee import Employee
 
             return Employee.objects.filter(pk=employee_id).exists()
         except Exception:

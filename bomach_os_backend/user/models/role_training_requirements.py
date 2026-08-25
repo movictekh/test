@@ -1,35 +1,7 @@
-from django.core.validators import MinValueValidator
-from django.db import models
+"""Compatibility module alias for canonical domain ownership."""
 
-from user.models.base import BaseModel
+import importlib
+import sys
 
-
-class RoleTrainingRequirement(BaseModel):
-    class RequirementType(models.TextChoices):
-        MANDATORY = "mandatory", "Mandatory"
-        CONTINUOUS = "continuous", "Continuous"
-
-    role = models.ForeignKey(
-        "Role",
-        on_delete=models.CASCADE,
-        related_name="training_requirements",
-    )
-    training_program = models.ForeignKey(
-        "hr.TrainingProgram",
-        on_delete=models.CASCADE,
-        related_name="role_requirements",
-    )
-    requirement_type = models.CharField(max_length=20, choices=RequirementType.choices)
-    sequence = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
-    is_active = models.BooleanField(default=True)
-
-    class Meta:
-        ordering = ["sequence", "id"]
-        indexes = [
-            models.Index(fields=["role", "sequence"]),
-            models.Index(fields=["role", "requirement_type"]),
-            models.Index(fields=["role", "training_program"]),
-        ]
-
-    def __str__(self):
-        return f"{self.role.name}: {self.training_program.program_name}"
+_canonical = importlib.import_module("domains.people.models.role_training_requirements")
+sys.modules[__name__] = _canonical

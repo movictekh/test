@@ -38,7 +38,7 @@ def require_permission(resource, action, owner_lookup=None):
     def decorator(func):
         @wraps(func)
         def wrapper(request, *args, **kwargs):
-            from user.models.role import Role
+            from domains.organization.models.role import Role
 
             try:
                 employee = request.user.employee_profile

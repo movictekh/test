@@ -18,7 +18,7 @@ from user.api.schemas.shareholder import (
     ShareholderSummarySchema,
     ShareholderUpdateSchema,
 )
-from user.models.employee import Employee
+from domains.people.models.employee import Employee
 from user.models.shareholder import Shareholder
 from user.models.user import User
 from user.utils.generate_pass import generate_password

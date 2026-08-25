@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional
 
 from ninja import Schema
 
-from user.models.employee import Employee
+from domains.people.models.employee import Employee
 
 
 # Employee schemas

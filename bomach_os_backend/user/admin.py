@@ -3,8 +3,8 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils import timezone
 from django.utils.html import format_html
 
-from user.models.branch import Branch
-from user.models.role import Role
+from domains.organization.models.branch import Branch
+from domains.organization.models.role import Role
 
 from .models import (
     Attendance,

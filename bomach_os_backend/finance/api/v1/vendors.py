@@ -29,7 +29,7 @@ from finance.service import (
 )
 from shared.api.schema import MessageSchema
 from services.models.service import ServiceOrder
-from user.models.branch import Branch
+from domains.organization.models.branch import Branch
 from user.models.partner import Partner
 from system.authorization import require_permission
 

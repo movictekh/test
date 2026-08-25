@@ -6,7 +6,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 from user.models.base import BaseModel
-from user.models.employee import Employee
+from domains.people.models.employee import Employee
 from user.models.user import User
 
 

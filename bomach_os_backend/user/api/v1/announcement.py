@@ -13,8 +13,8 @@ from user.api.schemas.announcement import (
 )
 from user.api.schemas.others import MessageSchema
 from user.models.announcement import Announcement
-from user.models.branch import Branch
-from user.models.roles import Department
+from domains.organization.models.branch import Branch
+from domains.organization.models.roles import Department
 from system.authorization import require_permission
 
 announcement_api = Router(tags=["Announcements"])

@@ -42,20 +42,10 @@ from user.api.schemas.role import (
     GenerateTargetsResponseSchema,
 )
 from system.audit.models import AuditLog
-from user.models.employee import Employee, EmployeeDocument, Review
-from user.models.role_kpis import (
-    EmployeeKPIRecord,
-    KPITrackingModeChoices,
-    RoleKPIMetric,
-    generate_employee_kpi_records_for_role_kpis,
-)
-from user.models.role_targets import (
-    EmployeeTarget,
-    RoleTargetTemplate,
-    generate_employee_targets_for_templates,
-    with_target_progress,
-)
-from user.models.roles import Department, Unit
+from domains.people.models.employee import Employee, EmployeeDocument, Review
+from domains.people.models.role_kpis import EmployeeKPIRecord, KPITrackingModeChoices, RoleKPIMetric, generate_employee_kpi_records_for_role_kpis
+from domains.people.models.role_targets import EmployeeTarget, RoleTargetTemplate, generate_employee_targets_for_templates, with_target_progress
+from domains.organization.models.roles import Department, Unit
 from user.models.user import User
 from system.audit.services import log_activity
 from user.utils.generate_pass import generate_password

@@ -22,8 +22,8 @@ from finance.service import (
 from shared.api.schema import MessageSchema
 from services.models.expenses import Expense
 from services.models.service import ServiceOrder
-from user.models.branch import Branch
-from user.models.roles import Department
+from domains.organization.models.branch import Branch
+from domains.organization.models.roles import Department
 from user.models.user import User
 from system.authorization import require_permission
 

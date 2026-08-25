@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError  # ← Missing import!
 from django.db import models
 
 from .base import TimeStampedModel
-from .roles import Department, Unit
+from domains.organization.models.roles import Department, Unit
 from .user import User
 
 

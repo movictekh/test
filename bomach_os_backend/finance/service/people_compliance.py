@@ -32,7 +32,7 @@ def _payroll_period_bounds(payroll_run):
 
 
 def _payroll_employee_queryset(payroll_run):
-    from user.models.employee import Employee
+    from domains.people.models.employee import Employee
 
     period_start, period_end = _payroll_period_bounds(payroll_run)
     employees = (

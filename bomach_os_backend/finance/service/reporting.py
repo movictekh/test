@@ -12,7 +12,7 @@ from finance.models import (
     LedgerAccount,
     VendorBill,
 )
-from user.models.company import CompanyPreferences
+from domains.organization.models.company import CompanyPreferences
 
 ZERO = Decimal("0.00")
 CENT = Decimal("0.01")

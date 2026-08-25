@@ -13,7 +13,7 @@ from domains.real_estate.models.estate_property_invoice import (
     EstatePropertyInvoiceItem,
     InvoiceApproval,
 )
-from user.models.employee import Employee
+from domains.people.models.employee import Employee
 from user.models.user import User
 
 ZERO = Decimal("0.00")

@@ -25,8 +25,8 @@ from finance.service import (
 from shared.api.schema import MessageSchema
 from services.models.payment import Payment
 from services.models.service import Service
-from user.models.branch import Branch
-from user.models.employee import Employee
+from domains.organization.models.branch import Branch
+from domains.people.models.employee import Employee
 from system.authorization import require_permission
 
 router = Router(tags=["Finance Commissions And Bonuses"])

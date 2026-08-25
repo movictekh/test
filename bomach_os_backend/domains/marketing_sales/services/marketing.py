@@ -33,7 +33,7 @@ from domains.marketing_sales.selectors.marketing import (
 )
 from domains.marketing_sales.services.funnel import record_initial_funnel_event
 from user.models.client import Client as CustomerClient
-from user.models.employee import Employee
+from domains.people.models.employee import Employee
 from user.models.partner import Partner
 from user.models.user import User
 from system.authorization import scope_queryset

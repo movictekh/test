@@ -7,9 +7,9 @@ from django.utils import timezone
 from ninja import Router
 
 from user.api.schemas.dashboard import DashboardSummarySchema, ScorecardDetailSchema
-from user.models.attendance import Attendance
-from user.models.employee import Employee
-from user.models.roles import Department
+from domains.people.models.attendance import Attendance
+from domains.people.models.employee import Employee
+from domains.organization.models.roles import Department
 
 employee_dashboard_api = Router(tags=["Dashboard"])
 

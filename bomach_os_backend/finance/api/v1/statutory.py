@@ -28,7 +28,7 @@ from finance.service import (
     void_statutory_obligation,
 )
 from shared.api.schema import MessageSchema
-from user.models.branch import Branch
+from domains.organization.models.branch import Branch
 from system.authorization import require_permission
 
 router = Router(tags=["Finance Tax And Statutory"])

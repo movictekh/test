@@ -13,7 +13,7 @@ from user.api.schemas.policy import (
     PolicyUpdateSchema,
 )
 from user.models.policy import Policy
-from user.models.roles import Department
+from domains.organization.models.roles import Department
 from system.authorization import require_permission
 
 policy_api = Router(tags=["Policies"])

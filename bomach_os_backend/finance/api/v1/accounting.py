@@ -32,7 +32,7 @@ from finance.service import (
     update_manual_journal,
 )
 from shared.api.schema import MessageSchema
-from user.models.branch import Branch
+from domains.organization.models.branch import Branch
 from system.authorization import require_permission, scope_queryset
 
 router = Router(tags=["Finance Accounting"])

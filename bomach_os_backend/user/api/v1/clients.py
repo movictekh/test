@@ -24,7 +24,8 @@ from user.api.schemas.clients import (
     UpdatePersonalInfoSchema,
 )
 from user.api.schemas.others import MessageSchema
-from user.models import Client, Employee, Lead
+from user.models import Client, Lead
+from domains.people.models.employee import Employee
 from system.audit.models import AuditLog
 from user.models.user import User
 from system.audit.services import log_activity

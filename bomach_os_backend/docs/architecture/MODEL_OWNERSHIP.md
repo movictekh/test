@@ -31,7 +31,7 @@ This is an architecture inventory, not permission to delete or merge legacy mode
 | Department | user | Organization | MOVE SOURCE | `user.Department` | Core organizational dimension. |
 | Unit | user | Organization | MOVE SOURCE | `user.Unit` | Core organizational dimension. |
 | Role | user | Organization / Authorization | MOVE SOURCE | `user.Role` | Role definition and permission assignment. |
-| WorkLocation | user | Organization | MOVE SOURCE | `user.WorkLocation` | Organizational work location. |
+| WorkLocation | user | People / Attendance | MOVE SOURCE | `user.WorkLocation` | Employee-owned attendance whitelist; Branch remains the Organization reference. |
 | RoleReportingLine | user | Organization | MOVE SOURCE | preserve `user.*` | Role structure. |
 | RoleResource | user | Organization / Authorization | MOVE SOURCE | preserve `user.*` | Role resource configuration. |
 | RoleDescription | user | Organization | MOVE SOURCE | preserve `user.*` | Role definition. |

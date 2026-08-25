@@ -1,33 +1,7 @@
-from django.core.validators import MinValueValidator
-from django.db import models
+"""Compatibility module alias for canonical domain ownership."""
 
-from user.models.base import BaseModel
+import importlib
+import sys
 
-
-class RoleResource(BaseModel):
-    class Kind(models.TextChoices):
-        PHYSICAL = "physical", "Physical"
-        SOFTWARE = "software", "Software"
-        DOCUMENT = "document", "Document"
-        SKILL = "skill", "Skill"
-
-    role = models.ForeignKey(
-        "Role",
-        on_delete=models.CASCADE,
-        related_name="resources",
-    )
-    name = models.CharField(max_length=255)
-    description = models.TextField(blank=True, default="")
-    kind = models.CharField(max_length=20, choices=Kind.choices)
-    sequence = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
-    is_active = models.BooleanField(default=True)
-
-    class Meta:
-        ordering = ["sequence", "id"]
-        indexes = [
-            models.Index(fields=["role", "sequence"]),
-            models.Index(fields=["role", "kind"]),
-        ]
-
-    def __str__(self):
-        return f"{self.role.name}: {self.name}"
+_canonical = importlib.import_module("domains.organization.models.role_resources")
+sys.modules[__name__] = _canonical

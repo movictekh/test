@@ -68,9 +68,9 @@ from domains.marketing_sales.presenters import (
     _marketing_employee_name as _employee_name,
 )
 from domains.marketing_sales.presenters import _marketing_pct as _pct
-from user.models.branch import Branch
-from user.models.employee import Employee
-from user.models.role_targets import EmployeeTarget, with_target_progress
+from domains.organization.models.branch import Branch
+from domains.people.models.employee import Employee
+from domains.people.models.role_targets import EmployeeTarget, with_target_progress
 from system.authorization import scope_queryset
 
 

@@ -13,7 +13,7 @@ from user.api.schemas.event import (
     EventUpdateSchema,
 )
 from user.api.schemas.others import MessageSchema
-from user.models.employee import Employee
+from domains.people.models.employee import Employee
 from user.models.event import Event
 from system.authorization import require_permission
 

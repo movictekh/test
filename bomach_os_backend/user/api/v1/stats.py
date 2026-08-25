@@ -5,9 +5,9 @@ from ninja import Router
 
 from user.api.schemas.others import DashboardStatsSchema
 from user.models.approval import ApprovalRequest
-from user.models.branch import Branch
+from domains.organization.models.branch import Branch
 from user.models.client_inventory import CLientInventoryItem
-from user.models.employee import Employee
+from domains.people.models.employee import Employee
 
 stats_api = Router(tags=["Stats"])
 

@@ -99,15 +99,15 @@ from user.api.v1.approval_queue import approval_queue_api as approval_queue_rout
 from user.api.v1.audit import audit_api as audit_router
 from system.audit.api.v1.routers.audit_log import audit_log_api as audit_log_router
 from user.api.v1.auth import auth_api as auth_router
-from user.api.v1.biometric import biometric_api as biometric_router
+from domains.people.api.v1.routers.biometric import biometric_api as biometric_router
 from user.api.v1.board_resolution import board_resolution_api as board_resolution_router
-from user.api.v1.branch import branch_api as branch_router
+from domains.organization.api.v1.routers.branch import branch_api as branch_router
 from user.api.v1.cases import cases_api as cases_router
 from user.api.v1.client_inventory import inventory_api as inventory_router
 from user.api.v1.client_service import client_service_api as client_service_router
 from user.api.v1.clients import clients_api as clients_router
 from user.api.v1.command_center import command_center_router
-from user.api.v1.company import company_api as company_router
+from domains.organization.api.v1.routers.company import company_api as company_router
 from user.api.v1.compliance import compliance_api as compliance_router
 from user.api.v1.dashboard import employee_dashboard_api as employee_dashboard_router
 from user.api.v1.drawing_bank import drawing_bank_api as drawing_bank_router
@@ -123,7 +123,7 @@ from user.api.v1.role import role_api as role_router
 from user.api.v1.shareholder import shareholder_api as shareholder_router
 from user.api.v1.sops import dept_router, resp_router, sop_dashboard_router, unit_router
 from user.api.v1.stats import stats_api as stats_router
-from user.api.v1.target_report import target_report_api as target_report_router
+from domains.people.api.v1.routers.target_report import target_report_api as target_report_router
 from user.api.v1.wallet import wallet_api as wallet_router
 from user.api.v1.workflow_rule import workflow_rule_router
 from user.utils.auth import JWTAuthenticator

@@ -1,26 +1,7 @@
-from django.db import models
+"""Compatibility module alias for canonical domain ownership."""
 
-from user.models.base import BaseModel
+import importlib
+import sys
 
-
-class RoleDescription(BaseModel):
-    role = models.OneToOneField(
-        "Role",
-        on_delete=models.CASCADE,
-        related_name="role_description",
-    )
-    purpose = models.TextField(blank=True, default="")
-    responsibilities = models.TextField(blank=True, default="")
-    job_description = models.TextField(blank=True, default="")
-
-    class Meta:
-        verbose_name = "Role Description"
-        verbose_name_plural = "Role Descriptions"
-        ordering = ["created_at", "id"]
-
-    def __str__(self):
-        return f"Role description for {self.role.name}"
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
+_canonical = importlib.import_module("domains.organization.models.role_description")
+sys.modules[__name__] = _canonical

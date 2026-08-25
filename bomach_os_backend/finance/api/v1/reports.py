@@ -22,7 +22,7 @@ from finance.service.reporting import (
     report_catalog,
     revenue_report,
 )
-from user.models.branch import Branch
+from domains.organization.models.branch import Branch
 from system.authorization import require_permission
 
 router = Router(tags=["Financial Reports"])

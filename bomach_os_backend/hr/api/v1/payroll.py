@@ -20,7 +20,7 @@ from hr.api.schemas import (
 )
 from hr.api.schemas.job_posting import MessageSchema
 from hr.models import Payroll
-from user.models.employee import Employee
+from domains.people.models.employee import Employee
 from system.authorization import check_obj_permission, require_permission, scope_queryset
 
 router = Router(tags=["Payroll"])

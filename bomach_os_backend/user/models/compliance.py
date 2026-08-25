@@ -4,7 +4,7 @@ from django.db import models
 from django.utils import timezone
 
 from user.models.base import BaseModel
-from user.models.roles import Department
+from domains.organization.models.roles import Department
 
 
 class ComplianceRecord(BaseModel):

@@ -62,31 +62,19 @@ from user.api.schemas.role import (
     RoleTrainingRequirementUpdateSchema,
     RoleUpdateSchema,
 )
-from user.models import (
-    SOP,
-    Branch,
-    Department,
-    EmployeeKPIRecord,
-    RoleCareerPath,
-    RoleDailyRoutineItem,
-    RoleDescription,
-    RoleKPIMetric,
-    RoleReportingLine,
-    RoleResource,
-    RoleSOP,
-    RoleSuccessPlaybookItem,
-    RoleTargetTemplate,
-    RoleTaskTemplate,
-    RoleTrainingRequirement,
-    Unit,
-)
-from user.models.employee import Employee
-from user.models.role import PERMISSIONS_MAP, Role, get_permission_helper
-from user.models.role_kpis import (
-    KPITrackingModeChoices,
-    generate_employee_kpi_records_for_role_kpis,
-)
-from user.models.role_targets import generate_employee_targets_for_templates
+from user.models import SOP, RoleCareerPath, RoleDailyRoutineItem, RoleSOP, RoleSuccessPlaybookItem, RoleTaskTemplate
+from domains.organization.models.branch import Branch
+from domains.organization.models.role_description import RoleDescription
+from domains.organization.models.role_reporting import RoleReportingLine
+from domains.organization.models.role_resources import RoleResource
+from domains.organization.models.roles import Department, Unit
+from domains.people.models.role_kpis import EmployeeKPIRecord, RoleKPIMetric
+from domains.people.models.role_targets import RoleTargetTemplate
+from domains.people.models.role_training_requirements import RoleTrainingRequirement
+from domains.people.models.employee import Employee
+from domains.organization.models.role import PERMISSIONS_MAP, Role, get_permission_helper
+from domains.people.models.role_kpis import KPITrackingModeChoices, generate_employee_kpi_records_for_role_kpis
+from domains.people.models.role_targets import generate_employee_targets_for_templates
 from system.authorization import check_obj_permission, require_permission
 
 role_api = Router(tags=["Roles"])
