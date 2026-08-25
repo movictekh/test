@@ -14,7 +14,7 @@ from user.api.schemas.policy import (
 )
 from user.models.policy import Policy
 from user.models.roles import Department
-from user.utils.perm import require_permission
+from system.authorization import require_permission
 
 policy_api = Router(tags=["Policies"])
 

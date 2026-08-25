@@ -26,9 +26,9 @@ from finance.service import (
     replace_manual_payroll_items,
     submit_payroll_run,
 )
-from services.api.schema.others import MessageSchema
+from shared.api.schema import MessageSchema
 from user.models.branch import Branch
-from user.utils.perm import require_permission
+from system.authorization import require_permission
 
 router = Router(tags=["Finance Payroll"])
 

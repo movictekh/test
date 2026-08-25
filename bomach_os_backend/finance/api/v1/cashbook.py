@@ -18,7 +18,7 @@ from finance.models import (
 )
 from services.models.expenses import Expense
 from services.models.payment import Payment
-from user.utils.perm import require_permission
+from system.authorization import require_permission
 
 router = Router(tags=["Finance Cashbook"])
 

@@ -8,9 +8,9 @@ from ninja.pagination import LimitOffsetPagination, paginate
 
 from finance.service.audit import finance_audit_queryset
 from finance.service.exporting import export_audit_csv
-from user.api.schemas.audit_log import AuditLogResponse
+from system.audit.api.v1.schemas.audit_log import AuditLogResponse
 from user.models.branch import Branch
-from user.utils.perm import require_permission
+from system.authorization import require_permission
 
 router = Router(tags=["Finance Audit And Exceptions"])
 

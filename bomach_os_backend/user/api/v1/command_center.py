@@ -15,7 +15,7 @@ from user.api.schemas.command_center import (
     PipelineStage,
     PipelineSummary,
 )
-from user.utils.perm import require_permission
+from system.authorization import require_permission
 
 command_center_router = Router(tags=["Command Center"])
 

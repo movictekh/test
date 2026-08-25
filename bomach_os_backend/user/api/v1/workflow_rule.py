@@ -10,7 +10,7 @@ from user.api.schemas.workflow_rule import (
     WorkflowRuleUpdate,
 )
 from user.models.workflow_rule import WorkflowRule, WorkflowRuleLog
-from user.utils.perm import require_permission
+from system.authorization import require_permission
 
 workflow_rule_router = Router(tags=["Workflow Rules"])
 

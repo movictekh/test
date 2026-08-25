@@ -19,7 +19,7 @@ from hr.api.schemas import (
     WorkReportUpdate,
 )
 from hr.models import DailyWorkReport, ReportAttachment
-from user.utils.perm import check_obj_permission, require_permission, scope_queryset
+from system.authorization import check_obj_permission, require_permission, scope_queryset
 
 router = Router(tags=["Work Reports"])
 

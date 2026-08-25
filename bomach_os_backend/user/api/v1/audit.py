@@ -20,7 +20,7 @@ from user.api.schemas.auth import ErrorResponse
 from user.api.schemas.others import MessageSchema
 from user.models.compliance_audit import Audit
 from user.utils.auth import JWTAuthenticator
-from user.utils.perm import require_permission
+from system.authorization import require_permission
 
 audit_api = Router(tags=["Audit Management (Legal)"])
 

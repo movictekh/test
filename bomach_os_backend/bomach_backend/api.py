@@ -97,7 +97,7 @@ from user.api.v1.announcement import announcement_api as announcement_router
 from user.api.v1.approval import approval_api as approval_router
 from user.api.v1.approval_queue import approval_queue_api as approval_queue_router
 from user.api.v1.audit import audit_api as audit_router
-from user.api.v1.audit_log import audit_log_api as audit_log_router
+from system.audit.api.v1.routers.audit_log import audit_log_api as audit_log_router
 from user.api.v1.auth import auth_api as auth_router
 from user.api.v1.biometric import biometric_api as biometric_router
 from user.api.v1.board_resolution import board_resolution_api as board_resolution_router

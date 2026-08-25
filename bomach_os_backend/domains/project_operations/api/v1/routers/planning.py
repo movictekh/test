@@ -13,7 +13,7 @@ from ninja import Router
 from ninja.pagination import LimitOffsetPagination, paginate
 
 from domains.project_operations.models import Project, Timeline
-from user.utils.perm import require_permission
+from system.authorization import require_permission
 
 from ..schemas.schemas import (
     MessageSchema,
@@ -131,7 +131,7 @@ from ninja import Router
 from ninja.pagination import LimitOffsetPagination, paginate
 
 from domains.project_operations.models import Milestone, Project
-from user.utils.perm import require_permission
+from system.authorization import require_permission
 
 from ..schemas.schemas import (
     MessageSchema,

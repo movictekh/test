@@ -8,7 +8,7 @@ from ninja import Router
 
 from domains.service_operations.models import ClientFeedback
 from shared.api.schema.others import MessageSchema
-from user.utils.perm import require_permission
+from system.authorization import require_permission
 
 from ..schemas.feedback import (
     FeedbackIn,

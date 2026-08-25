@@ -13,7 +13,7 @@ from user.api.schemas.compliance import (
 )
 from user.api.schemas.others import MessageSchema
 from user.models import ComplianceRecord
-from user.utils.perm import require_permission
+from system.authorization import require_permission
 
 compliance_api = Router(tags=["Compliance"])
 

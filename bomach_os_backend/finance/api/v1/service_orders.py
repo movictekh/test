@@ -14,11 +14,11 @@ from finance.api.schemas import (
     ServiceOrderTransactionOut,
 )
 from finance.models import FinanceWallet, PettyCashRetirementLine, VendorBill
-from services.api.schema.others import MessageSchema
+from shared.api.schema import MessageSchema
 from services.models.expenses import Expense
 from services.models.payment import Invoice, Payment
 from services.models.service import ServiceOrder
-from user.utils.perm import require_permission
+from system.authorization import require_permission
 
 router = Router(tags=["Finance Service Order Profitability"])
 

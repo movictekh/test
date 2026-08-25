@@ -25,10 +25,10 @@ from user.api.schemas import (
     VerifyTokenResponse,
 )
 from user.models import TokenBlacklist, User
-from user.models.audit_log import AuditLog
+from system.audit.models import AuditLog
 from user.services.auth_service import AuthService
 from user.services.jwt_service import JWTService
-from user.utils.audit import log_activity
+from system.audit.services import log_activity
 from user.utils.auth import get_token_from_request
 
 auth_api = Router(tags=["Authentication"])

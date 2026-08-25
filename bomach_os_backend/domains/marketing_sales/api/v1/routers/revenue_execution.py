@@ -197,7 +197,7 @@ from user.models.role_targets import (
     RoleTargetTemplate,
     with_target_progress,
 )
-from user.utils.perm import require_permission
+from system.authorization import require_permission
 
 revenue_execution_router = Router(tags=["Revenue Execution"])
 

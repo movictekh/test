@@ -16,7 +16,7 @@ from domains.service_operations.models import (
 )
 from domains.service_operations.services import quotes as quote_services
 from shared.api.schema.others import MessageSchema
-from user.utils.perm import require_permission, scope_queryset
+from system.authorization import require_permission, scope_queryset
 
 from ..schemas.lifecycle import (
     InvoiceFromQuoteIn,

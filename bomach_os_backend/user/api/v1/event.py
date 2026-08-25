@@ -15,7 +15,7 @@ from user.api.schemas.event import (
 from user.api.schemas.others import MessageSchema
 from user.models.employee import Employee
 from user.models.event import Event
-from user.utils.perm import require_permission
+from system.authorization import require_permission
 
 events_api = Router(tags=["Events"])
 

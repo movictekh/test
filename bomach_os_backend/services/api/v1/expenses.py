@@ -9,9 +9,9 @@ from ninja.errors import HttpError
 from ninja.pagination import LimitOffsetPagination, paginate
 
 from services.api.schema.expense_schemas import ExpenseIn, ExpenseOut, ExpenseUpdate
-from services.api.schema.others import MessageSchema
+from shared.api.schema import MessageSchema
 from services.models.expenses import Expense
-from user.utils.perm import require_permission
+from system.authorization import require_permission
 
 router = Router(tags=["Expenses"])
 

@@ -25,12 +25,12 @@ from user.api.schemas.clients import (
 )
 from user.api.schemas.others import MessageSchema
 from user.models import Client, Employee, Lead
-from user.models.audit_log import AuditLog
+from system.audit.models import AuditLog
 from user.models.user import User
-from user.utils.audit import log_activity
+from system.audit.services import log_activity
 from user.utils.auth import JWTAuthenticator
 from user.utils.generate_pass import generate_password
-from user.utils.perm import require_permission, scope_queryset
+from system.authorization import require_permission, scope_queryset
 from user.utils.send_email import send_client_welcome_email
 
 clients_api = Router(tags=["Client Management"])

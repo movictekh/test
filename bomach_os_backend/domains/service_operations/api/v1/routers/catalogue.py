@@ -21,7 +21,7 @@ from domains.service_operations.models import (
 from domains.service_operations.services import catalogue as domain_services
 from shared.api.schema.others import MessageSchema
 from user.models.role import Role
-from user.utils.perm import require_permission
+from system.authorization import require_permission
 
 from ..schemas.catalogue import (
     ServiceCoreOut,
@@ -452,7 +452,7 @@ from ninja.pagination import LimitOffsetPagination, paginate
 
 from domains.service_operations.models import ServiceCategory
 from shared.api.schema.others import MessageSchema
-from user.utils.perm import require_permission
+from system.authorization import require_permission
 
 from ..schemas.lifecycle import ServiceCategoryIn, ServiceCategoryOut
 

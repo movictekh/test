@@ -18,7 +18,7 @@ from user.models.company import (
     CompanyPreferences,
     CompanyProfile,
 )
-from user.utils.perm import require_permission
+from system.authorization import require_permission
 
 company_api = Router(tags=["Company"])
 

@@ -23,7 +23,7 @@ from finance.service.reporting import (
     revenue_report,
 )
 from user.models.branch import Branch
-from user.utils.perm import require_permission
+from system.authorization import require_permission
 
 router = Router(tags=["Financial Reports"])
 

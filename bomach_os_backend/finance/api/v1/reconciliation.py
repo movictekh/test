@@ -33,8 +33,8 @@ from finance.service import (
     reconcile_bank_reconciliation,
     reconciliation_summary,
 )
-from services.api.schema.others import MessageSchema
-from user.utils.perm import require_permission, scope_queryset
+from shared.api.schema import MessageSchema
+from system.authorization import require_permission, scope_queryset
 
 router = Router(tags=["Finance Bank Reconciliation"])
 

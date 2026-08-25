@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from django.db.models import Q
 
-from user.models import AuditLog
+from system.audit.models import AuditLog
 
 
 def _json_safe(value):

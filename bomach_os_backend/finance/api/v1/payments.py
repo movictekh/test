@@ -14,10 +14,10 @@ from finance.api.schemas import (
 )
 from finance.models import FinanceAccount
 from finance.service import handle_payment_exception, review_payment_submission
-from services.api.schema.others import MessageSchema
+from shared.api.schema import MessageSchema
 from services.models.payment import Invoice, Payment
 from user.models.client_service import PaymentSubmission
-from user.utils.perm import require_permission
+from system.authorization import require_permission
 
 router = Router(tags=["Finance Payments"])
 

@@ -56,7 +56,7 @@ from domains.marketing_sales.presenters import (
 )
 from user.models.employee import Employee
 from user.models.role_targets import EmployeeTarget
-from user.utils.perm import scope_queryset
+from system.authorization import scope_queryset
 
 
 def _lead_queryset(request):

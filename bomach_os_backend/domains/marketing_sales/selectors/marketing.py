@@ -71,7 +71,7 @@ from domains.marketing_sales.presenters import _marketing_pct as _pct
 from user.models.branch import Branch
 from user.models.employee import Employee
 from user.models.role_targets import EmployeeTarget, with_target_progress
-from user.utils.perm import scope_queryset
+from system.authorization import scope_queryset
 
 
 def _period_bounds(period_start=None, period_end=None):

@@ -17,7 +17,7 @@ from user.api.schemas.partner import (
     PartnerUpdateSchema,
 )
 from user.models.partner import Partner, PartnerAgreement
-from user.utils.perm import require_permission
+from system.authorization import require_permission
 
 partner_api = Router(tags=["Partners"])
 

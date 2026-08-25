@@ -43,7 +43,7 @@ from user.services.face_recognition_service import (
 )
 from user.services.jwt_service import JWTService
 from user.utils.auth import JWTAuthenticator
-from user.utils.perm import require_permission
+from system.authorization import require_permission
 
 biometric_api = Router(tags=["Biometric Authentication"])
 

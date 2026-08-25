@@ -11,7 +11,7 @@ from system.notifications.services import (
     mark_all_user_notifications_read,
     mark_user_notification_read,
 )
-from user.utils.perm import require_permission
+from system.authorization import require_permission
 
 notification_router = Router(tags=["Notifications"])
 

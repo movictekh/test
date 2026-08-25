@@ -87,7 +87,7 @@ from user.models.role_kpis import (
     generate_employee_kpi_records_for_role_kpis,
 )
 from user.models.role_targets import generate_employee_targets_for_templates
-from user.utils.perm import check_obj_permission, require_permission
+from system.authorization import check_obj_permission, require_permission
 
 role_api = Router(tags=["Roles"])
 

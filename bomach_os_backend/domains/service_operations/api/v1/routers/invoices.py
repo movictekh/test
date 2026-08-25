@@ -25,7 +25,7 @@ from user.api.schemas.client_service import (
     ReviewPaymentSchema,
 )
 from user.models.client_service import PaymentSubmission
-from user.utils.perm import require_permission, scope_queryset
+from system.authorization import require_permission, scope_queryset
 
 from ..schemas.lifecycle import (
     InvoiceIn,

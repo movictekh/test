@@ -12,7 +12,7 @@ from finance.api.schemas import CashFlowForecastOut
 from finance.api.v1.cashbook import cash_position_as_of
 from finance.models import PayrollRun, StatutoryObligation, VendorBill
 from services.models.payment import Invoice
-from user.utils.perm import require_permission
+from system.authorization import require_permission
 
 router = Router(tags=["Finance Cash Flow"])
 

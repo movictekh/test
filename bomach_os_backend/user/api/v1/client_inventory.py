@@ -15,7 +15,7 @@ from user.api.schemas.client_inventory import (
 from user.api.schemas.others import MessageSchema
 from user.models.client_inventory import CLientInventoryItem
 from user.utils.auth import JWTAuthenticator
-from user.utils.perm import require_permission
+from system.authorization import require_permission
 
 inventory_api = Router(tags=["Client Inventory"])
 

@@ -27,11 +27,11 @@ from finance.service import (
     reject_vendor_bill,
     void_vendor_bill,
 )
-from services.api.schema.others import MessageSchema
+from shared.api.schema import MessageSchema
 from services.models.service import ServiceOrder
 from user.models.branch import Branch
 from user.models.partner import Partner
-from user.utils.perm import require_permission
+from system.authorization import require_permission
 
 router = Router(tags=["Finance Vendors And Payables"])
 

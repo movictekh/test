@@ -36,7 +36,7 @@ from user.models.client import Client as CustomerClient
 from user.models.employee import Employee
 from user.models.partner import Partner
 from user.models.user import User
-from user.utils.perm import scope_queryset
+from system.authorization import scope_queryset
 
 
 def _set_meeting_attendees(meeting, attendee_ids):

@@ -21,7 +21,7 @@ from hr.services.scorecard_calculator import (
     update_rankings,
 )
 from hr.utils.auth_client import get_auth_client
-from user.utils.perm import check_obj_permission, require_permission, scope_queryset
+from system.authorization import check_obj_permission, require_permission, scope_queryset
 
 logger = logging.getLogger(__name__)
 

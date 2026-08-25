@@ -7,7 +7,7 @@ from ninja.errors import HttpError
 from finance.api.schemas.command_center import FinanceCommandCenterOut
 from finance.service.command_center import finance_command_center
 from user.models.branch import Branch
-from user.utils.perm import require_permission
+from system.authorization import require_permission
 
 router = Router(tags=["Finance Command Center"])
 

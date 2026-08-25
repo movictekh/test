@@ -41,7 +41,7 @@ from user.api.schemas.role import (
     GenerateKPIRecordsResponseSchema,
     GenerateTargetsResponseSchema,
 )
-from user.models.audit_log import AuditLog
+from system.audit.models import AuditLog
 from user.models.employee import Employee, EmployeeDocument, Review
 from user.models.role_kpis import (
     EmployeeKPIRecord,
@@ -57,9 +57,9 @@ from user.models.role_targets import (
 )
 from user.models.roles import Department, Unit
 from user.models.user import User
-from user.utils.audit import log_activity
+from system.audit.services import log_activity
 from user.utils.generate_pass import generate_password
-from user.utils.perm import check_obj_permission, require_permission, scope_queryset
+from system.authorization import check_obj_permission, require_permission, scope_queryset
 from user.utils.send_email import (
     send_associate_welcome_email,
     send_employee_welcome_email,

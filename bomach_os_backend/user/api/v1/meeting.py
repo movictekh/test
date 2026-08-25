@@ -15,7 +15,7 @@ from user.api.schemas.meeting import (
 from user.api.schemas.others import MessageSchema
 from user.models.meeting import Meeting
 from user.models.user import User
-from user.utils.perm import require_permission
+from system.authorization import require_permission
 
 meeting_api = Router(tags=["Meetings"])
 

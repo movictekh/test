@@ -16,7 +16,7 @@ from hr.models.employee_evaluation import EmployeeEvaluation
 from hr.models.monthly_scorecard import MonthlyScorecard
 from hr.services.scorecard_calculator import generate_scorecard
 from hr.utils.auth_client import get_auth_client
-from user.utils.perm import check_obj_permission, require_permission, scope_queryset
+from system.authorization import check_obj_permission, require_permission, scope_queryset
 
 logger = logging.getLogger(__name__)
 

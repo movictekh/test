@@ -39,7 +39,7 @@ from domains.real_estate.services.estate import (
     update_estate as update_estate_record,
     update_property as update_property_record,
 )
-from user.utils.perm import require_permission
+from system.authorization import require_permission
 
 estate_api = Router(tags=["Real Estate"])
 

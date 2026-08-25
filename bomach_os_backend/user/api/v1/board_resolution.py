@@ -15,7 +15,7 @@ from user.api.schemas.board_resolution import (
 )
 from user.api.schemas.others import MessageSchema
 from user.models.board_resolution import BoardResolution
-from user.utils.perm import require_permission
+from system.authorization import require_permission
 
 board_resolution_api = Router(tags=["Board Resolutions"])
 

@@ -15,7 +15,7 @@ from user.models.user import User
 from user.models.wallet import Transaction
 from user.utils.auth import JWTAuthenticator
 from user.utils.monnify import monnifyPaymentVerification
-from user.utils.perm import check_obj_permission, require_permission, scope_queryset
+from system.authorization import check_obj_permission, require_permission, scope_queryset
 
 wallet_api = Router(tags=["Wallet Management"])
 

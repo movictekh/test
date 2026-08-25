@@ -14,7 +14,7 @@ from hr.api.schemas import (
     PerformanceReviewUpdateSchema,
 )
 from hr.models.performance_review import PerformanceReview
-from user.utils.perm import check_obj_permission, require_permission, scope_queryset
+from system.authorization import check_obj_permission, require_permission, scope_queryset
 
 router = Router(tags=["Performance Reviews"])
 

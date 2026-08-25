@@ -21,7 +21,7 @@ from user.models.approval import (
     ApprovalFlowStep,
     ApprovalRequest,
 )
-from user.utils.perm import require_permission
+from system.authorization import require_permission
 
 approval_api = Router(tags=["Approvals"])
 

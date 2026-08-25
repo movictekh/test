@@ -22,7 +22,7 @@ from user.models.employee import Employee
 from user.models.shareholder import Shareholder
 from user.models.user import User
 from user.utils.generate_pass import generate_password
-from user.utils.perm import require_permission
+from system.authorization import require_permission
 from user.utils.send_email import send_shareholder_welcome_email
 
 DOMAIN = settings.DOMAIN

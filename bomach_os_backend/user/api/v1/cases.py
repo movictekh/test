@@ -18,7 +18,7 @@ from user.api.schemas.cases import (
 from user.api.schemas.others import MessageSchema
 from user.models.cases import LegalCase
 from user.utils.auth import JWTAuthenticator
-from user.utils.perm import require_permission
+from system.authorization import require_permission
 
 cases_api = Router(tags=["Legal Case Management"])
 

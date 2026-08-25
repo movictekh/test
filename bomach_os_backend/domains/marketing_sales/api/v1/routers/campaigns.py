@@ -100,7 +100,7 @@ from domains.marketing_sales.services.marketing import (
 from shared.api.schema.others import MessageSchema
 from user.models.branch import Branch
 from user.models.employee import Employee
-from user.utils.perm import require_permission
+from system.authorization import require_permission
 
 campaigns_router = Router(tags=["Marketing Campaigns"])
 

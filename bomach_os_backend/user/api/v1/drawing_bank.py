@@ -18,7 +18,7 @@ from user.api.schemas.drawing_bank import (
 )
 from user.api.schemas.others import MessageSchema
 from user.models.drawing_bank import DrawingBank
-from user.utils.perm import require_permission
+from system.authorization import require_permission
 
 drawing_bank_api = Router(tags=["Drawing Bank"])
 

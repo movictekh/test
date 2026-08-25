@@ -15,7 +15,7 @@ from hr.api.schemas import (
     MessageSchema,
 )
 from hr.models import JobPosting
-from user.utils.perm import check_obj_permission, require_permission, scope_queryset
+from system.authorization import check_obj_permission, require_permission, scope_queryset
 
 router = Router(tags=["Job Postings"])
 

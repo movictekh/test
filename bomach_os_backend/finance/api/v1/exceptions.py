@@ -11,7 +11,7 @@ from finance.api.schemas.exceptions import (
 from finance.service.exporting import export_exceptions_csv
 from finance.service.intelligence import finance_exception_summary, finance_exceptions
 from user.models.branch import Branch
-from user.utils.perm import require_permission
+from system.authorization import require_permission
 
 router = Router(tags=["Finance Audit And Exceptions"])
 

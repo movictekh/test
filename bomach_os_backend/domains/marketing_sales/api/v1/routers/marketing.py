@@ -135,7 +135,7 @@ from user.models.client import Client as CustomerClient
 from user.models.employee import Employee
 from user.models.meeting import Meeting
 from user.models.partner import Partner
-from user.utils.perm import require_permission, scope_queryset
+from system.authorization import require_permission, scope_queryset
 from system.messaging.email.services import send_email as send_marketing_email
 
 marketing_router = Router(tags=["Marketing Command Center"])

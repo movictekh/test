@@ -24,10 +24,10 @@ from finance.service import (
     fixed_asset_summary,
     post_fixed_asset_depreciation,
 )
-from services.api.schema.others import MessageSchema
+from shared.api.schema import MessageSchema
 from services.models.expenses import Expense
 from user.models.branch import Branch
-from user.utils.perm import require_permission, scope_queryset
+from system.authorization import require_permission, scope_queryset
 
 router = Router(tags=["Finance Fixed Assets"])
 

@@ -15,7 +15,7 @@ from hr.api.schemas import (
     TrainingProgramUpdateSchema,
 )
 from hr.models import TrainingProgram
-from user.utils.perm import require_permission
+from system.authorization import require_permission
 
 router = Router(tags=["Training Programs"])
 

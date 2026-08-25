@@ -15,7 +15,7 @@ from domains.service_operations.models import (
     ServiceRequest,
 )
 from services.models.expenses import Expense
-from user.utils.perm import require_permission
+from system.authorization import require_permission
 
 from ..schemas.reports import (
     ServiceStatsOut,

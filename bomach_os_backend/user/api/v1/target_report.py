@@ -18,7 +18,7 @@ from user.api.schemas.target_report import (
     TargetReportResponseSchema,
 )
 from user.models.role_targets import EmployeeTarget, EmployeeTargetReport
-from user.utils.perm import check_obj_permission, require_permission, scope_queryset
+from system.authorization import check_obj_permission, require_permission, scope_queryset
 
 target_report_api = Router(tags=["Target Reports"])
 
