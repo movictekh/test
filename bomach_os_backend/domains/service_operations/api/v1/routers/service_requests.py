@@ -229,9 +229,9 @@ from user.api.schemas.client_service import (
     PaymentSubmissionResponseSchema,
     ReviewPaymentSchema,
 )
-from domains.crm.models.client import Client as CustomerClient
-from finance.transactions.payment_submission import PaymentSubmission
-from system.authorization import require_permission, scope_queryset
+from user.models.client import Client as CustomerClient
+from user.models.client_service import PaymentSubmission
+from user.utils.perm import require_permission, scope_queryset
 
 from ..schemas.service_requests import (
     ServiceRequestActivityCreateSchema,

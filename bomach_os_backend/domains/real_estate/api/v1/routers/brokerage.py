@@ -25,7 +25,7 @@ from domains.real_estate.services.brokerage import (
     update_brokerage_listing as update_brokerage_listing_record,
     verify_brokerage_listing as verify_brokerage_listing_record,
 )
-from system.authorization import require_permission
+from user.utils.perm import require_permission
 
 brokerage_api = Router(tags=["Brokerage"])
 

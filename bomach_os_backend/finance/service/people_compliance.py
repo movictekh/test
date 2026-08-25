@@ -15,7 +15,7 @@ from finance.models import (
     StatutoryObligationItem,
     VendorBill,
 )
-from finance.transactions.payment import Payment
+from services.models.payment import Payment
 
 from .accounting import post_payroll_payment_journal, post_statutory_payment_journal
 
@@ -32,7 +32,7 @@ def _payroll_period_bounds(payroll_run):
 
 
 def _payroll_employee_queryset(payroll_run):
-    from domains.people.models.employee import Employee
+    from user.models.employee import Employee
 
     period_start, period_end = _payroll_period_bounds(payroll_run)
     employees = (

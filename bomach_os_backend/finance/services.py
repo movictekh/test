@@ -4,10 +4,9 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
 from finance.models import FinanceAccount
-from domains.service_operations.models import Invoice
-from finance.transactions.payment import Payment
+from services.models.payment import Invoice, Payment
 from services.models.service import ServiceRequestActivity
-from finance.transactions.payment_submission import PaymentSubmission
+from user.models.client_service import PaymentSubmission
 
 
 def validation_detail(exc):

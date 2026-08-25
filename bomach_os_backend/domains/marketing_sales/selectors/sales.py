@@ -54,9 +54,9 @@ from domains.marketing_sales.presenters import (
 from domains.marketing_sales.presenters import (
     _revenue_turnaround_kpis as _turnaround_kpis,
 )
-from domains.people.models.employee import Employee
-from domains.people.models.role_targets import EmployeeTarget
-from system.authorization import scope_queryset
+from user.models.employee import Employee
+from user.models.role_targets import EmployeeTarget
+from user.utils.perm import scope_queryset
 
 
 def _lead_queryset(request):

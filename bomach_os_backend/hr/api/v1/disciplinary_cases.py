@@ -12,7 +12,7 @@ from hr.api.schemas.disciplinary_case import (
     DisciplinaryCaseUpdateSchema,
 )
 from hr.models.disciplinary_case import DisciplinaryCase
-from system.authorization import check_obj_permission, require_permission, scope_queryset
+from user.utils.perm import check_obj_permission, require_permission, scope_queryset
 
 router = Router(tags=["Disciplinary Cases"])
 

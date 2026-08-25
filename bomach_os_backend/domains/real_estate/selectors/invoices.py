@@ -1,7 +1,7 @@
 from django.db.models import Q
 
 from domains.real_estate.models.estate_property_invoice import EstatePropertyInvoice
-from system.authorization import scope_queryset
+from user.utils.perm import scope_queryset
 
 
 def list_estate_invoices(

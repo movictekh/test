@@ -13,7 +13,7 @@ from domains.service_operations.models import (
     ServiceWorkflow,
     ServiceWorkflowStage,
 )
-from domains.organization.models.role import Role
+from user.models.role import Role
 
 
 def choice_values(choices):

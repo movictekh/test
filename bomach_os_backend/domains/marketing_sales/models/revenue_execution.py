@@ -8,8 +8,8 @@ from django.utils import timezone
 
 from domains.marketing_sales.models.marketing import MarketingCampaign
 from user.models.base import BaseModel
-from domains.organization.models.branch import Branch
-from domains.people.models.employee import Employee
+from user.models.branch import Branch
+from user.models.employee import Employee
 
 
 class DailyActionTemplate(BaseModel):

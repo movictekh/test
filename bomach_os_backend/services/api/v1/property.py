@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404
 from ninja import Router
 from ninja.pagination import LimitOffsetPagination, paginate
 
-from shared.api.schema import MessageSchema
+from services.api.schema.others import MessageSchema
 from services.api.schema.property_schemas import (
     PropertyIn,
     PropertyOut,
@@ -14,7 +14,7 @@ from services.api.schema.property_schemas import (
     PropertyUpdate,
 )
 from services.models.property import Property
-from system.authorization import require_permission
+from user.utils.perm import require_permission
 
 router = Router(tags=["Properties"])
 

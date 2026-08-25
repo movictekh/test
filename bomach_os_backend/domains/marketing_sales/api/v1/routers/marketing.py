@@ -130,13 +130,13 @@ from domains.marketing_sales.services.marketing import (
     _resolve_partner_invitation,
     _set_meeting_attendees,
 )
-from domains.organization.models.branch import Branch
-from domains.crm.models.client import Client as CustomerClient
-from domains.people.models.employee import Employee
-from domains.governance.models.meeting import Meeting
-from domains.crm.models.partner import Partner
-from system.authorization import require_permission, scope_queryset
-from system.messaging.email.services import send_email as send_marketing_email
+from user.models.branch import Branch
+from user.models.client import Client as CustomerClient
+from user.models.employee import Employee
+from user.models.meeting import Meeting
+from user.models.partner import Partner
+from user.utils.perm import require_permission, scope_queryset
+from user.utils.send_email import send_marketing_email
 
 marketing_router = Router(tags=["Marketing Command Center"])
 logger = logging.getLogger(__name__)

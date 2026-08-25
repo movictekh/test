@@ -22,12 +22,12 @@ from finance.service import (
     handle_payment_exception,
     reject_incentive_award,
 )
-from shared.api.schema import MessageSchema
-from finance.transactions.payment import Payment
+from services.api.schema.others import MessageSchema
+from services.models.payment import Payment
 from services.models.service import Service
-from domains.organization.models.branch import Branch
-from domains.people.models.employee import Employee
-from system.authorization import require_permission
+from user.models.branch import Branch
+from user.models.employee import Employee
+from user.utils.perm import require_permission
 
 router = Router(tags=["Finance Commissions And Bonuses"])
 

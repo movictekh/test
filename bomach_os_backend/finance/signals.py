@@ -12,8 +12,8 @@ from finance.models import (
     VendorBill,
 )
 from finance.service.audit import record_finance_audit
-from finance.transactions.expense import Expense
-from finance.transactions.payment_submission import PaymentSubmission
+from services.models.expenses import Expense
+from user.models.client_service import PaymentSubmission
 
 STATUS_MODELS = (
     VendorBill,

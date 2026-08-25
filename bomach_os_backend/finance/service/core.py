@@ -14,11 +14,10 @@ from finance.models import (
     PettyCashRetirementLine,
     VendorBill,
 )
-from finance.transactions.expense import Expense
-from domains.service_operations.models import Invoice
-from finance.transactions.payment import Payment
+from services.models.expenses import Expense
+from services.models.payment import Invoice, Payment
 from services.models.service import ServiceRequestActivity
-from finance.transactions.payment_submission import PaymentSubmission
+from user.models.client_service import PaymentSubmission
 
 from .accounting import (
     post_client_payment_journal,

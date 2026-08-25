@@ -15,7 +15,7 @@ from domains.service_operations.models import (
 )
 from domains.service_operations.services import orders as order_services
 from shared.api.schema.others import MessageSchema
-from system.authorization import require_permission, scope_queryset
+from user.utils.perm import require_permission, scope_queryset
 
 from ..schemas.lifecycle import (
     ServiceDeliverableActionIn,

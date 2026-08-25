@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 
 from user.models.base import BaseModel
-from system.identity.models.user import User
+from user.models.user import User
 
 
 class DrawingBank(BaseModel):

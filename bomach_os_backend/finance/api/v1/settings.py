@@ -4,9 +4,9 @@ from ninja.errors import HttpError
 
 from finance.api.schemas.settings import FinanceSettingsOut, FinanceSettingsUpdate
 from finance.models import FinanceSettings
-from shared.api.schema import MessageSchema
-from domains.organization.models.company import CompanyPreferences
-from system.authorization import require_permission
+from services.api.schema.others import MessageSchema
+from user.models.company import CompanyPreferences
+from user.utils.perm import require_permission
 
 router = Router(tags=["Finance Settings"])
 

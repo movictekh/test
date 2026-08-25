@@ -43,7 +43,7 @@ class AuthClient:
             Tuple of (is_valid, user_id)
         """
         try:
-            from system.identity.models.token_blacklist import TokenBlacklist
+            from user.models import TokenBlacklist
 
             if TokenBlacklist.is_blacklisted(token):
                 return False, None
@@ -69,7 +69,7 @@ class AuthClient:
             return False, None, "Invalid or expired token"
 
         try:
-            from system.identity.models.user import User
+            from user.models import User
 
             user = User.objects.filter(pk=user_id, is_active=True).first()
             if not user:
@@ -91,7 +91,7 @@ class AuthClient:
     ) -> Optional[Dict[str, Any]]:
         """Get user information by user ID."""
         try:
-            from system.identity.models.user import User
+            from user.models import User
 
             user = User.objects.filter(pk=user_id).first()
             if not user:
@@ -112,7 +112,7 @@ class AuthClient:
     ) -> Optional[Dict[str, Any]]:
         """Get employee information by employee ID."""
         try:
-            from domains.people.models.employee import Employee
+            from user.models import Employee
 
             employee = (
                 Employee.objects.select_related("department", "branch")
@@ -149,7 +149,7 @@ class AuthClient:
     ) -> Optional[Dict[str, Any]]:
         """Get client information by client ID."""
         try:
-            from domains.crm.models.client import Client
+            from user.models import Client
 
             client = Client.objects.filter(pk=client_id).first()
             if not client:
@@ -165,7 +165,7 @@ class AuthClient:
     def validate_employee_id(self, employee_id: str, token: str = None) -> bool:
         """Check if an employee ID exists."""
         try:
-            from domains.people.models.employee import Employee
+            from user.models import Employee
 
             return Employee.objects.filter(pk=employee_id).exists()
         except Exception:
@@ -174,7 +174,7 @@ class AuthClient:
     def validate_client_id(self, client_id: str, token: str = None) -> bool:
         """Check if a client ID exists."""
         try:
-            from domains.crm.models.client import Client
+            from user.models import Client
 
             return Client.objects.filter(pk=client_id).exists()
         except Exception:

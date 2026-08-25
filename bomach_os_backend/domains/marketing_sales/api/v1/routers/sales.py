@@ -42,7 +42,7 @@ from domains.marketing_sales.services.sales import (
     _apply_lead_payload,
 )
 from shared.api.schema.others import MessageSchema
-from system.authorization import require_permission
+from user.utils.perm import require_permission
 
 leads_router = Router(tags=["Marketing Leads"])
 
@@ -486,7 +486,7 @@ from domains.marketing_sales.api.v1.schemas.sales import (
     FunnelSummarySchema,
 )
 from domains.marketing_sales.models.sales import FunnelLead, FunnelSnapshot, FunnelStage
-from system.authorization import require_permission
+from user.utils.perm import require_permission
 
 funnel_router = Router(tags=["Funnel Engine"])
 
@@ -623,9 +623,9 @@ from domains.marketing_sales.api.v1.schemas.sales import (
     UpdateDealSchema,
 )
 from domains.marketing_sales.models.sales import Deal, PipelineStage
-from domains.organization.models.branch import Branch
-from domains.people.models.employee import Employee
-from system.authorization import require_permission
+from user.models.branch import Branch
+from user.models.employee import Employee
+from user.utils.perm import require_permission
 
 pipeline_router = Router(tags=["Sales Pipeline"])
 
@@ -805,9 +805,9 @@ from domains.marketing_sales.presenters import _sales_pipeline_card as _pipeline
 from domains.marketing_sales.presenters import (
     _sales_validation_detail as _validation_detail,
 )
-from domains.organization.models.branch import Branch
-from domains.people.models.employee import Employee
-from system.authorization import require_permission
+from user.models.branch import Branch
+from user.models.employee import Employee
+from user.utils.perm import require_permission
 
 csrc_router = Router(tags=["CSRC Dashboard"])
 

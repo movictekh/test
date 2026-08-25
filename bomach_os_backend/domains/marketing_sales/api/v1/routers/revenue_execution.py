@@ -192,8 +192,12 @@ from domains.marketing_sales.services.sales import (
     _revenue_seed_turnaround_actions as _seed_turnaround_actions,
 )
 from shared.api.schema.others import MessageSchema
-from domains.people.models.role_targets import EmployeeTarget, RoleTargetTemplate, with_target_progress
-from system.authorization import require_permission
+from user.models.role_targets import (
+    EmployeeTarget,
+    RoleTargetTemplate,
+    with_target_progress,
+)
+from user.utils.perm import require_permission
 
 revenue_execution_router = Router(tags=["Revenue Execution"])
 

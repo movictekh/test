@@ -32,11 +32,11 @@ from domains.marketing_sales.selectors.marketing import (
     _partner_portal_token,
 )
 from domains.marketing_sales.services.funnel import record_initial_funnel_event
-from domains.crm.models.client import Client as CustomerClient
-from domains.people.models.employee import Employee
-from domains.crm.models.partner import Partner
-from system.identity.models.user import User
-from system.authorization import scope_queryset
+from user.models.client import Client as CustomerClient
+from user.models.employee import Employee
+from user.models.partner import Partner
+from user.models.user import User
+from user.utils.perm import scope_queryset
 
 
 def _set_meeting_attendees(meeting, attendee_ids):

@@ -31,9 +31,9 @@ from finance.service import (
     reverse_journal_entry,
     update_manual_journal,
 )
-from shared.api.schema import MessageSchema
-from domains.organization.models.branch import Branch
-from system.authorization import require_permission, scope_queryset
+from services.api.schema.others import MessageSchema
+from user.models.branch import Branch
+from user.utils.perm import require_permission, scope_queryset
 
 router = Router(tags=["Finance Accounting"])
 

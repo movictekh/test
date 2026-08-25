@@ -19,13 +19,13 @@ from finance.service import (
     pay_finance_expense,
     reject_finance_expense,
 )
-from shared.api.schema import MessageSchema
-from finance.transactions.expense import Expense
+from services.api.schema.others import MessageSchema
+from services.models.expenses import Expense
 from services.models.service import ServiceOrder
-from domains.organization.models.branch import Branch
-from domains.organization.models.roles import Department
-from system.identity.models.user import User
-from system.authorization import require_permission
+from user.models.branch import Branch
+from user.models.roles import Department
+from user.models.user import User
+from user.utils.perm import require_permission
 
 router = Router(tags=["Finance Expenses"])
 

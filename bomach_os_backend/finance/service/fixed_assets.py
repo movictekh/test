@@ -18,7 +18,7 @@ from finance.service.accounting import (
     ensure_finance_account_ledger_account,
     get_system_ledger_account,
 )
-from finance.transactions.expense import Expense
+from services.models.expenses import Expense
 
 ZERO = Decimal("0.00")
 CENT = Decimal("0.01")

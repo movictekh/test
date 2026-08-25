@@ -25,8 +25,8 @@ from domains.service_operations.models import (
 )
 from domains.service_operations.services import catalogue as domain_services
 from shared.api.schema.others import MessageSchema
-from domains.organization.models.role import Role
-from system.authorization import require_permission
+from user.models.role import Role
+from user.utils.perm import require_permission
 
 from ..schemas.catalogue import (
     FieldTypeOut,
@@ -573,8 +573,8 @@ from domains.service_operations import selectors as domain_selectors
 from domains.service_operations.models import Service, ServiceBranchActivation
 from domains.service_operations.services import catalogue as domain_services
 from shared.api.schema.others import MessageSchema
-from domains.organization.models.branch import Branch
-from system.authorization import require_permission
+from user.models.branch import Branch
+from user.utils.perm import require_permission
 
 from ..schemas.catalogue import BranchActivationBulkUpsert
 from ._catalogue_support import (

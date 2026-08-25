@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from system.messaging.email.services import send_text_email as send_mail
+from django.core.mail import send_mail
 from django.db.models import F, Max, Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -17,10 +17,10 @@ from finance.api.schemas import (
     ReceivableReminderOut,
     ReceivableSummaryOut,
 )
-from shared.api.schema import MessageSchema
-from domains.service_operations.models import Invoice
+from services.api.schema.others import MessageSchema
+from services.models.payment import Invoice
 from services.models.service import ServiceRequestActivity
-from system.authorization import require_permission
+from user.utils.perm import require_permission
 
 router = Router(tags=["Finance Receivables"])
 

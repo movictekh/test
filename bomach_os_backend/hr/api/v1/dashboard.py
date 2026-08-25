@@ -6,8 +6,8 @@ from hr.api.schemas.dashboard import HRDashboardStats, HRStats, MessageSchema
 from hr.models import JobPosting, LeaveRequest
 from hr.models.disciplinary_case import DisciplinaryCase
 from hr.models.training_program import TrainingProgram
-from domains.people.models.employee import Employee
-from system.authorization import require_permission
+from user.models import Employee
+from user.utils.perm import require_permission
 
 logger = logging.getLogger(__name__)
 

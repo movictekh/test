@@ -20,7 +20,7 @@ from hr.api.schemas.kpi import (
     KPITemplateUpdateSchema,
 )
 from hr.models.kpi import KPIMetric, KPITemplate, KPITemplateMetric
-from system.authorization import check_obj_permission, require_permission, scope_queryset
+from user.utils.perm import check_obj_permission, require_permission, scope_queryset
 
 router = Router(tags=["KPIs"])
 

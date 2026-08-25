@@ -14,7 +14,7 @@ from hr.api.schemas import (
     OfferLetterUpdateSchema,
 )
 from hr.models import Applicant, OfferLetter
-from system.authorization import check_obj_permission, require_permission, scope_queryset
+from user.utils.perm import check_obj_permission, require_permission, scope_queryset
 
 router = Router(tags=["Offer Letters"])
 

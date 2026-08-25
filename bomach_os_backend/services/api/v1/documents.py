@@ -7,9 +7,9 @@ from ninja import Router
 from ninja.pagination import LimitOffsetPagination, paginate
 
 from services.api.schema.document_schemas import DocumentIn, DocumentOut, DocumentUpdate
-from shared.api.schema import MessageSchema
+from services.api.schema.others import MessageSchema
 from services.models.document import Document
-from system.authorization import require_permission
+from user.utils.perm import require_permission
 
 router = Router(tags=["Documents"])
 

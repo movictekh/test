@@ -20,7 +20,7 @@ from domains.marketing_sales.selectors.sales import (
     _revenue_templates_for_day as _templates_for_day,
 )
 from domains.marketing_sales.services.funnel import record_status_funnel_event
-from domains.organization.models.branch import Branch
+from user.models.branch import Branch
 
 
 def _apply_lead_payload(lead, payload_data, actor=None):

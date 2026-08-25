@@ -86,6 +86,20 @@ class Estate(BaseModel):
     precise_address = models.TextField(
         verbose_name="Precise Address",
     )
+    estate_map_url = models.CharField(
+        max_length=1000,
+        blank=True,
+        default="",
+        verbose_name="Estate Map URL",
+        help_text="Uploaded PDF or hosted link for the estate layout drawing.",
+    )
+    virtual_tour_url = models.CharField(
+        max_length=1000,
+        blank=True,
+        default="",
+        verbose_name="Virtual Tour URL",
+        help_text="Hosted 3D walkthrough or map-based virtual tour link.",
+    )
     boundary = models.JSONField(
         default=list,
         blank=True,

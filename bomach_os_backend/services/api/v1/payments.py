@@ -6,10 +6,10 @@ from ninja import Router
 from ninja.pagination import LimitOffsetPagination, paginate
 
 from finance.services import get_active_finance_account
-from shared.api.schema import MessageSchema
+from services.api.schema.others import MessageSchema
 from services.api.schema.schemas import PaymentIn, PaymentOut
-from finance.transactions.payment import Payment
-from system.authorization import require_permission
+from services.models.payment import Payment
+from user.utils.perm import require_permission
 
 router = Router(tags=["Payments"])
 

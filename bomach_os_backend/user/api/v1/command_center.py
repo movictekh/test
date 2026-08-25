@@ -15,7 +15,7 @@ from user.api.schemas.command_center import (
     PipelineStage,
     PipelineSummary,
 )
-from system.authorization import require_permission
+from user.utils.perm import require_permission
 
 command_center_router = Router(tags=["Command Center"])
 
@@ -31,9 +31,9 @@ def _days_since(dt):
 @require_permission("command_center", "view")
 def get_activity_feed(request):
     """Recent activity across orders, approvals, invoices."""
-    from domains.service_operations.models import Invoice
+    from services.models.payment import Invoice
     from services.models.service import Quote, ServiceOrder
-    from system.approvals.models.approval import ApprovalRequest
+    from user.models.approval import ApprovalRequest
 
     items = []
 
@@ -86,7 +86,7 @@ def get_activity_feed(request):
 def get_pending_approvals(request):
     """Summary of pending approvals across domains."""
     from hr.models.leave_request import LeaveRequest
-    from finance.transactions.expense import Expense
+    from services.models.expenses import Expense
     from services.models.service import Quote, ServiceOrder
 
     items = []
@@ -157,8 +157,8 @@ def get_pending_approvals(request):
 @require_permission("command_center", "view")
 def get_financials(request):
     """Revenue, expenses, outstanding, and margin."""
-    from finance.transactions.expense import Expense
-    from domains.service_operations.models import Invoice
+    from services.models.expenses import Expense
+    from services.models.payment import Invoice
 
     revenue = Invoice.objects.filter(
         status__in=["paid", "partially_paid"],
@@ -233,7 +233,7 @@ def get_pipeline(request):
 def get_action_items(request):
     """Pending items requiring user's attention."""
     from services.models.service import ServiceOrder
-    from system.approvals.models.approval import ApprovalRequest
+    from user.models.approval import ApprovalRequest
 
     items = []
 

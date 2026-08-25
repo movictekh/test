@@ -9,7 +9,7 @@ from ninja.pagination import LimitOffsetPagination, paginate
 from hr.api.schemas import MessageSchema
 from hr.api.schemas.asset import AssetCreate, AssetOut, AssetUpdate
 from hr.models.asset import Asset
-from system.authorization import check_obj_permission, require_permission, scope_queryset
+from user.utils.perm import check_obj_permission, require_permission, scope_queryset
 
 router = Router(tags=["Assets"])
 

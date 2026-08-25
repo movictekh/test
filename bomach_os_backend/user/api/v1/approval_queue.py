@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional
 from django.utils import timezone
 from ninja import Query, Router
 
-from finance.transactions.expense import Expense
+from services.models.expenses import Expense
 from services.models.service import Quote, ServiceDeliverable
 from user.api.schemas.approval_queue import (
     ApprovalQueueChoicesSchema,

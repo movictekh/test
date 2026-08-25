@@ -8,14 +8,14 @@ from django.http import HttpRequest
 from ninja import Router
 from ninja.pagination import LimitOffsetPagination, paginate
 
-from system.identity.api.v1.schemas.auth import ErrorResponse
+from user.api.schemas.auth import ErrorResponse
 from user.api.schemas.others import MessageSchema
 from user.api.schemas.wallet import TransactionResponse, WalletBalanceResponse
-from system.identity.models.user import User
+from user.models.user import User
 from user.models.wallet import Transaction
-from system.identity.authentication import JWTAuthenticator
+from user.utils.auth import JWTAuthenticator
 from user.utils.monnify import monnifyPaymentVerification
-from system.authorization import check_obj_permission, require_permission, scope_queryset
+from user.utils.perm import check_obj_permission, require_permission, scope_queryset
 
 wallet_api = Router(tags=["Wallet Management"])
 

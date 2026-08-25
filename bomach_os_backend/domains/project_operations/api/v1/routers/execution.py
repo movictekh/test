@@ -13,7 +13,7 @@ from ninja.pagination import LimitOffsetPagination, paginate
 
 from domains.project_operations import selectors, services
 from domains.project_operations.models import Task
-from system.authorization import require_permission
+from user.utils.perm import require_permission
 
 from ..schemas.schemas import (
     MessageSchema,
@@ -114,7 +114,7 @@ from ninja.pagination import LimitOffsetPagination, paginate
 
 from domains.project_operations import selectors, services
 from domains.project_operations.models import Task
-from system.authorization import require_permission
+from user.utils.perm import require_permission
 
 from ..schemas.schemas import MessageSchema, TaskOutSchema, TaskStatusUpdateSchema
 
@@ -185,7 +185,7 @@ from ninja import Router
 from ninja.pagination import LimitOffsetPagination, paginate
 
 from domains.project_operations.models import Project, Worksite
-from system.authorization import require_permission
+from user.utils.perm import require_permission
 
 from ..schemas.schemas import (
     MessageSchema,
@@ -303,7 +303,7 @@ from ninja import Router
 from ninja.pagination import LimitOffsetPagination, paginate
 
 from domains.project_operations.models import SiteEquipment, Worksite
-from system.authorization import require_permission
+from user.utils.perm import require_permission
 
 from ..schemas.schemas import (
     MessageSchema,

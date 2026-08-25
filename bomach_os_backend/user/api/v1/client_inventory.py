@@ -6,7 +6,7 @@ from django.http import HttpRequest
 from ninja import Router
 from ninja.pagination import LimitOffsetPagination, paginate
 
-from system.identity.api.v1.schemas.auth import ErrorResponse
+from user.api.schemas.auth import ErrorResponse
 from user.api.schemas.client_inventory import (
     CreateInventoryItemRequest,
     InventoryItemResponse,
@@ -14,8 +14,8 @@ from user.api.schemas.client_inventory import (
 )
 from user.api.schemas.others import MessageSchema
 from user.models.client_inventory import CLientInventoryItem
-from system.identity.authentication import JWTAuthenticator
-from system.authorization import require_permission
+from user.utils.auth import JWTAuthenticator
+from user.utils.perm import require_permission
 
 inventory_api = Router(tags=["Client Inventory"])
 

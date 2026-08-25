@@ -1,5 +1,7 @@
-"""Compatibility export for the canonical shared API message schema."""
+from ninja import Schema
 
-from shared.api.schema import MessageSchema
 
-__all__ = ["MessageSchema"]
+class MessageSchema(Schema):
+    """Schema for success/error messages"""
+
+    detail: str

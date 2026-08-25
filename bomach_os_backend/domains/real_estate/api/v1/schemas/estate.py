@@ -33,6 +33,8 @@ class EstateCreateSchema(Schema):
     state: str
     city_town: str
     precise_address: str
+    estate_map_url: Optional[str] = None
+    virtual_tour_url: Optional[str] = None
     boundary: Optional[List[CoordinateSchema]] = None
 
     # Estate Documents (URLs from upload endpoint)
@@ -91,6 +93,8 @@ class EstateUpdateSchema(Schema):
     state: Optional[str] = None
     city_town: Optional[str] = None
     precise_address: Optional[str] = None
+    estate_map_url: Optional[str] = None
+    virtual_tour_url: Optional[str] = None
     boundary: Optional[List[CoordinateSchema]] = None
 
     # Estate Documents
@@ -168,6 +172,8 @@ class EstateSchema(Schema):
     state: str
     city_town: str
     precise_address: str
+    estate_map_url: str
+    virtual_tour_url: str
     boundary: list = []
 
     # Estate Documents

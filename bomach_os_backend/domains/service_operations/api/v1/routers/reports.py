@@ -14,8 +14,8 @@ from domains.service_operations.models import (
     ServiceOrder,
     ServiceRequest,
 )
-from finance.transactions.expense import Expense
-from system.authorization import require_permission
+from services.models.expenses import Expense
+from user.utils.perm import require_permission
 
 from ..schemas.reports import (
     ServiceStatsOut,

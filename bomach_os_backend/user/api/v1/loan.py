@@ -16,7 +16,7 @@ from user.api.schemas.loan import (
 )
 from user.api.schemas.others import MessageSchema
 from user.models.loan import Loan
-from system.authorization import check_obj_permission, require_permission, scope_queryset
+from user.utils.perm import check_obj_permission, require_permission, scope_queryset
 
 loan_api = Router(tags=["Loans"])
 
