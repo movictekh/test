@@ -6,7 +6,7 @@ from django.db import models
 from django.utils import timezone
 
 from user.models.base import BaseModel
-from user.models.user import User
+from system.identity.models.user import User
 
 
 class Lead(BaseModel):

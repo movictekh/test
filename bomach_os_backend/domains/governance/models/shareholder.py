@@ -7,7 +7,7 @@ from django.db import models
 
 from user.models.base import BaseModel
 from domains.people.models.employee import Employee
-from user.models.user import User
+from system.identity.models.user import User
 
 
 class Shareholder(BaseModel):

@@ -7,11 +7,11 @@ from django.http import HttpRequest
 from ninja import Router
 from ninja.pagination import LimitOffsetPagination, paginate
 
-from user.api.schemas.auth import ErrorResponse
+from system.identity.api.v1.schemas.auth import ErrorResponse
 from domains.legal_compliance.api.v1.schemas.cases import CreateLegalCaseRequest, LegalCaseResponse, LegalCaseStatisticsResponse, UpdateCaseStatusRequest, UpdateLegalCaseRequest
 from user.api.schemas.others import MessageSchema
 from domains.legal_compliance.models.cases import LegalCase
-from user.utils.auth import JWTAuthenticator
+from system.identity.authentication import JWTAuthenticator
 from system.authorization import require_permission
 
 cases_api = Router(tags=["Legal Case Management"])

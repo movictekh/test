@@ -46,7 +46,7 @@ from domains.people.models.employee import Employee, EmployeeDocument, Review
 from domains.people.models.role_kpis import EmployeeKPIRecord, KPITrackingModeChoices, RoleKPIMetric, generate_employee_kpi_records_for_role_kpis
 from domains.people.models.role_targets import EmployeeTarget, RoleTargetTemplate, generate_employee_targets_for_templates, with_target_progress
 from domains.organization.models.roles import Department, Unit
-from user.models.user import User
+from system.identity.models.user import User
 from system.audit.services import log_activity
 from user.utils.generate_pass import generate_password
 from system.authorization import check_obj_permission, require_permission, scope_queryset

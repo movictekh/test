@@ -15,7 +15,7 @@ from user.api.schemas import (
 )
 from user.models import SOP, Responsibility
 from domains.organization.models.roles import Department, Unit
-from user.models.user import User
+from system.identity.models.user import User
 
 # =============================================================================
 #  BASE ROUTER (Shared functionality)

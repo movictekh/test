@@ -43,7 +43,7 @@ class AuthClient:
             Tuple of (is_valid, user_id)
         """
         try:
-            from user.models import TokenBlacklist
+            from system.identity.models.token_blacklist import TokenBlacklist
 
             if TokenBlacklist.is_blacklisted(token):
                 return False, None
@@ -69,7 +69,7 @@ class AuthClient:
             return False, None, "Invalid or expired token"
 
         try:
-            from user.models import User
+            from system.identity.models.user import User
 
             user = User.objects.filter(pk=user_id, is_active=True).first()
             if not user:

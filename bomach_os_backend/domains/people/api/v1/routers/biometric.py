@@ -10,12 +10,12 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from ninja import Router
 
-from user.api.schemas.auth import ErrorResponse, LoginResponse
+from system.identity.api.v1.schemas.auth import ErrorResponse, LoginResponse
 from domains.people.api.v1.schemas.biometric import AdminCreateWorkLocationRequest, AdminUpdateWorkLocationRequest, ApproveWorkLocationRequest, AttendanceRecordResponse, BiometricClockInRequest, BiometricClockInResponse, BiometricLoginRequest, BiometricSetupResponse, BiometricStatusResponse, LocationOverrideRequest, LocationStatusResponse, LocationVerificationError, RejectWorkLocationRequest, RemoveBiometricRequest, SetupFaceRequest, SetupFingerprintRequest, SubmitWorkLocationRequest, WorkLocationListResponse, WorkLocationSchema
 from domains.people.models.attendance import Attendance
 from domains.people.models.employee import Employee
 from domains.people.models.work_location import WorkLocation
-from user.models.user import User
+from system.identity.models.user import User
 from user.services import face_recognition_service
 from user.services.face_recognition_service import (
     FaceNotDetected,
@@ -23,8 +23,8 @@ from user.services.face_recognition_service import (
     FaceServiceUnavailable,
     InvalidFaceImage,
 )
-from user.services.jwt_service import JWTService
-from user.utils.auth import JWTAuthenticator
+from system.identity.services.jwt import JWTService
+from system.identity.authentication import JWTAuthenticator
 from system.authorization import require_permission
 
 biometric_api = Router(tags=["Biometric Authentication"])

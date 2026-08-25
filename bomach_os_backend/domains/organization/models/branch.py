@@ -4,7 +4,7 @@ from django.core.validators import FileExtensionValidator, RegexValidator
 from django.db import models
 
 from user.models.base import BaseModel
-from user.models.user import User
+from system.identity.models.user import User
 
 
 class Branch(BaseModel):

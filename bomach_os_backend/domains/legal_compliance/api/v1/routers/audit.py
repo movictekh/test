@@ -7,10 +7,10 @@ from ninja import Router
 from ninja.pagination import LimitOffsetPagination, paginate
 
 from domains.legal_compliance.api.v1.schemas.audit import AuditorSummaryResponse, AuditPerformanceTrendsResponse, AuditResponse, AuditStatisticsResponse, CreateAuditRequest, UpdateAuditRequest, UpdateAuditScoreRequest, UpdateAuditStatusRequest
-from user.api.schemas.auth import ErrorResponse
+from system.identity.api.v1.schemas.auth import ErrorResponse
 from user.api.schemas.others import MessageSchema
 from domains.legal_compliance.models.compliance_audit import Audit
-from user.utils.auth import JWTAuthenticator
+from system.identity.authentication import JWTAuthenticator
 from system.authorization import require_permission
 
 audit_api = Router(tags=["Audit Management (Legal)"])

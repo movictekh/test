@@ -24,7 +24,7 @@ from finance.transactions.expense import Expense
 from services.models.service import ServiceOrder
 from domains.organization.models.branch import Branch
 from domains.organization.models.roles import Department
-from user.models.user import User
+from system.identity.models.user import User
 from system.authorization import require_permission
 
 router = Router(tags=["Finance Expenses"])

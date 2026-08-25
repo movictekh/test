@@ -98,7 +98,7 @@ from system.approvals.api.v1.routers.approval import approval_api as approval_ro
 from user.api.v1.approval_queue import approval_queue_api as approval_queue_router
 from domains.legal_compliance.api.v1.routers.audit import audit_api as audit_router
 from system.audit.api.v1.routers.audit_log import audit_log_api as audit_log_router
-from user.api.v1.auth import auth_api as auth_router
+from system.identity.api.v1.routers.auth import auth_api as auth_router
 from domains.people.api.v1.routers.biometric import biometric_api as biometric_router
 from domains.governance.api.v1.routers.board_resolution import board_resolution_api as board_resolution_router
 from domains.organization.api.v1.routers.branch import branch_api as branch_router
@@ -126,7 +126,7 @@ from user.api.v1.stats import stats_api as stats_router
 from domains.people.api.v1.routers.target_report import target_report_api as target_report_router
 from user.api.v1.wallet import wallet_api as wallet_router
 from system.automation.api.v1.routers.workflow_rule import workflow_rule_router
-from user.utils.auth import JWTAuthenticator
+from system.identity.authentication import JWTAuthenticator
 
 # HR
 

@@ -5,7 +5,7 @@ from django.db import IntegrityError
 from ninja import Router
 from ninja.pagination import LimitOffsetPagination, paginate
 
-from user.api.schemas.auth import ErrorResponse
+from system.identity.api.v1.schemas.auth import ErrorResponse
 from domains.real_estate.api.v1.schemas.cart import CartItemCreateSchema, CartItemSchema, CartSchema
 from shared.api.schema.others import MessageSchema
 from domains.real_estate.models.cart import Cart, CartItem

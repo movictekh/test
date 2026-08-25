@@ -9,7 +9,7 @@ from django.utils import timezone
 from user.models.base import BaseModel
 from domains.organization.models.role import Role
 from domains.organization.models.roles import Department, Unit
-from user.models.user import User
+from system.identity.models.user import User
 
 
 class Employee(BaseModel):

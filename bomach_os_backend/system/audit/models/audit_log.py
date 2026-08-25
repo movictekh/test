@@ -2,7 +2,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 
-from user.models.user import User
+from system.identity.models.user import User
 
 from user.models.base import BaseModel
 

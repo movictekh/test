@@ -3,7 +3,7 @@ from typing import Any, Dict, Optional
 
 from ninja import Schema
 
-from user.models.user import User
+from system.identity.models.user import User
 
 
 class UserInfo(Schema):

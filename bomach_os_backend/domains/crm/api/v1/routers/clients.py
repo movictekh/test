@@ -10,15 +10,15 @@ from django.shortcuts import get_object_or_404
 from ninja import Router
 from ninja.pagination import LimitOffsetPagination, paginate
 
-from user.api.schemas.auth import ErrorResponse
+from system.identity.api.v1.schemas.auth import ErrorResponse
 from domains.crm.api.v1.schemas.clients import ClientListSchema, ClientProfileSchema, ClientResponse, CreateClientRequest, CreateLeadRequest, LeadResponse, UpdateClientRequest, UpdateCompanyInfoSchema, UpdateLeadRequest, UpdatePersonalInfoSchema
 from user.api.schemas.others import MessageSchema
 from domains.crm.models.client import Client, Lead
 from domains.people.models.employee import Employee
 from system.audit.models import AuditLog
-from user.models.user import User
+from system.identity.models.user import User
 from system.audit.services import log_activity
-from user.utils.auth import JWTAuthenticator
+from system.identity.authentication import JWTAuthenticator
 from user.utils.generate_pass import generate_password
 from system.authorization import require_permission, scope_queryset
 from user.utils.send_email import send_client_welcome_email

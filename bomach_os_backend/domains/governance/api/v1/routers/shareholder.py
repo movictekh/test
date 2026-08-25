@@ -15,7 +15,7 @@ from user.api.schemas.others import MessageSchema
 from domains.governance.api.v1.schemas.shareholder import ShareholderCreateSchema, ShareholderSchema, ShareholderSummarySchema, ShareholderUpdateSchema
 from domains.people.models.employee import Employee
 from domains.governance.models.shareholder import Shareholder
-from user.models.user import User
+from system.identity.models.user import User
 from user.utils.generate_pass import generate_password
 from system.authorization import require_permission
 from user.utils.send_email import send_shareholder_welcome_email

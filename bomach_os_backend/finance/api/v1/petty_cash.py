@@ -31,7 +31,7 @@ from finance.service import (
 from shared.api.schema import MessageSchema
 from services.models.service import ServiceOrder
 from domains.organization.models.branch import Branch
-from user.models.user import User
+from system.identity.models.user import User
 from system.authorization import require_permission
 
 router = Router(tags=["Finance Petty Cash"])

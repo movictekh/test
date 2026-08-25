@@ -9,7 +9,7 @@ from ninja.pagination import LimitOffsetPagination, paginate
 from domains.governance.api.v1.schemas.meeting import MeetingChoicesSchema, MeetingCreateSchema, MeetingSchema, MeetingUpdateSchema
 from user.api.schemas.others import MessageSchema
 from domains.governance.models.meeting import Meeting
-from user.models.user import User
+from system.identity.models.user import User
 from system.authorization import require_permission
 
 meeting_api = Router(tags=["Meetings"])
