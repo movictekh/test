@@ -871,7 +871,7 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
                   Add Properties
                 </CompactActionButton>
                 <CompactActionButton
-                  disabled={!canPropertyCreate && !canPropertyUpdate}
+                  disabled={!canPropertyCreate && !(canPropertyUpdate && canPropertyList)}
                   onClick={() => setPropertyDataOpen(true)}
                 >
                   <IconFilePlus size={14} />
@@ -1373,6 +1373,7 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
             estateName={selectedEstate.estateName}
             canCreate={canPropertyCreate}
             canUpdate={canPropertyUpdate}
+            canList={canPropertyList}
             onClose={() => setPropertyDataOpen(false)}
             onChanged={async () => {
               await invalidateEstate(selectedEstate.id)

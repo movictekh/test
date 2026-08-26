@@ -35,7 +35,9 @@ async function runWithConcurrency<T>(
     while (cursor < values.length) {
       const index = cursor
       cursor += 1
-      await worker(values[index])
+      const value = values[index]
+      if (value === undefined) continue
+      await worker(value)
     }
   })
   await Promise.all(runners)
@@ -46,6 +48,7 @@ export function PropertyDataStudioWorkspace({
   estateName,
   canCreate,
   canUpdate,
+  canList,
   onClose,
   onChanged,
 }: {
@@ -53,10 +56,12 @@ export function PropertyDataStudioWorkspace({
   estateName: string
   canCreate: boolean
   canUpdate: boolean
+  canList: boolean
   onClose: () => void
   onChanged: () => Promise<void> | void
 }) {
-  const [mode, setMode] = useState<PropertyDataMode>('create')
+  const canEdit = canUpdate && canList
+  const [mode, setMode] = useState<PropertyDataMode>(canCreate ? 'create' : 'edit')
   const [workbook, setWorkbook] = useState<PropertyWorkbookData | null>(null)
   const [sheetName, setSheetName] = useState('')
   const [rows, setRows] = useState<PropertyDataRow[]>([])
@@ -77,10 +82,11 @@ export function PropertyDataStudioWorkspace({
       success: rows.filter((row) => row.status === 'success').length,
       failed: rows.filter((row) => row.status === 'failed').length,
       selected: rows.filter(
-        (row) => row.selected && (row.status === 'ready' || row.status === 'failed'),
+        (row) =>
+          row.selected && (row.status === 'ready' || (mode === 'edit' && row.status === 'failed')),
       ).length,
     }),
-    [rows],
+    [mode, rows],
   )
 
   const visibleRows = useMemo(() => {
@@ -92,6 +98,8 @@ export function PropertyDataStudioWorkspace({
   }, [filter, rows])
 
   const ensureExistingProperties = async () => {
+    if (!canList)
+      throw new Error('Property list access is required to edit or export Estate inventory.')
     if (existingProperties) return existingProperties
     setLoadingExisting(true)
     try {
@@ -136,6 +144,8 @@ export function PropertyDataStudioWorkspace({
 
   const changeMode = (nextMode: PropertyDataMode) => {
     if (running) return
+    if (nextMode === 'create' && !canCreate) return
+    if (nextMode === 'edit' && !canEdit) return
     setMode(nextMode)
     resetImport()
   }
@@ -149,6 +159,7 @@ export function PropertyDataStudioWorkspace({
       const preferred =
         loaded.sheets.find((sheet) => sheet.name.trim().toLowerCase() === 'properties') ??
         loaded.sheets[0]
+      if (!preferred) throw new Error('The workbook does not contain a readable worksheet.')
       setWorkbook(loaded)
       setSheetName(preferred.name)
       applySheet(loaded, preferred.name, mode, existing)
@@ -182,10 +193,15 @@ export function PropertyDataStudioWorkspace({
     await runWithConcurrency(source, PROPERTY_DATA_CONCURRENCY, async (row) => {
       updateRow(row.key, { status: 'submitting', error: '' })
       try {
-        const result =
-          mode === 'create'
-            ? await realEstateApi.createProperty(estateId, row.input!)
-            : await realEstateApi.updatePropertyFields(estateId, row.propertyId!, row.patch)
+        let result: Property
+        if (mode === 'create') {
+          if (!row.input) throw new Error(`Row ${row.rowNumber} has no valid create payload.`)
+          result = await realEstateApi.createProperty(estateId, row.input)
+        } else {
+          if (row.propertyId == null)
+            throw new Error(`Row ${row.rowNumber} has no property ID for editing.`)
+          result = await realEstateApi.updatePropertyFields(estateId, row.propertyId, row.patch)
+        }
         updateRow(row.key, {
           status: 'success',
           selected: false,
@@ -208,12 +224,14 @@ export function PropertyDataStudioWorkspace({
 
   const submitSelected = async () => {
     const selected = rows.filter(
-      (row) => row.selected && (row.status === 'ready' || row.status === 'failed'),
+      (row) =>
+        row.selected && (row.status === 'ready' || (mode === 'edit' && row.status === 'failed')),
     )
     await submitRows(selected)
   }
 
   const retryFailed = async () => {
+    if (mode !== 'edit') return
     const failed = rows.filter((row) => row.status === 'failed')
     await submitRows(failed)
   }
@@ -290,7 +308,7 @@ export function PropertyDataStudioWorkspace({
               <button
                 type="button"
                 className={mode === 'edit' ? 'is-active' : ''}
-                disabled={!canUpdate || running}
+                disabled={!canEdit || running}
                 onClick={() => changeMode('edit')}
               >
                 Edit existing properties
@@ -493,7 +511,11 @@ export function PropertyDataStudioWorkspace({
                           <input
                             type="checkbox"
                             aria-label={`Select row ${row.rowNumber}`}
-                            disabled={running || !['ready', 'failed'].includes(row.status)}
+                            disabled={
+                              running ||
+                              (row.status !== 'ready' &&
+                                !(mode === 'edit' && row.status === 'failed'))
+                            }
                             checked={row.selected}
                             onChange={(event) =>
                               updateRow(row.key, { selected: event.target.checked })
@@ -574,15 +596,17 @@ export function PropertyDataStudioWorkspace({
         <footer className="commercial-modal-footer specialized-data-studio-footer">
           {rows.some((row) => row.status === 'failed') ? (
             <>
-              <button
-                type="button"
-                className="commercial-btn"
-                disabled={running}
-                onClick={() => void retryFailed()}
-              >
-                <IconRefresh size={14} />
-                Retry failed
-              </button>
+              {mode === 'edit' ? (
+                <button
+                  type="button"
+                  className="commercial-btn"
+                  disabled={running}
+                  onClick={() => void retryFailed()}
+                >
+                  <IconRefresh size={14} />
+                  Retry failed edits
+                </button>
+              ) : null}
               <button
                 type="button"
                 className="commercial-btn"
@@ -592,6 +616,13 @@ export function PropertyDataStudioWorkspace({
                 Download failed rows
               </button>
             </>
+          ) : null}
+          {mode === 'create' && rows.some((row) => row.status === 'failed') ? (
+            <span className="specialized-data-studio-footer-note">
+              Failed creates are not auto-retried because a lost network response can make a
+              completed create look failed. Confirm Estate inventory first, then re-import only the
+              rows that were not created.
+            </span>
           ) : null}
           {rows.some((row) => row.status === 'success' || row.status === 'failed') ? (
             <button

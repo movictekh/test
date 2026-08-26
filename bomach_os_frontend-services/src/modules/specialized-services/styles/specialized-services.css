@@ -1582,3 +1582,10 @@
     flex: 1 1 100%;
   }
 }
+
+.specialized-data-studio-footer-note {
+  flex: 1 1 320px;
+  font-size: 12px;
+  line-height: 1.45;
+  opacity: 0.78;
+}

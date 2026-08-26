@@ -237,28 +237,28 @@ function parseNumber(
   label: string,
   errors: string[],
   options: { integer?: boolean; min?: number; max?: number } = {},
-) {
-  if (isBlank(value)) return undefined
+): number | null {
+  if (isBlank(value)) return null
   if (isClear(value)) {
     errors.push(`${label} cannot use ${PROPERTY_CLEAR_TOKEN}.`)
-    return undefined
+    return null
   }
   const parsed = Number(normalizeNumericText(value))
   if (!Number.isFinite(parsed)) {
     errors.push(`${label} must be a valid number.`)
-    return undefined
+    return null
   }
   if (options.integer && !Number.isInteger(parsed)) {
     errors.push(`${label} must be a whole number.`)
-    return undefined
+    return null
   }
   if (options.min != null && parsed < options.min) {
     errors.push(`${label} must be at least ${options.min}.`)
-    return undefined
+    return null
   }
   if (options.max != null && parsed > options.max) {
     errors.push(`${label} must be at most ${options.max}.`)
-    return undefined
+    return null
   }
   return parsed
 }
@@ -754,6 +754,10 @@ function isEmptyMatrixRow(row: unknown[]) {
   return row.every((cell) => isBlank(cell))
 }
 
+function createCellRecord(): Record<string, unknown> {
+  return Object.create(null) as Record<string, unknown>
+}
+
 function canonicalizeSheet(matrix: unknown[][]) {
   const headerIndex = matrix.findIndex((row) => !isEmptyMatrixRow(row))
   if (headerIndex < 0) return { headerIndex: -1, headers: [] as string[], rows: [] }
@@ -765,7 +769,7 @@ function canonicalizeSheet(matrix: unknown[][]) {
     .map((values, index) => ({ values, rowNumber: headerIndex + index + 2 }))
     .filter(({ values }) => !isEmptyMatrixRow(values))
     .map(({ values, rowNumber }) => {
-      const record: Record<string, unknown> = {}
+      const record = createCellRecord()
       headers.forEach((header, index) => {
         if (header) record[header] = values[index] ?? ''
       })
@@ -862,15 +866,20 @@ export async function readPropertyWorkbook(file: File): Promise<PropertyWorkbook
     type: 'array',
     sheetRows: PROPERTY_DATA_MAX_ROWS + 2,
   })
-  const sheets = workbook.SheetNames.map((name) => ({
-    name,
-    matrix: XLSX.utils.sheet_to_json<unknown[]>(workbook.Sheets[name], {
-      header: 1,
-      defval: '',
-      raw: true,
-      blankrows: false,
-    }),
-  }))
+  const sheets = workbook.SheetNames.map((name) => {
+    const worksheet = workbook.Sheets[name]
+    if (!worksheet) throw new Error(`Worksheet "${name}" could not be read.`)
+
+    return {
+      name,
+      matrix: XLSX.utils.sheet_to_json<unknown[]>(worksheet, {
+        header: 1,
+        defval: '',
+        raw: true,
+        blankrows: false,
+      }),
+    }
+  })
 
   if (!sheets.length) throw new Error('The workbook does not contain any worksheets.')
   return { filename: file.name, sheets }

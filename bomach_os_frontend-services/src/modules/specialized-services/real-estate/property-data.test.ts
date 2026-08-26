@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest'
 
 import type { Property } from './real-estate.types'
-import { parsePropertySheetMatrix, PROPERTY_CLEAR_TOKEN } from './property-data'
+import {
+  parsePropertySheetMatrix,
+  PROPERTY_CLEAR_TOKEN,
+  PROPERTY_DATA_MAX_ROWS,
+  readPropertyWorkbook,
+} from './property-data'
 
 const existingPlot = (): Property => ({
   id: 41,
@@ -38,6 +43,21 @@ const existingPlot = (): Property => ({
   updatedAt: '2026-01-01T00:00:00Z',
 })
 
+type ParsedSheetResult = ReturnType<typeof parsePropertySheetMatrix>
+type LoadedWorkbook = Awaited<ReturnType<typeof readPropertyWorkbook>>
+
+function rowAt(result: ParsedSheetResult, index = 0) {
+  const row = result.rows[index]
+  if (!row) throw new Error(`Expected parsed row at index ${index}.`)
+  return row
+}
+
+function sheetAt(workbook: LoadedWorkbook, index = 0) {
+  const sheet = workbook.sheets[index]
+  if (!sheet) throw new Error(`Expected worksheet at index ${index}.`)
+  return sheet
+}
+
 describe('property data studio parser', () => {
   it('accepts valid create rows and lets Estate pricing fill a blank price', () => {
     const result = parsePropertySheetMatrix(
@@ -50,9 +70,9 @@ describe('property data studio parser', () => {
 
     expect(result.fileErrors).toEqual([])
     expect(result.rows).toHaveLength(1)
-    expect(result.rows[0].status).toBe('ready')
-    expect(result.rows[0].input?.price).toBeNull()
-    expect(result.rows[0].warnings[0]).toContain('Estate default price')
+    expect(rowAt(result).status).toBe('ready')
+    expect(rowAt(result).input?.price).toBeNull()
+    expect(rowAt(result).warnings[0]).toContain('Estate default price')
   })
 
   it('rejects incomplete boundary pairs', () => {
@@ -64,8 +84,8 @@ describe('property data studio parser', () => {
       'create',
     )
 
-    expect(result.rows[0].status).toBe('invalid')
-    expect(result.rows[0].errors.join(' ')).toContain('requires both latitude and longitude')
+    expect(rowAt(result).status).toBe('invalid')
+    expect(rowAt(result).errors.join(' ')).toContain('requires both latitude and longitude')
   })
 
   it('rejects Reserved and Sold state in create import', () => {
@@ -77,8 +97,8 @@ describe('property data studio parser', () => {
       'create',
     )
 
-    expect(result.rows[0].status).toBe('invalid')
-    expect(result.rows[0].errors.join(' ')).toContain('purchase/payment workflow')
+    expect(rowAt(result).status).toBe('invalid')
+    expect(rowAt(result).errors.join(' ')).toContain('purchase/payment workflow')
   })
 
   it('builds an edit diff and leaves blank cells unchanged', () => {
@@ -91,10 +111,10 @@ describe('property data studio parser', () => {
       [existingPlot()],
     )
 
-    expect(result.rows[0].status).toBe('ready')
-    expect(result.rows[0].patch).toEqual({ price: 6500000 })
-    expect(result.rows[0].diffs).toHaveLength(1)
-    expect(result.rows[0].diffs[0].label).toBe('Price')
+    expect(rowAt(result).status).toBe('ready')
+    expect(rowAt(result).patch).toEqual({ price: 6500000 })
+    expect(rowAt(result).diffs).toHaveLength(1)
+    expect(rowAt(result).diffs[0]!.label).toBe('Price')
   })
 
   it('supports explicit description clearing without treating blanks as clears', () => {
@@ -107,8 +127,8 @@ describe('property data studio parser', () => {
       [existingPlot()],
     )
 
-    expect(result.rows[0].status).toBe('ready')
-    expect(result.rows[0].patch.description).toBe('')
+    expect(rowAt(result).status).toBe('ready')
+    expect(rowAt(result).patch.description).toBe('')
   })
 
   it('marks unchanged exported edit rows as skipped', () => {
@@ -121,8 +141,8 @@ describe('property data studio parser', () => {
       [existingPlot()],
     )
 
-    expect(result.rows[0].status).toBe('skipped')
-    expect(result.rows[0].selected).toBe(false)
+    expect(rowAt(result).status).toBe('skipped')
+    expect(rowAt(result).selected).toBe(false)
   })
 
   it('rejects duplicate property ids in one edit file', () => {
@@ -137,7 +157,7 @@ describe('property data studio parser', () => {
     )
 
     expect(result.rows.every((row) => row.status === 'invalid')).toBe(true)
-    expect(result.rows[1].errors.join(' ')).toContain('appears more than once')
+    expect(rowAt(result, 1).errors.join(' ')).toContain('appears more than once')
   })
 
   it('rejects bulk commercial-state transitions on edit', () => {
@@ -150,8 +170,8 @@ describe('property data studio parser', () => {
       [existingPlot()],
     )
 
-    expect(result.rows[0].status).toBe('invalid')
-    expect(result.rows[0].errors.join(' ')).toContain('purchase/payment workflow')
+    expect(rowAt(result).status).toBe('invalid')
+    expect(rowAt(result).errors.join(' ')).toContain('purchase/payment workflow')
   })
 
   it('rejects a property id that is not in the selected Estate', () => {
@@ -164,8 +184,8 @@ describe('property data studio parser', () => {
       [existingPlot()],
     )
 
-    expect(result.rows[0].status).toBe('invalid')
-    expect(result.rows[0].errors.join(' ')).toContain('selected Estate')
+    expect(rowAt(result).status).toBe('invalid')
+    expect(rowAt(result).errors.join(' ')).toContain('selected Estate')
   })
 
   it('reports duplicate normalized headers as a file error', () => {
@@ -181,8 +201,7 @@ describe('property data studio parser', () => {
     expect(result.fileErrors.join(' ')).toContain('Duplicate column')
   })
 
-  it('does not permit prototype-polluting spreadsheet headers to alter Object.prototype', () => {
-    const before = ({} as { polluted?: unknown }).polluted
+  it('uses prototype-less records for untrusted spreadsheet headers', () => {
     const result = parsePropertySheetMatrix(
       [
         ['__proto__', 'property_type', 'property_name', 'plot_size'],
@@ -191,8 +210,72 @@ describe('property data studio parser', () => {
       'create',
     )
 
-    expect(result.rows[0].status).toBe('ready')
-    expect(({} as { polluted?: unknown }).polluted).toBe(before)
-    expect(result.warnings.join(' ')).toContain('__proto__')
+    expect(rowAt(result).status).toBe('ready')
+    expect(Object.getPrototypeOf(rowAt(result).raw)).toBeNull()
+    expect(result.warnings.join(' ')).toContain('proto')
+  })
+
+  it('rejects imports larger than the per-session row limit', () => {
+    const matrix = [
+      ['property_type', 'property_name', 'plot_size'],
+      ...Array.from({ length: PROPERTY_DATA_MAX_ROWS + 1 }, (_, index) => [
+        'plot',
+        `Plot ${index + 1}`,
+        500,
+      ]),
+    ]
+
+    const result = parsePropertySheetMatrix(matrix, 'create')
+    expect(result.rows).toEqual([])
+    expect(result.fileErrors.join(' ')).toContain('maximum')
+  })
+
+  it('parses a real CSV file through SheetJS', async () => {
+    const csv = [
+      'property_type,property_name,price,plot_size,plot_size_unit',
+      'plot,Plot CSV-01,,500,sqm',
+    ].join('\n')
+    const file = new File([csv], 'properties.csv', { type: 'text/csv' })
+
+    const workbook = await readPropertyWorkbook(file)
+    const parsed = parsePropertySheetMatrix(sheetAt(workbook).matrix, 'create')
+
+    expect(workbook.sheets).toHaveLength(1)
+    expect(parsed.rows).toHaveLength(1)
+    expect(rowAt(parsed).status).toBe('ready')
+    expect(rowAt(parsed).propertyName).toBe('Plot CSV-01')
+  })
+
+  it('parses a real XLSX file through SheetJS', async () => {
+    const XLSX = await import('xlsx')
+    const workbook = XLSX.utils.book_new()
+    const sheet = XLSX.utils.aoa_to_sheet([
+      ['property_type', 'property_name', 'price', 'plot_size', 'plot_size_unit'],
+      ['plot', 'Plot XLSX-01', '', 500, 'sqm'],
+    ])
+    XLSX.utils.book_append_sheet(workbook, sheet, 'Properties')
+    const rawBytes: unknown = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
+    let bytes: ArrayBuffer
+    if (rawBytes instanceof ArrayBuffer) {
+      bytes = rawBytes
+    } else if (ArrayBuffer.isView(rawBytes)) {
+      const copy = new Uint8Array(rawBytes.byteLength)
+      copy.set(new Uint8Array(rawBytes.buffer, rawBytes.byteOffset, rawBytes.byteLength))
+      bytes = copy.buffer
+    } else {
+      throw new Error('SheetJS did not return binary XLSX data.')
+    }
+
+    const file = new File([bytes], 'properties.xlsx', {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    })
+
+    const parsedWorkbook = await readPropertyWorkbook(file)
+    const parsed = parsePropertySheetMatrix(sheetAt(parsedWorkbook).matrix, 'create')
+
+    expect(sheetAt(parsedWorkbook).name).toBe('Properties')
+    expect(parsed.rows).toHaveLength(1)
+    expect(rowAt(parsed).status).toBe('ready')
+    expect(rowAt(parsed).propertyName).toBe('Plot XLSX-01')
   })
 })
