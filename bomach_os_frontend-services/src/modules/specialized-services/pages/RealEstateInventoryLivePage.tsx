@@ -41,6 +41,7 @@ import { realEstateKeys } from '../real-estate/real-estate.keys'
 import { realEstateQueries } from '../real-estate/real-estate.queries'
 import {
   propertyStatuses,
+  type Boundary,
   type BrokerageVerificationStatus,
   type CreateBrokerageInput,
   type CreateEstateInput,
@@ -54,6 +55,12 @@ import { validateQuickPlotUpdate } from '../real-estate/real-estate.validation'
 const BatchCreatePropertiesWorkspace = lazy(() =>
   import('../workspaces/BatchCreatePropertiesWorkspace').then((module) => ({
     default: module.BatchCreatePropertiesWorkspace,
+  })),
+)
+
+const PropertyDataStudioWorkspace = lazy(() =>
+  import('../workspaces/PropertyDataStudioWorkspace').then((module) => ({
+    default: module.PropertyDataStudioWorkspace,
   })),
 )
 
@@ -142,7 +149,7 @@ function estateLocationEmbedUrl(estate: {
   cityTown: string
   state: string
   estateName: string
-  boundary?: import('../real-estate/real-estate.types').Boundary
+  boundary?: Boundary
 }) {
   const center = boundaryCenter(estate.boundary)
   if (center) {
@@ -219,11 +226,7 @@ function EstateDirectoryList({
   )
 }
 
-function StandalonePropertyDirectoryList({
-  properties,
-}: {
-  properties: Property[]
-}) {
+function StandalonePropertyDirectoryList({ properties }: { properties: Property[] }) {
   return (
     <div className="specialized-table-wrap specialized-table-wrap--directory">
       <table className="specialized-table specialized-table--directory">
@@ -399,6 +402,7 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
   const [createEstateError, setCreateEstateError] = useState<UserFacingError | null>(null)
   const [estateEditOpen, setEstateEditOpen] = useState(false)
   const [propertiesOpen, setPropertiesOpen] = useState(false)
+  const [propertyDataOpen, setPropertyDataOpen] = useState(false)
   const [brokerageOpen, setBrokerageOpen] = useState(false)
   const [propertyEditOpen, setPropertyEditOpen] = useState(false)
   const [deleteId, setDeleteId] = useState<number | null>(null)
@@ -473,10 +477,7 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
   const selectedEstate =
     detailQuery.data ?? estates.find((estate) => estate.id === estateId) ?? null
   const estateLocationUrl = useMemo(
-    () =>
-      selectedEstate?.preciseAddress
-        ? estateLocationEmbedUrl(selectedEstate)
-        : null,
+    () => (selectedEstate?.preciseAddress ? estateLocationEmbedUrl(selectedEstate) : null),
     [selectedEstate],
   )
   const properties = propertiesQuery.data?.items ?? []
@@ -485,7 +486,9 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
   const estateBrokerageListings = useMemo(
     () =>
       selectedEstate
-        ? (brokerageQuery.data?.items ?? []).filter((listing) => listing.estateId === selectedEstate.id)
+        ? (brokerageQuery.data?.items ?? []).filter(
+            (listing) => listing.estateId === selectedEstate.id,
+          )
         : [],
     [brokerageQuery.data?.items, selectedEstate],
   )
@@ -571,12 +574,14 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
           page: 1,
           limit: 100,
         }),
-        (current:
-          | {
-              count: number
-              items: Array<(typeof estate) | Record<string, unknown>>
-            }
-          | undefined) => {
+        (
+          current:
+            | {
+                count: number
+                items: Array<typeof estate | Record<string, unknown>>
+              }
+            | undefined,
+        ) => {
           if (!current) return current
           return {
             ...current,
@@ -858,9 +863,19 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
           primaryAction={
             selectedEstate ? (
               <>
-                <CompactActionButton disabled={!canPropertyCreate} onClick={() => setPropertiesOpen(true)}>
+                <CompactActionButton
+                  disabled={!canPropertyCreate}
+                  onClick={() => setPropertiesOpen(true)}
+                >
                   <IconPlus size={14} />
                   Add Properties
+                </CompactActionButton>
+                <CompactActionButton
+                  disabled={!canPropertyCreate && !canPropertyUpdate}
+                  onClick={() => setPropertyDataOpen(true)}
+                >
+                  <IconFilePlus size={14} />
+                  Import / Export
                 </CompactActionButton>
                 <CompactActionButton
                   disabled={!canBrokerageCreate}
@@ -1092,7 +1107,9 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
                             url: selectedEstate.estateMapUrl,
                             kind: estateMediaKind(selectedEstate.estateMapUrl),
                           })
-                          setEstateMediaLoading(estateMediaKind(selectedEstate.estateMapUrl) === 'embed')
+                          setEstateMediaLoading(
+                            estateMediaKind(selectedEstate.estateMapUrl) === 'embed',
+                          )
                         }}
                       >
                         <IconExternalLink size={12} />
@@ -1118,7 +1135,9 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
                             url: selectedEstate.virtualTourUrl,
                             kind: estateMediaKind(selectedEstate.virtualTourUrl),
                           })
-                          setEstateMediaLoading(estateMediaKind(selectedEstate.virtualTourUrl) === 'embed')
+                          setEstateMediaLoading(
+                            estateMediaKind(selectedEstate.virtualTourUrl) === 'embed',
+                          )
                         }}
                       >
                         <IconExternalLink size={12} />
@@ -1226,17 +1245,17 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
             </section>
 
             {canBrokerageList && estateBrokerageListings.length ? (
-                <section className="specialized-card">
-                  <header className="specialized-card-header">
-                    <div>
-                      <div className="specialized-card-title">Brokerage Listings</div>
-                      <div className="specialized-card-subtitle">
-                        Listings linked to {selectedEstate.estateName}
-                      </div>
+              <section className="specialized-card">
+                <header className="specialized-card-header">
+                  <div>
+                    <div className="specialized-card-title">Brokerage Listings</div>
+                    <div className="specialized-card-subtitle">
+                      Listings linked to {selectedEstate.estateName}
                     </div>
-                  </header>
-                  {brokerageList}
-                </section>
+                  </div>
+                </header>
+                {brokerageList}
+              </section>
             ) : null}
           </>
         ) : (
@@ -1245,7 +1264,8 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
               <div>
                 <div className="specialized-card-title">Inventory Directory</div>
                 <div className="specialized-card-subtitle">
-                  Switch between estate records and standalone properties, then open the record you want to manage.
+                  Switch between estate records and standalone properties, then open the record you
+                  want to manage.
                 </div>
               </div>
             </header>
@@ -1310,9 +1330,7 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
             saving={updateEstateMutation.isPending}
             initialValue={mapEstateToInput(selectedEstate)}
             onClose={() => setEstateEditOpen(false)}
-            onSubmit={(input) =>
-              updateEstateMutation.mutate({ id: selectedEstate.id, input })
-            }
+            onSubmit={(input) => updateEstateMutation.mutate({ id: selectedEstate.id, input })}
           />
         </Suspense>
       ) : null}
@@ -1347,6 +1365,20 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
             ])
           }}
         />
+      ) : null}
+      {propertyDataOpen && selectedEstate ? (
+        <Suspense fallback={<RealEstateWorkspaceFallback />}>
+          <PropertyDataStudioWorkspace
+            estateId={selectedEstate.id}
+            estateName={selectedEstate.estateName}
+            canCreate={canPropertyCreate}
+            canUpdate={canPropertyUpdate}
+            onClose={() => setPropertyDataOpen(false)}
+            onChanged={async () => {
+              await invalidateEstate(selectedEstate.id)
+            }}
+          />
+        </Suspense>
       ) : null}
       {brokerageOpen ? (
         <Suspense fallback={<RealEstateWorkspaceFallback />}>

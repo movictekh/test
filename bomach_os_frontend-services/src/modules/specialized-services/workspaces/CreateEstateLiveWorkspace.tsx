@@ -364,22 +364,26 @@ export function CreateEstateLiveWorkspace({
       }
     }
 
-    setFieldErrors(nextFieldErrors)
-    setError(nextFormError)
+    const syncHandle = window.setTimeout(() => {
+      setFieldErrors(nextFieldErrors)
+      setError(nextFormError)
 
-    const firstErrorKey = firstFocusableField(nextFieldErrors, nextFormError)
-    if (!firstErrorKey) return
-    const element = fieldRefs.current[firstErrorKey]
-    if (!element) {
-      if (modalBodyRef.current) {
-        modalBodyRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+      const firstErrorKey = firstFocusableField(nextFieldErrors, nextFormError)
+      if (!firstErrorKey) return
+      const element = fieldRefs.current[firstErrorKey]
+      if (!element) {
+        if (modalBodyRef.current) {
+          modalBodyRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+        }
+        return
       }
-      return
-    }
-    element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' })
-    window.setTimeout(() => {
-      if ('focus' in element && typeof element.focus === 'function') element.focus()
-    }, 30)
+      element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' })
+      window.setTimeout(() => {
+        if ('focus' in element && typeof element.focus === 'function') element.focus()
+      }, 30)
+    }, 0)
+
+    return () => window.clearTimeout(syncHandle)
   }, [submitError])
 
   return (

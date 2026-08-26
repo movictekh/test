@@ -46,6 +46,12 @@ export function BoundaryFields({
     onClearError?.('boundary')
   }
 
+  const fieldRef = (fieldKey: string) => (node: HTMLElement | null) => {
+    if (fieldRefs) {
+      fieldRefs.current[fieldKey] = node
+    }
+  }
+
   return (
     <div className="commercial-form-span">
       <div className="commercial-form-section-heading">
@@ -67,9 +73,7 @@ export function BoundaryFields({
                   inputMode="decimal"
                   aria-label={`${boundaryCornerLabels[corner]} latitude`}
                   placeholder="Latitude"
-                  ref={(node) => {
-                    if (fieldRefs) fieldRefs.current[`boundary.${corner}.lat`] = node
-                  }}
+                  ref={fieldRef(`boundary.${corner}.lat`)}
                   value={shown(point?.lat)}
                   onChange={(event) => update(corner, 'lat', event.target.value)}
                 />
@@ -79,9 +83,7 @@ export function BoundaryFields({
                   inputMode="decimal"
                   aria-label={`${boundaryCornerLabels[corner]} longitude`}
                   placeholder="Longitude"
-                  ref={(node) => {
-                    if (fieldRefs) fieldRefs.current[`boundary.${corner}.lng`] = node
-                  }}
+                  ref={fieldRef(`boundary.${corner}.lng`)}
                   value={shown(point?.lng)}
                   onChange={(event) => update(corner, 'lng', event.target.value)}
                 />

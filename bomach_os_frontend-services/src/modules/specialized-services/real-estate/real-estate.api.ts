@@ -133,6 +133,28 @@ const propertyPayload = (i: CreatePropertyInput) => ({
   units_offices: i.unitsOffices ?? null,
   images: i.images ?? [],
 })
+const propertyPatchPayload = (i: Partial<CreatePropertyInput>) => ({
+  ...('isOurProperty' in i ? { is_our_property: i.isOurProperty } : {}),
+  ...('propertyName' in i ? { property_name: i.propertyName } : {}),
+  ...('price' in i ? { price: i.price } : {}),
+  ...('boundary' in i ? { boundary: compactBoundary(i.boundary) } : {}),
+  ...('description' in i ? { description: i.description } : {}),
+  ...('status' in i ? { status: i.status } : {}),
+  ...('plotNumber' in i ? { plot_number: i.plotNumber } : {}),
+  ...('plotSize' in i ? { plot_size: i.plotSize } : {}),
+  ...('plotSizeUnit' in i ? { plot_size_unit: i.plotSizeUnit } : {}),
+  ...('buildingTypeResidential' in i
+    ? { building_type_residential: i.buildingTypeResidential }
+    : {}),
+  ...('bedrooms' in i ? { bedrooms: i.bedrooms } : {}),
+  ...('bathrooms' in i ? { bathrooms: i.bathrooms } : {}),
+  ...('floorsResidential' in i ? { floors_residential: i.floorsResidential } : {}),
+  ...('totalAreaResidential' in i ? { total_area_residential: i.totalAreaResidential } : {}),
+  ...('buildingTypeCommercial' in i ? { building_type_commercial: i.buildingTypeCommercial } : {}),
+  ...('totalAreaCommercial' in i ? { total_area_commercial: i.totalAreaCommercial } : {}),
+  ...('numberOfFloors' in i ? { number_of_floors: i.numberOfFloors } : {}),
+  ...('unitsOffices' in i ? { units_offices: i.unitsOffices } : {}),
+})
 const brokeragePayload = (i: CreateBrokerageInput) => ({
   title: i.title,
   description: i.description ?? '',
@@ -181,6 +203,26 @@ export const realEstateApi = {
     mapPropertyList(
       await apiClient.get<unknown>(`/estates/${estateId}/properties?${propertyQuery(f)}`),
     ),
+  listAllProperties: async (estateId: number) => {
+    const limit = 250
+    const properties = []
+    let page = 1
+    let count = Number.POSITIVE_INFINITY
+
+    while (properties.length < count) {
+      const result = mapPropertyList(
+        await apiClient.get<unknown>(
+          `/estates/${estateId}/properties?${propertyQuery({ page, limit })}`,
+        ),
+      )
+      count = result.count
+      properties.push(...result.items)
+      if (!result.items.length) break
+      page += 1
+    }
+
+    return properties
+  },
   listStandaloneProperties: async (f: PropertyFilters = {}) =>
     mapPropertyList(await apiClient.get<unknown>(`/estates/properties/all?${propertyQuery(f)}`)),
   propertyDetail: async (estateId: number, id: number) =>
@@ -194,6 +236,13 @@ export const realEstateApi = {
   updateProperty: async (estateId: number, id: number, i: CreatePropertyInput) =>
     mapProperty(
       await apiClient.put<unknown>(`/estates/${estateId}/properties/${id}`, propertyPayload(i)),
+    ),
+  updatePropertyFields: async (estateId: number, id: number, i: Partial<CreatePropertyInput>) =>
+    mapProperty(
+      await apiClient.put<unknown>(
+        `/estates/${estateId}/properties/${id}`,
+        propertyPatchPayload(i),
+      ),
     ),
   deleteProperty: async (estateId: number, id: number) =>
     apiClient.delete<unknown>(`/estates/${estateId}/properties/${id}`),
