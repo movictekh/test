@@ -8,6 +8,7 @@ import {
   type Estate,
 } from '../real-estate/real-estate.types'
 import { validateBrokerage } from '../real-estate/real-estate.validation'
+import { BoundaryFields } from './BoundaryFields'
 
 function parseNonNegativeNumber(value: string, fallback = 0) {
   if (value.trim() === '') return fallback
@@ -43,6 +44,7 @@ export function CreateBrokerageLiveWorkspace({
     title: '',
     description: '',
     location: '',
+    boundary: {},
     price: 0,
     propertyType: 'land',
     ownerName: '',
@@ -145,6 +147,13 @@ export function CreateBrokerageLiveWorkspace({
                   onChange={(event) => setField('location', event.target.value)}
                 />
               </label>
+
+              <BoundaryFields
+                value={value.boundary}
+                onChange={(boundary) => setField('boundary', boundary)}
+                title="Brokerage property boundary"
+                description="Optional. Add any available NW, NE, SE or SW corners for this listing."
+              />
 
               <label className="commercial-field">
                 <span>

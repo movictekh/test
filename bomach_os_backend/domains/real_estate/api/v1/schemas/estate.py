@@ -6,10 +6,19 @@ from ninja import Schema
 
 
 class CoordinateSchema(Schema):
-    """A single lat/lng coordinate point"""
+    """One boundary-corner coordinate pair."""
 
-    lat: Decimal
-    lng: Decimal
+    lat: Optional[Decimal] = None
+    lng: Optional[Decimal] = None
+
+
+class BoundarySchema(Schema):
+    """Optional NW/NE/SE/SW boundary; every corner is independently optional."""
+
+    nw: Optional[CoordinateSchema] = None
+    ne: Optional[CoordinateSchema] = None
+    se: Optional[CoordinateSchema] = None
+    sw: Optional[CoordinateSchema] = None
 
 
 class EstateCreateSchema(Schema):
@@ -33,11 +42,9 @@ class EstateCreateSchema(Schema):
     state: str
     city_town: str
     precise_address: str
-    latitude: Optional[Decimal] = None
-    longitude: Optional[Decimal] = None
     estate_map_url: Optional[str] = None
     virtual_tour_url: Optional[str] = None
-    boundary: Optional[List[CoordinateSchema]] = None
+    boundary: Optional[BoundarySchema] = None
 
     # Estate Documents (URLs from upload endpoint)
     documents: Optional[List[str]] = None
@@ -95,11 +102,9 @@ class EstateUpdateSchema(Schema):
     state: Optional[str] = None
     city_town: Optional[str] = None
     precise_address: Optional[str] = None
-    latitude: Optional[Decimal] = None
-    longitude: Optional[Decimal] = None
     estate_map_url: Optional[str] = None
     virtual_tour_url: Optional[str] = None
-    boundary: Optional[List[CoordinateSchema]] = None
+    boundary: Optional[BoundarySchema] = None
 
     # Estate Documents
     documents: Optional[List[str]] = None
@@ -176,11 +181,9 @@ class EstateSchema(Schema):
     state: str
     city_town: str
     precise_address: str
-    latitude: Optional[Decimal] = None
-    longitude: Optional[Decimal] = None
     estate_map_url: str
     virtual_tour_url: str
-    boundary: list = []
+    boundary: dict = {}
 
     # Estate Documents
     documents: List[EstateDocumentSchema] = []
@@ -232,6 +235,12 @@ class EstateSchema(Schema):
     @staticmethod
     def resolve_estate_status_display(obj):
         return obj.get_estate_status_display()
+
+    @staticmethod
+    def resolve_boundary(obj):
+        from domains.real_estate.location import normalize_boundary
+
+        return normalize_boundary(obj.boundary)
 
     @staticmethod
     def resolve_documents(obj):
@@ -316,7 +325,7 @@ class PropertyCreateSchema(Schema):
     property_type: str  # 'plot', 'residential', 'commercial'
     property_name: str
     price: Optional[Decimal] = None
-    boundary: Optional[List[CoordinateSchema]] = None
+    boundary: Optional[BoundarySchema] = None
     description: Optional[str] = None
     status: str = "available"
 
@@ -349,7 +358,7 @@ class PropertyUpdateSchema(Schema):
     property_type: Optional[str] = None
     property_name: Optional[str] = None
     price: Optional[Decimal] = None
-    boundary: Optional[List[CoordinateSchema]] = None
+    boundary: Optional[BoundarySchema] = None
     description: Optional[str] = None
     status: Optional[str] = None
     is_active: Optional[bool] = None
@@ -389,7 +398,7 @@ class PropertySchema(Schema):
     property_type_display: str
     property_name: str
     price: Optional[Decimal] = None
-    boundary: list = []
+    boundary: dict = {}
     description: str
     status: str
     status_display: str
@@ -419,6 +428,15 @@ class PropertySchema(Schema):
     is_active: bool
     created_at: datetime
     updated_at: datetime
+
+    @staticmethod
+    def resolve_boundary(obj):
+        from domains.real_estate.location import normalize_boundary
+
+        own = normalize_boundary(obj.boundary)
+        if own or not obj.estate:
+            return own
+        return normalize_boundary(obj.estate.boundary)
 
     @staticmethod
     def resolve_estate_name(obj):
@@ -472,7 +490,7 @@ class StandalonePropertyCreateSchema(Schema):
     property_type: str
     property_name: str
     price: Decimal
-    boundary: Optional[List[CoordinateSchema]] = None
+    boundary: Optional[BoundarySchema] = None
     description: Optional[str] = None
     status: str = "available"
 
@@ -565,6 +583,7 @@ class BrokerageListingCreateSchema(Schema):
     title: str
     description: Optional[str] = ""
     location: str
+    boundary: Optional[BoundarySchema] = None
     price: Decimal
     property_type: str
     owner_name: str
@@ -586,6 +605,7 @@ class BrokerageListingUpdateSchema(Schema):
     title: Optional[str] = None
     description: Optional[str] = None
     location: Optional[str] = None
+    boundary: Optional[BoundarySchema] = None
     price: Optional[Decimal] = None
     property_type: Optional[str] = None
     owner_name: Optional[str] = None
@@ -614,6 +634,7 @@ class BrokerageListingSchema(Schema):
     title: str
     description: str
     location: str
+    boundary: dict = {}
     price: Decimal
     property_type: str
     property_type_display: str
@@ -634,6 +655,12 @@ class BrokerageListingSchema(Schema):
     images: List[BrokerageListingImageSchema] = []
     created_at: datetime
     updated_at: datetime
+
+    @staticmethod
+    def resolve_boundary(obj):
+        from domains.real_estate.location import normalize_boundary
+
+        return normalize_boundary(obj.boundary)
 
     @staticmethod
     def resolve_property_type_display(obj):

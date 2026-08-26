@@ -7,11 +7,13 @@ import { realEstateApi } from '../real-estate/real-estate.api'
 import { buildPropertyBatch } from '../real-estate/property-batch'
 import {
   propertyStatuses,
+  type Boundary,
   type CreatePropertyInput,
   type PropertyBatchItem,
   type PropertyType,
 } from '../real-estate/real-estate.types'
 import { validateProperty } from '../real-estate/real-estate.validation'
+import { BoundaryFields } from './BoundaryFields'
 
 const propertyTypeOptions = [
   {
@@ -75,6 +77,7 @@ export function BatchCreatePropertiesWorkspace({
   const [useEstateDefaultPrice, setUseEstateDefaultPrice] = useState(false)
   const [status, setStatus] = useState<CreatePropertyInput['status']>('available')
   const [description, setDescription] = useState('')
+  const [boundary, setBoundary] = useState<Boundary>({})
   const [plotSize, setPlotSize] = useState(500)
   const [residentialType, setResidentialType] = useState('duplex')
   const [bedrooms, setBedrooms] = useState(4)
@@ -107,6 +110,7 @@ export function BatchCreatePropertiesWorkspace({
     propertyType,
     propertyName: namePrefix || 'Property',
     price: useEstateDefaultPrice && selectedEstateId != null ? null : price,
+    boundary: count === 1 ? boundary : {},
     description,
     status,
     ...(propertyType === 'plot' ? { plotSize, plotSizeUnit: 'sqm' } : {}),
@@ -306,6 +310,24 @@ export function BatchCreatePropertiesWorkspace({
                 </div>
 
                 <div className="commercial-form-grid">
+                  {count === 1 ? (
+                    <BoundaryFields
+                      value={boundary}
+                      onChange={setBoundary}
+                      title="Property boundary"
+                      description={
+                        selectedEstateId != null
+                          ? 'Optional. Leave it blank to default to the selected estate boundary.'
+                          : 'Optional. Add any available NW, NE, SE or SW corners.'
+                      }
+                    />
+                  ) : (
+                    <div className="commercial-form-span commercial-notice">
+                      Boundary entry is disabled for multi-property batches so the same parcel is
+                      not copied to different properties. Linked batch properties will still fall
+                      back to the selected estate boundary.
+                    </div>
+                  )}
                   <label className="commercial-field">
                     <span>
                       How many properties? <em>*</em>

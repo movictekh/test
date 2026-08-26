@@ -9,6 +9,7 @@ import {
   type PropertyType,
 } from '../real-estate/real-estate.types'
 import { validateProperty } from '../real-estate/real-estate.validation'
+import { BoundaryFields } from './BoundaryFields'
 
 const residentialTypeOptions = [
   { value: 'house', label: 'House' },
@@ -54,6 +55,7 @@ function mapPropertyToInput(property: Property): CreatePropertyInput {
     propertyType: property.propertyType,
     propertyName: property.propertyName,
     price: property.price,
+    boundary: property.boundary,
     description: property.description,
     status: property.status,
     plotNumber: property.plotNumber,
@@ -238,6 +240,15 @@ export function EditPropertyLiveWorkspace({
                 />
               </label>
             </div>
+          </section>
+
+          <section className="commercial-form-section">
+            <BoundaryFields
+              value={value.boundary}
+              onChange={(boundary) => setField('boundary', boundary)}
+              title="Property boundary"
+              description="Optional. Leave it blank to use the linked estate boundary when the property is attached to an estate."
+            />
           </section>
 
           {propertyType === 'plot' ? (

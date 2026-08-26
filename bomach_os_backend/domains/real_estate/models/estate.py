@@ -5,6 +5,7 @@ from django.core.validators import FileExtensionValidator, MinValueValidator
 from django.db import models
 
 from user.models.base import BaseModel
+from domains.real_estate.location import validate_boundary
 
 
 class Estate(BaseModel):
@@ -86,22 +87,6 @@ class Estate(BaseModel):
     precise_address = models.TextField(
         verbose_name="Precise Address",
     )
-    latitude = models.DecimalField(
-        max_digits=10,
-        decimal_places=7,
-        null=True,
-        blank=True,
-        verbose_name="Latitude",
-        help_text="Optional map pin latitude for the estate location.",
-    )
-    longitude = models.DecimalField(
-        max_digits=10,
-        decimal_places=7,
-        null=True,
-        blank=True,
-        verbose_name="Longitude",
-        help_text="Optional map pin longitude for the estate location.",
-    )
     estate_map_url = models.CharField(
         max_length=1000,
         blank=True,
@@ -117,10 +102,10 @@ class Estate(BaseModel):
         help_text="Hosted 3D walkthrough or map-based virtual tour link.",
     )
     boundary = models.JSONField(
-        default=list,
+        default=dict,
         blank=True,
         verbose_name="Boundary Coordinates",
-        help_text='List of {lat, lng} points defining the estate boundary polygon. e.g. [{"lat": 6.5244, "lng": 3.3792}, ...]',
+        help_text="Optional named corners: nw, ne, se, sw. Any subset from zero to four corners is valid.",
     )
 
     # Documents - Title Documents (checkboxes)
@@ -270,14 +255,11 @@ class Estate(BaseModel):
 
     def clean(self):
         super().clean()
+        self.boundary = validate_boundary(self.boundary)
         if not self.estate_name or not self.estate_name.strip():
             raise ValidationError({"estate_name": "Estate name cannot be blank."})
         if not self.estate_code or not self.estate_code.strip():
             raise ValidationError({"estate_code": "Estate code cannot be blank."})
-        if self.latitude is not None and not (-90 <= self.latitude <= 90):
-            raise ValidationError({"latitude": "Latitude must be between -90 and 90."})
-        if self.longitude is not None and not (-180 <= self.longitude <= 180):
-            raise ValidationError({"longitude": "Longitude must be between -180 and 180."})
         valid_types = [c[0] for c in self.ESTATE_TYPE_CHOICES]
         if self.estate_type and self.estate_type not in valid_types:
             raise ValidationError(
@@ -425,10 +407,10 @@ class Property(BaseModel):
     )
 
     boundary = models.JSONField(
-        default=list,
+        default=dict,
         blank=True,
         verbose_name="Boundary Coordinates",
-        help_text='List of {lat, lng} points defining the property boundary polygon. e.g. [{"lat": 6.5244, "lng": 3.3792}, ...]',
+        help_text="Optional named corners: nw, ne, se, sw. Empty linked properties default to their estate boundary.",
     )
     description = models.TextField(
         blank=True,
@@ -585,6 +567,7 @@ class Property(BaseModel):
 
     def clean(self):
         super().clean()
+        self.boundary = validate_boundary(self.boundary)
         if not self.property_name or not self.property_name.strip():
             raise ValidationError({"property_name": "Property name cannot be blank."})
 

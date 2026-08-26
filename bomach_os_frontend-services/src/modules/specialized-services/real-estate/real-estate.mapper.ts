@@ -1,3 +1,5 @@
+import { normalizeBoundary } from './real-estate.boundary'
+
 import type {
   BrokerageListing,
   BrokerageStats,
@@ -59,9 +61,7 @@ export function mapEstate(payload: unknown): Estate {
     longitude: nnum(v.longitude),
     estateMapUrl: str(v.estate_map_url),
     virtualTourUrl: str(v.virtual_tour_url),
-    boundary: Array.isArray(v.boundary)
-      ? v.boundary.map((x) => row(x)).map((x) => ({ lat: num(x.lat), lng: num(x.lng) }))
-      : [],
+    boundary: normalizeBoundary(v.boundary),
     documents: Array.isArray(v.documents) ? v.documents.map(mapDocument) : [],
     hasCOfO: bool(v.has_c_of_o),
     hasDeedOfAssignment: bool(v.has_deed_of_assignment),
@@ -166,6 +166,7 @@ export function mapProperty(payload: unknown): Property {
     propertyTypeDisplay: str(v.property_type_display),
     propertyName: str(v.property_name),
     price: num(v.price),
+    boundary: normalizeBoundary(v.boundary),
     description: str(v.description),
     status: str(v.status, 'available') as Property['status'],
     statusDisplay: str(v.status_display),
@@ -213,6 +214,7 @@ export function mapBrokerageListing(payload: unknown): BrokerageListing {
     title: str(v.title),
     description: str(v.description),
     location: str(v.location),
+    boundary: normalizeBoundary(v.boundary),
     price: num(v.price),
     propertyType: str(v.property_type, 'land') as BrokerageListing['propertyType'],
     ownerName: str(v.owner_name),

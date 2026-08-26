@@ -1,6 +1,7 @@
 from decimal import Decimal
 from urllib.parse import urlparse
 
+from domains.real_estate.location import normalize_boundary
 from domains.real_estate.models.estate import (
     Estate,
     EstateDocument,
@@ -11,18 +12,6 @@ from domains.real_estate.models.estate import (
 
 def _file_path(url):
     return urlparse(url).path.lstrip("/") if url.startswith("http") else url
-
-
-def _coordinates(values):
-    if not values:
-        return []
-    result = []
-    for value in values:
-        if isinstance(value, dict):
-            result.append({"lat": float(value["lat"]), "lng": float(value["lng"])})
-        else:
-            result.append({"lat": float(value.lat), "lng": float(value.lng)})
-    return result
 
 
 def save_estate_documents(estate, urls):
@@ -55,7 +44,7 @@ def create_estate(payload):
     estate = Estate.objects.create(
         **data,
         tags=payload.tags or [],
-        boundary=_coordinates(payload.boundary),
+        boundary=normalize_boundary(payload.boundary),
     )
     if payload.documents:
         save_estate_documents(estate, payload.documents)
@@ -65,7 +54,7 @@ def create_estate(payload):
 def update_estate(estate, payload):
     data = payload.dict(exclude_unset=True)
     if "boundary" in data:
-        estate.boundary = _coordinates(data.pop("boundary"))
+        estate.boundary = normalize_boundary(data.pop("boundary"))
     if "documents" in data:
         urls = data.pop("documents")
         if urls is not None:
@@ -86,6 +75,9 @@ def delete_estate(estate):
 def create_property(payload, *, estate=None):
     data = payload.dict(exclude={"images", "boundary"})
     data = {key: value for key, value in data.items() if value is not None}
+    property_boundary = normalize_boundary(payload.boundary)
+    if not property_boundary and estate is not None:
+        property_boundary = normalize_boundary(estate.boundary)
     if "price" not in data and estate is not None:
         if payload.property_type == "plot" and payload.plot_size:
             data["price"] = Decimal(estate.price_per_sqm) * Decimal(payload.plot_size)
@@ -93,7 +85,7 @@ def create_property(payload, *, estate=None):
             data["price"] = estate.price_per_sqm
     prop = Property.objects.create(
         estate=estate,
-        boundary=_coordinates(payload.boundary),
+        boundary=property_boundary,
         **data,
     )
     if payload.images:
@@ -104,7 +96,10 @@ def create_property(payload, *, estate=None):
 def update_property(prop, payload):
     data = payload.dict(exclude_unset=True)
     if "boundary" in data:
-        prop.boundary = _coordinates(data.pop("boundary"))
+        boundary = normalize_boundary(data.pop("boundary"))
+        if not boundary and prop.estate is not None:
+            boundary = normalize_boundary(prop.estate.boundary)
+        prop.boundary = boundary
     if "images" in data:
         urls = data.pop("images")
         if urls is not None:

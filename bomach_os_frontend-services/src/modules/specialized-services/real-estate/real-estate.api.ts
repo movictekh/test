@@ -1,4 +1,5 @@
 import { apiClient } from '@/shared/api/api-client'
+import { compactBoundary } from './real-estate.boundary'
 import {
   mapBrokerageList,
   mapBrokerageListing,
@@ -74,6 +75,7 @@ const estatePayload = (i: CreateEstateInput) => ({
   precise_address: i.preciseAddress,
   latitude: i.latitude ?? null,
   longitude: i.longitude ?? null,
+  boundary: compactBoundary(i.boundary),
   estate_map_url: i.estateMapUrl ?? '',
   virtual_tour_url: i.virtualTourUrl ?? '',
   documents: i.documents ?? [],
@@ -108,6 +110,7 @@ const propertyPayload = (i: CreatePropertyInput) => ({
   property_type: i.propertyType,
   property_name: i.propertyName,
   ...(i.price != null ? { price: i.price } : {}),
+  boundary: compactBoundary(i.boundary),
   description: i.description ?? '',
   status: i.status,
   plot_number: i.plotNumber ?? null,
@@ -129,6 +132,7 @@ const brokeragePayload = (i: CreateBrokerageInput) => ({
   title: i.title,
   description: i.description ?? '',
   location: i.location,
+  boundary: compactBoundary(i.boundary),
   price: i.price,
   property_type: i.propertyType,
   owner_name: i.ownerName,
@@ -228,6 +232,7 @@ export function mapEstateToInput(estate: Estate): CreateEstateInput {
     preciseAddress: estate.preciseAddress,
     latitude: estate.latitude,
     longitude: estate.longitude,
+    boundary: estate.boundary,
     estateMapUrl: estate.estateMapUrl,
     virtualTourUrl: estate.virtualTourUrl,
     hasCOfO: estate.hasCOfO,

@@ -36,6 +36,7 @@ import {
 } from '@/shared/ui/module-controls'
 
 import { mapEstateToInput, realEstateApi } from '../real-estate/real-estate.api'
+import { boundaryCenter } from '../real-estate/real-estate.boundary'
 import { realEstateKeys } from '../real-estate/real-estate.keys'
 import { realEstateQueries } from '../real-estate/real-estate.queries'
 import {
@@ -143,9 +144,14 @@ function estateLocationEmbedUrl(estate: {
   estateName: string
   latitude?: number | null
   longitude?: number | null
+  boundary?: import('../real-estate/real-estate.types').Boundary
 }) {
   if (estate.latitude != null && estate.longitude != null) {
     return `https://www.google.com/maps?q=${estate.latitude},${estate.longitude}&z=16&t=k&output=embed`
+  }
+  const center = boundaryCenter(estate.boundary)
+  if (center) {
+    return `https://www.google.com/maps?q=${center.lat},${center.lng}&z=16&t=k&output=embed`
   }
   const query = [estate.preciseAddress, estate.cityTown, estate.state, estate.estateName]
     .map((value) => value.trim())

@@ -4,6 +4,7 @@ import type {
   CreatePropertyInput,
   QuickUpdatePlotInput,
 } from './real-estate.types'
+import { validateBoundary } from './real-estate.boundary'
 export function validateQuickPlotUpdate(i: QuickUpdatePlotInput) {
   if (i.price !== undefined && (!Number.isFinite(i.price) || i.price <= 0))
     return 'Plot price must be greater than zero.'
@@ -27,6 +28,8 @@ export function validateEstate(i: CreateEstateInput) {
     (!Number.isFinite(i.longitude) || i.longitude < -180 || i.longitude > 180)
   )
     return 'Longitude must be between -180 and 180.'
+  const boundaryError = validateBoundary(i.boundary)
+  if (boundaryError) return boundaryError
   if (!Number.isFinite(i.pricePerSqm) || i.pricePerSqm < 0)
     return 'Price per square metre must be zero or greater.'
   if (
@@ -46,6 +49,8 @@ export function validateEstate(i: CreateEstateInput) {
 }
 export function validateProperty(i: CreatePropertyInput, options?: { requirePrice?: boolean }) {
   if (!i.propertyName.trim()) return 'Property name is required.'
+  const boundaryError = validateBoundary(i.boundary)
+  if (boundaryError) return boundaryError
   const requirePrice = options?.requirePrice ?? true
   if (requirePrice && (i.price == null || !Number.isFinite(i.price) || i.price <= 0))
     return 'Property price must be greater than zero.'
@@ -64,6 +69,8 @@ export function validateProperty(i: CreatePropertyInput, options?: { requirePric
   return ''
 }
 export function validateBrokerage(i: CreateBrokerageInput) {
+  const boundaryError = validateBoundary(i.boundary)
+  if (boundaryError) return boundaryError
   if (!i.title.trim() || !i.location.trim() || !i.ownerName.trim())
     return 'Title, location and owner / mandate giver are required.'
   if (!Number.isFinite(i.price) || i.price <= 0) return 'Asking price must be greater than zero.'

@@ -1,5 +1,6 @@
 from urllib.parse import urlparse
 
+from domains.real_estate.location import normalize_boundary
 from domains.real_estate.models.brokerage import BrokerageListing, BrokerageListingImage
 
 
@@ -20,12 +21,14 @@ def replace_listing_images(listing, urls):
 
 
 def create_brokerage_listing(payload):
-    data = payload.dict(exclude={"images", "tags"})
+    data = payload.dict(exclude={"images", "tags", "boundary"})
     data = {key: value for key, value in data.items() if value is not None}
+    boundary = normalize_boundary(payload.boundary)
     assigned_agent_id = data.pop("assigned_agent_id", None)
     estate_id = data.pop("estate_id", None)
     listing = BrokerageListing.objects.create(
         **data,
+        boundary=boundary,
         tags=payload.tags or [],
         assigned_agent_id=assigned_agent_id,
         estate_id=estate_id,
@@ -41,6 +44,8 @@ def update_brokerage_listing(listing, payload):
         urls = data.pop("images")
         if urls is not None:
             replace_listing_images(listing, urls)
+    if "boundary" in data:
+        listing.boundary = normalize_boundary(data.pop("boundary"))
     if "assigned_agent_id" in data:
         listing.assigned_agent_id = data.pop("assigned_agent_id")
     if "estate_id" in data:

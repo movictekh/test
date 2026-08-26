@@ -11,6 +11,15 @@ export interface Choice<Value extends string = string> {
   label: string
 }
 
+export type BoundaryCorner = 'nw' | 'ne' | 'se' | 'sw'
+
+export interface BoundaryCoordinate {
+  lat: number | null
+  lng: number | null
+}
+
+export type Boundary = Partial<Record<BoundaryCorner, BoundaryCoordinate | null>>
+
 export interface EstateDocument {
   id: number
   file: string
@@ -39,7 +48,7 @@ export interface Estate {
   longitude: number | null
   estateMapUrl: string
   virtualTourUrl: string
-  boundary: Array<{ lat: number; lng: number }>
+  boundary: Boundary
   documents: EstateDocument[]
   hasCOfO: boolean
   hasDeedOfAssignment: boolean
@@ -130,6 +139,7 @@ export interface CreateEstateInput {
   preciseAddress: string
   latitude?: number | null
   longitude?: number | null
+  boundary?: Boundary
   estateMapUrl?: string
   virtualTourUrl?: string
   hasCOfO: boolean
@@ -177,6 +187,7 @@ export interface Property {
   propertyTypeDisplay: string
   propertyName: string
   price: number
+  boundary: Boundary
   description: string
   status: PropertyStatus
   statusDisplay: string
@@ -220,6 +231,7 @@ export interface CreatePropertyInput {
   propertyType: PropertyType
   propertyName: string
   price?: number | null
+  boundary?: Boundary
   description?: string
   status: PropertyStatus
   plotNumber?: number | null
@@ -260,6 +272,7 @@ export interface BrokerageListing {
   title: string
   description: string
   location: string
+  boundary: Boundary
   price: number
   propertyType: BrokeragePropertyType
   ownerName: string
@@ -307,6 +320,7 @@ export interface CreateBrokerageInput {
   title: string
   description?: string
   location: string
+  boundary?: Boundary
   price: number
   propertyType: BrokeragePropertyType
   ownerName: string

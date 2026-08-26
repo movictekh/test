@@ -22,6 +22,7 @@ import {
   type CreateEstateInput,
 } from '../real-estate/real-estate.types'
 import { validateEstate } from '../real-estate/real-estate.validation'
+import { BoundaryFields } from './BoundaryFields'
 
 type EstateWorkspaceValues = Omit<CreateEstateInput, 'tags'> & { tags: string }
 
@@ -65,6 +66,7 @@ function defaultEstateInput(): EstateWorkspaceValues {
     preciseAddress: '',
     latitude: null,
     longitude: null,
+    boundary: {},
     estateMapUrl: '',
     virtualTourUrl: '',
     hasCOfO: false,
@@ -206,6 +208,7 @@ export function CreateEstateLiveWorkspace({
         cityTown: cityTownValue ? `${cityTownValue}, ${selectedLga}` : selectedLga,
         latitude: value.latitude ?? null,
         longitude: value.longitude ?? null,
+        boundary: value.boundary ?? {},
         estateMapUrl: value.estateMapUrl?.trim() ?? '',
         virtualTourUrl: value.virtualTourUrl?.trim() ?? '',
         minPriceOtherProperties: value.minPriceOtherProperties || null,
@@ -743,6 +746,16 @@ export function CreateEstateLiveWorkspace({
                       <small className="commercial-field-error">{fieldErrors.longitude}</small>
                     ) : null}
                   </label>
+                )}
+              </form.Field>
+              <form.Field name="boundary">
+                {(field) => (
+                  <BoundaryFields
+                    value={field.state.value}
+                    onChange={(boundary) => field.handleChange(boundary)}
+                    title="Estate boundary"
+                    description="Optional. Add any available NW, NE, SE or SW corners. The saved map view can still use latitude and longitude when provided."
+                  />
                 )}
               </form.Field>
               <form.Field name="availablePlotSizes">
