@@ -11,9 +11,9 @@ import {
   IconX,
 } from '@tabler/icons-react'
 import { useForm } from '@tanstack/react-form'
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
-import { presentError } from '@/shared/errors'
+import { presentError, type UserFacingError } from '@/shared/errors'
 
 import { realEstateApi } from '../real-estate/real-estate.api'
 import {
@@ -25,6 +25,47 @@ import { validateEstate } from '../real-estate/real-estate.validation'
 import { BoundaryFields } from './BoundaryFields'
 
 type EstateWorkspaceValues = Omit<CreateEstateInput, 'tags'> & { tags: string }
+
+const backendEstateFieldMap: Record<string, string> = {
+  estate_name: 'estateName',
+  estate_code: 'estateCode',
+  developer_company_name: 'developerCompanyName',
+  estate_description: 'estateDescription',
+  state: 'state',
+  city_town: 'cityTown',
+  precise_address: 'preciseAddress',
+  price_per_sqm: 'pricePerSqm',
+  min_price_other_properties: 'minPriceOtherProperties',
+  max_price_other_properties: 'maxPriceOtherProperties',
+  estate_status: 'estateStatus',
+  estate_map_url: 'estateMapUrl',
+  virtual_tour_url: 'virtualTourUrl',
+  boundary: 'boundary',
+  detail: 'form',
+  non_field_errors: 'form',
+}
+
+function inferBoundaryFieldKey(message: string) {
+  const normalized = message.trim().toLowerCase()
+  const cornerMatch = normalized.match(/\b(nw|ne|se|sw)\b/)
+  if (!cornerMatch) return 'boundary'
+  const corner = cornerMatch[1]
+  if (normalized.includes('latitude')) return `boundary.${corner}.lat`
+  if (normalized.includes('longitude')) return `boundary.${corner}.lng`
+  return 'boundary'
+}
+
+function firstFocusableField(
+  nextFieldErrors: Record<string, string>,
+  fallbackMessage: string,
+) {
+  const firstErrorKey = Object.keys(nextFieldErrors)[0]
+  if (firstErrorKey) return firstErrorKey
+  if (fallbackMessage.toLowerCase().includes('latitude')) return inferBoundaryFieldKey(fallbackMessage)
+  if (fallbackMessage.toLowerCase().includes('longitude')) return inferBoundaryFieldKey(fallbackMessage)
+  if (fallbackMessage.toLowerCase().includes('boundary')) return inferBoundaryFieldKey(fallbackMessage)
+  return ''
+}
 
 function parseNonNegativeNumber(value: string) {
   if (value.trim() === '') return 0
@@ -161,12 +202,14 @@ export function CreateEstateLiveWorkspace({
   mode = 'create',
   saving,
   initialValue,
+  submitError,
   onClose,
   onSubmit,
 }: {
   mode?: 'create' | 'edit'
   saving: boolean
   initialValue?: CreateEstateInput
+  submitError?: UserFacingError | null
   onClose: () => void
   onSubmit: (i: CreateEstateInput) => void
 }) {
@@ -178,6 +221,7 @@ export function CreateEstateLiveWorkspace({
   const [tourUploadError, setTourUploadError] = useState('')
   const [tourUploading, setTourUploading] = useState(false)
   const fieldRefs = useRef<Record<string, HTMLElement | null>>({})
+  const modalBodyRef = useRef<HTMLDivElement | null>(null)
   const [selectedLga, setSelectedLga] = useState(
     splitStoredCityTown(initialValue?.cityTown ?? '').lga,
   )
@@ -210,16 +254,24 @@ export function CreateEstateLiveWorkspace({
       }
       const nextFieldErrors = buildEstateFieldErrors(input, { selectedLga })
       const nextError = validateEstate(input)
+      if (nextError) {
+        const boundaryFieldKey = inferBoundaryFieldKey(nextError)
+        if (boundaryFieldKey.startsWith('boundary')) {
+          nextFieldErrors[boundaryFieldKey] = nextError
+        }
+      }
       setFieldErrors(nextFieldErrors)
       setError(nextError)
-      const firstErrorKey = Object.keys(nextFieldErrors)[0]
+      const firstErrorKey = firstFocusableField(nextFieldErrors, nextError)
       if (firstErrorKey) {
         const element = fieldRefs.current[firstErrorKey]
         if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' })
           window.setTimeout(() => {
             if ('focus' in element && typeof element.focus === 'function') element.focus()
           }, 30)
+        } else if (modalBodyRef.current) {
+          modalBodyRef.current.scrollTo({ top: 0, behavior: 'smooth' })
         }
         return
       }
@@ -273,6 +325,46 @@ export function CreateEstateLiveWorkspace({
     }
   }
 
+  useEffect(() => {
+    if (!submitError) return
+
+    const nextFieldErrors: Record<string, string> = {}
+    let nextFormError = submitError.message
+
+    Object.entries(submitError.fieldErrors ?? {}).forEach(([field, message]) => {
+      const mappedField = backendEstateFieldMap[field] ?? field
+      if (mappedField === 'form') {
+        nextFormError = message
+        return
+      }
+      nextFieldErrors[mappedField] = message
+    })
+
+    if (!Object.keys(nextFieldErrors).length && nextFormError) {
+      const boundaryFieldKey = inferBoundaryFieldKey(nextFormError)
+      if (boundaryFieldKey.startsWith('boundary')) {
+        nextFieldErrors[boundaryFieldKey] = nextFormError
+      }
+    }
+
+    setFieldErrors(nextFieldErrors)
+    setError(nextFormError)
+
+    const firstErrorKey = firstFocusableField(nextFieldErrors, nextFormError)
+    if (!firstErrorKey) return
+    const element = fieldRefs.current[firstErrorKey]
+    if (!element) {
+      if (modalBodyRef.current) {
+        modalBodyRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+      }
+      return
+    }
+    element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' })
+    window.setTimeout(() => {
+      if ('focus' in element && typeof element.focus === 'function') element.focus()
+    }, 30)
+  }, [submitError])
+
   return (
     <div className="commercial-modal-backdrop" role="presentation" onMouseDown={onClose}>
       <form
@@ -301,7 +393,7 @@ export function CreateEstateLiveWorkspace({
           </button>
         </header>
 
-        <div className="commercial-modal-body">
+        <div className="commercial-modal-body" ref={modalBodyRef}>
           {error ? <div className="commercial-notice commercial-notice-red">{error}</div> : null}
 
           <section className="commercial-form-section">
@@ -677,6 +769,15 @@ export function CreateEstateLiveWorkspace({
                   <BoundaryFields
                     value={field.state.value}
                     onChange={(boundary) => field.handleChange(boundary)}
+                    fieldErrors={fieldErrors}
+                    fieldRefs={fieldRefs}
+                    onClearError={(fieldKey) =>
+                      setFieldErrors((current) => {
+                        const next = { ...current }
+                        delete next[fieldKey]
+                        return next
+                      })
+                    }
                     title="Estate boundary"
                     description="Optional. Add any available NW, NE, SE or SW corners. The map center is calculated from the valid corners you provide."
                   />

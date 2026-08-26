@@ -69,6 +69,32 @@ function extractFieldErrors(details: unknown): Record<string, string> | undefine
   return entries.length > 0 ? Object.fromEntries(entries) : undefined
 }
 
+function inferFieldErrorsFromMessage(message: string): Record<string, string> | undefined {
+  const normalized = normalise(message)
+
+  if (normalized.includes('estate code') && (normalized.includes('exists') || normalized.includes('unique'))) {
+    return { estate_code: message }
+  }
+
+  if (normalized.includes('min price') && normalized.includes('max price')) {
+    return { min_price_other_properties: message }
+  }
+
+  if (normalized.includes('boundary')) {
+    return { boundary: message }
+  }
+
+  if (normalized.includes('virtual tour')) {
+    return { virtual_tour_url: message }
+  }
+
+  if (normalized.includes('estate map')) {
+    return { estate_map_url: message }
+  }
+
+  return undefined
+}
+
 function defaultNetworkError(): UserFacingError {
   return {
     title: 'Connection problem',
@@ -176,13 +202,13 @@ function twoFactorError(error: ApiError): UserFacingError {
 }
 
 function validationError(error: ApiError): UserFacingError {
-  const fieldErrors = extractFieldErrors(error.details)
+  const fieldErrors = extractFieldErrors(error.details) ?? inferFieldErrorsFromMessage(error.message)
 
   return {
     title: 'Check the highlighted information',
     message: fieldErrors
-      ? 'Some information needs your attention before this can be submitted.'
-      : 'Review the form and correct the information that could not be accepted.',
+      ? error.message || 'Some information needs your attention before this can be submitted.'
+      : error.message || 'Review the form and correct the information that could not be accepted.',
     placement: 'form',
     retryable: true,
     ...(fieldErrors ? { fieldErrors } : {}),

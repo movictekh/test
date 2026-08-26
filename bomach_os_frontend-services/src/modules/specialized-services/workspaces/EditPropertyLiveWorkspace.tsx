@@ -102,7 +102,11 @@ export function EditPropertyLiveWorkspace({
   const propertyType = value.propertyType
 
   return (
-    <div className="commercial-modal-backdrop" role="presentation" onMouseDown={onClose}>
+    <div
+      className="commercial-modal-backdrop commercial-modal-backdrop--nested"
+      role="presentation"
+      onMouseDown={onClose}
+    >
       <form
         className="commercial-modal commercial-modal--xl specialized-real-estate-modal"
         role="dialog"

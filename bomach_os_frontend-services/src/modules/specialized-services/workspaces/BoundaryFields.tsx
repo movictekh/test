@@ -2,6 +2,7 @@ import {
   boundaryCornerLabels,
   boundaryCorners,
 } from '../real-estate/real-estate.boundary'
+import type { MutableRefObject } from 'react'
 import type {
   Boundary,
   BoundaryCoordinate,
@@ -23,11 +24,17 @@ export function BoundaryFields({
   onChange,
   title = 'Boundary coordinates',
   description = 'Optional. Enter any of NW, NE, SE and SW. A supplied corner needs both latitude and longitude.',
+  fieldErrors = {},
+  fieldRefs,
+  onClearError,
 }: {
   value: Boundary | undefined
   onChange: (value: Boundary) => void
   title?: string
   description?: string
+  fieldErrors?: Record<string, string>
+  fieldRefs?: MutableRefObject<Record<string, HTMLElement | null>>
+  onClearError?: (fieldKey: string) => void
 }) {
   const update = (corner: BoundaryCorner, axis: keyof BoundaryCoordinate, raw: string) => {
     const currentPoint = value?.[corner] ?? { lat: null, lng: null }
@@ -35,6 +42,8 @@ export function BoundaryFields({
       ...(value ?? {}),
       [corner]: { ...currentPoint, [axis]: parsed(raw) },
     })
+    onClearError?.(`boundary.${corner}.${axis}`)
+    onClearError?.('boundary')
   }
 
   return (
@@ -58,6 +67,9 @@ export function BoundaryFields({
                   inputMode="decimal"
                   aria-label={`${boundaryCornerLabels[corner]} latitude`}
                   placeholder="Latitude"
+                  ref={(node) => {
+                    if (fieldRefs) fieldRefs.current[`boundary.${corner}.lat`] = node
+                  }}
                   value={shown(point?.lat)}
                   onChange={(event) => update(corner, 'lat', event.target.value)}
                 />
@@ -67,14 +79,26 @@ export function BoundaryFields({
                   inputMode="decimal"
                   aria-label={`${boundaryCornerLabels[corner]} longitude`}
                   placeholder="Longitude"
+                  ref={(node) => {
+                    if (fieldRefs) fieldRefs.current[`boundary.${corner}.lng`] = node
+                  }}
                   value={shown(point?.lng)}
                   onChange={(event) => update(corner, 'lng', event.target.value)}
                 />
               </div>
+              {fieldErrors[`boundary.${corner}.lat`] || fieldErrors[`boundary.${corner}.lng`] ? (
+                <small className="commercial-field-error">
+                  {fieldErrors[`boundary.${corner}.lat`] ??
+                    fieldErrors[`boundary.${corner}.lng`]}
+                </small>
+              ) : null}
             </div>
           )
         })}
       </div>
+      {fieldErrors.boundary ? (
+        <small className="commercial-field-error">{fieldErrors.boundary}</small>
+      ) : null}
     </div>
   )
 }

@@ -22,7 +22,7 @@ import { useAuth } from '@/app/auth'
 import { SectionLoadingState } from '@/app/loading/SectionLoadingState'
 import { canPerformAction, hasPermission, PERMISSIONS } from '@/app/permissions'
 import type { AppSectionSearch } from '@/routes/app/$section'
-import { presentError } from '@/shared/errors'
+import { presentError, type UserFacingError } from '@/shared/errors'
 import { formatCurrency } from '@/shared/lib/formatters'
 import { withOptionalSearchValue, withoutSearchKeys } from '@/shared/navigation/search-state'
 import { ErrorState, useToast } from '@/shared/ui'
@@ -396,6 +396,7 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
   const [searchDraft, setSearchDraft] = useState(recordSearch.search ?? '')
   const [syncedSearch, setSyncedSearch] = useState(recordSearch.search ?? '')
   const [estateOpen, setEstateOpen] = useState(false)
+  const [createEstateError, setCreateEstateError] = useState<UserFacingError | null>(null)
   const [estateEditOpen, setEstateEditOpen] = useState(false)
   const [propertiesOpen, setPropertiesOpen] = useState(false)
   const [brokerageOpen, setBrokerageOpen] = useState(false)
@@ -528,6 +529,7 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
   const createEstateMutation = useMutation({
     mutationFn: (input: CreateEstateInput) => realEstateApi.createEstate(input),
     onSuccess: async (estate) => {
+      setCreateEstateError(null)
       await queryClient.invalidateQueries({ queryKey: realEstateKeys.estates() })
       setEstateOpen(false)
       toast.success(`Estate ${estate.estateCode} created`)
@@ -538,10 +540,13 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
       })
       setPropertiesOpen(true)
     },
-    onError: (error) =>
+    onError: (error) => {
+      const userFacingError = presentError(error, 'form-submit')
+      setCreateEstateError(userFacingError)
       toast.error('Estate could not be created', {
-        description: presentError(error, 'form-submit').message,
-      }),
+        description: userFacingError.message,
+      })
+    },
   })
   const updateMutation = useMutation({
     mutationFn: ({ id, input }: { id: number; input: QuickUpdatePlotInput }) =>
@@ -1289,7 +1294,11 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
         <Suspense fallback={<RealEstateWorkspaceFallback />}>
           <CreateEstateLiveWorkspace
             saving={createEstateMutation.isPending}
-            onClose={() => setEstateOpen(false)}
+            submitError={createEstateError}
+            onClose={() => {
+              setEstateOpen(false)
+              setCreateEstateError(null)
+            }}
             onSubmit={(input) => createEstateMutation.mutate(input)}
           />
         </Suspense>
@@ -1360,7 +1369,7 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
           onSubmit={(input) => updatePropertyMutation.mutate({ id: selectedProperty.id, input })}
         />
       ) : null}
-      {selectedProperty && selectedEstate ? (
+      {selectedProperty && selectedEstate && !propertyEditOpen ? (
         <div
           className="commercial-modal-backdrop"
           role="presentation"

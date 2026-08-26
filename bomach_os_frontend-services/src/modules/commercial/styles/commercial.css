@@ -1600,6 +1600,12 @@
   color: #1e3a8a;
 }
 
+.commercial-notice-red {
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #991b1b;
+}
+
 @media (max-width: 700px) {
   .commercial-quote-detail-layout,
   .commercial-quote-overview,

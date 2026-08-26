@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from django.core.exceptions import ValidationError
 from ninja import Query, Router
@@ -42,6 +42,51 @@ from domains.real_estate.services.estate import (
 from user.utils.perm import require_permission
 
 estate_api = Router(tags=["Real Estate"])
+
+
+class ValidationMessageSchema(MessageSchema):
+    errors: Dict[str, List[str]]
+
+
+def validation_payload(error: ValidationError):
+    if hasattr(error, "message_dict"):
+        message_dict = error.message_dict
+        first_error = next(
+            (messages[0] for messages in message_dict.values() if messages),
+            "Some information needs your attention before this can be submitted.",
+        )
+        return {"detail": first_error, "errors": message_dict}
+
+    if hasattr(error, "messages"):
+        first_error = error.messages[0] if error.messages else str(error)
+        return {"detail": first_error, "errors": {"detail": error.messages}}
+
+    return {"detail": str(error), "errors": {"detail": [str(error)]}}
+
+
+def exception_payload(error: Exception):
+    message = str(error)
+    normalized = message.lower()
+
+    if "estate code" in normalized and ("exists" in normalized or "unique" in normalized):
+        return {
+            "detail": message,
+            "errors": {"estate_code": [message]},
+        }
+
+    if "min price" in normalized and "max price" in normalized:
+        return {
+            "detail": message,
+            "errors": {"min_price_other_properties": [message]},
+        }
+
+    if "boundary" in normalized:
+        return {
+            "detail": message,
+            "errors": {"boundary": [message]},
+        }
+
+    return {"detail": message, "errors": {"detail": [message]}}
 
 
 # Choices endpoint - MUST come before parameterized routes
@@ -90,19 +135,20 @@ def get_estate(request, estate_id: int):
         return 404, {"detail": "Estate not found"}
 
 
-@estate_api.post("/", response={201: EstateSchema, 400: MessageSchema})
+@estate_api.post("/", response={201: EstateSchema, 400: ValidationMessageSchema})
 @require_permission("estates", "create")
 def create_estate(request, payload: EstateCreateSchema):
     try:
         return 201, create_estate_record(payload)
     except ValidationError as e:
-        return 400, {"detail": e.messages[0] if hasattr(e, "messages") else str(e)}
+        return 400, validation_payload(e)
     except Exception as e:
-        return 400, {"detail": str(e)}
+        return 400, exception_payload(e)
 
 
 @estate_api.put(
-    "/{estate_id}", response={200: EstateSchema, 400: MessageSchema, 404: MessageSchema}
+    "/{estate_id}",
+    response={200: EstateSchema, 400: ValidationMessageSchema, 404: MessageSchema},
 )
 @require_permission("estates", "update")
 def update_estate(request, estate_id: int, payload: EstateUpdateSchema):
@@ -112,9 +158,9 @@ def update_estate(request, estate_id: int, payload: EstateUpdateSchema):
     except Estate.DoesNotExist:
         return 404, {"detail": "Estate not found"}
     except ValidationError as e:
-        return 400, {"detail": e.messages[0] if hasattr(e, "messages") else str(e)}
+        return 400, validation_payload(e)
     except Exception as e:
-        return 400, {"detail": str(e)}
+        return 400, exception_payload(e)
 
 
 @estate_api.delete("/{estate_id}", response={200: MessageSchema, 404: MessageSchema})
