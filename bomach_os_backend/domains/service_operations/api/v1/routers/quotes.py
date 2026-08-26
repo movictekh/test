@@ -1,9 +1,7 @@
 from decimal import Decimal
 from typing import List, Optional
 
-from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.mail import send_mail
 from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
 from ninja import Query, Router
@@ -18,7 +16,7 @@ from domains.service_operations.models import (
 )
 from domains.service_operations.services import quotes as quote_services
 from shared.api.schema.others import MessageSchema
-from user.utils.perm import require_permission, scope_queryset
+from system.authorization import require_permission, scope_queryset
 
 from ..schemas.lifecycle import (
     InvoiceFromQuoteIn,
@@ -116,48 +114,6 @@ def _log_request_activity(
         note=note,
         next_action=next_action,
         created_by=created_by,
-    )
-
-
-def _client_email(quote):
-    if quote.service_request and quote.service_request.contact_email:
-        return quote.service_request.contact_email
-    return quote.client.user.email
-
-
-def _portal_quote_url(quote):
-    base_url = getattr(settings, "FRONTEND_PRODUCTION_DOMAIN", "").strip().split()
-    if not base_url:
-        return ""
-    url = base_url[0]
-    if not url.startswith(("http://", "https://")):
-        url = f"https://{url}"
-    return f"{url.rstrip('/')}/service-requests/quotes/{quote.id}"
-
-
-def _send_quote_email(quote):
-    recipient = _client_email(quote)
-    if not recipient:
-        raise ValidationError("Client email is not available.")
-
-    portal_url = _portal_quote_url(quote)
-    body = (
-        f"Hello {quote.client.user.get_full_name() or quote.client.user.email},\n\n"
-        f"Your quotation {quote.quote_number} for {quote.service.name} has been sent.\n\n"
-        f"Total: {quote.amount}\n"
-        f"Required deposit: {quote.deposit_amount}\n"
-        f"Valid until: {quote.valid_until}\n"
-    )
-    if portal_url:
-        body += f"\nView and respond to the quote here: {portal_url}\n"
-    body += "\nBomach Group"
-
-    send_mail(
-        subject=f"Quotation {quote.quote_number} from Bomach Group",
-        message=body,
-        from_email=getattr(settings, "DEFAULT_FROM_EMAIL", None),
-        recipient_list=[recipient],
-        fail_silently=False,
     )
 
 
