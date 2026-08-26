@@ -5,6 +5,16 @@ export type PropertyStatus = 'not-for-sale' | 'available' | 'reserved' | 'sold' 
 export type BrokerageVerificationStatus = 'pending' | 'verified' | 'inspection_due'
 export type BrokerageStatus = 'available' | 'sold' | 'off_market'
 export type BrokeragePropertyType = 'residential' | 'commercial' | 'land'
+export type PurchaseMode = 'full_payment' | 'reservation' | 'installment'
+export type PurchaseStatus =
+  | 'awaiting_approval'
+  | 'awaiting_payment'
+  | 'reserved'
+  | 'installment_active'
+  | 'fully_paid'
+  | 'cancelled'
+  | 'expired'
+  | 'defaulted'
 
 export interface Choice<Value extends string = string> {
   value: Value
@@ -260,6 +270,59 @@ export interface QuickUpdatePlotInput {
   status?: PropertyStatus
   price?: number
   clientName?: string
+}
+
+export interface PurchaseClient {
+  id: number
+  userId: number
+  fullName: string
+  email: string
+  phone: string
+  companyName: string
+}
+
+export interface ManualPurchaseClientInput {
+  firstName: string
+  lastName: string
+  email: string
+  phoneNumber: string
+  companyName: string
+  sendPortalInvite: boolean
+}
+
+export interface CreatePropertyPurchaseInput {
+  propertyId: number
+  clientId: number
+  mode: PurchaseMode
+  agreedPrice: number
+  installmentMonths: number | null
+}
+
+export interface PropertyPurchase {
+  id: number
+  propertyId: number
+  propertyName: string
+  estateId: number
+  estateName: string
+  clientId: number
+  clientUserId: number
+  clientName: string
+  clientEmail: string
+  invoiceId: number | null
+  mode: PurchaseMode
+  agreedPrice: number
+  reservationThresholdPercent: number | null
+  reservationAmount: number | null
+  installmentMonths: number | null
+  paymentWindowExpiresAt: string | null
+  status: PurchaseStatus
+  amountPaid: number
+  reservedAt: string | null
+  completedAt: string | null
+  cancelledAt: string | null
+  createdById: number
+  createdAt: string
+  updatedAt: string
 }
 
 export type BatchItemStatus = 'queued' | 'creating' | 'created' | 'failed'

@@ -64,6 +64,12 @@ const PropertyDataStudioWorkspace = lazy(() =>
   })),
 )
 
+const PropertyPurchaseWorkspace = lazy(() =>
+  import('../workspaces/PropertyPurchaseWorkspace').then((module) => ({
+    default: module.PropertyPurchaseWorkspace,
+  })),
+)
+
 const CreateBrokerageLiveWorkspace = lazy(() =>
   import('../workspaces/CreateBrokerageLiveWorkspace').then((module) => ({
     default: module.CreateBrokerageLiveWorkspace,
@@ -271,6 +277,8 @@ function SelectedPropertyForm({
   onSubmit,
   onDelete,
   onEdit,
+  onStartPurchase,
+  canStartPurchase,
 }: {
   selectedEstateName: string
   selectedProperty: Property
@@ -282,6 +290,8 @@ function SelectedPropertyForm({
   onSubmit: (input: QuickUpdatePlotInput) => void
   onDelete: () => void
   onEdit: () => void
+  onStartPurchase: () => void
+  canStartPurchase: boolean
 }) {
   const [propertyStatusDraft, setPropertyStatusDraft] = useState<PropertyStatus>(
     selectedProperty.status,
@@ -364,6 +374,16 @@ function SelectedPropertyForm({
       {formError ? (
         <div className="commercial-notice commercial-notice-red">{formError}</div>
       ) : null}
+      {selectedProperty.status === 'available' ? (
+        <button
+          type="button"
+          className="specialized-btn specialized-btn-primary specialized-btn-block"
+          disabled={!canStartPurchase}
+          onClick={onStartPurchase}
+        >
+          Start Client Purchase
+        </button>
+      ) : null}
       <button
         className="specialized-btn specialized-btn-primary specialized-btn-block"
         disabled={!canPropertyUpdate || updatePending}
@@ -403,6 +423,7 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
   const [estateEditOpen, setEstateEditOpen] = useState(false)
   const [propertiesOpen, setPropertiesOpen] = useState(false)
   const [propertyDataOpen, setPropertyDataOpen] = useState(false)
+  const [purchaseOpen, setPurchaseOpen] = useState(false)
   const [brokerageOpen, setBrokerageOpen] = useState(false)
   const [propertyEditOpen, setPropertyEditOpen] = useState(false)
   const [deleteId, setDeleteId] = useState<number | null>(null)
@@ -428,6 +449,8 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
   const canPropertyCreate = hasPermission(user, PERMISSIONS.propertiesCreate)
   const canPropertyUpdate = hasPermission(user, PERMISSIONS.propertiesUpdate)
   const canPropertyDelete = hasPermission(user, PERMISSIONS.propertiesDelete)
+  const canClientList = hasPermission(user, PERMISSIONS.clientsList)
+  const canClientCreate = hasPermission(user, PERMISSIONS.clientsCreate)
   const canBrokerageList = hasPermission(user, PERMISSIONS.brokerageList)
   const canBrokerageCreate = hasPermission(user, PERMISSIONS.brokerageCreate)
   const canBrokerageUpdate = hasPermission(user, PERMISSIONS.brokerageUpdate)
@@ -1402,7 +1425,23 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
           onSubmit={(input) => updatePropertyMutation.mutate({ id: selectedProperty.id, input })}
         />
       ) : null}
-      {selectedProperty && selectedEstate && !propertyEditOpen ? (
+      {purchaseOpen && selectedProperty && selectedEstate ? (
+        <Suspense fallback={<RealEstateWorkspaceFallback />}>
+          <PropertyPurchaseWorkspace
+            estate={selectedEstate}
+            property={selectedProperty}
+            canCreateClient={canClientCreate}
+            onClose={() => setPurchaseOpen(false)}
+            onCreated={(purchase) => {
+              setPurchaseOpen(false)
+              toast.success(`Purchase ${purchase.id} created`, {
+                description: `${purchase.clientName} · Awaiting approval`,
+              })
+            }}
+          />
+        </Suspense>
+      ) : null}
+      {selectedProperty && selectedEstate && !propertyEditOpen && !purchaseOpen ? (
         <div
           className="commercial-modal-backdrop"
           role="presentation"
@@ -1456,6 +1495,8 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
                 onSubmit={(input) => updateMutation.mutate({ id: selectedProperty.id, input })}
                 onEdit={() => setPropertyEditOpen(true)}
                 onDelete={() => setDeleteId(selectedProperty.id)}
+                onStartPurchase={() => setPurchaseOpen(true)}
+                canStartPurchase={canPropertyUpdate && canClientList}
               />
             </div>
           </section>

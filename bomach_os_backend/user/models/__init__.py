@@ -21,6 +21,7 @@ from .estate_property_invoice import (
     EstatePropertyInvoiceItem,
     InvoiceApproval,
 )
+from .property_purchase import PropertyPurchase
 from .meeting import Meeting
 from .notification import Notification
 from .otp import OTPCode

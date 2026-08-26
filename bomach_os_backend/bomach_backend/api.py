@@ -18,6 +18,7 @@ from domains.real_estate.api.v1 import (
     cart_api as cart_router,
     estate_api as estate_router,
     estate_invoice_api as estate_invoice_router,
+    property_purchase_api as property_purchase_router,
 )
 
 # Project Operations API v1
@@ -177,6 +178,7 @@ api.add_router("/loans", loan_router)
 api.add_router("/estates/", estate_router)
 api.add_router("/brokerage/", brokerage_router)
 api.add_router("/estate-invoices/", estate_invoice_router)
+api.add_router("/property-purchases/", property_purchase_router)
 api.add_router("/cart/", cart_router)
 api.add_router("/dashboard/", employee_dashboard_router)
 api.add_router("/roles/", role_router)
