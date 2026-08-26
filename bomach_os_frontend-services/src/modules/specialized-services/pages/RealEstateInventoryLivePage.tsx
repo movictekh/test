@@ -142,13 +142,8 @@ function estateLocationEmbedUrl(estate: {
   cityTown: string
   state: string
   estateName: string
-  latitude?: number | null
-  longitude?: number | null
   boundary?: import('../real-estate/real-estate.types').Boundary
 }) {
-  if (estate.latitude != null && estate.longitude != null) {
-    return `https://www.google.com/maps?q=${estate.latitude},${estate.longitude}&z=16&t=k&output=embed`
-  }
   const center = boundaryCenter(estate.boundary)
   if (center) {
     return `https://www.google.com/maps?q=${center.lat},${center.lng}&z=16&t=k&output=embed`

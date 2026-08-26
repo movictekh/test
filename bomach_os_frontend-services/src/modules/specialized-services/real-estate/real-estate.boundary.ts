@@ -72,6 +72,27 @@ export function boundaryCenter(boundary: Boundary | null | undefined) {
   }
 }
 
+function orientation(
+  a: { lat: number; lng: number },
+  b: { lat: number; lng: number },
+  c: { lat: number; lng: number },
+) {
+  return (b.lng - a.lng) * (c.lat - a.lat) - (b.lat - a.lat) * (c.lng - a.lng)
+}
+
+function segmentsCross(
+  a: { lat: number; lng: number },
+  b: { lat: number; lng: number },
+  c: { lat: number; lng: number },
+  d: { lat: number; lng: number },
+) {
+  const o1 = orientation(a, b, c)
+  const o2 = orientation(a, b, d)
+  const o3 = orientation(c, d, a)
+  const o4 = orientation(c, d, b)
+  return (o1 > 0) !== (o2 > 0) && (o3 > 0) !== (o4 > 0)
+}
+
 export function validateBoundary(boundary: Boundary | null | undefined) {
   for (const corner of boundaryCorners) {
     const point = boundary?.[corner]
@@ -108,6 +129,14 @@ export function validateBoundary(boundary: Boundary | null | undefined) {
     if (Math.abs(area2) < 1e-12) {
       return 'Three or more corners must define a non-zero area.'
     }
+  }
+
+  if (
+    points.length === 4 &&
+    (segmentsCross(points[0]!, points[1]!, points[2]!, points[3]!) ||
+      segmentsCross(points[1]!, points[2]!, points[3]!, points[0]!))
+  ) {
+    return 'Four corners must follow NW → NE → SE → SW without crossing.'
   }
 
   return ''

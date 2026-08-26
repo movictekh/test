@@ -42,3 +42,14 @@ class BoundaryLocationTests(SimpleTestCase):
                 "ne": {"lat": 6.5, "lng": 3.4},
             },
         )
+
+    def test_crossing_four_corner_perimeter_is_rejected(self):
+        with self.assertRaises(ValidationError):
+            normalize_boundary(
+                {
+                    "nw": {"lat": 2, "lng": 0},
+                    "ne": {"lat": 0, "lng": 2},
+                    "se": {"lat": 3, "lng": 2},
+                    "sw": {"lat": 0, "lng": 0},
+                }
+            )

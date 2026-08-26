@@ -57,8 +57,6 @@ export function mapEstate(payload: unknown): Estate {
     state: str(v.state),
     cityTown: str(v.city_town),
     preciseAddress: str(v.precise_address),
-    latitude: nnum(v.latitude),
-    longitude: nnum(v.longitude),
     estateMapUrl: str(v.estate_map_url),
     virtualTourUrl: str(v.virtual_tour_url),
     boundary: normalizeBoundary(v.boundary),

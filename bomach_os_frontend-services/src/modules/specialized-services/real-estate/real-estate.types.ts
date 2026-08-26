@@ -44,8 +44,6 @@ export interface Estate {
   state: string
   cityTown: string
   preciseAddress: string
-  latitude: number | null
-  longitude: number | null
   estateMapUrl: string
   virtualTourUrl: string
   boundary: Boundary
@@ -137,8 +135,6 @@ export interface CreateEstateInput {
   state: string
   cityTown: string
   preciseAddress: string
-  latitude?: number | null
-  longitude?: number | null
   boundary?: Boundary
   estateMapUrl?: string
   virtualTourUrl?: string

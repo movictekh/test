@@ -21,13 +21,6 @@ export function validateEstate(i: CreateEstateInput) {
   if (!i.estateDescription.trim()) return 'Estate description is required.'
   if (!i.country.trim() || !i.state.trim() || !i.cityTown.trim() || !i.preciseAddress.trim())
     return 'Complete Estate location is required.'
-  if (i.latitude != null && (!Number.isFinite(i.latitude) || i.latitude < -90 || i.latitude > 90))
-    return 'Latitude must be between -90 and 90.'
-  if (
-    i.longitude != null &&
-    (!Number.isFinite(i.longitude) || i.longitude < -180 || i.longitude > 180)
-  )
-    return 'Longitude must be between -180 and 180.'
   const boundaryError = validateBoundary(i.boundary)
   if (boundaryError) return boundaryError
   if (!Number.isFinite(i.pricePerSqm) || i.pricePerSqm < 0)

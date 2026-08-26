@@ -64,8 +64,6 @@ function defaultEstateInput(): EstateWorkspaceValues {
     state: '',
     cityTown: '',
     preciseAddress: '',
-    latitude: null,
-    longitude: null,
     boundary: {},
     estateMapUrl: '',
     virtualTourUrl: '',
@@ -139,16 +137,6 @@ function buildEstateFieldErrors(input: CreateEstateInput, options: { selectedLga
   if (!options.selectedLga.trim()) errors.selectedLga = 'Local Government Area is required.'
   if (!input.cityTown.trim()) errors.cityTown = 'City / town is required.'
   if (!input.preciseAddress.trim()) errors.preciseAddress = 'Precise address is required.'
-  if (
-    input.latitude != null &&
-    (!Number.isFinite(input.latitude) || input.latitude < -90 || input.latitude > 90)
-  )
-    errors.latitude = 'Latitude must be between -90 and 90.'
-  if (
-    input.longitude != null &&
-    (!Number.isFinite(input.longitude) || input.longitude < -180 || input.longitude > 180)
-  )
-    errors.longitude = 'Longitude must be between -180 and 180.'
   if (!Number.isFinite(input.pricePerSqm) || input.pricePerSqm < 0)
     errors.pricePerSqm = 'Price per square metre must be zero or greater.'
   if (
@@ -206,8 +194,6 @@ export function CreateEstateLiveWorkspace({
         country: 'Nigeria',
         countryCode: 'NGA',
         cityTown: cityTownValue ? `${cityTownValue}, ${selectedLga}` : selectedLga,
-        latitude: value.latitude ?? null,
-        longitude: value.longitude ?? null,
         boundary: value.boundary ?? {},
         estateMapUrl: value.estateMapUrl?.trim() ?? '',
         virtualTourUrl: value.virtualTourUrl?.trim() ?? '',
@@ -686,75 +672,13 @@ export function CreateEstateLiveWorkspace({
                   </label>
                 )}
               </form.Field>
-              <form.Field name="latitude">
-                {(field) => (
-                  <label className="commercial-field">
-                    <span>Latitude</span>
-                    <input
-                      className="commercial-number-input"
-                      type="number"
-                      step="any"
-                      inputMode="decimal"
-                      ref={(node) => {
-                        fieldRefs.current.latitude = node
-                      }}
-                      value={numberInputValue(field.state.value)}
-                      onChange={(event) => {
-                        field.handleChange(
-                          event.target.value.trim() === '' ? null : Number(event.target.value),
-                        )
-                        setFieldErrors((current) => {
-                          const next = { ...current }
-                          delete next.latitude
-                          return next
-                        })
-                      }}
-                      placeholder="Optional"
-                    />
-                    {fieldErrors.latitude ? (
-                      <small className="commercial-field-error">{fieldErrors.latitude}</small>
-                    ) : null}
-                  </label>
-                )}
-              </form.Field>
-              <form.Field name="longitude">
-                {(field) => (
-                  <label className="commercial-field">
-                    <span>Longitude</span>
-                    <input
-                      className="commercial-number-input"
-                      type="number"
-                      step="any"
-                      inputMode="decimal"
-                      ref={(node) => {
-                        fieldRefs.current.longitude = node
-                      }}
-                      value={numberInputValue(field.state.value)}
-                      onChange={(event) => {
-                        field.handleChange(
-                          event.target.value.trim() === '' ? null : Number(event.target.value),
-                        )
-                        setFieldErrors((current) => {
-                          const next = { ...current }
-                          delete next.longitude
-                          return next
-                        })
-                      }}
-                      placeholder="Optional"
-                    />
-                    {fieldErrors.longitude ? (
-                      <small className="commercial-field-error">{fieldErrors.longitude}</small>
-                    ) : null}
-                  </label>
-                )}
-              </form.Field>
               <form.Field name="boundary">
                 {(field) => (
                   <BoundaryFields
                     value={field.state.value}
                     onChange={(boundary) => field.handleChange(boundary)}
                     title="Estate boundary"
-                    description="Optional. Add any available NW, NE, SE or SW corners. The saved map view can still use latitude and longitude when provided."
+                    description="Optional. Add any available NW, NE, SE or SW corners. The map center is calculated from the valid corners you provide."
                   />
                 )}
               </form.Field>

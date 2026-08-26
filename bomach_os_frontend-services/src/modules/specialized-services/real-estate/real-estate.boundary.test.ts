@@ -28,4 +28,15 @@ describe('four-corner boundaries', () => {
       ne: { lat: 6.6, lng: 3.4 },
     })
   })
+  it('rejects a crossing four-corner perimeter', () => {
+    expect(
+      validateBoundary({
+        nw: { lat: 2, lng: 0 },
+        ne: { lat: 0, lng: 2 },
+        se: { lat: 3, lng: 2 },
+        sw: { lat: 0, lng: 0 },
+      }),
+    ).toContain('without crossing')
+  })
+
 })
