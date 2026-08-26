@@ -114,7 +114,8 @@ describe('property data studio parser', () => {
     expect(rowAt(result).status).toBe('ready')
     expect(rowAt(result).patch).toEqual({ price: 6500000 })
     expect(rowAt(result).diffs).toHaveLength(1)
-    expect(rowAt(result).diffs[0]!.label).toBe('Price')
+    const firstDiff = rowAt(result).diffs.at(0)
+    expect(firstDiff?.label).toBe('Price')
   })
 
   it('supports explicit description clearing without treating blanks as clears', () => {
