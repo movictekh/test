@@ -1178,6 +1178,10 @@
   border-radius: 14px;
   background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
 }
+.specialized-estate-asset--compact {
+  padding: 10px 12px;
+  gap: 10px;
+}
 .specialized-estate-asset-icon {
   width: 38px;
   height: 38px;
@@ -1196,6 +1200,9 @@
   display: block;
   font-size: 12px;
   color: #1f2a44;
+}
+.specialized-estate-asset--compact .specialized-estate-asset-body strong {
+  font-size: 11px;
 }
 .specialized-estate-asset-body small {
   display: block;
@@ -1232,6 +1239,7 @@
   border-radius: 16px;
   overflow: hidden;
   background: #f8fafc;
+  position: relative;
 }
 .specialized-estate-preview-shell {
   display: grid;
@@ -1318,6 +1326,71 @@
 .specialized-estate-preview-fallback small {
   font-size: 10px;
   color: #697386;
+}
+.specialized-estate-preview-loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: 12px;
+  background:
+    linear-gradient(90deg, rgba(241, 245, 249, 0.95) 25%, rgba(226, 232, 240, 0.95) 37%, rgba(241, 245, 249, 0.95) 63%);
+  background-size: 400% 100%;
+  animation: specializedSkeletonShift 1.25s ease-in-out infinite;
+  z-index: 2;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+}
+.specialized-estate-spinner {
+  width: 28px;
+  height: 28px;
+  margin: 0 auto;
+  border: 3px solid rgba(35, 67, 140, 0.18);
+  border-top-color: #23438c;
+  border-radius: 999px;
+  animation: specializedSpin 0.8s linear infinite;
+}
+@keyframes specializedSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes specializedSkeletonShift {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+.specialized-inline-toggle {
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid #d7dfeb;
+  border-radius: 999px;
+  background: #fff;
+  color: #334155;
+  font-size: 11px;
+  font-weight: 600;
+}
+.specialized-inline-toggle.is-active {
+  border-color: #b9cdf8;
+  background: #edf4ff;
+  color: #23438c;
+}
+.specialized-map-preload-frame {
+  position: fixed;
+  width: 1px;
+  height: 1px;
+  right: -9999px;
+  bottom: -9999px;
+  opacity: 0;
+  pointer-events: none;
+  border: 0;
 }
 .specialized-operations-toolbar {
   padding-block: 12px;

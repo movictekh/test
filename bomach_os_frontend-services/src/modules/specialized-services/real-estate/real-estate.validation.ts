@@ -20,6 +20,13 @@ export function validateEstate(i: CreateEstateInput) {
   if (!i.estateDescription.trim()) return 'Estate description is required.'
   if (!i.country.trim() || !i.state.trim() || !i.cityTown.trim() || !i.preciseAddress.trim())
     return 'Complete Estate location is required.'
+  if (i.latitude != null && (!Number.isFinite(i.latitude) || i.latitude < -90 || i.latitude > 90))
+    return 'Latitude must be between -90 and 90.'
+  if (
+    i.longitude != null &&
+    (!Number.isFinite(i.longitude) || i.longitude < -180 || i.longitude > 180)
+  )
+    return 'Longitude must be between -180 and 180.'
   if (!Number.isFinite(i.pricePerSqm) || i.pricePerSqm < 0)
     return 'Price per square metre must be zero or greater.'
   if (
@@ -37,9 +44,11 @@ export function validateEstate(i: CreateEstateInput) {
   }
   return ''
 }
-export function validateProperty(i: CreatePropertyInput) {
+export function validateProperty(i: CreatePropertyInput, options?: { requirePrice?: boolean }) {
   if (!i.propertyName.trim()) return 'Property name is required.'
-  if (!Number.isFinite(i.price) || i.price <= 0) return 'Property price must be greater than zero.'
+  const requirePrice = options?.requirePrice ?? true
+  if (requirePrice && (i.price == null || !Number.isFinite(i.price) || i.price <= 0))
+    return 'Property price must be greater than zero.'
   if (i.propertyType === 'plot' && (!i.plotSize || i.plotSize <= 0))
     return 'Plot size must be greater than zero.'
   if (i.propertyType === 'residential') {

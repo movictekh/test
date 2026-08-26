@@ -136,6 +136,24 @@ function estateMediaKind(url: string): 'pdf' | 'video' | 'image' | 'embed' {
   return 'embed'
 }
 
+function estateLocationEmbedUrl(estate: {
+  preciseAddress: string
+  cityTown: string
+  state: string
+  estateName: string
+  latitude?: number | null
+  longitude?: number | null
+}) {
+  if (estate.latitude != null && estate.longitude != null) {
+    return `https://www.google.com/maps?q=${estate.latitude},${estate.longitude}&z=16&t=k&output=embed`
+  }
+  const query = [estate.preciseAddress, estate.cityTown, estate.state, estate.estateName]
+    .map((value) => value.trim())
+    .filter(Boolean)
+    .join(', ')
+  return `https://www.google.com/maps?q=${encodeURIComponent(query)}&z=16&t=k&output=embed`
+}
+
 function EstateDirectoryList({
   estates,
   onOpen,
@@ -388,6 +406,7 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
     url: string
     kind: 'pdf' | 'video' | 'image' | 'embed'
   } | null>(null)
+  const [estateMediaLoading, setEstateMediaLoading] = useState(false)
   const [inventoryView, setInventoryView] = useState<
     'estates' | 'non-estate-properties' | 'brokerage'
   >('estates')
@@ -451,6 +470,13 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
   const estates = useMemo(() => estatesQuery.data?.items ?? [], [estatesQuery.data?.items])
   const selectedEstate =
     detailQuery.data ?? estates.find((estate) => estate.id === estateId) ?? null
+  const estateLocationUrl = useMemo(
+    () =>
+      selectedEstate?.preciseAddress
+        ? estateLocationEmbedUrl(selectedEstate)
+        : null,
+    [selectedEstate],
+  )
   const properties = propertiesQuery.data?.items ?? []
   const standaloneProperties = standalonePropertiesQuery.data?.items ?? []
   const selectedProperty = properties.find((property) => property.id === propertyId) ?? null
@@ -1007,37 +1033,61 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
 
         {selectedEstate ? (
           <>
-            {selectedEstate.estateMapUrl || selectedEstate.virtualTourUrl ? (
+            {selectedEstate.estateMapUrl ||
+            selectedEstate.virtualTourUrl ||
+            selectedEstate.preciseAddress ? (
               <section className="specialized-card">
                 <header className="specialized-card-header">
                   <div>
                     <div className="specialized-card-title">Estate map and virtual tour</div>
-                    <div className="specialized-card-subtitle">
-                      Open the latest layout drawing and immersive walkthrough for{' '}
-                      {selectedEstate.estateName}.
-                    </div>
                   </div>
                 </header>
                 <div className="specialized-estate-assets">
+                  {selectedEstate.preciseAddress ? (
+                    <article className="specialized-estate-asset specialized-estate-asset--compact">
+                      <div className="specialized-estate-asset-icon">
+                        <IconMapPin2 size={18} />
+                      </div>
+                      <div className="specialized-estate-asset-body">
+                        <strong>Location</strong>
+                      </div>
+                      <button
+                        type="button"
+                        className="specialized-btn specialized-btn-small"
+                        onClick={() => {
+                          setEstateMediaPreview({
+                            title: `${selectedEstate.estateName} location`,
+                            url: estateLocationUrl ?? estateLocationEmbedUrl(selectedEstate),
+                            kind: 'embed',
+                          })
+                          setEstateMediaLoading(true)
+                        }}
+                      >
+                        <IconExternalLink size={12} />
+                        Open location
+                      </button>
+                    </article>
+                  ) : null}
+
                   {selectedEstate.estateMapUrl ? (
-                    <article className="specialized-estate-asset">
+                    <article className="specialized-estate-asset specialized-estate-asset--compact">
                       <div className="specialized-estate-asset-icon">
                         <IconMap2 size={18} />
                       </div>
                       <div className="specialized-estate-asset-body">
                         <strong>Estate map</strong>
-                        <small>Open the uploaded estate map or reference image.</small>
                       </div>
                       <button
                         type="button"
                         className="specialized-btn specialized-btn-small"
-                        onClick={() =>
+                        onClick={() => {
                           setEstateMediaPreview({
                             title: 'Estate map',
                             url: selectedEstate.estateMapUrl,
                             kind: estateMediaKind(selectedEstate.estateMapUrl),
                           })
-                        }
+                          setEstateMediaLoading(estateMediaKind(selectedEstate.estateMapUrl) === 'embed')
+                        }}
                       >
                         <IconExternalLink size={12} />
                         Open map
@@ -1046,92 +1096,30 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
                   ) : null}
 
                   {selectedEstate.virtualTourUrl ? (
-                    <article className="specialized-estate-asset">
+                    <article className="specialized-estate-asset specialized-estate-asset--compact">
                       <div className="specialized-estate-asset-icon">
                         <IconWorldWww size={18} />
                       </div>
                       <div className="specialized-estate-asset-body">
                         <strong>Virtual tour</strong>
-                        <small>Open the uploaded walkthrough inside this workspace.</small>
                       </div>
                       <button
                         type="button"
                         className="specialized-btn specialized-btn-small"
-                        onClick={() =>
+                        onClick={() => {
                           setEstateMediaPreview({
                             title: 'Virtual tour',
                             url: selectedEstate.virtualTourUrl,
                             kind: estateMediaKind(selectedEstate.virtualTourUrl),
                           })
-                        }
+                          setEstateMediaLoading(estateMediaKind(selectedEstate.virtualTourUrl) === 'embed')
+                        }}
                       >
                         <IconExternalLink size={12} />
                         Open tour
                       </button>
                     </article>
                   ) : null}
-                </div>
-              </section>
-            ) : null}
-
-            {estateMediaPreview ? (
-              <section className="specialized-card">
-                <header className="specialized-card-header">
-                  <div>
-                    <div className="specialized-card-title">{estateMediaPreview.title}</div>
-                    <div className="specialized-card-subtitle">
-                      Review this file here, then return to the estate record when you are done.
-                    </div>
-                  </div>
-                  <div className="specialized-card-actions">
-                    <a
-                      className="specialized-btn specialized-btn-small"
-                      href={estateMediaPreview.url}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      <IconExternalLink size={12} />
-                      Open original
-                    </a>
-                    <button
-                      type="button"
-                      className="specialized-btn specialized-btn-small"
-                      onClick={() => setEstateMediaPreview(null)}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </header>
-                <div className="specialized-estate-preview-shell">
-                  <div className="specialized-estate-preview">
-                    {estateMediaPreview.kind === 'pdf' ? (
-                      <iframe
-                        title={estateMediaPreview.title}
-                        src={`${estateMediaPreview.url}#toolbar=1&navpanes=1&view=FitH`}
-                        className="specialized-estate-preview-frame"
-                      />
-                    ) : estateMediaPreview.kind === 'video' ? (
-                      <video
-                        className="specialized-estate-preview-video"
-                        src={estateMediaPreview.url}
-                        controls
-                        playsInline
-                        preload="metadata"
-                      />
-                    ) : estateMediaPreview.kind === 'image' ? (
-                      <img
-                        className="specialized-estate-preview-image"
-                        src={estateMediaPreview.url}
-                        alt={estateMediaPreview.title}
-                      />
-                    ) : (
-                      <iframe
-                        title={estateMediaPreview.title}
-                        src={estateMediaPreview.url}
-                        className="specialized-estate-preview-frame"
-                      />
-                    )}
-                  </div>
                 </div>
               </section>
             ) : null}
@@ -1442,6 +1430,118 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
           if (deleteId != null) void deleteMutation.mutateAsync(deleteId)
         }}
       />
+      {estateLocationUrl ? (
+        <iframe
+          title="Estate location preload"
+          src={estateLocationUrl}
+          aria-hidden="true"
+          tabIndex={-1}
+          className="specialized-map-preload-frame"
+        />
+      ) : null}
+      {estateMediaPreview ? (
+        <div
+          className="commercial-modal-backdrop commercial-modal-backdrop--nested"
+          role="presentation"
+          onMouseDown={() => setEstateMediaPreview(null)}
+        >
+          <section
+            className="commercial-modal commercial-modal--xl specialized-real-estate-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label={estateMediaPreview.title}
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <header className="commercial-modal-header">
+              <div>
+                <h2>{estateMediaPreview.title}</h2>
+                <p>Review this file here and open the original file if preview is unavailable.</p>
+              </div>
+              <button
+                type="button"
+                className="commercial-modal-close"
+                onClick={() => setEstateMediaPreview(null)}
+                aria-label="Close"
+              >
+                <IconX size={16} />
+              </button>
+            </header>
+            <div className="commercial-modal-body">
+              <div className="specialized-estate-preview-shell">
+                <div className="specialized-estate-preview">
+                  {estateMediaLoading ? (
+                    <div className="specialized-estate-preview-loading" aria-live="polite">
+                      <div className="specialized-estate-spinner" />
+                      <span>Loading map…</span>
+                    </div>
+                  ) : null}
+                  {estateMediaPreview.kind === 'pdf' ? (
+                    <object
+                      aria-label={estateMediaPreview.title}
+                      data={`${estateMediaPreview.url}#toolbar=1&navpanes=1&view=FitH`}
+                      type="application/pdf"
+                      className="specialized-estate-preview-frame"
+                    >
+                      <div className="specialized-estate-preview-fallback">
+                        <strong>Preview unavailable in this popup.</strong>
+                        <small>Open the file in a new tab to view the full PDF.</small>
+                        <a
+                          className="specialized-btn specialized-btn-small"
+                          href={estateMediaPreview.url}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          <IconExternalLink size={12} />
+                          Open in new tab
+                        </a>
+                      </div>
+                    </object>
+                  ) : estateMediaPreview.kind === 'video' ? (
+                    <video
+                      className="specialized-estate-preview-video"
+                      src={estateMediaPreview.url}
+                      controls
+                      playsInline
+                      preload="metadata"
+                    />
+                  ) : estateMediaPreview.kind === 'image' ? (
+                    <img
+                      className="specialized-estate-preview-image"
+                      src={estateMediaPreview.url}
+                      alt={estateMediaPreview.title}
+                      onLoad={() => setEstateMediaLoading(false)}
+                    />
+                  ) : (
+                    <iframe
+                      title={estateMediaPreview.title}
+                      src={estateMediaPreview.url}
+                      className="specialized-estate-preview-frame"
+                      onLoad={() => setEstateMediaLoading(false)}
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+            <footer className="commercial-modal-footer">
+              <a
+                className="commercial-btn"
+                href={estateMediaPreview.url}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open original
+              </a>
+              <button
+                type="button"
+                className="commercial-btn"
+                onClick={() => setEstateMediaPreview(null)}
+              >
+                Close
+              </button>
+            </footer>
+          </section>
+        </div>
+      ) : null}
     </ModulePageFrame>
   )
 }

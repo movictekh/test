@@ -72,6 +72,7 @@ export function BatchCreatePropertiesWorkspace({
   const [start, setStart] = useState(1)
   const [namePrefix, setNamePrefix] = useState('Plot')
   const [price, setPrice] = useState(5_000_000)
+  const [useEstateDefaultPrice, setUseEstateDefaultPrice] = useState(false)
   const [status, setStatus] = useState<CreatePropertyInput['status']>('available')
   const [description, setDescription] = useState('')
   const [plotSize, setPlotSize] = useState(500)
@@ -105,7 +106,7 @@ export function BatchCreatePropertiesWorkspace({
     isOurProperty: true,
     propertyType,
     propertyName: namePrefix || 'Property',
-    price,
+    price: useEstateDefaultPrice && selectedEstateId != null ? null : price,
     description,
     status,
     ...(propertyType === 'plot' ? { plotSize, plotSizeUnit: 'sqm' } : {}),
@@ -156,7 +157,9 @@ export function BatchCreatePropertiesWorkspace({
 
   const runBatch = async () => {
     const base = template()
-    const validationError = validateProperty(base)
+    const validationError = validateProperty(base, {
+      requirePrice: !(selectedEstateId != null && useEstateDefaultPrice),
+    })
     if (validationError) return setError(validationError)
     if (!Number.isInteger(count) || count < 1 || count > 250)
       return setError('Batch size must be between 1 and 250 Properties.')
@@ -349,15 +352,35 @@ export function BatchCreatePropertiesWorkspace({
                     <span>
                       Price per property <em>*</em>
                     </span>
-                    <input
-                      className="commercial-number-input"
-                      type="number"
-                      min={1}
-                      step="any"
-                      inputMode="decimal"
-                      value={numberInputValue(price)}
-                      onChange={(event) => setPrice(parseNonNegativeNumber(event.target.value))}
-                    />
+                    {selectedEstateId != null && useEstateDefaultPrice ? null : (
+                      <input
+                        className="commercial-number-input"
+                        type="number"
+                        min={1}
+                        step="any"
+                        inputMode="decimal"
+                        value={numberInputValue(price)}
+                        onChange={(event) => setPrice(parseNonNegativeNumber(event.target.value))}
+                      />
+                    )}
+                    {selectedEstateId != null ? (
+                      <button
+                        type="button"
+                        className={
+                          useEstateDefaultPrice
+                            ? 'specialized-inline-toggle is-active'
+                            : 'specialized-inline-toggle'
+                        }
+                        onClick={() => setUseEstateDefaultPrice((current) => !current)}
+                      >
+                        {useEstateDefaultPrice
+                          ? 'Using estate default price'
+                          : 'Use estate default price'}
+                      </button>
+                    ) : null}
+                    {selectedEstateId != null && useEstateDefaultPrice ? (
+                      <small>The manual price field is hidden and the estate default will be used.</small>
+                    ) : null}
                   </label>
                   <label className="commercial-field">
                     <span>Initial status</span>

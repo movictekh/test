@@ -35,6 +35,8 @@ export interface Estate {
   state: string
   cityTown: string
   preciseAddress: string
+  latitude: number | null
+  longitude: number | null
   estateMapUrl: string
   virtualTourUrl: string
   boundary: Array<{ lat: number; lng: number }>
@@ -126,6 +128,8 @@ export interface CreateEstateInput {
   state: string
   cityTown: string
   preciseAddress: string
+  latitude?: number | null
+  longitude?: number | null
   estateMapUrl?: string
   virtualTourUrl?: string
   hasCOfO: boolean
@@ -215,7 +219,7 @@ export interface CreatePropertyInput {
   isOurProperty: boolean
   propertyType: PropertyType
   propertyName: string
-  price: number
+  price?: number | null
   description?: string
   status: PropertyStatus
   plotNumber?: number | null
