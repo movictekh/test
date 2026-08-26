@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
-from django.core.validators import FileExtensionValidator, MinValueValidator
+from django.core.validators import FileExtensionValidator, MaxValueValidator, MinValueValidator
 from django.db import models
 
 from user.models.base import BaseModel
@@ -239,6 +239,43 @@ class Estate(BaseModel):
         verbose_name="Receipt Fee",
     )
 
+    # Sales & Payment Policy
+    reservation_allowed = models.BooleanField(
+        default=False,
+        verbose_name="Reservation Allowed",
+        help_text="Whether properties in this estate may be reserved before full payment.",
+    )
+    reservation_threshold_percent = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[
+            MinValueValidator(Decimal("0.01")),
+            MaxValueValidator(Decimal("100.00")),
+        ],
+        verbose_name="Reservation Down Payment (%)",
+        help_text="Percentage of the final purchase total that must be verified before a property becomes reserved.",
+    )
+    installment_allowed = models.BooleanField(
+        default=False,
+        verbose_name="Installment Payment Allowed",
+        help_text="Whether buyers may continue paying an outstanding property balance in installments.",
+    )
+    max_installment_months = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(1)],
+        verbose_name="Maximum Installment Months",
+        help_text="Optional maximum installment duration for purchases in this estate.",
+    )
+    reservation_payment_window_hours = models.PositiveIntegerField(
+        default=72,
+        validators=[MinValueValidator(1)],
+        verbose_name="Reservation Payment Window (Hours)",
+        help_text="How long an approved reservation payment request may remain open before expiry rules are evaluated.",
+    )
+
     class Meta:
         app_label = "user"
         verbose_name = "Estate"
@@ -279,6 +316,33 @@ class Estate(BaseModel):
                 raise ValidationError(
                     {"min_price_other_properties": "Min price cannot exceed max price."}
                 )
+
+        if self.reservation_allowed:
+            if self.reservation_threshold_percent is None:
+                raise ValidationError(
+                    {
+                        "reservation_threshold_percent": (
+                            "Reservation down payment percentage is required when reservation is allowed."
+                        )
+                    }
+                )
+        elif self.reservation_threshold_percent is not None:
+            raise ValidationError(
+                {
+                    "reservation_threshold_percent": (
+                        "Reservation down payment percentage must be empty when reservation is disabled."
+                    )
+                }
+            )
+
+        if not self.installment_allowed and self.max_installment_months is not None:
+            raise ValidationError(
+                {
+                    "max_installment_months": (
+                        "Maximum installment months must be empty when installment payment is disabled."
+                    )
+                }
+            )
 
     def save(self, *args, **kwargs):
         if not kwargs.get("update_fields"):

@@ -31,6 +31,27 @@ export function validateEstate(i: CreateEstateInput) {
     i.minPriceOtherProperties > i.maxPriceOtherProperties
   )
     return 'Minimum property price cannot exceed maximum property price.'
+  if (i.reservationAllowed) {
+    if (
+      i.reservationThresholdPercent == null ||
+      !Number.isFinite(i.reservationThresholdPercent) ||
+      i.reservationThresholdPercent <= 0 ||
+      i.reservationThresholdPercent > 100
+    )
+      return 'Reservation down payment must be greater than 0% and at most 100%.'
+  } else if (i.reservationThresholdPercent != null) {
+    return 'Reservation down payment must be empty when reservation is disabled.'
+  }
+  if (
+    i.installmentAllowed &&
+    i.maxInstallmentMonths != null &&
+    (!Number.isInteger(i.maxInstallmentMonths) || i.maxInstallmentMonths < 1)
+  )
+    return 'Maximum installment months must be a positive whole number.'
+  if (!i.installmentAllowed && i.maxInstallmentMonths != null)
+    return 'Maximum installment months must be empty when installment payment is disabled.'
+  if (!Number.isInteger(i.reservationPaymentWindowHours) || i.reservationPaymentWindowHours < 1)
+    return 'Reservation payment window must be at least 1 hour.'
   if (i.virtualTourUrl?.trim()) {
     try {
       new URL(i.virtualTourUrl)

@@ -30,6 +30,12 @@ class EstateCreateSchema(Schema):
     development_fee: Optional[Decimal] = None
     receipt_fee: Optional[Decimal] = None
 
+    reservation_allowed: bool = False
+    reservation_threshold_percent: Optional[Decimal] = None
+    installment_allowed: bool = False
+    max_installment_months: Optional[int] = None
+    reservation_payment_window_hours: int = 72
+
     estate_name: str
     estate_code: str
     estate_type: str
@@ -90,6 +96,12 @@ class EstateUpdateSchema(Schema):
     legal_fee: Optional[Decimal] = None
     development_fee: Optional[Decimal] = None
     receipt_fee: Optional[Decimal] = None
+
+    reservation_allowed: Optional[bool] = None
+    reservation_threshold_percent: Optional[Decimal] = None
+    installment_allowed: Optional[bool] = None
+    max_installment_months: Optional[int] = None
+    reservation_payment_window_hours: Optional[int] = None
 
     estate_name: Optional[str] = None
     estate_type: Optional[str] = None
@@ -167,6 +179,12 @@ class EstateSchema(Schema):
     legal_fee: Optional[Decimal] = None
     development_fee: Optional[Decimal] = None
     receipt_fee: Optional[Decimal] = None
+
+    reservation_allowed: bool
+    reservation_threshold_percent: Optional[Decimal] = None
+    installment_allowed: bool
+    max_installment_months: Optional[int] = None
+    reservation_payment_window_hours: int
 
     estate_name: str
     estate_code: str

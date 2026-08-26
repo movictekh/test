@@ -41,6 +41,11 @@ const backendEstateFieldMap: Record<string, string> = {
   estate_map_url: 'estateMapUrl',
   virtual_tour_url: 'virtualTourUrl',
   boundary: 'boundary',
+  reservation_allowed: 'reservationAllowed',
+  reservation_threshold_percent: 'reservationThresholdPercent',
+  installment_allowed: 'installmentAllowed',
+  max_installment_months: 'maxInstallmentMonths',
+  reservation_payment_window_hours: 'reservationPaymentWindowHours',
   detail: 'form',
   non_field_errors: 'form',
 }
@@ -55,15 +60,15 @@ function inferBoundaryFieldKey(message: string) {
   return 'boundary'
 }
 
-function firstFocusableField(
-  nextFieldErrors: Record<string, string>,
-  fallbackMessage: string,
-) {
+function firstFocusableField(nextFieldErrors: Record<string, string>, fallbackMessage: string) {
   const firstErrorKey = Object.keys(nextFieldErrors)[0]
   if (firstErrorKey) return firstErrorKey
-  if (fallbackMessage.toLowerCase().includes('latitude')) return inferBoundaryFieldKey(fallbackMessage)
-  if (fallbackMessage.toLowerCase().includes('longitude')) return inferBoundaryFieldKey(fallbackMessage)
-  if (fallbackMessage.toLowerCase().includes('boundary')) return inferBoundaryFieldKey(fallbackMessage)
+  if (fallbackMessage.toLowerCase().includes('latitude'))
+    return inferBoundaryFieldKey(fallbackMessage)
+  if (fallbackMessage.toLowerCase().includes('longitude'))
+    return inferBoundaryFieldKey(fallbackMessage)
+  if (fallbackMessage.toLowerCase().includes('boundary'))
+    return inferBoundaryFieldKey(fallbackMessage)
   return ''
 }
 
@@ -132,6 +137,11 @@ function defaultEstateInput(): EstateWorkspaceValues {
     legalFee: 0,
     developmentFee: 0,
     receiptFee: 0,
+    reservationAllowed: false,
+    reservationThresholdPercent: null,
+    installmentAllowed: false,
+    maxInstallmentMonths: null,
+    reservationPaymentWindowHours: 72,
     tags: '',
     documents: [],
   }
@@ -186,7 +196,8 @@ function buildEstateFieldErrors(input: CreateEstateInput, options: { selectedLga
     input.minPriceOtherProperties > input.maxPriceOtherProperties
   ) {
     errors.minPriceOtherProperties = 'Minimum property price cannot exceed maximum property price.'
-    errors.maxPriceOtherProperties = 'Maximum property price must be greater than or equal to the minimum.'
+    errors.maxPriceOtherProperties =
+      'Maximum property price must be greater than or equal to the minimum.'
   }
   if (input.virtualTourUrl?.trim()) {
     try {
@@ -247,6 +258,12 @@ export function CreateEstateLiveWorkspace({
         legalFee: value.legalFee || null,
         developmentFee: value.developmentFee || null,
         receiptFee: value.receiptFee || null,
+        reservationThresholdPercent: value.reservationAllowed
+          ? (value.reservationThresholdPercent ?? null)
+          : null,
+        maxInstallmentMonths: value.installmentAllowed
+          ? (value.maxInstallmentMonths ?? null)
+          : null,
         tags: value.tags
           .split(',')
           .map((item) => item.trim())
@@ -675,7 +692,9 @@ export function CreateEstateLiveWorkspace({
                           ))}
                         </select>
                         {fieldErrors.selectedLga ? (
-                          <small className="commercial-field-error">{fieldErrors.selectedLga}</small>
+                          <small className="commercial-field-error">
+                            {fieldErrors.selectedLga}
+                          </small>
                         ) : null}
                       </label>
 
@@ -729,7 +748,9 @@ export function CreateEstateLiveWorkspace({
                               </select>
                             )}
                             {fieldErrors.cityTown ? (
-                              <small className="commercial-field-error">{fieldErrors.cityTown}</small>
+                              <small className="commercial-field-error">
+                                {fieldErrors.cityTown}
+                              </small>
                             ) : null}
                           </label>
                         )}
@@ -834,6 +855,171 @@ export function CreateEstateLiveWorkspace({
           <section className="commercial-form-section">
             <div className="commercial-form-section-heading">
               <div>
+                <h3>Sales and payment policy</h3>
+                <p>Configure reservation and installment rules for properties in this estate.</p>
+              </div>
+            </div>
+
+            <div className="commercial-form-grid">
+              <form.Field name="reservationAllowed">
+                {(field) => (
+                  <label className="commercial-check commercial-form-span">
+                    <input
+                      type="checkbox"
+                      checked={field.state.value}
+                      onChange={(event) => {
+                        const checked = event.target.checked
+                        field.handleChange(checked)
+                        if (!checked) form.setFieldValue('reservationThresholdPercent', null)
+                      }}
+                    />
+                    <span>Allow property reservation in this estate</span>
+                  </label>
+                )}
+              </form.Field>
+
+              <form.Subscribe selector={(state) => state.values.reservationAllowed}>
+                {(allowed) =>
+                  allowed ? (
+                    <>
+                      <form.Field name="reservationThresholdPercent">
+                        {(field) => (
+                          <label className="commercial-field">
+                            <span>
+                              Reservation down payment (%) <em>*</em>
+                            </span>
+                            <input
+                              className="commercial-number-input"
+                              type="number"
+                              min={0.01}
+                              max={100}
+                              step="0.01"
+                              inputMode="decimal"
+                              ref={(node) => {
+                                fieldRefs.current.reservationThresholdPercent = node
+                              }}
+                              value={field.state.value ?? ''}
+                              onChange={(event) => {
+                                field.handleChange(
+                                  event.target.value === '' ? null : Number(event.target.value),
+                                )
+                                setFieldErrors((current) => {
+                                  const next = { ...current }
+                                  delete next.reservationThresholdPercent
+                                  return next
+                                })
+                              }}
+                            />
+                            <small>
+                              Verified cumulative payment must reach this percentage of the final
+                              purchase total before the property can become reserved.
+                            </small>
+                            {fieldErrors.reservationThresholdPercent ? (
+                              <small className="commercial-field-error">
+                                {fieldErrors.reservationThresholdPercent}
+                              </small>
+                            ) : null}
+                          </label>
+                        )}
+                      </form.Field>
+
+                      <form.Field name="reservationPaymentWindowHours">
+                        {(field) => (
+                          <label className="commercial-field">
+                            <span>Reservation payment window (hours)</span>
+                            <input
+                              className="commercial-number-input"
+                              type="number"
+                              min={1}
+                              step={1}
+                              inputMode="numeric"
+                              ref={(node) => {
+                                fieldRefs.current.reservationPaymentWindowHours = node
+                              }}
+                              value={field.state.value}
+                              onChange={(event) =>
+                                field.handleChange(
+                                  Math.max(1, Math.trunc(Number(event.target.value) || 1)),
+                                )
+                              }
+                            />
+                            <small>
+                              Defaults to 72 hours. Enforcement comes with the purchase/payment
+                              lifecycle.
+                            </small>
+                          </label>
+                        )}
+                      </form.Field>
+                    </>
+                  ) : (
+                    <div className="commercial-notice commercial-form-span">
+                      Reservation is disabled for this estate.
+                    </div>
+                  )
+                }
+              </form.Subscribe>
+
+              <form.Field name="installmentAllowed">
+                {(field) => (
+                  <label className="commercial-check commercial-form-span">
+                    <input
+                      type="checkbox"
+                      checked={field.state.value}
+                      onChange={(event) => {
+                        const checked = event.target.checked
+                        field.handleChange(checked)
+                        if (!checked) form.setFieldValue('maxInstallmentMonths', null)
+                      }}
+                    />
+                    <span>Allow installment payment for properties in this estate</span>
+                  </label>
+                )}
+              </form.Field>
+
+              <form.Subscribe selector={(state) => state.values.installmentAllowed}>
+                {(allowed) =>
+                  allowed ? (
+                    <form.Field name="maxInstallmentMonths">
+                      {(field) => (
+                        <label className="commercial-field">
+                          <span>Maximum installment months</span>
+                          <input
+                            className="commercial-number-input"
+                            type="number"
+                            min={1}
+                            step={1}
+                            inputMode="numeric"
+                            ref={(node) => {
+                              fieldRefs.current.maxInstallmentMonths = node
+                            }}
+                            value={field.state.value ?? ''}
+                            onChange={(event) =>
+                              field.handleChange(
+                                event.target.value === ''
+                                  ? null
+                                  : Math.max(1, Math.trunc(Number(event.target.value))),
+                              )
+                            }
+                          />
+                          <small>
+                            Optional. Leave blank when there is no estate-level maximum term.
+                          </small>
+                        </label>
+                      )}
+                    </form.Field>
+                  ) : (
+                    <div className="commercial-notice commercial-form-span">
+                      Installment payment is disabled for this estate.
+                    </div>
+                  )
+                }
+              </form.Subscribe>
+            </div>
+          </section>
+
+          <section className="commercial-form-section">
+            <div className="commercial-form-section-heading">
+              <div>
                 <h3>Estate map and virtual tour</h3>
                 <p>Add the estate map as a PDF or image, plus an optional walkthrough asset.</p>
               </div>
@@ -873,51 +1059,51 @@ export function CreateEstateLiveWorkspace({
                       />
                     </label>
 
-                    {field.state.value ? (
-                      (() => {
-                        const assetKind = uploadedAssetKind(field.state.value)
-                        const AssetIcon = assetKind === 'image' ? IconPhoto : IconFileTypePdf
-                        return (
-                      <article className="commercial-upload-item commercial-upload-item--uploaded">
-                        <div className="commercial-upload-item-icon">
-                          <AssetIcon size={18} />
-                        </div>
-                        <div className="commercial-upload-item-body">
-                          <div className="commercial-upload-item-top">
-                            <strong>
-                              {field.state.value.split('/').at(-1) || 'Estate map file'}
-                            </strong>
-                            <span>{assetKind === 'image' ? 'Image' : 'PDF'}</span>
-                          </div>
-                          <small>Ready for this estate record</small>
-                        </div>
-                        <div className="commercial-upload-actions">
-                          <button
-                            type="button"
-                            className="commercial-upload-remove"
-                            onClick={() =>
-                              window.open(field.state.value, '_blank', 'noopener,noreferrer')
-                            }
-                            aria-label="Open estate map"
-                          >
-                            <IconExternalLink size={14} />
-                          </button>
-                          <button
-                            type="button"
-                            className="commercial-upload-remove"
-                            onClick={() => {
-                              field.handleChange('')
-                              setMapUploadError('')
-                            }}
-                            aria-label="Remove estate map"
-                          >
-                            <IconTrash size={14} />
-                          </button>
-                        </div>
-                      </article>
-                        )
-                      })()
-                    ) : null}
+                    {field.state.value
+                      ? (() => {
+                          const assetKind = uploadedAssetKind(field.state.value)
+                          const AssetIcon = assetKind === 'image' ? IconPhoto : IconFileTypePdf
+                          return (
+                            <article className="commercial-upload-item commercial-upload-item--uploaded">
+                              <div className="commercial-upload-item-icon">
+                                <AssetIcon size={18} />
+                              </div>
+                              <div className="commercial-upload-item-body">
+                                <div className="commercial-upload-item-top">
+                                  <strong>
+                                    {field.state.value.split('/').at(-1) || 'Estate map file'}
+                                  </strong>
+                                  <span>{assetKind === 'image' ? 'Image' : 'PDF'}</span>
+                                </div>
+                                <small>Ready for this estate record</small>
+                              </div>
+                              <div className="commercial-upload-actions">
+                                <button
+                                  type="button"
+                                  className="commercial-upload-remove"
+                                  onClick={() =>
+                                    window.open(field.state.value, '_blank', 'noopener,noreferrer')
+                                  }
+                                  aria-label="Open estate map"
+                                >
+                                  <IconExternalLink size={14} />
+                                </button>
+                                <button
+                                  type="button"
+                                  className="commercial-upload-remove"
+                                  onClick={() => {
+                                    field.handleChange('')
+                                    setMapUploadError('')
+                                  }}
+                                  aria-label="Remove estate map"
+                                >
+                                  <IconTrash size={14} />
+                                </button>
+                              </div>
+                            </article>
+                          )
+                        })()
+                      : null}
 
                     {mapUploading ? (
                       <article className="commercial-upload-item commercial-upload-item--uploading">

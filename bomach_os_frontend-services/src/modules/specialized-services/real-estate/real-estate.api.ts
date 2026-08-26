@@ -101,6 +101,13 @@ const estatePayload = (i: CreateEstateInput) => ({
   legal_fee: i.legalFee ?? null,
   development_fee: i.developmentFee ?? null,
   receipt_fee: i.receiptFee ?? null,
+  reservation_allowed: i.reservationAllowed,
+  reservation_threshold_percent: i.reservationAllowed
+    ? (i.reservationThresholdPercent ?? null)
+    : null,
+  installment_allowed: i.installmentAllowed,
+  max_installment_months: i.installmentAllowed ? (i.maxInstallmentMonths ?? null) : null,
+  reservation_payment_window_hours: i.reservationPaymentWindowHours,
   tags: i.tags ?? [],
 })
 const propertyPayload = (i: CreatePropertyInput) => ({
@@ -255,6 +262,11 @@ export function mapEstateToInput(estate: Estate): CreateEstateInput {
     legalFee: estate.legalFee,
     developmentFee: estate.developmentFee,
     receiptFee: estate.receiptFee,
+    reservationAllowed: estate.reservationAllowed,
+    reservationThresholdPercent: estate.reservationThresholdPercent,
+    installmentAllowed: estate.installmentAllowed,
+    maxInstallmentMonths: estate.maxInstallmentMonths,
+    reservationPaymentWindowHours: estate.reservationPaymentWindowHours,
     tags: estate.tags,
     documents: estate.documents.map((document) => document.file),
   }

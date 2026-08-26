@@ -33,6 +33,11 @@ export interface Estate {
   legalFee: number | null
   developmentFee: number | null
   receiptFee: number | null
+  reservationAllowed: boolean
+  reservationThresholdPercent: number | null
+  installmentAllowed: boolean
+  maxInstallmentMonths: number | null
+  reservationPaymentWindowHours: number
   estateName: string
   estateCode: string
   estateType: EstateType
@@ -162,6 +167,11 @@ export interface CreateEstateInput {
   legalFee?: number | null
   developmentFee?: number | null
   receiptFee?: number | null
+  reservationAllowed: boolean
+  reservationThresholdPercent?: number | null
+  installmentAllowed: boolean
+  maxInstallmentMonths?: number | null
+  reservationPaymentWindowHours: number
   tags?: string[]
   documents?: string[]
 }

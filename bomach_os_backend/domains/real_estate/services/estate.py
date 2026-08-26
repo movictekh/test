@@ -59,8 +59,12 @@ def update_estate(estate, payload):
         urls = data.pop("documents")
         if urls is not None:
             replace_estate_documents(estate, urls)
+    nullable_policy_fields = {
+        "reservation_threshold_percent",
+        "max_installment_months",
+    }
     for field, value in data.items():
-        if value is not None:
+        if value is not None or field in nullable_policy_fields:
             setattr(estate, field, value)
     estate.full_clean()
     estate.save()
