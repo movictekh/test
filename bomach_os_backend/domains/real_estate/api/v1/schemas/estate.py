@@ -33,6 +33,8 @@ class EstateCreateSchema(Schema):
     state: str
     city_town: str
     precise_address: str
+    latitude: Optional[Decimal] = None
+    longitude: Optional[Decimal] = None
     estate_map_url: Optional[str] = None
     virtual_tour_url: Optional[str] = None
     boundary: Optional[List[CoordinateSchema]] = None
@@ -93,6 +95,8 @@ class EstateUpdateSchema(Schema):
     state: Optional[str] = None
     city_town: Optional[str] = None
     precise_address: Optional[str] = None
+    latitude: Optional[Decimal] = None
+    longitude: Optional[Decimal] = None
     estate_map_url: Optional[str] = None
     virtual_tour_url: Optional[str] = None
     boundary: Optional[List[CoordinateSchema]] = None
@@ -172,6 +176,8 @@ class EstateSchema(Schema):
     state: str
     city_town: str
     precise_address: str
+    latitude: Optional[Decimal] = None
+    longitude: Optional[Decimal] = None
     estate_map_url: str
     virtual_tour_url: str
     boundary: list = []
@@ -309,7 +315,7 @@ class PropertyCreateSchema(Schema):
     estate_id: Optional[int] = None
     property_type: str  # 'plot', 'residential', 'commercial'
     property_name: str
-    price: Decimal
+    price: Optional[Decimal] = None
     boundary: Optional[List[CoordinateSchema]] = None
     description: Optional[str] = None
     status: str = "available"
@@ -382,7 +388,7 @@ class PropertySchema(Schema):
     property_type: str
     property_type_display: str
     property_name: str
-    price: Decimal
+    price: Optional[Decimal] = None
     boundary: list = []
     description: str
     status: str

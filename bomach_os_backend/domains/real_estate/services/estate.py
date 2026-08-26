@@ -1,3 +1,4 @@
+from decimal import Decimal
 from urllib.parse import urlparse
 
 from domains.real_estate.models.estate import (
@@ -85,6 +86,11 @@ def delete_estate(estate):
 def create_property(payload, *, estate=None):
     data = payload.dict(exclude={"images", "boundary"})
     data = {key: value for key, value in data.items() if value is not None}
+    if "price" not in data and estate is not None:
+        if payload.property_type == "plot" and payload.plot_size:
+            data["price"] = Decimal(estate.price_per_sqm) * Decimal(payload.plot_size)
+        else:
+            data["price"] = estate.price_per_sqm
     prop = Property.objects.create(
         estate=estate,
         boundary=_coordinates(payload.boundary),
