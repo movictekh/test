@@ -1,7 +1,8 @@
-from datetime import datetime
-from decimal import Decimal
+from datetime import datetime, timedelta
+from decimal import Decimal, ROUND_HALF_UP
 from typing import Optional
 
+from django.utils import timezone
 from ninja import Schema
 from pydantic import EmailStr
 
@@ -52,6 +53,16 @@ class PropertyPurchaseCreateSchema(Schema):
     installment_months: Optional[int] = None
 
 
+class ChoiceItemSchema(Schema):
+    value: str
+    label: str
+
+
+class PropertyPurchaseChoicesSchema(Schema):
+    mode: list[ChoiceItemSchema]
+    status: list[ChoiceItemSchema]
+
+
 class PropertyPurchaseSchema(Schema):
     id: int
     property_id: int
@@ -64,6 +75,7 @@ class PropertyPurchaseSchema(Schema):
     client_email: str
     invoice_id: Optional[int]
     mode: str
+    mode_display: str
     agreed_price: Decimal
     reservation_threshold_percent: Optional[Decimal]
     reservation_amount: Optional[Decimal]
@@ -73,7 +85,11 @@ class PropertyPurchaseSchema(Schema):
     approved_at: Optional[datetime]
     next_payment_due_at: Optional[datetime]
     status: str
+    status_display: str
     amount_paid: Decimal
+    outstanding_balance: Decimal
+    payment_progress_percent: Decimal
+    can_request_payment: bool
     reserved_at: Optional[datetime]
     completed_at: Optional[datetime]
     cancelled_at: Optional[datetime]
@@ -105,6 +121,52 @@ class PropertyPurchaseSchema(Schema):
     def resolve_client_email(obj):
         return obj.client.user.email
 
+    @staticmethod
+    def resolve_mode_display(obj):
+        return obj.get_mode_display()
+
+    @staticmethod
+    def resolve_status_display(obj):
+        return obj.get_status_display()
+
+    @staticmethod
+    def resolve_outstanding_balance(obj):
+        return max(Decimal("0.00"), obj.agreed_price - obj.amount_paid)
+
+    @staticmethod
+    def resolve_payment_progress_percent(obj):
+        if obj.agreed_price <= Decimal("0.00"):
+            return Decimal("0.00")
+        return (
+            (obj.amount_paid / obj.agreed_price) * Decimal("100")
+        ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+    @staticmethod
+    def resolve_can_request_payment(obj):
+        if obj.status not in {
+            obj.STATUS_AWAITING_PAYMENT,
+            obj.STATUS_RESERVED,
+            obj.STATUS_INSTALLMENT_ACTIVE,
+        }:
+            return False
+        if obj.amount_paid >= obj.agreed_price:
+            return False
+        now = timezone.now()
+        if (
+            obj.status == obj.STATUS_AWAITING_PAYMENT
+            and obj.payment_window_expires_at
+            and obj.payment_window_expires_at <= now
+        ):
+            return False
+        if (
+            obj.status == obj.STATUS_INSTALLMENT_ACTIVE
+            and obj.next_payment_due_at is not None
+            and obj.next_payment_due_at + timedelta(hours=obj.payment_window_hours)
+            <= now
+        ):
+            return False
+        return True
+
 
 class PropertyPurchasePaymentAttemptSchema(Schema):
     intent_reference: str
@@ -116,3 +178,31 @@ class PropertyPurchasePaymentAttemptSchema(Schema):
     checkout_url: str
     expires_at: Optional[datetime]
     provider_metadata: dict
+
+
+class PropertyPurchasePaymentHistoryAttemptSchema(Schema):
+    reference: str
+    provider: str
+    provider_reference: str
+    status: str
+    amount: Decimal
+    currency: str
+    checkout_url: str
+    failure_message: str
+    completed_at: Optional[datetime]
+    created_at: datetime
+
+
+class PropertyPurchasePaymentHistorySchema(Schema):
+    intent_reference: str
+    intent_status: str
+    amount: Decimal
+    currency: str
+    expires_at: Optional[datetime]
+    confirmed_at: Optional[datetime]
+    created_at: datetime
+    attempts: list[PropertyPurchasePaymentHistoryAttemptSchema]
+    receipt_reference: Optional[str]
+    receipt_amount: Optional[Decimal]
+    receipt_paid_at: Optional[datetime]
+    payment_method: Optional[str]

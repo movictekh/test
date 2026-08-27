@@ -2,16 +2,26 @@ from typing import Optional
 
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest
-from ninja import Router
+from ninja import Query, Router
+from ninja.errors import HttpError
+from ninja.pagination import LimitOffsetPagination, paginate
 
 from domains.real_estate.api.v1.schemas.purchase import (
+    PropertyPurchaseChoicesSchema,
     PropertyPurchaseCreateSchema,
     PropertyPurchasePaymentAttemptSchema,
+    PropertyPurchasePaymentHistorySchema,
     PropertyPurchaseSchema,
     PurchaseClientCreateSchema,
     PurchaseClientSchema,
 )
 from domains.real_estate.models.property_purchase import PropertyPurchase
+from domains.real_estate.selectors.purchase import (
+    get_client_property_purchase,
+    list_client_property_purchases,
+    list_property_purchases,
+    payment_intents_for_purchase,
+)
 from domains.real_estate.services.payment_intents import start_next_property_purchase_payment
 from domains.real_estate.services.purchase import (
     create_property_purchase,
@@ -58,6 +68,53 @@ def _payment_payload(intent, attempt):
     }
 
 
+def _client_profile(user):
+    try:
+        return user.client_profile
+    except Exception:
+        raise HttpError(400, "Client profile not found for this user.")
+
+
+def _payment_history_payload(purchase):
+    rows = []
+    for intent in payment_intents_for_purchase(purchase):
+        try:
+            receipt = intent.confirmed_receipt
+        except Exception:
+            receipt = None
+        rows.append(
+            {
+                "intent_reference": intent.reference,
+                "intent_status": intent.status,
+                "amount": intent.amount,
+                "currency": intent.currency,
+                "expires_at": intent.expires_at,
+                "confirmed_at": intent.confirmed_at,
+                "created_at": intent.created_at,
+                "attempts": [
+                    {
+                        "reference": attempt.reference,
+                        "provider": attempt.provider,
+                        "provider_reference": attempt.provider_reference,
+                        "status": attempt.status,
+                        "amount": attempt.amount,
+                        "currency": attempt.currency,
+                        "checkout_url": attempt.checkout_url,
+                        "failure_message": attempt.failure_message,
+                        "completed_at": attempt.completed_at,
+                        "created_at": attempt.created_at,
+                    }
+                    for attempt in intent.attempts.all()
+                ],
+                "receipt_reference": receipt.reference if receipt else None,
+                "receipt_amount": receipt.amount if receipt else None,
+                "receipt_paid_at": receipt.paid_at if receipt else None,
+                "payment_method": receipt.payment_method if receipt else None,
+            }
+        )
+    return rows
+
+
 @property_purchase_api.get("/clients/search", response={200: list[PurchaseClientSchema], 400: MessageSchema})
 @require_permission("clients", "list")
 def search_clients(request: HttpRequest, q: str = ""):
@@ -83,6 +140,45 @@ def create_client(request: HttpRequest, payload: PurchaseClientCreateSchema):
         return 400, {"detail": _detail(error)}
     except Exception as error:
         return 400, {"detail": str(error)}
+
+
+@property_purchase_api.get(
+    "/choices/fields",
+    response=PropertyPurchaseChoicesSchema,
+)
+def purchase_choices(request: HttpRequest):
+    return {
+        "mode": [
+            {"value": value, "label": label}
+            for value, label in PropertyPurchase.MODE_CHOICES
+        ],
+        "status": [
+            {"value": value, "label": label}
+            for value, label in PropertyPurchase.STATUS_CHOICES
+        ],
+    }
+
+
+@property_purchase_api.get("/", response=list[PropertyPurchaseSchema])
+@paginate(LimitOffsetPagination, page_size=10)
+@require_permission("properties", "list")
+def list_purchases(
+    request: HttpRequest,
+    status: Optional[str] = Query(None),
+    mode: Optional[str] = Query(None),
+    client_id: Optional[int] = Query(None),
+    estate_id: Optional[int] = Query(None),
+    property_id: Optional[int] = Query(None),
+    search: Optional[str] = Query(None),
+):
+    return list_property_purchases(
+        status=status,
+        mode=mode,
+        client_id=client_id,
+        estate_id=estate_id,
+        property_id=property_id,
+        search=search,
+    )
 
 
 @property_purchase_api.post("/", response={201: PropertyPurchaseSchema, 400: MessageSchema})
@@ -212,6 +308,76 @@ def default_purchase(request: HttpRequest, purchase_id: int):
         lambda: default_property_purchase(purchase_id=purchase_id),
         purchase_id,
     )
+
+
+@property_purchase_api.get("/my", response=list[PropertyPurchaseSchema])
+@paginate(LimitOffsetPagination, page_size=10)
+def list_my_purchases(
+    request: HttpRequest,
+    status: Optional[str] = Query(None),
+):
+    client = _client_profile(request.user)
+    return list_client_property_purchases(client=client, status=status)
+
+
+@property_purchase_api.get(
+    "/my/{purchase_id}",
+    response={200: PropertyPurchaseSchema, 404: MessageSchema},
+)
+def my_purchase_detail(request: HttpRequest, purchase_id: int):
+    client = _client_profile(request.user)
+    try:
+        return 200, get_client_property_purchase(
+            client=client,
+            purchase_id=purchase_id,
+        )
+    except PropertyPurchase.DoesNotExist:
+        return 404, {"detail": "Property purchase not found."}
+
+
+@property_purchase_api.get(
+    "/my/{purchase_id}/payments",
+    response={200: list[PropertyPurchasePaymentHistorySchema], 404: MessageSchema},
+)
+def my_purchase_payments(request: HttpRequest, purchase_id: int):
+    client = _client_profile(request.user)
+    try:
+        purchase = get_client_property_purchase(
+            client=client,
+            purchase_id=purchase_id,
+        )
+    except PropertyPurchase.DoesNotExist:
+        return 404, {"detail": "Property purchase not found."}
+    return 200, _payment_history_payload(purchase)
+
+
+@property_purchase_api.post(
+    "/my/{purchase_id}/payment-request",
+    response={
+        200: PropertyPurchasePaymentAttemptSchema,
+        201: PropertyPurchasePaymentAttemptSchema,
+        400: MessageSchema,
+        404: MessageSchema,
+        503: MessageSchema,
+    },
+)
+def my_payment_request(request: HttpRequest, purchase_id: int):
+    client = _client_profile(request.user)
+    try:
+        get_client_property_purchase(client=client, purchase_id=purchase_id)
+        ensure_monnify_provider_registered()
+        intent, attempt, created = start_next_property_purchase_payment(
+            purchase_id=purchase_id,
+            provider_name="monnify",
+            created_by=request.user,
+        )
+        return (201 if created else 200), _payment_payload(intent, attempt)
+    except PropertyPurchase.DoesNotExist:
+        return 404, {"detail": "Property purchase not found."}
+    except ValidationError as error:
+        return 400, {"detail": _detail(error)}
+    except PaymentProviderError as error:
+        return 503, {"detail": str(error)}
 
 
 @property_purchase_api.get(

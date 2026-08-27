@@ -45,3 +45,20 @@ Phase 2 does not change estate-invoice approval or payment behavior. Phase 3 own
 ### Legacy `services.Property`
 
 `services.Property` remains a separate live legacy inventory concept and is not merged, renamed or deleted here. It has a separate `/properties` API and a different data shape from `domains.real_estate.models.Property`. Before consolidation, audit production record counts, foreign keys, frontend/API consumers and ID mapping. That is a later migration project, not part of this boundary cleanup.
+
+## Phase 8 portal-ready purchase UX
+
+The purchase lifecycle now exposes read surfaces designed for both staff UI and
+the authenticated client portal without changing settlement ownership.
+
+- Staff can list/filter/search property purchases through the canonical purchase API.
+- Frontends can read typed purchase mode/status choices instead of hard-coding labels.
+- Purchase responses expose status/mode display labels, outstanding balance,
+  payment progress percentage, and whether another payment request is currently valid.
+- Authenticated clients can list and read only purchases tied to
+  `request.user.client_profile`.
+- Client payment history is purpose-scoped through Central Payments and omits raw
+  provider metadata, Finance journals, and internal settlement details.
+- Clients can request the next Monnify checkout only for their own purchase; the
+  existing exact-amount, expiry, idempotency, verified-receipt settlement, and
+  transactional-outbox rules remain authoritative.
