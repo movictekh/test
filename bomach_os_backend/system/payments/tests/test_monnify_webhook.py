@@ -7,8 +7,9 @@ from system.payments.providers import PaymentProviderIgnoredEvent, PaymentProvid
 
 
 class MonnifyWebhookTests(TestCase):
+    @patch("system.payments.api.v1.routers.webhook.apply_confirmed_receipt")
     @patch("system.payments.api.v1.routers.webhook.verify_and_apply_provider_event")
-    def test_public_webhook_forwards_raw_body(self, verify):
+    def test_public_webhook_forwards_raw_body(self, verify, apply_receipt):
         verify.return_value = type("Receipt", (), {"reference": "CR-1"})()
         raw = json.dumps({"eventType": "SUCCESSFUL_TRANSACTION"}).encode()
         response = self.client.post(
@@ -17,6 +18,7 @@ class MonnifyWebhookTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(verify.call_args.kwargs["raw_body"], raw)
         self.assertIsNone(verify.call_args.kwargs["confirmed_by"])
+        apply_receipt.assert_called_once_with(verify.return_value)
 
     @patch("system.payments.api.v1.routers.webhook.verify_and_apply_provider_event")
     def test_verification_failure_401(self, verify):

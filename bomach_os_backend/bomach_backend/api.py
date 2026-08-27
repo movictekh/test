@@ -118,6 +118,9 @@ from user.api.v1.loan import loan_api as loan_router
 from domains.governance.api.v1.routers.meeting import meeting_api as meeting_router
 from system.notifications.api.v1 import notification_router
 from system.payments.api.v1 import payment_webhook_router
+from system.payments.application import register_receipt_application
+from domains.real_estate.payment_contract import PROPERTY_PURCHASE_PURPOSE_TYPE
+from domains.real_estate.services.settlement import apply_property_purchase_receipt
 from user.api.v1.others import orthers_api as orthers_router
 from domains.crm.api.v1.routers.partner import partner_api as partner_router
 from domains.governance.api.v1.routers.policy import policy_api as policy_router
@@ -132,6 +135,12 @@ from system.identity.authentication import JWTAuthenticator
 
 # HR
 
+
+register_receipt_application(
+    PROPERTY_PURCHASE_PURPOSE_TYPE,
+    apply_property_purchase_receipt,
+    replace=True,
+)
 
 authenticator = JWTAuthenticator()
 

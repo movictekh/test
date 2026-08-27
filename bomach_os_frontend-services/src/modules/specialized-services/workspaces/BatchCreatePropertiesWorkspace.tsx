@@ -6,7 +6,7 @@ import { presentError } from '@/shared/errors'
 import { realEstateApi } from '../real-estate/real-estate.api'
 import { buildPropertyBatch } from '../real-estate/property-batch'
 import {
-  propertyStatuses,
+  operatorPropertyStatuses,
   type Boundary,
   type CreatePropertyInput,
   type PropertyBatchItem,
@@ -246,7 +246,9 @@ export function BatchCreatePropertiesWorkspace({
                 <div className="commercial-form-section-heading">
                   <div>
                     <h3>Estate link</h3>
-                    <p>Attach these properties to an estate, or leave them as non-estate properties.</p>
+                    <p>
+                      Attach these properties to an estate, or leave them as non-estate properties.
+                    </p>
                   </div>
                 </div>
 
@@ -401,7 +403,9 @@ export function BatchCreatePropertiesWorkspace({
                       </button>
                     ) : null}
                     {selectedEstateId != null && useEstateDefaultPrice ? (
-                      <small>The manual price field is hidden and the estate default will be used.</small>
+                      <small>
+                        The manual price field is hidden and the estate default will be used.
+                      </small>
                     ) : null}
                   </label>
                   <label className="commercial-field">
@@ -412,7 +416,7 @@ export function BatchCreatePropertiesWorkspace({
                         setStatus(event.target.value as CreatePropertyInput['status'])
                       }
                     >
-                      {propertyStatuses.map((item) => (
+                      {operatorPropertyStatuses.map((item) => (
                         <option key={item.value} value={item.value}>
                           {item.label}
                         </option>

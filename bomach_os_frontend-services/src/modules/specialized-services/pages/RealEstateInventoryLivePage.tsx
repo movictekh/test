@@ -36,17 +36,19 @@ import {
 } from '@/shared/ui/module-controls'
 
 import { mapEstateToInput, realEstateApi } from '../real-estate/real-estate.api'
+import { propertyPurchaseQueries } from '../real-estate/property-purchase.api'
 import { boundaryCenter } from '../real-estate/real-estate.boundary'
 import { realEstateKeys } from '../real-estate/real-estate.keys'
 import { realEstateQueries } from '../real-estate/real-estate.queries'
 import {
-  propertyStatuses,
+  operatorPropertyStatuses,
   type Boundary,
   type BrokerageVerificationStatus,
   type CreateBrokerageInput,
   type CreateEstateInput,
   type CreatePropertyInput,
   type Property,
+  type PropertyPurchase,
   type PropertyStatus,
   type QuickUpdatePlotInput,
 } from '../real-estate/real-estate.types'
@@ -67,6 +69,12 @@ const PropertyDataStudioWorkspace = lazy(() =>
 const PropertyPurchaseWorkspace = lazy(() =>
   import('../workspaces/PropertyPurchaseWorkspace').then((module) => ({
     default: module.PropertyPurchaseWorkspace,
+  })),
+)
+
+const PropertyPurchaseLifecycleWorkspace = lazy(() =>
+  import('../workspaces/PropertyPurchaseLifecycleWorkspace').then((module) => ({
+    default: module.PropertyPurchaseLifecycleWorkspace,
   })),
 )
 
@@ -269,6 +277,8 @@ function StandalonePropertyDirectoryList({ properties }: { properties: Property[
 function SelectedPropertyForm({
   selectedEstateName,
   selectedProperty,
+  activePurchase,
+  purchaseStateLoading,
   canPropertyUpdate,
   canPropertyDelete,
   updatePending,
@@ -278,10 +288,13 @@ function SelectedPropertyForm({
   onDelete,
   onEdit,
   onStartPurchase,
+  onManagePurchase,
   canStartPurchase,
 }: {
   selectedEstateName: string
   selectedProperty: Property
+  activePurchase: PropertyPurchase | null
+  purchaseStateLoading: boolean
   canPropertyUpdate: boolean
   canPropertyDelete: boolean
   updatePending: boolean
@@ -291,12 +304,12 @@ function SelectedPropertyForm({
   onDelete: () => void
   onEdit: () => void
   onStartPurchase: () => void
+  onManagePurchase: () => void
   canStartPurchase: boolean
 }) {
-  const [propertyStatusDraft, setPropertyStatusDraft] = useState<PropertyStatus>(
-    selectedProperty.status,
-  )
-  const needsClientName = propertyStatusDraft === 'reserved' || propertyStatusDraft === 'sold'
+  const settlementManagedStatus =
+    selectedProperty.status === 'reserved' || selectedProperty.status === 'sold'
+  const statusLocked = settlementManagedStatus || activePurchase != null
 
   return (
     <form
@@ -304,14 +317,9 @@ function SelectedPropertyForm({
         event.preventDefault()
         const d = new FormData(event.currentTarget)
         const statusValue = d.get('status')
-        const clientValue = d.get('clientName')
         const priceValue = d.get('price')
         const input: QuickUpdatePlotInput = {
-          status: (typeof statusValue === 'string'
-            ? statusValue
-            : selectedProperty.status) as PropertyStatus,
-          clientName:
-            typeof clientValue === 'string' ? clientValue.trim() : selectedProperty.clientName,
+          ...(typeof statusValue === 'string' ? { status: statusValue as PropertyStatus } : {}),
           price:
             typeof priceValue === 'string' && priceValue !== ''
               ? Number(priceValue)
@@ -337,33 +345,39 @@ function SelectedPropertyForm({
         <strong>{formatCurrency(selectedProperty.price)}</strong>
         <span>{selectedProperty.statusDisplay || selectedProperty.status}</span>
       </div>
+
+      {activePurchase ? (
+        <div className="commercial-notice">
+          Active purchase: <strong>{activePurchase.status.replaceAll('_', ' ')}</strong> ·{' '}
+          {activePurchase.clientName} · {formatCurrency(activePurchase.amountPaid)} verified
+        </div>
+      ) : null}
+
       <label className="specialized-field">
         <span>Status</span>
         <select
           name="status"
           defaultValue={selectedProperty.status}
-          disabled={!canPropertyUpdate}
-          onChange={(event) => setPropertyStatusDraft(event.target.value as PropertyStatus)}
+          disabled={!canPropertyUpdate || statusLocked}
         >
-          {propertyStatuses.map((item) => (
+          {settlementManagedStatus ? (
+            <option value={selectedProperty.status}>
+              {selectedProperty.statusDisplay || selectedProperty.status}
+            </option>
+          ) : null}
+          {operatorPropertyStatuses.map((item) => (
             <option key={item.value} value={item.value}>
               {item.label}
             </option>
           ))}
         </select>
+        {statusLocked ? (
+          <small>Commercial status is controlled by purchase settlement.</small>
+        ) : null}
       </label>
-      {needsClientName ? (
-        <label className="specialized-field">
-          <span>Client / reservation holder</span>
-          <input
-            name="clientName"
-            defaultValue={selectedProperty.clientName}
-            disabled={!canPropertyUpdate}
-          />
-        </label>
-      ) : null}
+
       <label className="specialized-field">
-        <span>Agreed price</span>
+        <span>Inventory price</span>
         <input
           name="price"
           type="number"
@@ -371,19 +385,31 @@ function SelectedPropertyForm({
           disabled={!canPropertyUpdate}
         />
       </label>
+
       {formError ? (
         <div className="commercial-notice commercial-notice-red">{formError}</div>
       ) : null}
-      {selectedProperty.status === 'available' ? (
+
+      {activePurchase ? (
         <button
           type="button"
           className="specialized-btn specialized-btn-primary specialized-btn-block"
-          disabled={!canStartPurchase}
+          disabled={!canPropertyUpdate}
+          onClick={onManagePurchase}
+        >
+          Manage Client Purchase
+        </button>
+      ) : selectedProperty.status === 'available' ? (
+        <button
+          type="button"
+          className="specialized-btn specialized-btn-primary specialized-btn-block"
+          disabled={!canStartPurchase || purchaseStateLoading}
           onClick={onStartPurchase}
         >
-          Start Client Purchase
+          {purchaseStateLoading ? 'Checking purchase…' : 'Start Client Purchase'}
         </button>
       ) : null}
+
       <button
         className="specialized-btn specialized-btn-primary specialized-btn-block"
         disabled={!canPropertyUpdate || updatePending}
@@ -424,6 +450,7 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
   const [propertiesOpen, setPropertiesOpen] = useState(false)
   const [propertyDataOpen, setPropertyDataOpen] = useState(false)
   const [purchaseOpen, setPurchaseOpen] = useState(false)
+  const [purchaseLifecycleOpen, setPurchaseLifecycleOpen] = useState(false)
   const [brokerageOpen, setBrokerageOpen] = useState(false)
   const [propertyEditOpen, setPropertyEditOpen] = useState(false)
   const [deleteId, setDeleteId] = useState<number | null>(null)
@@ -446,6 +473,7 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
   const canEstateCreate = hasPermission(user, PERMISSIONS.estatesCreate)
   const canEstateUpdate = hasPermission(user, PERMISSIONS.estatesUpdate)
   const canPropertyList = hasPermission(user, PERMISSIONS.propertiesList)
+  const canPropertyView = hasPermission(user, PERMISSIONS.propertiesView)
   const canPropertyCreate = hasPermission(user, PERMISSIONS.propertiesCreate)
   const canPropertyUpdate = hasPermission(user, PERMISSIONS.propertiesUpdate)
   const canPropertyDelete = hasPermission(user, PERMISSIONS.propertiesDelete)
@@ -478,6 +506,10 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
     ...realEstateQueries.properties(estateId ?? 0, { page: 1, limit: 250 }),
     enabled: Boolean(estateId) && canPropertyList,
   })
+  const activePurchaseQuery = useQuery({
+    ...propertyPurchaseQueries.current(propertyId ?? 0),
+    enabled: Boolean(propertyId) && canPropertyView,
+  })
   const standalonePropertiesQuery = useQuery({
     ...realEstateQueries.standaloneProperties({
       ...(recordSearch.search ? { search: recordSearch.search } : {}),
@@ -506,6 +538,7 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
   const properties = propertiesQuery.data?.items ?? []
   const standaloneProperties = standalonePropertiesQuery.data?.items ?? []
   const selectedProperty = properties.find((property) => property.id === propertyId) ?? null
+  const activePurchase = activePurchaseQuery.data ?? null
   const estateBrokerageListings = useMemo(
     () =>
       selectedEstate
@@ -1420,6 +1453,7 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
       {propertyEditOpen && selectedProperty ? (
         <EditPropertyLiveWorkspace
           property={selectedProperty}
+          statusLocked={activePurchase != null}
           saving={updatePropertyMutation.isPending}
           onClose={() => setPropertyEditOpen(false)}
           onSubmit={(input) => updatePropertyMutation.mutate({ id: selectedProperty.id, input })}
@@ -1434,6 +1468,11 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
             onClose={() => setPurchaseOpen(false)}
             onCreated={(purchase) => {
               setPurchaseOpen(false)
+              queryClient.setQueryData(
+                propertyPurchaseQueries.current(purchase.propertyId).queryKey,
+                purchase,
+              )
+              setPurchaseLifecycleOpen(true)
               toast.success(`Purchase ${purchase.id} created`, {
                 description: `${purchase.clientName} · Awaiting approval`,
               })
@@ -1441,7 +1480,31 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
           />
         </Suspense>
       ) : null}
-      {selectedProperty && selectedEstate && !propertyEditOpen && !purchaseOpen ? (
+      {purchaseLifecycleOpen && activePurchase ? (
+        <Suspense fallback={<RealEstateWorkspaceFallback />}>
+          <PropertyPurchaseLifecycleWorkspace
+            purchase={activePurchase}
+            canManage={canPropertyUpdate}
+            onClose={() => setPurchaseLifecycleOpen(false)}
+            onChanged={async (purchase) => {
+              const terminal = ['fully_paid', 'cancelled', 'expired', 'defaulted'].includes(
+                purchase.status,
+              )
+              queryClient.setQueryData(
+                propertyPurchaseQueries.current(purchase.propertyId).queryKey,
+                terminal ? null : purchase,
+              )
+              if (estateId) await invalidateEstate(estateId)
+              if (terminal) setPurchaseLifecycleOpen(false)
+            }}
+          />
+        </Suspense>
+      ) : null}
+      {selectedProperty &&
+      selectedEstate &&
+      !propertyEditOpen &&
+      !purchaseOpen &&
+      !purchaseLifecycleOpen ? (
         <div
           className="commercial-modal-backdrop"
           role="presentation"
@@ -1487,6 +1550,8 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
                 key={selectedProperty.id}
                 selectedEstateName={selectedEstate.estateName}
                 selectedProperty={selectedProperty}
+                activePurchase={activePurchase}
+                purchaseStateLoading={activePurchaseQuery.isPending}
                 canPropertyUpdate={canPropertyUpdate}
                 canPropertyDelete={canPropertyDelete}
                 updatePending={updateMutation.isPending}
@@ -1496,7 +1561,14 @@ export function RealEstateInventoryLivePage({ recordSearch }: { recordSearch: Ap
                 onEdit={() => setPropertyEditOpen(true)}
                 onDelete={() => setDeleteId(selectedProperty.id)}
                 onStartPurchase={() => setPurchaseOpen(true)}
-                canStartPurchase={canPropertyUpdate && canClientList}
+                onManagePurchase={() => setPurchaseLifecycleOpen(true)}
+                canStartPurchase={
+                  canPropertyUpdate &&
+                  canPropertyView &&
+                  canClientList &&
+                  !activePurchase &&
+                  !activePurchaseQuery.isPending
+                }
               />
             </div>
           </section>

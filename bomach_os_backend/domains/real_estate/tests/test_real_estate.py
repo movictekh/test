@@ -95,7 +95,6 @@ class RealEstateAPITests(RoleAPITestMixin, TestCase):
             f"/api/v1/estates/{self.estate.id}/plots/{plot.id}/quick-update",
             data={
                 "status": "hold",
-                "client_name": "Reserved Client",
                 "price": "5000000",
             },
             content_type="application/json",
@@ -104,11 +103,23 @@ class RealEstateAPITests(RoleAPITestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data["status"], "hold")
-        self.assertEqual(data["client_name"], "Reserved Client")
+        self.assertEqual(data["client_name"], "")
         self.assertEqual(data["price"], "5000000.00")
         plot.refresh_from_db()
         self.assertEqual(plot.status, "hold")
-        self.assertEqual(plot.client_name, "Reserved Client")
+        self.assertEqual(plot.client_name, "")
+
+    def test_quick_update_rejects_direct_client_holder(self):
+        plot = Property.objects.get(estate=self.estate, plot_number=4)
+        response = self.client.patch(
+            f"/api/v1/estates/{self.estate.id}/plots/{plot.id}/quick-update",
+            data={"client_name": "Reserved Client"},
+            content_type="application/json",
+            **self.headers,
+        )
+        self.assertEqual(response.status_code, 400)
+        plot.refresh_from_db()
+        self.assertEqual(plot.client_name, "")
 
     def test_quick_update_invalid_status(self):
         plot = Property.objects.get(estate=self.estate, plot_number=4)

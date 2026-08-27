@@ -2,7 +2,7 @@ import { IconBuilding, IconHome, IconMap2, IconX } from '@tabler/icons-react'
 import { useState } from 'react'
 
 import {
-  propertyStatuses,
+  operatorPropertyStatuses,
   propertyTypes,
   type CreatePropertyInput,
   type Property,
@@ -85,11 +85,13 @@ export function EditPropertyLiveWorkspace({
   saving,
   onClose,
   onSubmit,
+  statusLocked = false,
 }: {
   property: Property
   saving: boolean
   onClose: () => void
   onSubmit: (input: CreatePropertyInput) => void
+  statusLocked?: boolean
 }) {
   const [value, setValue] = useState<CreatePropertyInput>(() => mapPropertyToInput(property))
   const [error, setError] = useState('')
@@ -183,18 +185,25 @@ export function EditPropertyLiveWorkspace({
 
               <label className="commercial-field">
                 <span>Status</span>
-                <select
-                  value={value.status}
-                  onChange={(event) =>
-                    setField('status', event.target.value as CreatePropertyInput['status'])
-                  }
-                >
-                  {propertyStatuses.map((item) => (
-                    <option key={item.value} value={item.value}>
-                      {item.label}
-                    </option>
-                  ))}
-                </select>
+                {statusLocked || property.status === 'reserved' || property.status === 'sold' ? (
+                  <input value={property.statusDisplay || property.status} disabled />
+                ) : (
+                  <select
+                    value={value.status}
+                    onChange={(event) =>
+                      setField('status', event.target.value as CreatePropertyInput['status'])
+                    }
+                  >
+                    {operatorPropertyStatuses.map((item) => (
+                      <option key={item.value} value={item.value}>
+                        {item.label}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {statusLocked || property.status === 'reserved' || property.status === 'sold' ? (
+                  <small>Commercial status is controlled by the purchase/payment workflow.</small>
+                ) : null}
               </label>
 
               <label className="commercial-field">
@@ -230,10 +239,7 @@ export function EditPropertyLiveWorkspace({
 
               <label className="commercial-field">
                 <span>Client / holder</span>
-                <input
-                  value={value.clientName ?? ''}
-                  onChange={(event) => setField('clientName', event.target.value)}
-                />
+                <input value={property.clientName || 'Managed by purchase workflow'} disabled />
               </label>
 
               <label className="commercial-field commercial-field--full">

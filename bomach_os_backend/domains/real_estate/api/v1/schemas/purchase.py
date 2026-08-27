@@ -68,7 +68,10 @@ class PropertyPurchaseSchema(Schema):
     reservation_threshold_percent: Optional[Decimal]
     reservation_amount: Optional[Decimal]
     installment_months: Optional[int]
+    payment_window_hours: int
     payment_window_expires_at: Optional[datetime]
+    approved_at: Optional[datetime]
+    next_payment_due_at: Optional[datetime]
     status: str
     amount_paid: Decimal
     reserved_at: Optional[datetime]
@@ -101,3 +104,15 @@ class PropertyPurchaseSchema(Schema):
     @staticmethod
     def resolve_client_email(obj):
         return obj.client.user.email
+
+
+class PropertyPurchasePaymentAttemptSchema(Schema):
+    intent_reference: str
+    attempt_reference: str
+    provider: str
+    provider_reference: str
+    amount: Decimal
+    currency: str
+    checkout_url: str
+    expires_at: Optional[datetime]
+    provider_metadata: dict

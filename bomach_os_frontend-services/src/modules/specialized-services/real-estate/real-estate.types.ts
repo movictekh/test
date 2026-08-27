@@ -298,6 +298,18 @@ export interface CreatePropertyPurchaseInput {
   installmentMonths: number | null
 }
 
+export interface PropertyPurchasePaymentRequest {
+  intentReference: string
+  attemptReference: string
+  provider: string
+  providerReference: string
+  amount: number
+  currency: string
+  checkoutUrl: string
+  expiresAt: string | null
+  providerMetadata: Record<string, unknown>
+}
+
 export interface PropertyPurchase {
   id: number
   propertyId: number
@@ -314,7 +326,10 @@ export interface PropertyPurchase {
   reservationThresholdPercent: number | null
   reservationAmount: number | null
   installmentMonths: number | null
+  paymentWindowHours: number
   paymentWindowExpiresAt: string | null
+  approvedAt: string | null
+  nextPaymentDueAt: string | null
   status: PurchaseStatus
   amountPaid: number
   reservedAt: string | null
@@ -409,6 +424,12 @@ export const propertyStatuses: Array<Choice<PropertyStatus>> = [
   { value: 'available', label: 'Available' },
   { value: 'reserved', label: 'Reserved' },
   { value: 'sold', label: 'Sold' },
+  { value: 'hold', label: 'Hold' },
+  { value: 'not-for-sale', label: 'Not for Sale' },
+]
+
+export const operatorPropertyStatuses: Array<Choice<PropertyStatus>> = [
+  { value: 'available', label: 'Available' },
   { value: 'hold', label: 'Hold' },
   { value: 'not-for-sale', label: 'Not for Sale' },
 ]

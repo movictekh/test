@@ -8,10 +8,8 @@ import { validateBoundary } from './real-estate.boundary'
 export function validateQuickPlotUpdate(i: QuickUpdatePlotInput) {
   if (i.price !== undefined && (!Number.isFinite(i.price) || i.price <= 0))
     return 'Plot price must be greater than zero.'
-  if ((i.status === 'reserved' || i.status === 'sold') && !i.clientName?.trim())
-    return i.status === 'reserved'
-      ? 'A reservation holder is required when reserving a plot.'
-      : 'A client name is required when marking a plot as sold.'
+  if (i.status === 'reserved' || i.status === 'sold')
+    return 'Reserved and sold states are controlled by verified purchase payments.'
   return ''
 }
 export function validateEstate(i: CreateEstateInput) {

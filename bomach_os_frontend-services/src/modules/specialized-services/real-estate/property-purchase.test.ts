@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { mapPropertyPurchase, mapPurchaseClient } from './property-purchase.api'
+import {
+  mapPropertyPurchase,
+  mapPropertyPurchasePaymentRequest,
+  mapPurchaseClient,
+} from './property-purchase.api'
+import { operatorPropertyStatuses } from './real-estate.types'
 
 describe('property purchase API mapping', () => {
   it('maps CRM client search rows', () => {
@@ -39,7 +44,10 @@ describe('property purchase API mapping', () => {
       reservation_threshold_percent: '20.00',
       reservation_amount: '2000000.00',
       installment_months: null,
+      payment_window_hours: 72,
       payment_window_expires_at: '2026-09-01T12:00:00Z',
+      approved_at: null,
+      next_payment_due_at: null,
       status: 'awaiting_approval',
       amount_paid: '0.00',
       reserved_at: null,
@@ -54,5 +62,32 @@ describe('property purchase API mapping', () => {
     expect(purchase.agreedPrice).toBe(10000000)
     expect(purchase.reservationAmount).toBe(2000000)
     expect(purchase.invoiceId).toBeNull()
+    expect(purchase.paymentWindowHours).toBe(72)
+    expect(purchase.approvedAt).toBeNull()
+  })
+
+  it('maps provider payment request details', () => {
+    const request = mapPropertyPurchasePaymentRequest({
+      intent_reference: 'PI-1',
+      attempt_reference: 'PA-1',
+      provider: 'monnify',
+      provider_reference: 'PA-1',
+      amount: '2000000.00',
+      currency: 'NGN',
+      checkout_url: 'https://checkout.example.test',
+      expires_at: '2026-09-01T12:00:00Z',
+      provider_metadata: { dynamic_invoice: { accountNumber: '1234567890' } },
+    })
+    expect(request.provider).toBe('monnify')
+    expect(request.amount).toBe(2000000)
+    expect(request.checkoutUrl).toContain('checkout')
+  })
+
+  it('does not expose reserved or sold as operator inventory choices', () => {
+    expect(operatorPropertyStatuses.map((status) => status.value)).toEqual([
+      'available',
+      'hold',
+      'not-for-sale',
+    ])
   })
 })

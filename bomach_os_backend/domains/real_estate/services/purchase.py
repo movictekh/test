@@ -173,6 +173,7 @@ def create_property_purchase(
         reservation_threshold_percent=reservation_percent,
         reservation_amount=reservation_amount,
         installment_months=months,
+        payment_window_hours=estate.reservation_payment_window_hours,
         payment_window_expires_at=(
             timezone.now() + timedelta(hours=estate.reservation_payment_window_hours)
         ),
@@ -185,8 +186,8 @@ def create_property_purchase(
     except IntegrityError as exc:
         raise ValidationError({"property_id": "This property already has an active purchase."}) from exc
 
-    # Phase 3 deliberately does not mutate Property.status, Property.owner,
-    # client_name, invoice payment state, or Finance.
+    # Agreement creation never mutates Property.status/owner/client holder or Finance.
+    # Verified Central Payments receipts own later settlement transitions.
     return purchase
 
 

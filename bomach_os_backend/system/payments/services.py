@@ -222,7 +222,11 @@ def start_payment_attempt(*, intent, provider_name, idempotency_key):
                 raise ValidationError(
                     "Payment attempt idempotency key belongs to another intent."
                 )
-            if attempt.provider_reference:
+            if attempt.provider_reference or attempt.status in {
+                PaymentAttempt.STATUS.CREATED,
+                PaymentAttempt.STATUS.PENDING,
+                PaymentAttempt.STATUS.SUCCEEDED,
+            }:
                 return attempt, False
         else:
             attempt = PaymentAttempt.objects.create(

@@ -1,6 +1,9 @@
 from decimal import Decimal
 from urllib.parse import urlparse
 
+from django.core.exceptions import ValidationError
+from django.db import transaction
+
 from domains.real_estate.location import normalize_boundary
 from domains.real_estate.models.estate import (
     Estate,
@@ -8,6 +11,54 @@ from domains.real_estate.models.estate import (
     Property,
     PropertyImage,
 )
+
+
+SETTLEMENT_MANAGED_PROPERTY_STATUSES = {"reserved", "sold"}
+
+
+def _property_has_commercial_lock(prop):
+    from domains.real_estate.models.property_purchase import PropertyPurchase
+
+    return PropertyPurchase.objects.filter(
+        property=prop,
+        status__in=[
+            *PropertyPurchase.ACTIVE_STATUSES,
+            PropertyPurchase.STATUS_DEFAULTED,
+        ],
+    ).exists()
+
+
+def _validate_property_create_commercial_state(data):
+    if data.get("status", "available") in SETTLEMENT_MANAGED_PROPERTY_STATUSES:
+        raise ValidationError(
+            "Reserved and sold property states are managed by verified purchase payments."
+        )
+
+
+def _validate_property_update_commercial_state(prop, data):
+    if "status" in data and data["status"] is not None and data["status"] != prop.status:
+        target_status = data["status"]
+        if (
+            prop.status in SETTLEMENT_MANAGED_PROPERTY_STATUSES
+            or target_status in SETTLEMENT_MANAGED_PROPERTY_STATUSES
+        ):
+            raise ValidationError(
+                "Reserved and sold property states are managed by verified purchase payments."
+            )
+        if _property_has_commercial_lock(prop):
+            raise ValidationError(
+                "Property status is locked while its commercial purchase requires settlement or reconciliation."
+            )
+
+    if (
+        prop.estate_id
+        and "client_name" in data
+        and data["client_name"] is not None
+        and data["client_name"] != prop.client_name
+    ):
+        raise ValidationError(
+            "Estate-linked client/holder identity is managed by the purchase workflow."
+        )
 
 
 def _file_path(url):
@@ -87,6 +138,7 @@ def create_property(payload, *, estate=None):
             data["price"] = Decimal(estate.price_per_sqm) * Decimal(payload.plot_size)
         else:
             data["price"] = estate.price_per_sqm
+    _validate_property_create_commercial_state(data)
     prop = Property.objects.create(
         estate=estate,
         boundary=property_boundary,
@@ -97,7 +149,9 @@ def create_property(payload, *, estate=None):
     return prop
 
 
+@transaction.atomic
 def update_property(prop, payload):
+    prop = Property.objects.select_for_update().select_related("estate").get(pk=prop.pk)
     data = payload.dict(exclude_unset=True)
     if "boundary" in data:
         boundary = normalize_boundary(data.pop("boundary"))
@@ -108,6 +162,7 @@ def update_property(prop, payload):
         urls = data.pop("images")
         if urls is not None:
             replace_property_images(prop, urls)
+    _validate_property_update_commercial_state(prop, data)
     for field, value in data.items():
         if value is not None:
             setattr(prop, field, value)
@@ -116,12 +171,14 @@ def update_property(prop, payload):
     prop.refresh_from_db()
     return prop
 
-
 def delete_property(prop):
     prop.delete()
 
 
+@transaction.atomic
 def quick_update_plot(prop, data):
+    prop = Property.objects.select_for_update().select_related("estate").get(pk=prop.pk)
+    _validate_property_update_commercial_state(prop, data)
     for field, value in data.items():
         if value is not None:
             setattr(prop, field, value)

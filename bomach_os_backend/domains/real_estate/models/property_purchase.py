@@ -77,7 +77,13 @@ class PropertyPurchase(BaseModel):
         blank=True,
         validators=[MinValueValidator(1)],
     )
+    payment_window_hours = models.PositiveSmallIntegerField(
+        default=72,
+        validators=[MinValueValidator(1)],
+    )
     payment_window_expires_at = models.DateTimeField(null=True, blank=True)
+    approved_at = models.DateTimeField(null=True, blank=True)
+    next_payment_due_at = models.DateTimeField(null=True, blank=True)
     status = models.CharField(max_length=30, choices=STATUS_CHOICES, default=STATUS_AWAITING_APPROVAL)
     amount_paid = models.DecimalField(
         max_digits=15,

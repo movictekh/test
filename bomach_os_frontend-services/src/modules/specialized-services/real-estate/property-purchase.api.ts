@@ -1,9 +1,11 @@
+import { queryOptions } from '@tanstack/react-query'
 import { apiClient } from '@/shared/api/api-client'
 
 import type {
   CreatePropertyPurchaseInput,
   ManualPurchaseClientInput,
   PropertyPurchase,
+  PropertyPurchasePaymentRequest,
   PurchaseClient,
 } from './real-estate.types'
 
@@ -56,7 +58,10 @@ export function mapPropertyPurchase(value: unknown): PropertyPurchase {
     reservationThresholdPercent: nullableNumber(row.reservation_threshold_percent),
     reservationAmount: nullableNumber(row.reservation_amount),
     installmentMonths: nullableNumber(row.installment_months),
+    paymentWindowHours: numberValue(row.payment_window_hours),
     paymentWindowExpiresAt: text(row.payment_window_expires_at) || null,
+    approvedAt: text(row.approved_at) || null,
+    nextPaymentDueAt: text(row.next_payment_due_at) || null,
     status: text(row.status) as PropertyPurchase['status'],
     amountPaid: numberValue(row.amount_paid),
     reservedAt: text(row.reserved_at) || null,
@@ -68,6 +73,21 @@ export function mapPropertyPurchase(value: unknown): PropertyPurchase {
   }
 }
 
+export function mapPropertyPurchasePaymentRequest(value: unknown): PropertyPurchasePaymentRequest {
+  const row = asRecord(value)
+  return {
+    intentReference: text(row.intent_reference),
+    attemptReference: text(row.attempt_reference),
+    provider: text(row.provider),
+    providerReference: text(row.provider_reference),
+    amount: numberValue(row.amount),
+    currency: text(row.currency),
+    checkoutUrl: text(row.checkout_url),
+    expiresAt: text(row.expires_at) || null,
+    providerMetadata: asRecord(row.provider_metadata),
+  }
+}
+
 export const propertyPurchaseApi = {
   searchClients: async (query: string) =>
     (
@@ -75,6 +95,7 @@ export const propertyPurchaseApi = {
         `/property-purchases/clients/search?q=${encodeURIComponent(query.trim())}`,
       )
     ).map(mapPurchaseClient),
+
   createClient: async (input: ManualPurchaseClientInput) =>
     mapPurchaseClient(
       await apiClient.post<unknown>('/property-purchases/clients', {
@@ -86,6 +107,7 @@ export const propertyPurchaseApi = {
         send_portal_invite: input.sendPortalInvite,
       }),
     ),
+
   createPurchase: async (input: CreatePropertyPurchaseInput) =>
     mapPropertyPurchase(
       await apiClient.post<unknown>('/property-purchases/', {
@@ -96,4 +118,46 @@ export const propertyPurchaseApi = {
         installment_months: input.installmentMonths,
       }),
     ),
+
+  currentPurchase: async (propertyId: number) => {
+    const value = await apiClient.get<unknown>(`/property-purchases/property/${propertyId}/current`)
+    return value == null ? null : mapPropertyPurchase(value)
+  },
+
+  getPurchase: async (purchaseId: number) =>
+    mapPropertyPurchase(await apiClient.get<unknown>(`/property-purchases/${purchaseId}`)),
+
+  approvePurchase: async (purchaseId: number) =>
+    mapPropertyPurchase(
+      await apiClient.post<unknown>(`/property-purchases/${purchaseId}/approve`, {}),
+    ),
+
+  createPaymentRequest: async (purchaseId: number) =>
+    mapPropertyPurchasePaymentRequest(
+      await apiClient.post<unknown>(`/property-purchases/${purchaseId}/payment-request`, {}),
+    ),
+
+  cancelPurchase: async (purchaseId: number) =>
+    mapPropertyPurchase(
+      await apiClient.post<unknown>(`/property-purchases/${purchaseId}/cancel`, {}),
+    ),
+
+  expirePurchase: async (purchaseId: number) =>
+    mapPropertyPurchase(
+      await apiClient.post<unknown>(`/property-purchases/${purchaseId}/expire`, {}),
+    ),
+
+  defaultPurchase: async (purchaseId: number) =>
+    mapPropertyPurchase(
+      await apiClient.post<unknown>(`/property-purchases/${purchaseId}/default`, {}),
+    ),
+}
+
+export const propertyPurchaseQueries = {
+  current: (propertyId: number) =>
+    queryOptions({
+      queryKey: ['property-purchases', 'current', propertyId] as const,
+      queryFn: () => propertyPurchaseApi.currentPurchase(propertyId),
+      staleTime: 5_000,
+    }),
 }

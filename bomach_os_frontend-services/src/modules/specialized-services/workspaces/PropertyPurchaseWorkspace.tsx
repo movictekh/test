@@ -303,8 +303,8 @@ export function PropertyPurchaseWorkspace({
               <div>
                 <h3>Purchase terms</h3>
                 <p>
-                  Phase 3 records agreement terms only; verified payment later changes property
-                  state.
+                  Agreement terms are recorded before approval; only verified payment changes
+                  property state.
                 </p>
               </div>
             </div>
@@ -363,8 +363,8 @@ export function PropertyPurchaseWorkspace({
               </article>
             </div>
             <div className="commercial-notice">
-              New purchase status: <strong>Awaiting approval</strong>. No invoice, reservation,
-              ownership transfer or Finance posting occurs in Phase 3.
+              New purchase status: <strong>Awaiting approval</strong>. Approval makes it payable;
+              verified money later controls reservation, installment and ownership state.
             </div>
           </section>
         </div>
