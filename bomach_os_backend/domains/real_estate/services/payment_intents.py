@@ -18,6 +18,7 @@ from system.payments.services import (
     start_payment_attempt,
 )
 from user.models.employee import Employee
+from domains.real_estate.services.messaging import enqueue_payment_request_message
 
 CENT = Decimal("0.01")
 ZERO = Decimal("0.00")
@@ -278,4 +279,8 @@ def start_next_property_purchase_payment(*, purchase_id, provider_name, created_
         provider_name=provider_name,
         idempotency_key=f"{selected.reference}:{provider_name.strip().lower()}",
     )
+    purchase = PropertyPurchase.objects.select_related("client__user", "property").get(
+        id=purchase_id
+    )
+    enqueue_payment_request_message(purchase=purchase, intent=selected, attempt=attempt)
     return selected, attempt, created

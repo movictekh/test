@@ -11,6 +11,12 @@ from domains.real_estate.models.property_purchase import PropertyPurchase
 from domains.real_estate.payment_contract import PROPERTY_PURCHASE_PURPOSE_TYPE
 from system.payments.models import ConfirmedReceipt, PaymentIntent
 from system.payments.services import expire_payment_intent, money
+from domains.real_estate.services.messaging import (
+    enqueue_default_message,
+    enqueue_payment_receipt_message,
+    enqueue_reservation_message,
+    enqueue_sale_completion_message,
+)
 
 ZERO = Decimal("0.00")
 
@@ -174,6 +180,7 @@ def default_property_purchase(*, purchase_id, at=None):
 
     purchase.status = PropertyPurchase.STATUS_DEFAULTED
     purchase.save(update_fields=["status", "updated_at"])
+    enqueue_default_message(purchase=purchase)
     # Keep next_payment_due_at as the reconciliation deadline snapshot.
     # Money may already exist, so default never releases inventory for resale.
     prop.status = "hold"
@@ -243,6 +250,7 @@ def apply_property_purchase_receipt(receipt):
     if new_total > agreed:
         raise ValidationError("Receipt would overpay the agreed purchase price.")
 
+    previous_status = purchase.status
     purchase.amount_paid = new_total
     display_name = _holder(purchase)
 
@@ -315,4 +323,18 @@ def apply_property_purchase_receipt(receipt):
     receipt.save(
         update_fields=["application_reference", "applied_at", "updated_at"]
     )
+    enqueue_payment_receipt_message(purchase=purchase, receipt=receipt)
+    if (
+        purchase.status in {
+            PropertyPurchase.STATUS_RESERVED,
+            PropertyPurchase.STATUS_INSTALLMENT_ACTIVE,
+        }
+        and previous_status not in {
+            PropertyPurchase.STATUS_RESERVED,
+            PropertyPurchase.STATUS_INSTALLMENT_ACTIVE,
+        }
+    ):
+        enqueue_reservation_message(purchase=purchase, receipt=receipt)
+    if purchase.status == PropertyPurchase.STATUS_FULLY_PAID:
+        enqueue_sale_completion_message(purchase=purchase, receipt=receipt)
     return purchase

@@ -24,6 +24,7 @@ from .estate_property_invoice import (
 from .property_purchase import PropertyPurchase
 from .meeting import Meeting
 from .notification import Notification
+from .message_outbox import MessageOutbox
 from .central_payment import (
     ConfirmedReceipt,
     PaymentAttempt,
