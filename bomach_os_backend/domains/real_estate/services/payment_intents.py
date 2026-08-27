@@ -60,6 +60,8 @@ def create_property_purchase_payment_intent(
                 "property_id": purchase.property_id,
                 "client_id": purchase.client_id,
                 "mode": purchase.mode,
+                "customer_email": purchase.client.user.email,
+                "customer_name": purchase.client.user.get_full_name() or purchase.client.user.email,
             },
             expires_at=expiry,
             branch=_purchase_branch(purchase),

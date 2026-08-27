@@ -245,6 +245,7 @@ def start_payment_attempt(*, intent, provider_name, idempotency_key):
         description=locked_intent.description,
         metadata=dict(locked_intent.metadata or {}),
         idempotency_key=key,
+        expires_at=locked_intent.expires_at,
     )
     try:
         result = provider.create_attempt(request)
@@ -350,7 +351,7 @@ def record_verified_provider_event(
 
 def _receipt_matches_verified(receipt, verified):
     return (
-        receipt.provider_transaction_reference == verified.provider_reference
+        receipt.provider_transaction_reference == verified.transaction_reference
         and receipt.amount == money(verified.amount)
         and receipt.currency == verified.currency.upper()
     )
@@ -441,7 +442,7 @@ def confirm_verified_attempt(
             raise ValidationError(
                 "Verified transaction reference does not match the attempt."
             )
-        if verified.intent_reference != intent.reference:
+        if verified.intent_reference and verified.intent_reference != intent.reference:
             raise ValidationError("Verified payment does not match the payment intent.")
         if money(verified.amount) != intent.amount:
             raise ValidationError("Verified provider amount does not match the payment intent.")
@@ -463,7 +464,7 @@ def confirm_verified_attempt(
         else:
             duplicate_reference = ConfirmedReceipt.objects.filter(
                 provider=locked_attempt.provider,
-                provider_transaction_reference=verified.provider_reference,
+                provider_transaction_reference=verified.transaction_reference,
             ).first()
             if duplicate_reference:
                 if duplicate_reference.intent_id != intent.id:
@@ -484,7 +485,7 @@ def confirm_verified_attempt(
                     intent=intent,
                     attempt=locked_attempt,
                     provider=locked_attempt.provider,
-                    provider_transaction_reference=verified.provider_reference,
+                    provider_transaction_reference=verified.transaction_reference,
                     amount=intent.amount,
                     currency=intent.currency,
                     paid_at=verified.paid_at,
@@ -544,10 +545,11 @@ def verify_and_apply_provider_event(
     provider_name,
     payload,
     headers,
+    raw_body=None,
     confirmed_by=None,
 ):
     provider = get_provider(provider_name)
-    verified = provider.verify_event(payload=payload, headers=headers)
+    verified = provider.verify_event(payload=payload, headers=headers, raw_body=raw_body)
     event, _ = record_verified_provider_event(
         provider=provider.name,
         event_key=verified.event_key,

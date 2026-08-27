@@ -12,6 +12,10 @@ class PaymentProviderVerificationError(PaymentProviderError):
     """Raised when a provider event cannot be authenticated or verified."""
 
 
+class PaymentProviderIgnoredEvent(PaymentProviderError):
+    """A valid provider event outside this collection workflow."""
+
+
 @dataclass(frozen=True)
 class ProviderAttemptRequest:
     intent_reference: str
@@ -21,6 +25,7 @@ class ProviderAttemptRequest:
     description: str
     metadata: dict
     idempotency_key: str
+    expires_at: datetime | None = None
 
 
 @dataclass(frozen=True)
@@ -36,6 +41,7 @@ class VerifiedProviderPayment:
     event_key: str
     event_type: str
     provider_reference: str
+    transaction_reference: str
     intent_reference: str
     amount: Decimal
     currency: str
@@ -55,5 +61,6 @@ class PaymentProvider(Protocol):
         *,
         payload: dict,
         headers: Mapping[str, str],
+        raw_body: bytes | None = None,
     ) -> VerifiedProviderPayment:
         ...

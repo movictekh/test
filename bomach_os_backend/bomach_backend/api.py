@@ -117,6 +117,7 @@ from user.api.v1.event import events_api as events_router
 from user.api.v1.loan import loan_api as loan_router
 from domains.governance.api.v1.routers.meeting import meeting_api as meeting_router
 from system.notifications.api.v1 import notification_router
+from system.payments.api.v1 import payment_webhook_router
 from user.api.v1.others import orthers_api as orthers_router
 from domains.crm.api.v1.routers.partner import partner_api as partner_router
 from domains.governance.api.v1.routers.policy import policy_api as policy_router
@@ -190,6 +191,7 @@ api.add_router("/service-requests/", svc_service_requests_router)
 api.add_router("/partners/", partner_router)
 api.add_router("/target-reports", target_report_router)
 api.add_router("/notifications", notification_router)
+api.add_router("/payment-webhooks", payment_webhook_router)
 api.add_router("/command-center", command_center_router)
 api.add_router("/workflow-rules", workflow_rule_router)
 

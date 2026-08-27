@@ -1,6 +1,7 @@
 from .base import (
     PaymentProvider,
     PaymentProviderError,
+    PaymentProviderIgnoredEvent,
     PaymentProviderVerificationError,
     ProviderAttemptRequest,
     ProviderAttemptResult,
@@ -11,6 +12,7 @@ from .registry import clear_provider_registry, get_provider, register_provider
 __all__ = [
     "PaymentProvider",
     "PaymentProviderError",
+    "PaymentProviderIgnoredEvent",
     "PaymentProviderVerificationError",
     "ProviderAttemptRequest",
     "ProviderAttemptResult",

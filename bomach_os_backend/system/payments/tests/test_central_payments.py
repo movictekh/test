@@ -45,13 +45,14 @@ class FakeProvider:
             metadata={"request_seen": True},
         )
 
-    def verify_event(self, *, payload, headers):
+    def verify_event(self, *, payload, headers, raw_body=None):
         if headers.get("x-fake-signature") != "valid":
             raise PaymentProviderVerificationError("Invalid fake signature.")
         return VerifiedProviderPayment(
             event_key=str(payload["event_key"]),
             event_type=str(payload.get("event_type", "payment.success")),
             provider_reference=str(payload["provider_reference"]),
+            transaction_reference=str(payload.get("transaction_reference") or payload["provider_reference"]),
             intent_reference=str(payload["intent_reference"]),
             amount=Decimal(str(payload["amount"])),
             currency=str(payload["currency"]),
