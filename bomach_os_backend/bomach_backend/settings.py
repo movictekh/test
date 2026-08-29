@@ -281,13 +281,7 @@ DEFAULT_FROM_EMAIL = "noreply@benji.com"
 # Monnify Payment Gateway
 MONNIFY_API_KEY = config("MONNIFY_API_KEY", default="")
 MONNIFY_SECRET_KEY = config("MONNIFY_SECRET_KEY", default="")
-MONNIFY_CONTRACT_CODE = config("MONNIFY_CONTRACT_CODE", default="")
 MONNIFY_BASE_URL = config("MONNIFY_BASE_URL", default="https://api.monnify.com")
-MONNIFY_CONNECT_TIMEOUT = config("MONNIFY_CONNECT_TIMEOUT", default=5.0, cast=float)
-MONNIFY_RESPONSE_TIMEOUT = config("MONNIFY_RESPONSE_TIMEOUT", default=20.0, cast=float)
-MONNIFY_ALLOW_UNSIGNED_SANDBOX_WEBHOOKS = config(
-    "MONNIFY_ALLOW_UNSIGNED_SANDBOX_WEBHOOKS", default=False, cast=bool
-)
 
 
 CACHES = {

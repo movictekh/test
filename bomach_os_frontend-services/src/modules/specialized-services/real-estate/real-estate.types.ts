@@ -5,30 +5,11 @@ export type PropertyStatus = 'not-for-sale' | 'available' | 'reserved' | 'sold' 
 export type BrokerageVerificationStatus = 'pending' | 'verified' | 'inspection_due'
 export type BrokerageStatus = 'available' | 'sold' | 'off_market'
 export type BrokeragePropertyType = 'residential' | 'commercial' | 'land'
-export type PurchaseMode = 'full_payment' | 'reservation' | 'installment'
-export type PurchaseStatus =
-  | 'awaiting_approval'
-  | 'awaiting_payment'
-  | 'reserved'
-  | 'installment_active'
-  | 'fully_paid'
-  | 'cancelled'
-  | 'expired'
-  | 'defaulted'
 
 export interface Choice<Value extends string = string> {
   value: Value
   label: string
 }
-
-export type BoundaryCorner = 'nw' | 'ne' | 'se' | 'sw'
-
-export interface BoundaryCoordinate {
-  lat: number | null
-  lng: number | null
-}
-
-export type Boundary = Partial<Record<BoundaryCorner, BoundaryCoordinate | null>>
 
 export interface EstateDocument {
   id: number
@@ -43,11 +24,6 @@ export interface Estate {
   legalFee: number | null
   developmentFee: number | null
   receiptFee: number | null
-  reservationAllowed: boolean
-  reservationThresholdPercent: number | null
-  installmentAllowed: boolean
-  maxInstallmentMonths: number | null
-  reservationPaymentWindowHours: number
   estateName: string
   estateCode: string
   estateType: EstateType
@@ -59,9 +35,7 @@ export interface Estate {
   state: string
   cityTown: string
   preciseAddress: string
-  estateMapUrl: string
-  virtualTourUrl: string
-  boundary: Boundary
+  boundary: Array<{ lat: number; lng: number }>
   documents: EstateDocument[]
   hasCOfO: boolean
   hasDeedOfAssignment: boolean
@@ -150,9 +124,6 @@ export interface CreateEstateInput {
   state: string
   cityTown: string
   preciseAddress: string
-  boundary?: Boundary
-  estateMapUrl?: string
-  virtualTourUrl?: string
   hasCOfO: boolean
   hasDeedOfAssignment: boolean
   hasSurveyPlan: boolean
@@ -177,11 +148,6 @@ export interface CreateEstateInput {
   legalFee?: number | null
   developmentFee?: number | null
   receiptFee?: number | null
-  reservationAllowed: boolean
-  reservationThresholdPercent?: number | null
-  installmentAllowed: boolean
-  maxInstallmentMonths?: number | null
-  reservationPaymentWindowHours: number
   tags?: string[]
   documents?: string[]
 }
@@ -203,7 +169,6 @@ export interface Property {
   propertyTypeDisplay: string
   propertyName: string
   price: number
-  boundary: Boundary
   description: string
   status: PropertyStatus
   statusDisplay: string
@@ -246,8 +211,7 @@ export interface CreatePropertyInput {
   isOurProperty: boolean
   propertyType: PropertyType
   propertyName: string
-  price?: number | null
-  boundary?: Boundary
+  price: number
   description?: string
   status: PropertyStatus
   plotNumber?: number | null
@@ -272,74 +236,6 @@ export interface QuickUpdatePlotInput {
   clientName?: string
 }
 
-export interface PurchaseClient {
-  id: number
-  userId: number
-  fullName: string
-  email: string
-  phone: string
-  companyName: string
-}
-
-export interface ManualPurchaseClientInput {
-  firstName: string
-  lastName: string
-  email: string
-  phoneNumber: string
-  companyName: string
-  sendPortalInvite: boolean
-}
-
-export interface CreatePropertyPurchaseInput {
-  propertyId: number
-  clientId: number
-  mode: PurchaseMode
-  agreedPrice: number
-  installmentMonths: number | null
-}
-
-export interface PropertyPurchasePaymentRequest {
-  intentReference: string
-  attemptReference: string
-  provider: string
-  providerReference: string
-  amount: number
-  currency: string
-  checkoutUrl: string
-  expiresAt: string | null
-  providerMetadata: Record<string, unknown>
-}
-
-export interface PropertyPurchase {
-  id: number
-  propertyId: number
-  propertyName: string
-  estateId: number
-  estateName: string
-  clientId: number
-  clientUserId: number
-  clientName: string
-  clientEmail: string
-  invoiceId: number | null
-  mode: PurchaseMode
-  agreedPrice: number
-  reservationThresholdPercent: number | null
-  reservationAmount: number | null
-  installmentMonths: number | null
-  paymentWindowHours: number
-  paymentWindowExpiresAt: string | null
-  approvedAt: string | null
-  nextPaymentDueAt: string | null
-  status: PurchaseStatus
-  amountPaid: number
-  reservedAt: string | null
-  completedAt: string | null
-  cancelledAt: string | null
-  createdById: number
-  createdAt: string
-  updatedAt: string
-}
-
 export type BatchItemStatus = 'queued' | 'creating' | 'created' | 'failed'
 
 export interface PropertyBatchItem {
@@ -356,7 +252,6 @@ export interface BrokerageListing {
   title: string
   description: string
   location: string
-  boundary: Boundary
   price: number
   propertyType: BrokeragePropertyType
   ownerName: string
@@ -404,7 +299,6 @@ export interface CreateBrokerageInput {
   title: string
   description?: string
   location: string
-  boundary?: Boundary
   price: number
   propertyType: BrokeragePropertyType
   ownerName: string
@@ -424,12 +318,6 @@ export const propertyStatuses: Array<Choice<PropertyStatus>> = [
   { value: 'available', label: 'Available' },
   { value: 'reserved', label: 'Reserved' },
   { value: 'sold', label: 'Sold' },
-  { value: 'hold', label: 'Hold' },
-  { value: 'not-for-sale', label: 'Not for Sale' },
-]
-
-export const operatorPropertyStatuses: Array<Choice<PropertyStatus>> = [
-  { value: 'available', label: 'Available' },
   { value: 'hold', label: 'Hold' },
   { value: 'not-for-sale', label: 'Not for Sale' },
 ]

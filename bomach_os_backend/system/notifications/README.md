@@ -48,17 +48,3 @@ introducing `bulk_create`.
 
 Email and Announcement remain separate capabilities and are not folded into
 the Notification model.
-
-## Transactional messaging outbox
-
-Payment and Real Estate lifecycle messages use `MessageOutbox`. Business
-transactions enqueue durable rows only; they never perform email/network I/O.
-`process_message_outbox` claims rows in short transactions, delivers after the
-claim transaction closes, records attempts, and schedules retryable failures.
-
-The outbox model is canonically sourced under `system.notifications` while
-retaining Django identity/migration ownership in the historical `user` app.
-
-Lifecycle producers cover payment requests, verified-payment receipts,
-reservation confirmation, sale completion, installment reminders, and
-installment-default notices.

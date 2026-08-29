@@ -1,5 +1,3 @@
-import { normalizeBoundary } from './real-estate.boundary'
-
 import type {
   BrokerageListing,
   BrokerageStats,
@@ -46,11 +44,6 @@ export function mapEstate(payload: unknown): Estate {
     legalFee: nnum(v.legal_fee),
     developmentFee: nnum(v.development_fee),
     receiptFee: nnum(v.receipt_fee),
-    reservationAllowed: bool(v.reservation_allowed),
-    reservationThresholdPercent: nnum(v.reservation_threshold_percent),
-    installmentAllowed: bool(v.installment_allowed),
-    maxInstallmentMonths: nnum(v.max_installment_months),
-    reservationPaymentWindowHours: num(v.reservation_payment_window_hours, 72),
     estateName: str(v.estate_name),
     estateCode: str(v.estate_code),
     estateType: str(v.estate_type, 'land') as Estate['estateType'],
@@ -62,9 +55,9 @@ export function mapEstate(payload: unknown): Estate {
     state: str(v.state),
     cityTown: str(v.city_town),
     preciseAddress: str(v.precise_address),
-    estateMapUrl: str(v.estate_map_url),
-    virtualTourUrl: str(v.virtual_tour_url),
-    boundary: normalizeBoundary(v.boundary),
+    boundary: Array.isArray(v.boundary)
+      ? v.boundary.map((x) => row(x)).map((x) => ({ lat: num(x.lat), lng: num(x.lng) }))
+      : [],
     documents: Array.isArray(v.documents) ? v.documents.map(mapDocument) : [],
     hasCOfO: bool(v.has_c_of_o),
     hasDeedOfAssignment: bool(v.has_deed_of_assignment),
@@ -169,7 +162,6 @@ export function mapProperty(payload: unknown): Property {
     propertyTypeDisplay: str(v.property_type_display),
     propertyName: str(v.property_name),
     price: num(v.price),
-    boundary: normalizeBoundary(v.boundary),
     description: str(v.description),
     status: str(v.status, 'available') as Property['status'],
     statusDisplay: str(v.status_display),
@@ -217,7 +209,6 @@ export function mapBrokerageListing(payload: unknown): BrokerageListing {
     title: str(v.title),
     description: str(v.description),
     location: str(v.location),
-    boundary: normalizeBoundary(v.boundary),
     price: num(v.price),
     propertyType: str(v.property_type, 'land') as BrokerageListing['propertyType'],
     ownerName: str(v.owner_name),

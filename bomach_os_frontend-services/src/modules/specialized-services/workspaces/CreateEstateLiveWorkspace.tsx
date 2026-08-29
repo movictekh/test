@@ -1,76 +1,14 @@
 import { getAllStates, getCities, getLocalGovernments } from '@eh1z/nigerian-locations'
-import {
-  IconExternalLink,
-  IconFileTypePdf,
-  IconPhoto,
-  IconPlayerPlay,
-  IconRefresh,
-  IconTrash,
-  IconUpload,
-  IconWorldWww,
-  IconX,
-} from '@tabler/icons-react'
+import { useState } from 'react'
+import { IconX } from '@tabler/icons-react'
 import { useForm } from '@tanstack/react-form'
-import { useEffect, useMemo, useRef, useState } from 'react'
 
-import { presentError, type UserFacingError } from '@/shared/errors'
-
-import { realEstateApi } from '../real-estate/real-estate.api'
 import {
   estateStatuses,
   estateTypes,
   type CreateEstateInput,
 } from '../real-estate/real-estate.types'
 import { validateEstate } from '../real-estate/real-estate.validation'
-import { BoundaryFields } from './BoundaryFields'
-
-type EstateWorkspaceValues = Omit<CreateEstateInput, 'tags'> & { tags: string }
-
-const backendEstateFieldMap: Record<string, string> = {
-  estate_name: 'estateName',
-  estate_code: 'estateCode',
-  developer_company_name: 'developerCompanyName',
-  estate_description: 'estateDescription',
-  state: 'state',
-  city_town: 'cityTown',
-  precise_address: 'preciseAddress',
-  price_per_sqm: 'pricePerSqm',
-  min_price_other_properties: 'minPriceOtherProperties',
-  max_price_other_properties: 'maxPriceOtherProperties',
-  estate_status: 'estateStatus',
-  estate_map_url: 'estateMapUrl',
-  virtual_tour_url: 'virtualTourUrl',
-  boundary: 'boundary',
-  reservation_allowed: 'reservationAllowed',
-  reservation_threshold_percent: 'reservationThresholdPercent',
-  installment_allowed: 'installmentAllowed',
-  max_installment_months: 'maxInstallmentMonths',
-  reservation_payment_window_hours: 'reservationPaymentWindowHours',
-  detail: 'form',
-  non_field_errors: 'form',
-}
-
-function inferBoundaryFieldKey(message: string) {
-  const normalized = message.trim().toLowerCase()
-  const cornerMatch = normalized.match(/\b(nw|ne|se|sw)\b/)
-  if (!cornerMatch) return 'boundary'
-  const corner = cornerMatch[1]
-  if (normalized.includes('latitude')) return `boundary.${corner}.lat`
-  if (normalized.includes('longitude')) return `boundary.${corner}.lng`
-  return 'boundary'
-}
-
-function firstFocusableField(nextFieldErrors: Record<string, string>, fallbackMessage: string) {
-  const firstErrorKey = Object.keys(nextFieldErrors)[0]
-  if (firstErrorKey) return firstErrorKey
-  if (fallbackMessage.toLowerCase().includes('latitude'))
-    return inferBoundaryFieldKey(fallbackMessage)
-  if (fallbackMessage.toLowerCase().includes('longitude'))
-    return inferBoundaryFieldKey(fallbackMessage)
-  if (fallbackMessage.toLowerCase().includes('boundary'))
-    return inferBoundaryFieldKey(fallbackMessage)
-  return ''
-}
 
 function parseNonNegativeNumber(value: string) {
   if (value.trim() === '') return 0
@@ -83,165 +21,58 @@ function numberInputValue(value: number | null | undefined) {
   return !value ? '' : String(value)
 }
 
-function uploadedAssetKind(url: string): 'pdf' | 'image' | 'tour' {
-  const normalized = (() => {
-    try {
-      return new URL(url, window.location.origin).pathname.toLowerCase()
-    } catch {
-      return url.toLowerCase()
-    }
-  })()
-
-  if (normalized.endsWith('.pdf')) return 'pdf'
-  if (/\.(png|jpg|jpeg|webp|gif|svg)$/i.test(normalized)) return 'image'
-  return 'tour'
-}
-
-function defaultEstateInput(): EstateWorkspaceValues {
-  return {
-    isOurEstate: true,
-    estateName: '',
-    estateCode: '',
-    estateType: 'residential',
-    developerCompanyName: 'Bomach',
-    estateDescription: '',
-    country: 'Nigeria',
-    countryCode: 'NGA',
-    state: '',
-    cityTown: '',
-    preciseAddress: '',
-    boundary: {},
-    estateMapUrl: '',
-    virtualTourUrl: '',
-    hasCOfO: false,
-    hasDeedOfAssignment: false,
-    hasSurveyPlan: false,
-    zoningInformation: '',
-    hasPlanningPermit: false,
-    hasBuildingApproval: false,
-    hasEnvironmentalClearance: false,
-    pricePerSqm: 0,
-    availablePlotSizes: '',
-    minPriceOtherProperties: 0,
-    maxPriceOtherProperties: 0,
-    estateStatus: 'available',
-    totalArea: 0,
-    areaUnit: 'sqm',
-    hasRoads: false,
-    hasElectricity: false,
-    hasWater: false,
-    hasFencing: false,
-    hasSecurity: false,
-    hasDrainage: false,
-    hasRecreation: false,
-    legalFee: 0,
-    developmentFee: 0,
-    receiptFee: 0,
-    reservationAllowed: false,
-    reservationThresholdPercent: null,
-    installmentAllowed: false,
-    maxInstallmentMonths: null,
-    reservationPaymentWindowHours: 72,
-    tags: '',
-    documents: [],
-  }
-}
-
-function splitStoredCityTown(value: string) {
-  const parts = value
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean)
-
-  if (parts.length <= 1) {
-    return { cityTown: value.trim(), lga: '' }
-  }
-
-  return {
-    cityTown: parts.slice(0, -1).join(', '),
-    lga: parts.at(-1) ?? '',
-  }
-}
-
-function toWorkspaceInput(initialValue?: CreateEstateInput): EstateWorkspaceValues {
-  if (!initialValue) return defaultEstateInput()
-
-  const parsedLocation = splitStoredCityTown(initialValue.cityTown)
-
-  return {
-    ...defaultEstateInput(),
-    ...initialValue,
-    cityTown: parsedLocation.cityTown,
-    tags: Array.isArray(initialValue.tags) ? initialValue.tags.join(', ') : '',
-    documents: initialValue.documents ?? [],
-  }
-}
-
-function buildEstateFieldErrors(input: CreateEstateInput, options: { selectedLga: string }) {
-  const errors: Record<string, string> = {}
-  if (!input.estateName.trim()) errors.estateName = 'Estate name is required.'
-  if (!input.estateCode.trim()) errors.estateCode = 'Estate code is required.'
-  if (!input.developerCompanyName.trim())
-    errors.developerCompanyName = 'Developer / company name is required.'
-  if (!input.estateDescription.trim()) errors.estateDescription = 'Estate description is required.'
-  if (!input.state.trim()) errors.state = 'State is required.'
-  if (!options.selectedLga.trim()) errors.selectedLga = 'Local Government Area is required.'
-  if (!input.cityTown.trim()) errors.cityTown = 'City / town is required.'
-  if (!input.preciseAddress.trim()) errors.preciseAddress = 'Precise address is required.'
-  if (!Number.isFinite(input.pricePerSqm) || input.pricePerSqm < 0)
-    errors.pricePerSqm = 'Price per square metre must be zero or greater.'
-  if (
-    input.minPriceOtherProperties != null &&
-    input.maxPriceOtherProperties != null &&
-    input.minPriceOtherProperties > input.maxPriceOtherProperties
-  ) {
-    errors.minPriceOtherProperties = 'Minimum property price cannot exceed maximum property price.'
-    errors.maxPriceOtherProperties =
-      'Maximum property price must be greater than or equal to the minimum.'
-  }
-  if (input.virtualTourUrl?.trim()) {
-    try {
-      new URL(input.virtualTourUrl)
-    } catch {
-      errors.virtualTourUrl = 'Virtual tour link must be a valid URL.'
-    }
-  }
-  return errors
-}
-
 export function CreateEstateLiveWorkspace({
-  mode = 'create',
   saving,
-  initialValue,
-  submitError,
   onClose,
   onSubmit,
 }: {
-  mode?: 'create' | 'edit'
   saving: boolean
-  initialValue?: CreateEstateInput
-  submitError?: UserFacingError | null
   onClose: () => void
   onSubmit: (i: CreateEstateInput) => void
 }) {
-  const initial = useMemo(() => toWorkspaceInput(initialValue), [initialValue])
   const [error, setError] = useState('')
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
-  const [mapUploadError, setMapUploadError] = useState('')
-  const [mapUploading, setMapUploading] = useState(false)
-  const [tourUploadError, setTourUploadError] = useState('')
-  const [tourUploading, setTourUploading] = useState(false)
-  const fieldRefs = useRef<Record<string, HTMLElement | null>>({})
-  const modalBodyRef = useRef<HTMLDivElement | null>(null)
-  const [selectedLga, setSelectedLga] = useState(
-    splitStoredCityTown(initialValue?.cityTown ?? '').lga,
-  )
-  const [fallbackCityTown, setFallbackCityTown] = useState(
-    splitStoredCityTown(initialValue?.cityTown ?? '').cityTown,
-  )
+  const [selectedLga, setSelectedLga] = useState('')
+  const [fallbackCityTown, setFallbackCityTown] = useState('')
   const stateOptions = getAllStates()
   const form = useForm({
-    defaultValues: initial,
+    defaultValues: {
+      isOurEstate: true,
+      estateName: '',
+      estateCode: '',
+      estateType: 'residential' as const,
+      developerCompanyName: 'Bomach',
+      estateDescription: '',
+      country: 'Nigeria',
+      countryCode: 'NGA',
+      state: '',
+      cityTown: '',
+      preciseAddress: '',
+      hasCOfO: false,
+      hasDeedOfAssignment: false,
+      hasSurveyPlan: false,
+      zoningInformation: '',
+      hasPlanningPermit: false,
+      hasBuildingApproval: false,
+      hasEnvironmentalClearance: false,
+      pricePerSqm: 0,
+      availablePlotSizes: '',
+      minPriceOtherProperties: 0,
+      maxPriceOtherProperties: 0,
+      estateStatus: 'available' as const,
+      totalArea: 0,
+      areaUnit: 'sqm',
+      hasRoads: false,
+      hasElectricity: false,
+      hasWater: false,
+      hasFencing: false,
+      hasSecurity: false,
+      hasDrainage: false,
+      hasRecreation: false,
+      legalFee: 0,
+      developmentFee: 0,
+      receiptFee: 0,
+      tags: '',
+    },
     onSubmit: ({ value }) => {
       const cityTownValue = value.cityTown.trim() || fallbackCityTown.trim()
       const input: CreateEstateInput = {
@@ -249,142 +80,30 @@ export function CreateEstateLiveWorkspace({
         country: 'Nigeria',
         countryCode: 'NGA',
         cityTown: cityTownValue ? `${cityTownValue}, ${selectedLga}` : selectedLga,
-        boundary: value.boundary ?? {},
-        estateMapUrl: value.estateMapUrl?.trim() ?? '',
-        virtualTourUrl: value.virtualTourUrl?.trim() ?? '',
         minPriceOtherProperties: value.minPriceOtherProperties || null,
         maxPriceOtherProperties: value.maxPriceOtherProperties || null,
         totalArea: value.totalArea || null,
         legalFee: value.legalFee || null,
         developmentFee: value.developmentFee || null,
         receiptFee: value.receiptFee || null,
-        reservationThresholdPercent: value.reservationAllowed
-          ? (value.reservationThresholdPercent ?? null)
-          : null,
-        maxInstallmentMonths: value.installmentAllowed
-          ? (value.maxInstallmentMonths ?? null)
-          : null,
         tags: value.tags
           .split(',')
           .map((item) => item.trim())
           .filter(Boolean),
       }
-      const nextFieldErrors = buildEstateFieldErrors(input, { selectedLga })
       const nextError = validateEstate(input)
-      if (nextError) {
-        const boundaryFieldKey = inferBoundaryFieldKey(nextError)
-        if (boundaryFieldKey.startsWith('boundary')) {
-          nextFieldErrors[boundaryFieldKey] = nextError
-        }
-      }
-      setFieldErrors(nextFieldErrors)
       setError(nextError)
-      const firstErrorKey = firstFocusableField(nextFieldErrors, nextError)
-      if (firstErrorKey) {
-        const element = fieldRefs.current[firstErrorKey]
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' })
-          window.setTimeout(() => {
-            if ('focus' in element && typeof element.focus === 'function') element.focus()
-          }, 30)
-        } else if (modalBodyRef.current) {
-          modalBodyRef.current.scrollTo({ top: 0, behavior: 'smooth' })
-        }
+      if (!selectedLga.trim()) {
+        setError('Local Government Area is required.')
         return
       }
-      onSubmit(input)
+      if (!cityTownValue.trim()) {
+        setError('City / town is required.')
+        return
+      }
+      if (!nextError) onSubmit(input)
     },
   })
-
-  const title = mode === 'edit' ? 'Edit Estate' : 'Add Estate'
-  const subtitle =
-    mode === 'edit'
-      ? 'Update the estate record, map file and virtual-tour link without changing the rest of the inventory flow.'
-      : 'Create the estate record first, then add its property inventory in a second step.'
-
-  const uploadMap = async (file: File | null) => {
-    if (!file) return
-    setMapUploadError('')
-    setMapUploading(true)
-
-    try {
-      const url = await realEstateApi.uploadEstateAsset(file)
-      form.setFieldValue('estateMapUrl', url)
-      setFieldErrors((current) => {
-        const next = { ...current }
-        delete next.estateMapUrl
-        return next
-      })
-    } catch (uploadError) {
-      setMapUploadError(presentError(uploadError, 'form-submit').message)
-    } finally {
-      setMapUploading(false)
-    }
-  }
-
-  const uploadTour = async (file: File | null) => {
-    if (!file) return
-    setTourUploadError('')
-    setTourUploading(true)
-
-    try {
-      const url = await realEstateApi.uploadEstateAsset(file)
-      form.setFieldValue('virtualTourUrl', url)
-      setFieldErrors((current) => {
-        const next = { ...current }
-        delete next.virtualTourUrl
-        return next
-      })
-    } catch (uploadError) {
-      setTourUploadError(presentError(uploadError, 'form-submit').message)
-    } finally {
-      setTourUploading(false)
-    }
-  }
-
-  useEffect(() => {
-    if (!submitError) return
-
-    const nextFieldErrors: Record<string, string> = {}
-    let nextFormError = submitError.message
-
-    Object.entries(submitError.fieldErrors ?? {}).forEach(([field, message]) => {
-      const mappedField = backendEstateFieldMap[field] ?? field
-      if (mappedField === 'form') {
-        nextFormError = message
-        return
-      }
-      nextFieldErrors[mappedField] = message
-    })
-
-    if (!Object.keys(nextFieldErrors).length && nextFormError) {
-      const boundaryFieldKey = inferBoundaryFieldKey(nextFormError)
-      if (boundaryFieldKey.startsWith('boundary')) {
-        nextFieldErrors[boundaryFieldKey] = nextFormError
-      }
-    }
-
-    const syncHandle = window.setTimeout(() => {
-      setFieldErrors(nextFieldErrors)
-      setError(nextFormError)
-
-      const firstErrorKey = firstFocusableField(nextFieldErrors, nextFormError)
-      if (!firstErrorKey) return
-      const element = fieldRefs.current[firstErrorKey]
-      if (!element) {
-        if (modalBodyRef.current) {
-          modalBodyRef.current.scrollTo({ top: 0, behavior: 'smooth' })
-        }
-        return
-      }
-      element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' })
-      window.setTimeout(() => {
-        if ('focus' in element && typeof element.focus === 'function') element.focus()
-      }, 30)
-    }, 0)
-
-    return () => window.clearTimeout(syncHandle)
-  }, [submitError])
 
   return (
     <div className="commercial-modal-backdrop" role="presentation" onMouseDown={onClose}>
@@ -392,7 +111,7 @@ export function CreateEstateLiveWorkspace({
         className="commercial-modal commercial-modal--xl specialized-real-estate-modal"
         role="dialog"
         aria-modal="true"
-        aria-label={title}
+        aria-label="Add Estate"
         onMouseDown={(event) => event.stopPropagation()}
         onSubmit={(event) => {
           event.preventDefault()
@@ -401,8 +120,8 @@ export function CreateEstateLiveWorkspace({
       >
         <header className="commercial-modal-header">
           <div>
-            <h2>{title}</h2>
-            <p>{subtitle}</p>
+            <h2>Add Estate</h2>
+            <p>Create the estate record first, then add its property inventory in a second step.</p>
           </div>
           <button
             type="button"
@@ -414,7 +133,7 @@ export function CreateEstateLiveWorkspace({
           </button>
         </header>
 
-        <div className="commercial-modal-body" ref={modalBodyRef}>
+        <div className="commercial-modal-body">
           {error ? <div className="commercial-notice commercial-notice-red">{error}</div> : null}
 
           <section className="commercial-form-section">
@@ -434,22 +153,9 @@ export function CreateEstateLiveWorkspace({
                     </span>
                     <input
                       autoFocus
-                      ref={(node) => {
-                        fieldRefs.current.estateName = node
-                      }}
                       value={field.state.value}
-                      onChange={(event) => {
-                        field.handleChange(event.target.value)
-                        setFieldErrors((current) => {
-                          const next = { ...current }
-                          delete next.estateName
-                          return next
-                        })
-                      }}
+                      onChange={(event) => field.handleChange(event.target.value)}
                     />
-                    {fieldErrors.estateName ? (
-                      <small className="commercial-field-error">{fieldErrors.estateName}</small>
-                    ) : null}
                   </label>
                 )}
               </form.Field>
@@ -460,23 +166,10 @@ export function CreateEstateLiveWorkspace({
                       Estate code <em>*</em>
                     </span>
                     <input
-                      ref={(node) => {
-                        fieldRefs.current.estateCode = node
-                      }}
                       value={field.state.value}
-                      onChange={(event) => {
-                        field.handleChange(event.target.value)
-                        setFieldErrors((current) => {
-                          const next = { ...current }
-                          delete next.estateCode
-                          return next
-                        })
-                      }}
+                      onChange={(event) => field.handleChange(event.target.value)}
                       placeholder="EST-001"
                     />
-                    {fieldErrors.estateCode ? (
-                      <small className="commercial-field-error">{fieldErrors.estateCode}</small>
-                    ) : null}
                   </label>
                 )}
               </form.Field>
@@ -525,24 +218,9 @@ export function CreateEstateLiveWorkspace({
                       Developer / company <em>*</em>
                     </span>
                     <input
-                      ref={(node) => {
-                        fieldRefs.current.developerCompanyName = node
-                      }}
                       value={field.state.value}
-                      onChange={(event) => {
-                        field.handleChange(event.target.value)
-                        setFieldErrors((current) => {
-                          const next = { ...current }
-                          delete next.developerCompanyName
-                          return next
-                        })
-                      }}
+                      onChange={(event) => field.handleChange(event.target.value)}
                     />
-                    {fieldErrors.developerCompanyName ? (
-                      <small className="commercial-field-error">
-                        {fieldErrors.developerCompanyName}
-                      </small>
-                    ) : null}
                   </label>
                 )}
               </form.Field>
@@ -550,7 +228,7 @@ export function CreateEstateLiveWorkspace({
                 {(field) => (
                   <label className="commercial-field">
                     <span>
-                      unit_price_per_sqm <em>*</em>
+                      Price per sqm <em>*</em>
                     </span>
                     <input
                       className="commercial-number-input"
@@ -558,22 +236,11 @@ export function CreateEstateLiveWorkspace({
                       min={0}
                       step="any"
                       inputMode="decimal"
-                      ref={(node) => {
-                        fieldRefs.current.pricePerSqm = node
-                      }}
                       value={numberInputValue(field.state.value)}
-                      onChange={(event) => {
+                      onChange={(event) =>
                         field.handleChange(parseNonNegativeNumber(event.target.value))
-                        setFieldErrors((current) => {
-                          const next = { ...current }
-                          delete next.pricePerSqm
-                          return next
-                        })
-                      }}
+                      }
                     />
-                    {fieldErrors.pricePerSqm ? (
-                      <small className="commercial-field-error">{fieldErrors.pricePerSqm}</small>
-                    ) : null}
                   </label>
                 )}
               </form.Field>
@@ -584,25 +251,9 @@ export function CreateEstateLiveWorkspace({
                       Description <em>*</em>
                     </span>
                     <textarea
-                      ref={(node) => {
-                        fieldRefs.current.estateDescription = node
-                      }}
-                      rows={5}
                       value={field.state.value}
-                      onChange={(event) => {
-                        field.handleChange(event.target.value)
-                        setFieldErrors((current) => {
-                          const next = { ...current }
-                          delete next.estateDescription
-                          return next
-                        })
-                      }}
+                      onChange={(event) => field.handleChange(event.target.value)}
                     />
-                    {fieldErrors.estateDescription ? (
-                      <small className="commercial-field-error">
-                        {fieldErrors.estateDescription}
-                      </small>
-                    ) : null}
                   </label>
                 )}
               </form.Field>
@@ -635,9 +286,6 @@ export function CreateEstateLiveWorkspace({
                           State <em>*</em>
                         </span>
                         <select
-                          ref={(node) => {
-                            fieldRefs.current.state = node
-                          }}
                           value={field.state.value}
                           onChange={(event) => {
                             const nextState = event.target.value
@@ -645,13 +293,6 @@ export function CreateEstateLiveWorkspace({
                             setSelectedLga('')
                             setFallbackCityTown('')
                             form.setFieldValue('cityTown', '')
-                            setFieldErrors((current) => {
-                              const next = { ...current }
-                              delete next.state
-                              delete next.selectedLga
-                              delete next.cityTown
-                              return next
-                            })
                           }}
                         >
                           <option value="">Select state</option>
@@ -661,9 +302,6 @@ export function CreateEstateLiveWorkspace({
                             </option>
                           ))}
                         </select>
-                        {fieldErrors.state ? (
-                          <small className="commercial-field-error">{fieldErrors.state}</small>
-                        ) : null}
                       </label>
 
                       <label className="commercial-field">
@@ -671,21 +309,12 @@ export function CreateEstateLiveWorkspace({
                           LGA <em>*</em>
                         </span>
                         <select
-                          ref={(node) => {
-                            fieldRefs.current.selectedLga = node
-                          }}
                           value={selectedLga}
                           disabled={!field.state.value}
                           onChange={(event) => {
                             setSelectedLga(event.target.value)
                             setFallbackCityTown('')
                             form.setFieldValue('cityTown', '')
-                            setFieldErrors((current) => {
-                              const next = { ...current }
-                              delete next.selectedLga
-                              delete next.cityTown
-                              return next
-                            })
                           }}
                         >
                           <option value="">Select LGA</option>
@@ -695,11 +324,6 @@ export function CreateEstateLiveWorkspace({
                             </option>
                           ))}
                         </select>
-                        {fieldErrors.selectedLga ? (
-                          <small className="commercial-field-error">
-                            {fieldErrors.selectedLga}
-                          </small>
-                        ) : null}
                       </label>
 
                       <form.Field name="cityTown">
@@ -710,38 +334,20 @@ export function CreateEstateLiveWorkspace({
                             </span>
                             {useCityFallback ? (
                               <input
-                                ref={(node) => {
-                                  fieldRefs.current.cityTown = node
-                                }}
                                 value={fallbackCityTown}
                                 disabled={citySelectionDisabled}
                                 onChange={(event) => {
                                   const nextValue = event.target.value
                                   setFallbackCityTown(nextValue)
                                   cityField.handleChange(nextValue)
-                                  setFieldErrors((current) => {
-                                    const next = { ...current }
-                                    delete next.cityTown
-                                    return next
-                                  })
                                 }}
                                 placeholder="Enter city or town"
                               />
                             ) : (
                               <select
-                                ref={(node) => {
-                                  fieldRefs.current.cityTown = node
-                                }}
                                 value={cityField.state.value}
                                 disabled={citySelectionDisabled}
-                                onChange={(event) => {
-                                  cityField.handleChange(event.target.value)
-                                  setFieldErrors((current) => {
-                                    const next = { ...current }
-                                    delete next.cityTown
-                                    return next
-                                  })
-                                }}
+                                onChange={(event) => cityField.handleChange(event.target.value)}
                               >
                                 <option value="">Select city / town</option>
                                 {cityOptions.map((city) => (
@@ -751,11 +357,6 @@ export function CreateEstateLiveWorkspace({
                                 ))}
                               </select>
                             )}
-                            {fieldErrors.cityTown ? (
-                              <small className="commercial-field-error">
-                                {fieldErrors.cityTown}
-                              </small>
-                            ) : null}
                           </label>
                         )}
                       </form.Field>
@@ -770,42 +371,10 @@ export function CreateEstateLiveWorkspace({
                       Precise address <em>*</em>
                     </span>
                     <input
-                      ref={(node) => {
-                        fieldRefs.current.preciseAddress = node
-                      }}
                       value={field.state.value}
-                      onChange={(event) => {
-                        field.handleChange(event.target.value)
-                        setFieldErrors((current) => {
-                          const next = { ...current }
-                          delete next.preciseAddress
-                          return next
-                        })
-                      }}
+                      onChange={(event) => field.handleChange(event.target.value)}
                     />
-                    {fieldErrors.preciseAddress ? (
-                      <small className="commercial-field-error">{fieldErrors.preciseAddress}</small>
-                    ) : null}
                   </label>
-                )}
-              </form.Field>
-              <form.Field name="boundary">
-                {(field) => (
-                  <BoundaryFields
-                    value={field.state.value}
-                    onChange={(boundary) => field.handleChange(boundary)}
-                    fieldErrors={fieldErrors}
-                    fieldRefs={fieldRefs}
-                    onClearError={(fieldKey) =>
-                      setFieldErrors((current) => {
-                        const next = { ...current }
-                        delete next[fieldKey]
-                        return next
-                      })
-                    }
-                    title="Estate boundary"
-                    description="Optional. Add any available NW, NE, SE or SW corners. The map center is calculated from the valid corners you provide."
-                  />
                 )}
               </form.Field>
               <form.Field name="availablePlotSizes">
@@ -813,9 +382,6 @@ export function CreateEstateLiveWorkspace({
                   <label className="commercial-field">
                     <span>Available plot sizes</span>
                     <input
-                      ref={(node) => {
-                        fieldRefs.current.minPriceOtherProperties = node
-                      }}
                       value={field.state.value}
                       onChange={(event) => field.handleChange(event.target.value)}
                       placeholder="500, 600, 1000"
@@ -851,427 +417,6 @@ export function CreateEstateLiveWorkspace({
                       placeholder="premium, gated, phase-1"
                     />
                   </label>
-                )}
-              </form.Field>
-            </div>
-          </section>
-
-          <section className="commercial-form-section">
-            <div className="commercial-form-section-heading">
-              <div>
-                <h3>Sales and payment policy</h3>
-                <p>Configure reservation and installment rules for properties in this estate.</p>
-              </div>
-            </div>
-
-            <div className="commercial-form-grid">
-              <form.Field name="reservationAllowed">
-                {(field) => (
-                  <label className="commercial-check commercial-form-span">
-                    <input
-                      type="checkbox"
-                      checked={field.state.value}
-                      onChange={(event) => {
-                        const checked = event.target.checked
-                        field.handleChange(checked)
-                        if (!checked) form.setFieldValue('reservationThresholdPercent', null)
-                      }}
-                    />
-                    <span>Allow property reservation in this estate</span>
-                  </label>
-                )}
-              </form.Field>
-
-              <form.Subscribe selector={(state) => state.values.reservationAllowed}>
-                {(allowed) =>
-                  allowed ? (
-                    <>
-                      <form.Field name="reservationThresholdPercent">
-                        {(field) => (
-                          <label className="commercial-field">
-                            <span>
-                              Reservation down payment (%) <em>*</em>
-                            </span>
-                            <input
-                              className="commercial-number-input"
-                              type="number"
-                              min={0.01}
-                              max={100}
-                              step="0.01"
-                              inputMode="decimal"
-                              ref={(node) => {
-                                fieldRefs.current.reservationThresholdPercent = node
-                              }}
-                              value={field.state.value ?? ''}
-                              onChange={(event) => {
-                                field.handleChange(
-                                  event.target.value === '' ? null : Number(event.target.value),
-                                )
-                                setFieldErrors((current) => {
-                                  const next = { ...current }
-                                  delete next.reservationThresholdPercent
-                                  return next
-                                })
-                              }}
-                            />
-                            <small>
-                              Verified cumulative payment must reach this percentage of the final
-                              purchase total before the property can become reserved.
-                            </small>
-                            {fieldErrors.reservationThresholdPercent ? (
-                              <small className="commercial-field-error">
-                                {fieldErrors.reservationThresholdPercent}
-                              </small>
-                            ) : null}
-                          </label>
-                        )}
-                      </form.Field>
-
-                      <form.Field name="reservationPaymentWindowHours">
-                        {(field) => (
-                          <label className="commercial-field">
-                            <span>Reservation payment window (hours)</span>
-                            <input
-                              className="commercial-number-input"
-                              type="number"
-                              min={1}
-                              step={1}
-                              inputMode="numeric"
-                              ref={(node) => {
-                                fieldRefs.current.reservationPaymentWindowHours = node
-                              }}
-                              value={field.state.value}
-                              onChange={(event) =>
-                                field.handleChange(
-                                  Math.max(1, Math.trunc(Number(event.target.value) || 1)),
-                                )
-                              }
-                            />
-                            <small>
-                              Defaults to 72 hours. Enforcement comes with the purchase/payment
-                              lifecycle.
-                            </small>
-                          </label>
-                        )}
-                      </form.Field>
-                    </>
-                  ) : (
-                    <div className="commercial-notice commercial-form-span">
-                      Reservation is disabled for this estate.
-                    </div>
-                  )
-                }
-              </form.Subscribe>
-
-              <form.Field name="installmentAllowed">
-                {(field) => (
-                  <label className="commercial-check commercial-form-span">
-                    <input
-                      type="checkbox"
-                      checked={field.state.value}
-                      onChange={(event) => {
-                        const checked = event.target.checked
-                        field.handleChange(checked)
-                        if (!checked) form.setFieldValue('maxInstallmentMonths', null)
-                      }}
-                    />
-                    <span>Allow installment payment for properties in this estate</span>
-                  </label>
-                )}
-              </form.Field>
-
-              <form.Subscribe selector={(state) => state.values.installmentAllowed}>
-                {(allowed) =>
-                  allowed ? (
-                    <form.Field name="maxInstallmentMonths">
-                      {(field) => (
-                        <label className="commercial-field">
-                          <span>Maximum installment months</span>
-                          <input
-                            className="commercial-number-input"
-                            type="number"
-                            min={1}
-                            step={1}
-                            inputMode="numeric"
-                            ref={(node) => {
-                              fieldRefs.current.maxInstallmentMonths = node
-                            }}
-                            value={field.state.value ?? ''}
-                            onChange={(event) =>
-                              field.handleChange(
-                                event.target.value === ''
-                                  ? null
-                                  : Math.max(1, Math.trunc(Number(event.target.value))),
-                              )
-                            }
-                          />
-                          <small>
-                            Optional. Leave blank when there is no estate-level maximum term.
-                          </small>
-                        </label>
-                      )}
-                    </form.Field>
-                  ) : (
-                    <div className="commercial-notice commercial-form-span">
-                      Installment payment is disabled for this estate.
-                    </div>
-                  )
-                }
-              </form.Subscribe>
-            </div>
-          </section>
-
-          <section className="commercial-form-section">
-            <div className="commercial-form-section-heading">
-              <div>
-                <h3>Estate map and virtual tour</h3>
-                <p>Add the estate map as a PDF or image, plus an optional walkthrough asset.</p>
-              </div>
-            </div>
-
-            <div className="commercial-form-grid">
-              <form.Field name="estateMapUrl">
-                {(field) => (
-                  <div
-                    className="commercial-field commercial-field--full commercial-upload-field"
-                    ref={(node) => {
-                      fieldRefs.current.estateMapUrl = node
-                    }}
-                  >
-                    <span>Estate map</span>
-                    <label className="commercial-upload-dropzone">
-                      <div className="commercial-upload-dropzone-icon">
-                        <IconUpload size={18} />
-                      </div>
-                      <div>
-                        <strong>
-                          {field.state.value ? 'Replace estate map' : 'Upload estate map'}
-                        </strong>
-                        <small>
-                          Attach the estate drawing or reference image. It will be available from
-                          the estate screen.
-                        </small>
-                      </div>
-                      <input
-                        type="file"
-                        accept=".pdf,application/pdf,image/*,.png,.jpg,.jpeg,.webp,.gif,.svg"
-                        disabled={mapUploading || saving}
-                        onChange={(event) => {
-                          void uploadMap(event.target.files?.[0] ?? null)
-                          event.target.value = ''
-                        }}
-                      />
-                    </label>
-
-                    {field.state.value
-                      ? (() => {
-                          const assetKind = uploadedAssetKind(field.state.value)
-                          const AssetIcon = assetKind === 'image' ? IconPhoto : IconFileTypePdf
-                          return (
-                            <article className="commercial-upload-item commercial-upload-item--uploaded">
-                              <div className="commercial-upload-item-icon">
-                                <AssetIcon size={18} />
-                              </div>
-                              <div className="commercial-upload-item-body">
-                                <div className="commercial-upload-item-top">
-                                  <strong>
-                                    {field.state.value.split('/').at(-1) || 'Estate map file'}
-                                  </strong>
-                                  <span>{assetKind === 'image' ? 'Image' : 'PDF'}</span>
-                                </div>
-                                <small>Ready for this estate record</small>
-                              </div>
-                              <div className="commercial-upload-actions">
-                                <button
-                                  type="button"
-                                  className="commercial-upload-remove"
-                                  onClick={() =>
-                                    window.open(field.state.value, '_blank', 'noopener,noreferrer')
-                                  }
-                                  aria-label="Open estate map"
-                                >
-                                  <IconExternalLink size={14} />
-                                </button>
-                                <button
-                                  type="button"
-                                  className="commercial-upload-remove"
-                                  onClick={() => {
-                                    field.handleChange('')
-                                    setMapUploadError('')
-                                  }}
-                                  aria-label="Remove estate map"
-                                >
-                                  <IconTrash size={14} />
-                                </button>
-                              </div>
-                            </article>
-                          )
-                        })()
-                      : null}
-
-                    {mapUploading ? (
-                      <article className="commercial-upload-item commercial-upload-item--uploading">
-                        <div className="commercial-upload-item-icon">
-                          <IconUpload size={18} />
-                        </div>
-                        <div className="commercial-upload-item-body">
-                          <div className="commercial-upload-item-top">
-                            <strong>Uploading estate map</strong>
-                            <span>Map</span>
-                          </div>
-                          <div className="commercial-upload-progress">
-                            <div className="commercial-upload-progress-bar" />
-                          </div>
-                        </div>
-                      </article>
-                    ) : null}
-
-                    {mapUploadError ? (
-                      <article className="commercial-upload-item commercial-upload-item--error">
-                        <div className="commercial-upload-item-icon">
-                          <IconUpload size={18} />
-                        </div>
-                        <div className="commercial-upload-item-body">
-                          <div className="commercial-upload-item-top">
-                            <strong>Estate map upload failed</strong>
-                            <span>Map</span>
-                          </div>
-                          <small>{mapUploadError}</small>
-                        </div>
-                        <div className="commercial-upload-actions">
-                          <button
-                            type="button"
-                            className="commercial-upload-remove"
-                            onClick={() => setMapUploadError('')}
-                            aria-label="Dismiss upload error"
-                          >
-                            <IconRefresh size={14} />
-                          </button>
-                        </div>
-                      </article>
-                    ) : null}
-                  </div>
-                )}
-              </form.Field>
-
-              <form.Field name="virtualTourUrl">
-                {(field) => (
-                  <div
-                    className="commercial-field commercial-field--full commercial-upload-field"
-                    ref={(node) => {
-                      fieldRefs.current.virtualTourUrl = node
-                    }}
-                  >
-                    <span>Virtual tour asset</span>
-                    <label className="commercial-upload-dropzone">
-                      <div className="commercial-upload-dropzone-icon">
-                        <IconUpload size={18} />
-                      </div>
-                      <div>
-                        <strong>
-                          {field.state.value ? 'Replace virtual tour' : 'Upload virtual tour'}
-                        </strong>
-                        <small>
-                          Upload your in-house walkthrough file. A video or hosted viewer file can
-                          be attached here and opened from the estate screen.
-                        </small>
-                      </div>
-                      <input
-                        type="file"
-                        accept="video/*,.mp4,.mov,.webm,.m4v,.jpg,.jpeg,.png,.webp,.html"
-                        disabled={tourUploading || saving}
-                        onChange={(event) => {
-                          void uploadTour(event.target.files?.[0] ?? null)
-                          event.target.value = ''
-                        }}
-                      />
-                    </label>
-
-                    {field.state.value ? (
-                      <article className="commercial-upload-item commercial-upload-item--uploaded">
-                        <div className="commercial-upload-item-icon">
-                          <IconPlayerPlay size={18} />
-                        </div>
-                        <div className="commercial-upload-item-body">
-                          <div className="commercial-upload-item-top">
-                            <strong>
-                              {field.state.value.split('/').at(-1) || 'Virtual tour asset'}
-                            </strong>
-                            <span>Tour</span>
-                          </div>
-                          <small>Ready for this estate record</small>
-                        </div>
-                        <div className="commercial-upload-actions">
-                          <button
-                            type="button"
-                            className="commercial-upload-remove"
-                            onClick={() =>
-                              window.open(field.state.value, '_blank', 'noopener,noreferrer')
-                            }
-                            aria-label="Open virtual tour"
-                          >
-                            <IconExternalLink size={14} />
-                          </button>
-                          <button
-                            type="button"
-                            className="commercial-upload-remove"
-                            onClick={() => {
-                              field.handleChange('')
-                              setTourUploadError('')
-                            }}
-                            aria-label="Remove virtual tour"
-                          >
-                            <IconTrash size={14} />
-                          </button>
-                        </div>
-                      </article>
-                    ) : null}
-
-                    {tourUploading ? (
-                      <article className="commercial-upload-item commercial-upload-item--uploading">
-                        <div className="commercial-upload-item-icon">
-                          <IconPlayerPlay size={18} />
-                        </div>
-                        <div className="commercial-upload-item-body">
-                          <div className="commercial-upload-item-top">
-                            <strong>Uploading virtual tour</strong>
-                            <span>Tour</span>
-                          </div>
-                          <div className="commercial-upload-progress">
-                            <div className="commercial-upload-progress-bar" />
-                          </div>
-                        </div>
-                      </article>
-                    ) : null}
-
-                    {tourUploadError ? (
-                      <article className="commercial-upload-item commercial-upload-item--error">
-                        <div className="commercial-upload-item-icon">
-                          <IconWorldWww size={18} />
-                        </div>
-                        <div className="commercial-upload-item-body">
-                          <div className="commercial-upload-item-top">
-                            <strong>Virtual tour upload failed</strong>
-                            <span>Tour</span>
-                          </div>
-                          <small>{tourUploadError}</small>
-                        </div>
-                        <div className="commercial-upload-actions">
-                          <button
-                            type="button"
-                            className="commercial-upload-remove"
-                            onClick={() => setTourUploadError('')}
-                            aria-label="Dismiss tour upload error"
-                          >
-                            <IconRefresh size={14} />
-                          </button>
-                        </div>
-                      </article>
-                    ) : null}
-                    {fieldErrors.virtualTourUrl ? (
-                      <small className="commercial-field-error">{fieldErrors.virtualTourUrl}</small>
-                    ) : null}
-                  </div>
                 )}
               </form.Field>
             </div>
@@ -1324,19 +469,8 @@ export function CreateEstateLiveWorkspace({
           <button type="button" className="commercial-btn" onClick={onClose} disabled={saving}>
             Cancel
           </button>
-          <button
-            type="submit"
-            className="commercial-btn commercial-btn-primary"
-            disabled={saving || mapUploading || tourUploading}
-            aria-busy={saving}
-          >
-            {saving
-              ? mode === 'edit'
-                ? 'Saving...'
-                : 'Creating...'
-              : mode === 'edit'
-                ? 'Save Estate'
-                : 'Create Estate'}
+          <button type="submit" className="commercial-btn commercial-btn-primary" disabled={saving}>
+            {saving ? 'Creating...' : 'Create Estate'}
           </button>
         </footer>
       </form>

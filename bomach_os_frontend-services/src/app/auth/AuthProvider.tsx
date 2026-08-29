@@ -12,18 +12,6 @@ import { useToast } from '@/shared/ui'
 import { AuthContext } from './auth.context'
 import type { AuthContextValue, AuthUser } from './auth.types'
 
-interface BomachAuthTokenMessage {
-  type: 'BOMACH_AUTH_TOKEN'
-  token: string
-  refreshToken?: string
-}
-
-function isBomachAuthTokenMessage(value: unknown): value is BomachAuthTokenMessage {
-  if (typeof value !== 'object' || value === null) return false
-  const candidate = value as Record<string, unknown>
-  return candidate.type === 'BOMACH_AUTH_TOKEN' && typeof candidate.token === 'string'
-}
-
 export function AuthProvider({ children }: PropsWithChildren) {
   const queryClient = useQueryClient()
   const toast = useToast()
@@ -70,19 +58,19 @@ export function AuthProvider({ children }: PropsWithChildren) {
         accessToken: queryToken,
         refreshToken: queryRefreshToken || queryToken,
       })
-      void queryClient.invalidateQueries({
+      queryClient.invalidateQueries({
         queryKey: currentUserQueryOptions.queryKey,
       })
     }
 
     const handleMessage = (e: MessageEvent) => {
-      if (isBomachAuthTokenMessage(e.data)) {
-        const t = e.data.token
+      if (e.data && e.data.type === 'BOMACH_AUTH_TOKEN' && e.data.token) {
+        const t = String(e.data.token)
         tokenStore.set({
           accessToken: t,
           refreshToken: e.data.refreshToken ? String(e.data.refreshToken) : t,
         })
-        void queryClient.invalidateQueries({
+        queryClient.invalidateQueries({
           queryKey: currentUserQueryOptions.queryKey,
         })
       }

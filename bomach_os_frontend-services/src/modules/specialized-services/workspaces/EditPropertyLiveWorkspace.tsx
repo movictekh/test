@@ -2,14 +2,13 @@ import { IconBuilding, IconHome, IconMap2, IconX } from '@tabler/icons-react'
 import { useState } from 'react'
 
 import {
-  operatorPropertyStatuses,
+  propertyStatuses,
   propertyTypes,
   type CreatePropertyInput,
   type Property,
   type PropertyType,
 } from '../real-estate/real-estate.types'
 import { validateProperty } from '../real-estate/real-estate.validation'
-import { BoundaryFields } from './BoundaryFields'
 
 const residentialTypeOptions = [
   { value: 'house', label: 'House' },
@@ -55,7 +54,6 @@ function mapPropertyToInput(property: Property): CreatePropertyInput {
     propertyType: property.propertyType,
     propertyName: property.propertyName,
     price: property.price,
-    boundary: property.boundary,
     description: property.description,
     status: property.status,
     plotNumber: property.plotNumber,
@@ -85,13 +83,11 @@ export function EditPropertyLiveWorkspace({
   saving,
   onClose,
   onSubmit,
-  statusLocked = false,
 }: {
   property: Property
   saving: boolean
   onClose: () => void
   onSubmit: (input: CreatePropertyInput) => void
-  statusLocked?: boolean
 }) {
   const [value, setValue] = useState<CreatePropertyInput>(() => mapPropertyToInput(property))
   const [error, setError] = useState('')
@@ -104,11 +100,7 @@ export function EditPropertyLiveWorkspace({
   const propertyType = value.propertyType
 
   return (
-    <div
-      className="commercial-modal-backdrop commercial-modal-backdrop--nested"
-      role="presentation"
-      onMouseDown={onClose}
-    >
+    <div className="commercial-modal-backdrop" role="presentation" onMouseDown={onClose}>
       <form
         className="commercial-modal commercial-modal--xl specialized-real-estate-modal"
         role="dialog"
@@ -185,25 +177,18 @@ export function EditPropertyLiveWorkspace({
 
               <label className="commercial-field">
                 <span>Status</span>
-                {statusLocked || property.status === 'reserved' || property.status === 'sold' ? (
-                  <input value={property.statusDisplay || property.status} disabled />
-                ) : (
-                  <select
-                    value={value.status}
-                    onChange={(event) =>
-                      setField('status', event.target.value as CreatePropertyInput['status'])
-                    }
-                  >
-                    {operatorPropertyStatuses.map((item) => (
-                      <option key={item.value} value={item.value}>
-                        {item.label}
-                      </option>
-                    ))}
-                  </select>
-                )}
-                {statusLocked || property.status === 'reserved' || property.status === 'sold' ? (
-                  <small>Commercial status is controlled by the purchase/payment workflow.</small>
-                ) : null}
+                <select
+                  value={value.status}
+                  onChange={(event) =>
+                    setField('status', event.target.value as CreatePropertyInput['status'])
+                  }
+                >
+                  {propertyStatuses.map((item) => (
+                    <option key={item.value} value={item.value}>
+                      {item.label}
+                    </option>
+                  ))}
+                </select>
               </label>
 
               <label className="commercial-field">
@@ -239,7 +224,10 @@ export function EditPropertyLiveWorkspace({
 
               <label className="commercial-field">
                 <span>Client / holder</span>
-                <input value={property.clientName || 'Managed by purchase workflow'} disabled />
+                <input
+                  value={value.clientName ?? ''}
+                  onChange={(event) => setField('clientName', event.target.value)}
+                />
               </label>
 
               <label className="commercial-field commercial-field--full">
@@ -250,15 +238,6 @@ export function EditPropertyLiveWorkspace({
                 />
               </label>
             </div>
-          </section>
-
-          <section className="commercial-form-section">
-            <BoundaryFields
-              value={value.boundary}
-              onChange={(boundary) => setField('boundary', boundary)}
-              title="Property boundary"
-              description="Optional. Leave it blank to use the linked estate boundary when the property is attached to an estate."
-            />
           </section>
 
           {propertyType === 'plot' ? (

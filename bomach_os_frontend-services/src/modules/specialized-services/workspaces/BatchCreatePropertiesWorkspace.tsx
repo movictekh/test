@@ -6,14 +6,12 @@ import { presentError } from '@/shared/errors'
 import { realEstateApi } from '../real-estate/real-estate.api'
 import { buildPropertyBatch } from '../real-estate/property-batch'
 import {
-  operatorPropertyStatuses,
-  type Boundary,
+  propertyStatuses,
   type CreatePropertyInput,
   type PropertyBatchItem,
   type PropertyType,
 } from '../real-estate/real-estate.types'
 import { validateProperty } from '../real-estate/real-estate.validation'
-import { BoundaryFields } from './BoundaryFields'
 
 const propertyTypeOptions = [
   {
@@ -58,26 +56,21 @@ function numberInputValue(value: number | null | undefined) {
 export function BatchCreatePropertiesWorkspace({
   estateId,
   estateName,
-  estates,
   onClose,
   onChanged,
 }: {
-  estateId: number | null
-  estateName: string | null
-  estates: Array<{ id: number; estateName: string; estateCode: string }>
+  estateId: number
+  estateName: string
   onClose: () => void
   onChanged: () => Promise<void> | void
 }) {
-  const [selectedEstateId, setSelectedEstateId] = useState<number | null>(estateId)
   const [propertyType, setPropertyType] = useState<PropertyType>('plot')
   const [count, setCount] = useState(10)
   const [start, setStart] = useState(1)
   const [namePrefix, setNamePrefix] = useState('Plot')
   const [price, setPrice] = useState(5_000_000)
-  const [useEstateDefaultPrice, setUseEstateDefaultPrice] = useState(false)
   const [status, setStatus] = useState<CreatePropertyInput['status']>('available')
   const [description, setDescription] = useState('')
-  const [boundary, setBoundary] = useState<Boundary>({})
   const [plotSize, setPlotSize] = useState(500)
   const [residentialType, setResidentialType] = useState('duplex')
   const [bedrooms, setBedrooms] = useState(4)
@@ -109,8 +102,7 @@ export function BatchCreatePropertiesWorkspace({
     isOurProperty: true,
     propertyType,
     propertyName: namePrefix || 'Property',
-    price: useEstateDefaultPrice && selectedEstateId != null ? null : price,
-    boundary: count === 1 ? boundary : {},
+    price,
     description,
     status,
     ...(propertyType === 'plot' ? { plotSize, plotSizeUnit: 'sqm' } : {}),
@@ -138,10 +130,7 @@ export function BatchCreatePropertiesWorkspace({
       rows.map((row) => (row.key === item.key ? { ...row, status: 'creating', error: '' } : row)),
     )
     try {
-      const created =
-        selectedEstateId != null
-          ? await realEstateApi.createProperty(selectedEstateId, item.input)
-          : await realEstateApi.createStandaloneProperty(item.input)
+      const created = await realEstateApi.createProperty(estateId, item.input)
       setItems((rows) =>
         rows.map((row) =>
           row.key === item.key
@@ -161,9 +150,7 @@ export function BatchCreatePropertiesWorkspace({
 
   const runBatch = async () => {
     const base = template()
-    const validationError = validateProperty(base, {
-      requirePrice: !(selectedEstateId != null && useEstateDefaultPrice),
-    })
+    const validationError = validateProperty(base)
     if (validationError) return setError(validationError)
     if (!Number.isInteger(count) || count < 1 || count > 250)
       return setError('Batch size must be between 1 and 250 Properties.')
@@ -214,17 +201,13 @@ export function BatchCreatePropertiesWorkspace({
         className="commercial-modal commercial-modal--xl specialized-real-estate-modal"
         role="dialog"
         aria-modal="true"
-        aria-label="Add Properties"
+        aria-label="Add Estate Properties"
         onMouseDown={(event) => event.stopPropagation()}
       >
         <header className="commercial-modal-header">
           <div>
-            <h2>Add Properties</h2>
-            <p>
-              {selectedEstateId != null
-                ? `${estateName ?? 'Selected estate'} · Create one property or a controlled batch of up to 250.`
-                : 'Create one property or a controlled batch of up to 250, and optionally attach it to an estate.'}
-            </p>
+            <h2>Add Estate Properties</h2>
+            <p>{estateName} · Create one property or a controlled batch of up to 250.</p>
           </div>
           <button
             type="button"
@@ -245,37 +228,8 @@ export function BatchCreatePropertiesWorkspace({
               <section className="commercial-form-section">
                 <div className="commercial-form-section-heading">
                   <div>
-                    <h3>Estate link</h3>
-                    <p>
-                      Attach these properties to an estate, or leave them as non-estate properties.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="commercial-form-grid">
-                  <label className="commercial-field commercial-form-span">
-                    <span>Attach to estate</span>
-                    <select
-                      value={selectedEstateId ?? 0}
-                      onChange={(event) => setSelectedEstateId(Number(event.target.value) || null)}
-                      disabled={running}
-                    >
-                      <option value={0}>No estate — create as non-estate property</option>
-                      {estates.map((estate) => (
-                        <option key={estate.id} value={estate.id}>
-                          {estate.estateCode} · {estate.estateName}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-              </section>
-
-              <section className="commercial-form-section">
-                <div className="commercial-form-section-heading">
-                  <div>
                     <h3>Property type</h3>
-                    <p>Choose the asset class you want to create.</p>
+                    <p>Choose the asset class you want to create for this estate.</p>
                   </div>
                 </div>
 
@@ -312,24 +266,6 @@ export function BatchCreatePropertiesWorkspace({
                 </div>
 
                 <div className="commercial-form-grid">
-                  {count === 1 ? (
-                    <BoundaryFields
-                      value={boundary}
-                      onChange={setBoundary}
-                      title="Property boundary"
-                      description={
-                        selectedEstateId != null
-                          ? 'Optional. Leave it blank to default to the selected estate boundary.'
-                          : 'Optional. Add any available NW, NE, SE or SW corners.'
-                      }
-                    />
-                  ) : (
-                    <div className="commercial-form-span commercial-notice">
-                      Boundary entry is disabled for multi-property batches so the same parcel is
-                      not copied to different properties. Linked batch properties will still fall
-                      back to the selected estate boundary.
-                    </div>
-                  )}
                   <label className="commercial-field">
                     <span>
                       How many properties? <em>*</em>
@@ -376,37 +312,15 @@ export function BatchCreatePropertiesWorkspace({
                     <span>
                       Price per property <em>*</em>
                     </span>
-                    {selectedEstateId != null && useEstateDefaultPrice ? null : (
-                      <input
-                        className="commercial-number-input"
-                        type="number"
-                        min={1}
-                        step="any"
-                        inputMode="decimal"
-                        value={numberInputValue(price)}
-                        onChange={(event) => setPrice(parseNonNegativeNumber(event.target.value))}
-                      />
-                    )}
-                    {selectedEstateId != null ? (
-                      <button
-                        type="button"
-                        className={
-                          useEstateDefaultPrice
-                            ? 'specialized-inline-toggle is-active'
-                            : 'specialized-inline-toggle'
-                        }
-                        onClick={() => setUseEstateDefaultPrice((current) => !current)}
-                      >
-                        {useEstateDefaultPrice
-                          ? 'Using estate default price'
-                          : 'Use estate default price'}
-                      </button>
-                    ) : null}
-                    {selectedEstateId != null && useEstateDefaultPrice ? (
-                      <small>
-                        The manual price field is hidden and the estate default will be used.
-                      </small>
-                    ) : null}
+                    <input
+                      className="commercial-number-input"
+                      type="number"
+                      min={1}
+                      step="any"
+                      inputMode="decimal"
+                      value={numberInputValue(price)}
+                      onChange={(event) => setPrice(parseNonNegativeNumber(event.target.value))}
+                    />
                   </label>
                   <label className="commercial-field">
                     <span>Initial status</span>
@@ -416,7 +330,7 @@ export function BatchCreatePropertiesWorkspace({
                         setStatus(event.target.value as CreatePropertyInput['status'])
                       }
                     >
-                      {operatorPropertyStatuses.map((item) => (
+                      {propertyStatuses.map((item) => (
                         <option key={item.value} value={item.value}>
                           {item.label}
                         </option>

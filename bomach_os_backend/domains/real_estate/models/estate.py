@@ -1,11 +1,10 @@
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
-from django.core.validators import FileExtensionValidator, MaxValueValidator, MinValueValidator
+from django.core.validators import FileExtensionValidator, MinValueValidator
 from django.db import models
 
 from user.models.base import BaseModel
-from domains.real_estate.location import validate_boundary
 
 
 class Estate(BaseModel):
@@ -87,25 +86,11 @@ class Estate(BaseModel):
     precise_address = models.TextField(
         verbose_name="Precise Address",
     )
-    estate_map_url = models.CharField(
-        max_length=1000,
-        blank=True,
-        default="",
-        verbose_name="Estate Map URL",
-        help_text="Uploaded PDF or hosted link for the estate layout drawing.",
-    )
-    virtual_tour_url = models.CharField(
-        max_length=1000,
-        blank=True,
-        default="",
-        verbose_name="Virtual Tour URL",
-        help_text="Hosted 3D walkthrough or map-based virtual tour link.",
-    )
     boundary = models.JSONField(
-        default=dict,
+        default=list,
         blank=True,
         verbose_name="Boundary Coordinates",
-        help_text="Optional named corners: nw, ne, se, sw. Any subset from zero to four corners is valid.",
+        help_text='List of {lat, lng} points defining the estate boundary polygon. e.g. [{"lat": 6.5244, "lng": 3.3792}, ...]',
     )
 
     # Documents - Title Documents (checkboxes)
@@ -239,43 +224,6 @@ class Estate(BaseModel):
         verbose_name="Receipt Fee",
     )
 
-    # Sales & Payment Policy
-    reservation_allowed = models.BooleanField(
-        default=False,
-        verbose_name="Reservation Allowed",
-        help_text="Whether properties in this estate may be reserved before full payment.",
-    )
-    reservation_threshold_percent = models.DecimalField(
-        max_digits=5,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        validators=[
-            MinValueValidator(Decimal("0.01")),
-            MaxValueValidator(Decimal("100.00")),
-        ],
-        verbose_name="Reservation Down Payment (%)",
-        help_text="Percentage of the final purchase total that must be verified before a property becomes reserved.",
-    )
-    installment_allowed = models.BooleanField(
-        default=False,
-        verbose_name="Installment Payment Allowed",
-        help_text="Whether buyers may continue paying an outstanding property balance in installments.",
-    )
-    max_installment_months = models.PositiveSmallIntegerField(
-        null=True,
-        blank=True,
-        validators=[MinValueValidator(1)],
-        verbose_name="Maximum Installment Months",
-        help_text="Optional maximum installment duration for purchases in this estate.",
-    )
-    reservation_payment_window_hours = models.PositiveIntegerField(
-        default=72,
-        validators=[MinValueValidator(1)],
-        verbose_name="Reservation Payment Window (Hours)",
-        help_text="How long an approved reservation payment request may remain open before expiry rules are evaluated.",
-    )
-
     class Meta:
         app_label = "user"
         verbose_name = "Estate"
@@ -292,7 +240,6 @@ class Estate(BaseModel):
 
     def clean(self):
         super().clean()
-        self.boundary = validate_boundary(self.boundary)
         if not self.estate_name or not self.estate_name.strip():
             raise ValidationError({"estate_name": "Estate name cannot be blank."})
         if not self.estate_code or not self.estate_code.strip():
@@ -316,33 +263,6 @@ class Estate(BaseModel):
                 raise ValidationError(
                     {"min_price_other_properties": "Min price cannot exceed max price."}
                 )
-
-        if self.reservation_allowed:
-            if self.reservation_threshold_percent is None:
-                raise ValidationError(
-                    {
-                        "reservation_threshold_percent": (
-                            "Reservation down payment percentage is required when reservation is allowed."
-                        )
-                    }
-                )
-        elif self.reservation_threshold_percent is not None:
-            raise ValidationError(
-                {
-                    "reservation_threshold_percent": (
-                        "Reservation down payment percentage must be empty when reservation is disabled."
-                    )
-                }
-            )
-
-        if not self.installment_allowed and self.max_installment_months is not None:
-            raise ValidationError(
-                {
-                    "max_installment_months": (
-                        "Maximum installment months must be empty when installment payment is disabled."
-                    )
-                }
-            )
 
     def save(self, *args, **kwargs):
         if not kwargs.get("update_fields"):
@@ -471,10 +391,10 @@ class Property(BaseModel):
     )
 
     boundary = models.JSONField(
-        default=dict,
+        default=list,
         blank=True,
         verbose_name="Boundary Coordinates",
-        help_text="Optional named corners: nw, ne, se, sw. Empty linked properties default to their estate boundary.",
+        help_text='List of {lat, lng} points defining the property boundary polygon. e.g. [{"lat": 6.5244, "lng": 3.3792}, ...]',
     )
     description = models.TextField(
         blank=True,
@@ -631,7 +551,6 @@ class Property(BaseModel):
 
     def clean(self):
         super().clean()
-        self.boundary = validate_boundary(self.boundary)
         if not self.property_name or not self.property_name.strip():
             raise ValidationError({"property_name": "Property name cannot be blank."})
 

@@ -1,16 +1,43 @@
+import json
+import logging
 
+import requests
+from django.conf import settings
 from django.template.loader import render_to_string
-from system.messaging.email.providers.zeptomail import send_zepto_email as _send_zepto_email
-from system.messaging.email.services import send_email as _send_system_email
-from domains.project_operations.email import (
-    send_associate_task_assignment_email,
-    send_task_assignment_email,
-)
-from domains.real_estate.email import send_invoice_email
+
+logger = logging.getLogger(__name__)
+
+ZEPTO_URL = "https://api.zeptomail.com/v1.1/email"
+FROM_ADDRESS = "noreply@bomachgroup.com"
+FROM_NAME = "Bomach OS"
 
 
-
-
+def _send_zepto_email(to_address, to_name, subject, html_content):
+    """Send a single email via Zoho ZeptoMail API."""
+    headers = {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": settings.ZOHOZEPTOMAIL_KEY,
+    }
+    payload = {
+        "from": {"address": FROM_ADDRESS, "name": FROM_NAME},
+        "to": [
+            {
+                "email_address": {
+                    "address": to_address,
+                    "name": to_name or to_address.split("@")[0],
+                }
+            }
+        ],
+        "subject": subject,
+        "htmlbody": html_content,
+    }
+    response = requests.post(ZEPTO_URL, data=json.dumps(payload), headers=headers)
+    if not response.ok:
+        logger.warning(
+            "ZeptoMail API error (%s): %s", response.status_code, response.text
+        )
+    return response
 
 
 def _chunk_list(lst, size):
@@ -37,9 +64,9 @@ def send_email_util(
             name = recipient.get("name", "")
             if not email:
                 continue
-            resp = _send_system_email(
-                recipient=email,
-                name=name,
+            resp = _send_zepto_email(
+                to_address=email,
+                to_name=name,
                 subject=title,
                 html_content=html_content,
             )
@@ -63,13 +90,58 @@ def send_two_factor_code_email(recipient: str, first_name: str, code: str):
     )
 
 
+def send_invoice_email(email: str, name: str, invoice):
+    """Send estate property invoice to a client via email."""
+
+    items = []
+    for item in invoice.estate_invoice_items.select_related(
+        "property", "property__estate"
+    ).all():
+        items.append(
+            {
+                "property_name": item.property.property_name,
+                "estate_name": f"{item.property.estate.estate_name} - {item.property.estate.developer_company_name}",
+                "quantity": item.quantity,
+                "unit_price": f"{item.unit_price:,.2f}",
+                "total": f"{item.total:,.2f}",
+            }
+        )
+
+    context_data = {
+        "invoice_number": invoice.invoice_number,
+        "issue_date": invoice.issue_date.strftime("%d %b %Y"),
+        "due_date": invoice.due_date.strftime("%d %b %Y"),
+        "client_name": name,
+        "client_address": "",
+        "items": items,
+        "subtotal": f"{invoice.subtotal:,.2f}",
+        "tax_rate": f"{invoice.tax_rate:g}",
+        "tax_amount": f"{invoice.tax_amount:,.2f}",
+        "total_amount": f"{invoice.total_amount:,.2f}",
+        "amount_paid": invoice.amount_paid,
+        "balance": f"{invoice.balance:,.2f}" if invoice.amount_paid > 0 else None,
+        "notes": invoice.notes or "Thank you for your business.",
+        "bank_name": invoice.bank_name or "",
+        "account_name": invoice.account_name or "",
+        "account_number": invoice.account_number or "",
+        "sort_code": invoice.sort_code or "",
+    }
+
+    html_content = render_to_string("email_template/estate_invoice.html", context_data)
+
+    return _send_zepto_email(
+        to_address=email,
+        to_name=name,
+        subject=f"Invoice {invoice.invoice_number} - Bomach Engineering Services",
+        html_content=html_content,
+    )
 
 
 def _send_email(recipient: str, name: str, subject: str, html_content: str):
     """Internal helper to send a single email."""
-    return _send_system_email(
-        recipient=recipient,
-        name=name,
+    return _send_zepto_email(
+        to_address=recipient,
+        to_name=name,
         subject=subject,
         html_content=html_content,
     )
@@ -133,6 +205,33 @@ def send_client_welcome_email(
     )
 
 
+def send_task_assignment_email(
+    recipient: str,
+    assignee_name: str,
+    task_title: str,
+    task_description: str,
+    due_date: str,
+    task_url: str,
+):
+    """Send task assignment email to an employee/associate."""
+    context = {
+        "recipient": recipient,
+        "assignee_name": assignee_name,
+        "task_title": task_title,
+        "task_description": task_description,
+        "due_date": due_date,
+        "task_url": task_url,
+    }
+
+    html_content = render_to_string(
+        "email_template/task_assignment_email.html", context
+    )
+    return _send_email(
+        recipient=recipient,
+        name=assignee_name,
+        subject="New Task Assigned: " + task_title,
+        html_content=html_content,
+    )
 
 
 # ── Company constants used in associate / shareholder templates ──────────────
@@ -168,6 +267,35 @@ def send_associate_welcome_email(
     )
 
 
+def send_associate_task_assignment_email(
+    recipient: str,
+    associate_name: str,
+    task_title: str,
+    project_name: str,
+    assigned_by: str,
+    due_date: str,
+    task_link: str,
+):
+    """Send task assignment email to an associate (lawyer / surveyor)."""
+    context = {
+        "associate_name": associate_name,
+        "task_title": task_title,
+        "project_name": project_name,
+        "assigned_by": assigned_by,
+        "due_date": due_date,
+        "task_link": task_link,
+        "operations_email": _OPERATIONS_EMAIL,
+        "support_phone": _SUPPORT_PHONE,
+    }
+    html_content = render_to_string(
+        "email_template/associate_task_assignment_email.html", context
+    )
+    return _send_email(
+        recipient=recipient,
+        name=associate_name,
+        subject=f"New Assignment: {task_title}",
+        html_content=html_content,
+    )
 
 
 def send_shareholder_welcome_email(

@@ -188,7 +188,7 @@ def _journal_business_event(entry):
     source_type = entry.source_type
     source_event = entry.source_event
 
-    if source_type in {"payment", "central_payment_receipt"} and source_event == "confirmed":
+    if source_type == "payment" and source_event == "confirmed":
         return "payments", "confirmed", entry.reference or entry.journal_number
     if source_type == "expense" and source_event == "paid":
         return "expenses", "paid", entry.reference or entry.journal_number

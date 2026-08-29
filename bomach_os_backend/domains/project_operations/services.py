@@ -4,7 +4,7 @@ from django.conf import settings
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 
-from domains.project_operations.email import (
+from user.utils.send_email import (
     send_associate_task_assignment_email,
     send_task_assignment_email,
 )

@@ -54,9 +54,7 @@ if (typeof window !== 'undefined') {
         window.localStorage.setItem(REFRESH_TOKEN_KEY, urlRefreshToken)
       }
     }
-  } catch {
-    // Ignore malformed URL/search parsing during bootstrap.
-  }
+  } catch (_) {}
 }
 
 export const tokenStore = {

@@ -1,5 +1,4 @@
 import { apiClient } from '@/shared/api/api-client'
-import { compactBoundary } from './real-estate.boundary'
 import {
   mapBrokerageList,
   mapBrokerageListing,
@@ -23,7 +22,6 @@ import type {
   PropertyFilters,
   QuickUpdatePlotInput,
 } from './real-estate.types'
-import type { Estate } from './real-estate.types'
 
 function pageQuery(filters: { page?: number; limit?: number }) {
   const q = new URLSearchParams()
@@ -73,9 +71,6 @@ const estatePayload = (i: CreateEstateInput) => ({
   state: i.state,
   city_town: i.cityTown,
   precise_address: i.preciseAddress,
-  boundary: compactBoundary(i.boundary),
-  estate_map_url: i.estateMapUrl ?? '',
-  virtual_tour_url: i.virtualTourUrl ?? '',
   documents: i.documents ?? [],
   has_c_of_o: i.hasCOfO,
   has_deed_of_assignment: i.hasDeedOfAssignment,
@@ -101,21 +96,13 @@ const estatePayload = (i: CreateEstateInput) => ({
   legal_fee: i.legalFee ?? null,
   development_fee: i.developmentFee ?? null,
   receipt_fee: i.receiptFee ?? null,
-  reservation_allowed: i.reservationAllowed,
-  reservation_threshold_percent: i.reservationAllowed
-    ? (i.reservationThresholdPercent ?? null)
-    : null,
-  installment_allowed: i.installmentAllowed,
-  max_installment_months: i.installmentAllowed ? (i.maxInstallmentMonths ?? null) : null,
-  reservation_payment_window_hours: i.reservationPaymentWindowHours,
   tags: i.tags ?? [],
 })
 const propertyPayload = (i: CreatePropertyInput) => ({
   is_our_property: i.isOurProperty,
   property_type: i.propertyType,
   property_name: i.propertyName,
-  ...(i.price != null ? { price: i.price } : {}),
-  boundary: compactBoundary(i.boundary),
+  price: i.price,
   description: i.description ?? '',
   status: i.status,
   plot_number: i.plotNumber ?? null,
@@ -133,33 +120,10 @@ const propertyPayload = (i: CreatePropertyInput) => ({
   units_offices: i.unitsOffices ?? null,
   images: i.images ?? [],
 })
-const propertyPatchPayload = (i: Partial<CreatePropertyInput>) => ({
-  ...('isOurProperty' in i ? { is_our_property: i.isOurProperty } : {}),
-  ...('propertyName' in i ? { property_name: i.propertyName } : {}),
-  ...('price' in i ? { price: i.price } : {}),
-  ...('boundary' in i ? { boundary: compactBoundary(i.boundary) } : {}),
-  ...('description' in i ? { description: i.description } : {}),
-  ...('status' in i ? { status: i.status } : {}),
-  ...('plotNumber' in i ? { plot_number: i.plotNumber } : {}),
-  ...('plotSize' in i ? { plot_size: i.plotSize } : {}),
-  ...('plotSizeUnit' in i ? { plot_size_unit: i.plotSizeUnit } : {}),
-  ...('buildingTypeResidential' in i
-    ? { building_type_residential: i.buildingTypeResidential }
-    : {}),
-  ...('bedrooms' in i ? { bedrooms: i.bedrooms } : {}),
-  ...('bathrooms' in i ? { bathrooms: i.bathrooms } : {}),
-  ...('floorsResidential' in i ? { floors_residential: i.floorsResidential } : {}),
-  ...('totalAreaResidential' in i ? { total_area_residential: i.totalAreaResidential } : {}),
-  ...('buildingTypeCommercial' in i ? { building_type_commercial: i.buildingTypeCommercial } : {}),
-  ...('totalAreaCommercial' in i ? { total_area_commercial: i.totalAreaCommercial } : {}),
-  ...('numberOfFloors' in i ? { number_of_floors: i.numberOfFloors } : {}),
-  ...('unitsOffices' in i ? { units_offices: i.unitsOffices } : {}),
-})
 const brokeragePayload = (i: CreateBrokerageInput) => ({
   title: i.title,
   description: i.description ?? '',
   location: i.location,
-  boundary: compactBoundary(i.boundary),
   price: i.price,
   property_type: i.propertyType,
   owner_name: i.ownerName,
@@ -176,14 +140,6 @@ const brokeragePayload = (i: CreateBrokerageInput) => ({
 })
 
 export const realEstateApi = {
-  uploadEstateAsset: async (file: File, signal?: AbortSignal): Promise<string> => {
-    const formData = new FormData()
-    formData.set('file', file)
-    const payload = await apiClient.post<{ url: string }>('/others/upload-file', formData, {
-      ...(signal ? { signal } : {}),
-    })
-    return payload.url
-  },
   listEstates: async (f: EstateFilters = {}) =>
     mapEstateList(await apiClient.get<unknown>(`/estates/?${estateQuery(f)}`)),
   estateDetail: async (id: number) => mapEstate(await apiClient.get<unknown>(`/estates/${id}`)),
@@ -203,46 +159,15 @@ export const realEstateApi = {
     mapPropertyList(
       await apiClient.get<unknown>(`/estates/${estateId}/properties?${propertyQuery(f)}`),
     ),
-  listAllProperties: async (estateId: number) => {
-    const limit = 250
-    const properties = []
-    let page = 1
-    let count = Number.POSITIVE_INFINITY
-
-    while (properties.length < count) {
-      const result = mapPropertyList(
-        await apiClient.get<unknown>(
-          `/estates/${estateId}/properties?${propertyQuery({ page, limit })}`,
-        ),
-      )
-      count = result.count
-      properties.push(...result.items)
-      if (!result.items.length) break
-      page += 1
-    }
-
-    return properties
-  },
-  listStandaloneProperties: async (f: PropertyFilters = {}) =>
-    mapPropertyList(await apiClient.get<unknown>(`/estates/properties/all?${propertyQuery(f)}`)),
   propertyDetail: async (estateId: number, id: number) =>
     mapProperty(await apiClient.get<unknown>(`/estates/${estateId}/properties/${id}`)),
   createProperty: async (estateId: number, i: CreatePropertyInput) =>
     mapProperty(
       await apiClient.post<unknown>(`/estates/${estateId}/properties`, propertyPayload(i)),
     ),
-  createStandaloneProperty: async (i: CreatePropertyInput) =>
-    mapProperty(await apiClient.post<unknown>('/estates/properties/all', propertyPayload(i))),
   updateProperty: async (estateId: number, id: number, i: CreatePropertyInput) =>
     mapProperty(
       await apiClient.put<unknown>(`/estates/${estateId}/properties/${id}`, propertyPayload(i)),
-    ),
-  updatePropertyFields: async (estateId: number, id: number, i: Partial<CreatePropertyInput>) =>
-    mapProperty(
-      await apiClient.put<unknown>(
-        `/estates/${estateId}/properties/${id}`,
-        propertyPatchPayload(i),
-      ),
     ),
   deleteProperty: async (estateId: number, id: number) =>
     apiClient.delete<unknown>(`/estates/${estateId}/properties/${id}`),
@@ -269,54 +194,4 @@ export const realEstateApi = {
       }),
     ),
   deleteBrokerage: async (id: number) => apiClient.delete<unknown>(`/brokerage/${id}`),
-}
-
-export function mapEstateToInput(estate: Estate): CreateEstateInput {
-  return {
-    isOurEstate: estate.isOurEstate,
-    estateName: estate.estateName,
-    estateCode: estate.estateCode,
-    estateType: estate.estateType,
-    developerCompanyName: estate.developerCompanyName,
-    estateDescription: estate.estateDescription,
-    country: estate.country,
-    countryCode: estate.countryCode,
-    state: estate.state,
-    cityTown: estate.cityTown,
-    preciseAddress: estate.preciseAddress,
-    boundary: estate.boundary,
-    estateMapUrl: estate.estateMapUrl,
-    virtualTourUrl: estate.virtualTourUrl,
-    hasCOfO: estate.hasCOfO,
-    hasDeedOfAssignment: estate.hasDeedOfAssignment,
-    hasSurveyPlan: estate.hasSurveyPlan,
-    zoningInformation: estate.zoningInformation,
-    hasPlanningPermit: estate.hasPlanningPermit,
-    hasBuildingApproval: estate.hasBuildingApproval,
-    hasEnvironmentalClearance: estate.hasEnvironmentalClearance,
-    pricePerSqm: estate.pricePerSqm,
-    availablePlotSizes: estate.availablePlotSizes,
-    minPriceOtherProperties: estate.minPriceOtherProperties,
-    maxPriceOtherProperties: estate.maxPriceOtherProperties,
-    estateStatus: estate.estateStatus,
-    totalArea: estate.totalArea,
-    areaUnit: estate.areaUnit,
-    hasRoads: estate.hasRoads,
-    hasElectricity: estate.hasElectricity,
-    hasWater: estate.hasWater,
-    hasFencing: estate.hasFencing,
-    hasSecurity: estate.hasSecurity,
-    hasDrainage: estate.hasDrainage,
-    hasRecreation: estate.hasRecreation,
-    legalFee: estate.legalFee,
-    developmentFee: estate.developmentFee,
-    receiptFee: estate.receiptFee,
-    reservationAllowed: estate.reservationAllowed,
-    reservationThresholdPercent: estate.reservationThresholdPercent,
-    installmentAllowed: estate.installmentAllowed,
-    maxInstallmentMonths: estate.maxInstallmentMonths,
-    reservationPaymentWindowHours: estate.reservationPaymentWindowHours,
-    tags: estate.tags,
-    documents: estate.documents.map((document) => document.file),
-  }
 }

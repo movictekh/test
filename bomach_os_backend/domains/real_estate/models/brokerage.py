@@ -9,7 +9,6 @@ from django.core.validators import (
 from django.db import models
 
 from user.models.base import BaseModel
-from domains.real_estate.location import validate_boundary
 
 
 class BrokerageListing(BaseModel):
@@ -46,12 +45,6 @@ class BrokerageListing(BaseModel):
     location = models.CharField(
         max_length=500,
         verbose_name="Location",
-    )
-    boundary = models.JSONField(
-        default=dict,
-        blank=True,
-        verbose_name="Boundary Coordinates",
-        help_text="Optional named corners: nw, ne, se, sw. Any subset from zero to four corners is valid.",
     )
     price = models.DecimalField(
         max_digits=15,
@@ -153,7 +146,6 @@ class BrokerageListing(BaseModel):
 
     def clean(self):
         super().clean()
-        self.boundary = validate_boundary(self.boundary)
         if not self.title or not self.title.strip():
             raise ValidationError({"title": "Title cannot be blank."})
         if not self.location or not self.location.strip():

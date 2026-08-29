@@ -21,16 +21,8 @@ from .estate_property_invoice import (
     EstatePropertyInvoiceItem,
     InvoiceApproval,
 )
-from .property_purchase import PropertyPurchase
 from .meeting import Meeting
 from .notification import Notification
-from .message_outbox import MessageOutbox
-from .central_payment import (
-    ConfirmedReceipt,
-    PaymentAttempt,
-    PaymentIntent,
-    PaymentProviderEvent,
-)
 from .otp import OTPCode
 from .partner import Partner, PartnerAgreement
 from .policy import Policy

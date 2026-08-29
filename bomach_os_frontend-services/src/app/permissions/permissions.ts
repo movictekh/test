@@ -19,7 +19,6 @@ export const PERMISSIONS = {
 
   employeesList: 'employees.list',
   clientsList: 'clients.list',
-  clientsCreate: 'clients.create',
 
   servicesList: 'services.list',
   servicesView: 'services.view',
