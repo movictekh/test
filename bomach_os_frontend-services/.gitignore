@@ -38,9 +38,6 @@ test-results/
 # Temporary files
 *.local
 node_modules/.tmp/
-<<<<<<< HEAD
-=======
 .tanstack/
 test.md
 phase-1-foundation.md
->>>>>>> af027180398550ff8c312e58cdbb3031deec25ee
