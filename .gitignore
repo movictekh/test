@@ -141,3 +141,30 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Local backend checkout (synced separately; never commit into this repo)
+bomach_os_backend/
+
+# Python / virtualenvs / caches
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.sqlite3
+db.sqlite3
+
+# Frontend install / build artifacts (belt-and-suspenders with package .gitignore)
+**/node_modules/
+**/dist/
+**/storybook-static/
+**/coverage/
+**/.tanstack/
+**/.vite/
