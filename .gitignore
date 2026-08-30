@@ -170,3 +170,4 @@ db.sqlite3
 **/.vite/
 # Project-generated artifacts
 docs/bomach-phase-1-bootstrap.sh
+test.md
